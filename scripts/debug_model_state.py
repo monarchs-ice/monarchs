@@ -25,7 +25,7 @@ test, _, _, _ = reload_state(path, grid)
 
 # Now we can interact with the model, plot stuff out etc.
 lakedepth = get_2d_grid(grid, 'lake_depth')
-plt.imshow(lakedepth, vmax=1)
+plt.imshow(lakedepth, vmax=3)
 plt.colorbar()
 plt.title('Lake depth')
 plt.figure()
