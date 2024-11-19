@@ -314,5 +314,3 @@ model_setup = ModelSetup(model_setup_path)
 if model_setup.use_numba:
     jit_modules()
     jit_classes()
-    from monarchs.physics import solver
-    print(solver.firn_heateqn_solver)
