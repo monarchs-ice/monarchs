@@ -52,7 +52,7 @@ monarchs = 'run_MONARCHS:monarchs'
 [project.urls]
 Repository = "https://github.com/monarchs-ice/MONARCHS"
 Issues = "https://github.com/monarchs-ice/MONARCHS/issues"
-Documentation = "https://monarchs-ice.github.io/MONARCHS/"
+Documentation = "https://monarchs-ice.github.io/monarchs/"
 Homepage = "https://monarchs-ice.github.io/MONARCHS/"
 
 [build-system]

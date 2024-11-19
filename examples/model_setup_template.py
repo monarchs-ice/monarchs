@@ -9,7 +9,7 @@ indicating their use. This may be a bit much for a production runscript,
 since many parameters are optional and the docstrings may hinder readability.
 
 You can alternatively get a full reference of the available model_setup parameters
-at monarchs-ice.github.io/model_setup_reference.
+at monarchs-ice.github.io/monarchs/model_setup_reference.
 """
 
 import os
