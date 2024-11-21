@@ -3,7 +3,7 @@
 MOdel of aNtARtic iCe shelf Hydrology and Stability 
 
 Code associated with the ice shelf surface hydrology model MONARCHS. Please check out the documentation at the
-[MONARCHS website](https://monarchs-ice.github.io) for more info on setting up and running the model, and how best to contribute.
+[MONARCHS website](https://monarchs-ice.github.io/monarchs) for more info on setting up and running the model, and how best to contribute.
 
 MONARCHS was developed by [Sammie Buzzard](https://www.northumbria.ac.uk/about-us/our-staff/b/sammie-buzzard/) at Northumbria University and [Jon Elsey](https://profiles.cardiff.ac.uk/staff/elseyj1) at the University of 
 Leeds (both formerly Cardiff University), in collaboration with Alex Robel and the [Ice and Climate](https://iceclimate.eas.gatech.edu/) group at 
