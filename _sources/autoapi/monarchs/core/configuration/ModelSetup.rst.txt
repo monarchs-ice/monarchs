@@ -1,0 +1,4 @@
+monarchs.core.configuration.ModelSetup
+======================================
+
+.. py:class:: monarchs.core.configuration.ModelSetup(script_path)

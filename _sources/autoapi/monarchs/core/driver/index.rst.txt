@@ -1,0 +1,66 @@
+monarchs.core.driver
+====================
+
+.. py:module:: monarchs.core.driver
+
+.. autoapi-nested-parse::
+
+   Core functions used in the running of MONARCHS.
+   This module contains the core functions that drive the code
+   when it is executed.
+
+   When the code is run, it calls main(), which handles loading in the data,
+   calling core.loop_over_grid every model day (interchangeably called "iteration".
+   The loop over each timestep (by default 1 hour) is handled
+   in the single-column physics steps.
+   main then calls the lateral movement functions, and handles saving the data,
+   both in terms of the model state (also known as a "dump"), and the
+   variables that the user wants to track over time.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.core.driver.cores
+   monarchs.core.driver.model_setup
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/driver/check_firn_met_consistency
+   /autoapi/monarchs/core/driver/check_for_reload_state
+   /autoapi/monarchs/core/driver/get_num_cores
+   /autoapi/monarchs/core/driver/initialise
+   /autoapi/monarchs/core/driver/main
+   /autoapi/monarchs/core/driver/monarchs
+   /autoapi/monarchs/core/driver/print_model_end_of_timestep_messages
+   /autoapi/monarchs/core/driver/setup_toggle_dict
+   /autoapi/monarchs/core/driver/update_met_conditions
+
+.. autoapisummary::
+
+   monarchs.core.driver.check_firn_met_consistency
+   monarchs.core.driver.check_for_reload_state
+   monarchs.core.driver.get_num_cores
+   monarchs.core.driver.initialise
+   monarchs.core.driver.main
+   monarchs.core.driver.monarchs
+   monarchs.core.driver.print_model_end_of_timestep_messages
+   monarchs.core.driver.setup_toggle_dict
+   monarchs.core.driver.update_met_conditions
+
+
+Module Contents
+---------------
+
+.. py:data:: cores
+
+.. py:data:: model_setup
+

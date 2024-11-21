@@ -1,0 +1,4 @@
+monarchs.physics.Numba.solver.sfc_energy_virtual_lid
+====================================================
+
+.. py:function:: monarchs.physics.Numba.solver.sfc_energy_virtual_lid(x, output, args)

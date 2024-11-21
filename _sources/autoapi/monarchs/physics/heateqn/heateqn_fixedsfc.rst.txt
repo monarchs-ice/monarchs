@@ -1,0 +1,17 @@
+monarchs.physics.heateqn.heateqn_fixedsfc
+=========================================
+
+.. py:function:: monarchs.physics.heateqn.heateqn_fixedsfc(x, cell, dt, dz, T_sfc)
+
+   Solve the heat equation for the firn column with surface temperature fixed (nominally to 273.15 K).
+   See also /Numba/heateqn_fixedsfc for the NumbaMinpack implementation of this.
+
+   :Parameters: * **x** (*array_like, float, dimension(cell.vert_grid)*) -- initial estimate of the firn column temperature [K]
+                * **cell** (*core.iceshelf_class.IceShelf*) -- IceShelf object containing the details for that vertical column
+                * **dt** (*int*) -- timestep duration [s]
+                * **dz** (*int*) -- size of the vertical grid
+                * **T_sfc** (*float*) -- Surface temperature used to force the firn column [K]
+
+   :returns: **output**
+   :rtype: roots of the function, used by scipy.optimize.fsolve to determine the new firn temperature
+

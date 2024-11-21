@@ -1,0 +1,18 @@
+monarchs.core.dump_model_state.reload_state
+===========================================
+
+.. py:function:: monarchs.core.dump_model_state.reload_state(fname, grid)
+
+   Loads in the netCDF file containing the model state, and loads the data into
+   the format required for MONARCHS to function. This allows us to restart the model in the event of a failure.
+
+   Called by <main> if the relevant flag is set in <model_setup.py>.
+
+   :Parameters: * **fname** (*str*) -- Filename we want to load our data from.
+                * **grid** (*List, or numba.typed.List*) -- grid of IceShelf objects to update with the reloaded values
+
+   :returns: * **grid** (*List, or numba.typed.List*) -- Updated grid of IceShelf objects, with values loaded in from our input netCDF.
+             * **met_start_idx** (*int*) -- Starting index at which to slice our meteorological dataset at the current iteration.
+             * **met_end_idx** (*int*) -- As above, but ending index.
+             * **iteration** (*int*) -- Iteration (day) we wish to continue running the model from.
+

@@ -1,0 +1,18 @@
+monarchs.physics.firn_functions.calc_height_change
+==================================================
+
+.. py:function:: monarchs.physics.firn_functions.calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, surf_T)
+
+   Determine the amount of firn height change that arises due to melting.
+
+   :Parameters: * **cell** (*core.iceshelf_class.IceShelf*) -- IceShelf object that will be amended inplace according to the model physics.
+                * **timestep** (*float*) -- Number of seconds in each timestep. [s]
+                * **LW_in** (*float*) -- Downwelling longwave radiation at the current timestep. [W m^-2]
+                * **SW_in** (*float*) -- Downwelling shortwave radiation at the current timestep. [W m^-2]
+                * **T_air** (*float*) -- Surface air temperature at the current timestep. [K]
+                * **p_air** (*float*) -- Surface air pressure at the current timestep. [Pa]
+                * **T_dp** (*float*) -- Dewpoint temperature of the air at the surface at the current timestep. [K]
+                * **wind** (*float*) -- Wind speed at the surface at the current timestep. [m s^-1]
+                * **surf_T** (*float*) -- Calculated surface temperature of the firn from the initial (non-fixed surface) implementation of the heat
+                  equation. [K]
+

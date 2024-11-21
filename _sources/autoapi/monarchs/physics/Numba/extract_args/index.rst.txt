@@ -1,0 +1,42 @@
+monarchs.physics.Numba.extract_args
+===================================
+
+.. py:module:: monarchs.physics.Numba.extract_args
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.Numba.extract_args.extract_args
+   monarchs.physics.Numba.extract_args.extract_args_fixedsfc
+   monarchs.physics.Numba.extract_args.extract_args_lid
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/Numba/extract_args/extract_args
+   /autoapi/monarchs/physics/Numba/extract_args/extract_args_fixedsfc
+   /autoapi/monarchs/physics/Numba/extract_args/extract_args_lid
+
+.. autoapisummary::
+
+   monarchs.physics.Numba.extract_args.extract_args
+   monarchs.physics.Numba.extract_args.extract_args_fixedsfc
+   monarchs.physics.Numba.extract_args.extract_args_lid
+
+
+Module Contents
+---------------
+
+.. py:data:: extract_args
+
+.. py:data:: extract_args_fixedsfc
+
+.. py:data:: extract_args_lid
+

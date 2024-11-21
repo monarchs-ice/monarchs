@@ -1,0 +1,11 @@
+monarchs.physics.solver.sfc_energy_lid
+======================================
+
+.. py:function:: monarchs.physics.solver.sfc_energy_lid(x, args)
+
+   :Parameters: * **x**
+                * **args**
+
+   :returns: **output**
+   :rtype: float
+

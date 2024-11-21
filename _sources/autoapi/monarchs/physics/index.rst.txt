@@ -1,0 +1,24 @@
+monarchs.physics
+================
+
+.. py:module:: monarchs.physics
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/monarchs/physics/Numba/index
+   /autoapi/monarchs/physics/firn_functions/index
+   /autoapi/monarchs/physics/heateqn/index
+   /autoapi/monarchs/physics/lake_functions/index
+   /autoapi/monarchs/physics/lateral_functions/index
+   /autoapi/monarchs/physics/lid_functions/index
+   /autoapi/monarchs/physics/percolation_functions/index
+   /autoapi/monarchs/physics/snow_accumulation/index
+   /autoapi/monarchs/physics/solver/index
+   /autoapi/monarchs/physics/surface_fluxes/index
+
+

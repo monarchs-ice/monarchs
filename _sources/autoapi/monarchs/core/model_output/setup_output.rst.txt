@@ -1,0 +1,19 @@
+monarchs.core.model_output.setup_output
+=======================================
+
+.. py:function:: monarchs.core.model_output.setup_output(fname, grid, vars_to_save=('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth'), vert_grid_size=False)
+
+   Generate a netCDF file that we can use to save key diagnostics from our IceShelf grid over time.
+
+   :Parameters: * **fname** (*str*) -- Filename to save our output into.
+                * **grid** (*List, or numba.typed.List*) -- grid of IceShelf objects that we want to convert into gridded netCDF data.
+                * **vars_to_save** (*tuple, optional*) -- Tuple containing variables from our IceShelf objects that we want to save into our netCDF file.
+                * **vert_grid_size** (*int, optional*) --
+
+                  Desired size of the vertical grid to use.
+                   Default is False, which sets it to whatever the model vertical grid is specified as.
+
+   :rtype: None
+
+   :Yields: *netCDF file with filename <fname>*
+

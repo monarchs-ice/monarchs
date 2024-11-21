@@ -1,0 +1,26 @@
+monarchs.core.model_output
+==========================
+
+.. py:module:: monarchs.core.model_output
+
+.. autoapi-nested-parse::
+
+   Functions to handle output of model data.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/model_output/setup_output
+   /autoapi/monarchs/core/model_output/update_model_output
+
+.. autoapisummary::
+
+   monarchs.core.model_output.setup_output
+   monarchs.core.model_output.update_model_output
+
+

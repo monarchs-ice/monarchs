@@ -1,0 +1,44 @@
+monarchs.physics.lateral_functions
+==================================
+
+.. py:module:: monarchs.physics.lateral_functions
+
+
+Classes
+-------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lateral_functions/TemporaryCell
+
+.. autoapisummary::
+
+   monarchs.physics.lateral_functions.TemporaryCell
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lateral_functions/calc_available_water
+   /autoapi/monarchs/physics/lateral_functions/calc_catchment_outflow
+   /autoapi/monarchs/physics/lateral_functions/find_biggest_neighbour
+   /autoapi/monarchs/physics/lateral_functions/move_to_neighbours
+   /autoapi/monarchs/physics/lateral_functions/move_water
+   /autoapi/monarchs/physics/lateral_functions/update_water_level
+   /autoapi/monarchs/physics/lateral_functions/water_fraction
+
+.. autoapisummary::
+
+   monarchs.physics.lateral_functions.calc_available_water
+   monarchs.physics.lateral_functions.calc_catchment_outflow
+   monarchs.physics.lateral_functions.find_biggest_neighbour
+   monarchs.physics.lateral_functions.move_to_neighbours
+   monarchs.physics.lateral_functions.move_water
+   monarchs.physics.lateral_functions.update_water_level
+   monarchs.physics.lateral_functions.water_fraction
+
+
