@@ -202,6 +202,7 @@ def create_defaults_for_missing_flags(model_setup):
     vardict["rho_sfc"] = 500
     vardict["t_steps_per_day"] = 24
     vardict["lateral_timestep"] = model_setup.t_steps_per_day * 3600
+    vardict['firn_max_height'] = 150
     vardict["firn_min_height"] = 20
     vardict["min_height_handler"] = "filter"
     vardict["output_timestep"] = 1

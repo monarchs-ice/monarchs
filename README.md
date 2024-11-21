@@ -44,9 +44,8 @@ You can install MONARCHS on your system by cloning this repository and from the 
 
 `pip install -e .`
 
-If you want changes you have made to be picked up on your system, ensure that you use the `-e` flag when installing.
+If you want changes you have made to be picked up on your system, ensure that you use the `-e` flag when installing. See `pyproject.toml` for details.
 
-See `pyproject.toml` for details.
 In future, it will be possible to install a stable, version of MONARCHS with all its dependencies by doing 
 
 `pip install monarchs`
@@ -108,7 +107,7 @@ MONARCHS from.
 ## Plotting output
 
 To plot output, you can do this yourself by adding your relevant plotting functionality to run_MONARCHS.py, 
-or there are some functions provided in /plots which can help you with this. This is WIP.
+or there are some functions provided in `/plots` which can help you with this. This is WIP.
 
 ## Issues and pull requests
 Please, if possible, submit problems/feature requests via GitHub Issues rather than email.
