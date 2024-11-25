@@ -1,0 +1,10 @@
+monarchs.core.initial_conditions.interpolate_met_data
+=====================================================
+
+.. py:function:: monarchs.core.initial_conditions.interpolate_met_data(model_setup, lat_array=False, lon_array=False)
+
+   Meteorological data input
+   Here I use ERA5 data for testing. This won't necessarily be realistic yet,
+   but should work for testing the data pipeline.
+   TODO - docstring
+

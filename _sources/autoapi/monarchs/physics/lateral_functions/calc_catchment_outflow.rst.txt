@@ -1,0 +1,4 @@
+monarchs.physics.lateral_functions.calc_catchment_outflow
+=========================================================
+
+.. py:function:: monarchs.physics.lateral_functions.calc_catchment_outflow(cell, temporary_cell, water_frac, split)

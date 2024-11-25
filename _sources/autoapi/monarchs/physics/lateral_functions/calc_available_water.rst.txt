@@ -1,0 +1,13 @@
+monarchs.physics.lateral_functions.calc_available_water
+=======================================================
+
+.. py:function:: monarchs.physics.lateral_functions.calc_available_water(cell, water_frac, split, neighbour_cell=False, outflow=False)
+
+   Determine the amount of water that can be moved from one cell to the next.
+
+   :Parameters: * **cell**
+                * **water_frac**
+                * **split**
+                * **neighbour_cell**
+                * **outflow**
+

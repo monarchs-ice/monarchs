@@ -1,0 +1,29 @@
+monarchs.core.loop_over_grid
+============================
+
+.. py:module:: monarchs.core.loop_over_grid
+
+.. autoapi-nested-parse::
+
+   Grid-looping module. This either runs sequentially, or runs through in parallel
+   (effectively like a collapsed OpenMP parallel do loop).
+   core.loop_over_grid sets up a 2D grid of IceShelf objects (defined in
+   core.iceshelf_class), flattens this grid and then runs timestep_loop()
+   in parallel (using either pathos.Pool or numba.prange, since the problem is
+   embarassingly parallel), unless model_setup.parallel = False.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/loop_over_grid/loop_over_grid
+
+.. autoapisummary::
+
+   monarchs.core.loop_over_grid.loop_over_grid
+
+

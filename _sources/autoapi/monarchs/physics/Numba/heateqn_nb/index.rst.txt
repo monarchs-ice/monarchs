@@ -1,0 +1,42 @@
+monarchs.physics.Numba.heateqn_nb
+=================================
+
+.. py:module:: monarchs.physics.Numba.heateqn_nb
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.Numba.heateqn_nb.heateqn
+   monarchs.physics.Numba.heateqn_nb.heateqn_fixedsfc
+   monarchs.physics.Numba.heateqn_nb.heateqn_lid
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/Numba/heateqn_nb/heateqn
+   /autoapi/monarchs/physics/Numba/heateqn_nb/heateqn_fixedsfc
+   /autoapi/monarchs/physics/Numba/heateqn_nb/heateqn_lid
+
+.. autoapisummary::
+
+   monarchs.physics.Numba.heateqn_nb.heateqn
+   monarchs.physics.Numba.heateqn_nb.heateqn_fixedsfc
+   monarchs.physics.Numba.heateqn_nb.heateqn_lid
+
+
+Module Contents
+---------------
+
+.. py:data:: heateqn
+
+.. py:data:: heateqn_fixedsfc
+
+.. py:data:: heateqn_lid
+
