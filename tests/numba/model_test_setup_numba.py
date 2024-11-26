@@ -88,4 +88,4 @@ ignore_errors = False  # don't flag if model reaches unphysical state
 heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 
 met_dem_diagnostic_plots = True
-radiation_forcing_factor = 1.6
+radiation_forcing_factor = 1

@@ -14,8 +14,8 @@ print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 10  # Number of rows in your model grid, looking from top-down.
-col_amount = 10  # Number of columns in your model grid, looking from top-down.
+row_amount = 4  # Number of rows in your model grid, looking from top-down.
+col_amount = 4  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 2000  # size of each lateral grid cell in m - possible to automate
 # TODO - calc based on DEM automatically
 # lat_grid_size = 'dem'
@@ -240,7 +240,7 @@ Dumping and reloading parameters
         Flag to determine whether we want to reload from a dump (see <dump_data> for details). If True, reload model
         state from file at the path determined by <reload_filepath>.
 """
-dump_data = False
+dump_data = True
 dump_filepath = (
     "../MONARCHS_runs/progress.nc"  # Filename of our previously dumped state
 )
@@ -249,7 +249,7 @@ reload_state = False  # Flag to determine whether to reload the state or not
 """
 Computing and numerical parameters
 """
-use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
+use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a non-cluster machine set this False

@@ -8,7 +8,7 @@ from numba import jit_module
 
 def parse_args():
     """
-    Parse input. Most things are controlled by model_setup.py; the only input here is (optionally) the location
+    Parse input. Most things are controlled by `model_setup.py`; the only input here is (optionally) the location
     (as a filepath, so including the filename) of that setup file.
     """
     # If we are calling from the test suite rather than MONARCHS-main, then we need to ensure that we don't parse
@@ -16,7 +16,9 @@ def parse_args():
     # monarchs.core.configuration.model_setup to determine their behaviour (particularly regarding use of Numba).
     run_dir = os.getcwd().replace("\\", "/")  # platform-agnostic by replacing \\ with /
     warning_flag = False
-    # Check if pytest is currently running by checking the current environment variables. If so, then
+    # Check if `pytest` is currently running by checking the current environment variables. If so, then select the
+    # appropriate test runscript. This is necessary since we want to run the model but cannot pass a runscript
+    # directly when running `pytest`.
     if "PYTEST_CURRENT_TEST" in os.environ:
         if "numba" in run_dir.split("/")[-1]:
             runscript = "model_test_setup_numba.py"
@@ -113,10 +115,10 @@ def create_defaults_for_missing_flags(model_setup):
     a NumPy array of firn column depth matching the chosen grid size, or a netCDF of input meteorological data).
     It is intended to ensure that the code runs even if the setup file does not contain every possible argument.
     (for example, not having flags that don't affect the model physics such as <met_dem_diagnostic_plots> set,
-    or likewise the debugging toggles such as firn_heat_toggle).
+    or likewise the debugging toggles such as `firn_heat_toggle`).
 
     You can also amend this function to set defaults for certain variables, e.g. the default surface density
-    <rho_sfc> = 500 as defined below.
+    `rho_sfc` = 500 as defined below.
 
     Args
     -------
@@ -127,7 +129,9 @@ def create_defaults_for_missing_flags(model_setup):
     None
     """
 
-    # Some arguments get set to True or False, so we group these here for convenience.
+    # Some unspecified arguments get defaulted to True or False,
+    # so we group these here for convenience.
+
     optional_args_to_true = [
         "lake_development_toggle",
         "lid_development_toggle",
@@ -156,6 +160,7 @@ def create_defaults_for_missing_flags(model_setup):
         "bbox_top_left",
         "bbox_bottom_right",
         "dump_data_pre_lateral_movement",
+        "use_numba"
     ]
 
     for attr in optional_args_to_true:
@@ -256,41 +261,68 @@ class ModelSetup:
             setattr(self, var_name, var_value)
 
 def jit_modules():
-    if model_setup.use_numba:
-        from numba import jit
-        fastmath = False
-        from inspect import getmembers, isfunction
-        from monarchs.physics import (
-                                      surface_fluxes,
-                                      firn_functions,
-                                      lake_functions,
-                                      lid_functions,
-                                      percolation_functions,
-                                      snow_accumulation
-                                      )
-        from monarchs.core import utils, timestep
+    """
+    If using Numba, then we need to apply the `numba.jit` decorator to several functions
+    in `physics` and `core`, and ensure that MONARCHS loads in the Numba-compatible solvers.
+    This function handles this process, by loading in the modules and using `setattr`
+    to overwrite the initial implementation with the Numba-compatible
+    versions, either by applying the `jit` decorator, or in the case where the source code
+    differs between the Numba and non-Numba versions, by overwriting the pure-Python
+    version with the Numba-compatible one.
 
-        module_list = [surface_fluxes, utils, firn_functions, lake_functions, lid_functions,
-                       percolation_functions, snow_accumulation, timestep]
+    This is only called when `use_numba` is `True`, so the import only happens if needed
+    (important for if the user does not have Numba installed).
 
-        for module in module_list:
-            functions_list = getmembers(module, isfunction)
-            for name, function in functions_list:
-                if hasattr(function, '__wrapped__') or name.startswith('__'):
-                    continue
-                print(f'Applying Numba jit decorator to {module.__name__}.{name}')
-                jitted_function = jit(function, nopython=True, fastmath=fastmath)
-                setattr(module, name, jitted_function)
+    This function was designed this way (as opposed to applying jit to each function in its
+    own module locally) so that we only need to import `monarchs.core.configuration`
+    once; in `monarchs.core.driver`. This allows us to run in parallel with `multiprocessing`,
+    as otherwise each thread would try and load in the configuration file with null arguments,
+    whenever importing the physics functions (which needed to know whether `use_numba` was `True`)
+    which was causing an error.
+    """
 
-        from monarchs.physics import solver
-        from monarchs.physics.Numba import solver as numba_solver
-        # relax the isfunction stipulation for numba_solver since it is mostly jitted functions
-        jit_functions_list = getmembers(numba_solver)
-        for name, jitfunc in jit_functions_list:
-            # ignore builtins - which we did not filter out with getmembers
-            if not name.startswith('__'):
-                print(f'Setting {solver.__name__}.{name} to the equivalent Numba-compatible version')
-                setattr(solver, name, jitfunc)
+    from numba import jit
+    fastmath = False
+    from inspect import getmembers, isfunction
+
+    # import the modules we want to apply `@jit` to from `physics` and `core`.
+    # All functions in these modules will have the decorator applied, except
+    # functions that are already decorated (i.e. have the __wrapped__ attribute).
+    # The `monarchs.core.utils.do_not_jit` decorator can be useful here if a user
+    # wants to write their own functions but does not want to apply the `@jit`
+    # decorator (see `monarchs.core.utils.get_2d_grid` for an example)
+    from monarchs.physics import (
+                                  surface_fluxes,
+                                  firn_functions,
+                                  lake_functions,
+                                  lid_functions,
+                                  percolation_functions,
+                                  snow_accumulation
+                                  )
+    from monarchs.core import utils, timestep
+
+    # Go through all the modules we want to jit, find the `function` objects,
+    module_list = [surface_fluxes, utils, firn_functions, lake_functions, lid_functions,
+                   percolation_functions, snow_accumulation, timestep]
+    for module in module_list:
+        functions_list = getmembers(module, isfunction)
+        for name, function in functions_list:
+            if hasattr(function, '__wrapped__') or name.startswith('__'):
+                continue
+            print(f'Applying Numba jit decorator to {module.__name__}.{name}')
+            jitted_function = jit(function, nopython=True, fastmath=fastmath)
+            setattr(module, name, jitted_function)
+
+    from monarchs.physics import solver
+    from monarchs.physics.Numba import solver as numba_solver
+    # relax the isfunction stipulation for `numba_solver` since it is mostly jitted functions
+    # (which are `<CPUDispatcher>` objects rather than `<function>` objects
+    jit_functions_list = getmembers(numba_solver)
+    for name, jitfunc in jit_functions_list:
+        # ignore builtins - which we did not filter out with getmembers
+        if not name.startswith('__'):
+            print(f'Setting {solver.__name__}.{name} to the equivalent Numba-compatible version')
+            setattr(solver, name, jitfunc)
 
 
 
@@ -300,20 +332,21 @@ def jit_classes():
         from monarchs.core import iceshelf_class
         from monarchs.met_data import metdata_class
 
-        # define the "spec" for the Numba jitclass here - effectively a list of
-        # all the variables and their datatype (arrays denoted by [:])
+        # load in the "spec" for the Numba jitclasses
+        # see `iceshelf_class` and `metdata_class` for the definitions of these,
+        # any new variables should be added there
         iceshelf_spec = iceshelf_class.get_spec()
         iceshelf_class.IceShelf = jitclass(iceshelf_class.IceShelf, iceshelf_spec)
 
         metdata_spec = metdata_class.get_spec()
         metdata_class.MetData = jitclass(metdata_class.MetData, metdata_spec)
 
-
+# load in the model setup file and create the `model_setup` class instance to store
+# our configuration data.
 model_setup_path = parse_args()
 model_setup = ModelSetup(model_setup_path)
 
+# if using Numba,
 if model_setup.use_numba:
     jit_modules()
     jit_classes()
-    from monarchs.physics import solver
-    print(solver.firn_heateqn_solver)
