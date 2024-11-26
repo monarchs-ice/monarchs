@@ -1,0 +1,4 @@
+monarchs.core.configuration.jit_classes
+=======================================
+
+.. py:function:: monarchs.core.configuration.jit_classes()

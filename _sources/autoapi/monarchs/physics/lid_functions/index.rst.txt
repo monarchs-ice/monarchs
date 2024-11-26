@@ -1,0 +1,27 @@
+monarchs.physics.lid_functions
+==============================
+
+.. py:module:: monarchs.physics.lid_functions
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lid_functions/calc_surface_melt
+   /autoapi/monarchs/physics/lid_functions/combine_lid_firn
+   /autoapi/monarchs/physics/lid_functions/interpolate_profiles
+   /autoapi/monarchs/physics/lid_functions/lid_development
+   /autoapi/monarchs/physics/lid_functions/virtual_lid
+
+.. autoapisummary::
+
+   monarchs.physics.lid_functions.calc_surface_melt
+   monarchs.physics.lid_functions.combine_lid_firn
+   monarchs.physics.lid_functions.interpolate_profiles
+   monarchs.physics.lid_functions.lid_development
+   monarchs.physics.lid_functions.virtual_lid
+
+

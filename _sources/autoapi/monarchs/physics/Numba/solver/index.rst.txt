@@ -1,0 +1,88 @@
+monarchs.physics.Numba.solver
+=============================
+
+.. py:module:: monarchs.physics.Numba.solver
+
+.. autoapi-nested-parse::
+
+   This module contains functions used to solve the various heat/surface energy balance equations,
+   using the NumbaMinpack implementation.
+   This is rather unwieldy, but allows us to select a solver conditionally, and do so both in the main model code
+   using the relevant flag in ``model_setup.py``, but also in our test suite.
+   This is in part a tradeoff between usability of the model, and code clarity. This approach was chosen to maximise
+   usability, so that the different solvers can be generated according to the value of a single Boolean.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.Numba.solver.dev_eqn_cfunc
+   monarchs.physics.Numba.solver.dev_eqnaddress
+   monarchs.physics.Numba.solver.form_eqn_cfunc
+   monarchs.physics.Numba.solver.form_eqnaddress
+   monarchs.physics.Numba.solver.heq
+   monarchs.physics.Numba.solver.heqfs
+   monarchs.physics.Numba.solver.heqlid
+   monarchs.physics.Numba.solver.sfc_energy_lid
+   monarchs.physics.Numba.solver.sfc_energy_lid_address
+   monarchs.physics.Numba.solver.sfc_energy_virtual_lid
+   monarchs.physics.Numba.solver.sfc_energy_vlid_address
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/Numba/solver/args_array
+   /autoapi/monarchs/physics/Numba/solver/firn_heateqn_solver
+   /autoapi/monarchs/physics/Numba/solver/lake_development_eqn
+   /autoapi/monarchs/physics/Numba/solver/lake_formation_eqn
+   /autoapi/monarchs/physics/Numba/solver/lake_solver
+   /autoapi/monarchs/physics/Numba/solver/lid_heateqn_solver
+   /autoapi/monarchs/physics/Numba/solver/lid_seb_solver
+   /autoapi/monarchs/physics/Numba/solver/sfc_energy_lid
+   /autoapi/monarchs/physics/Numba/solver/sfc_energy_virtual_lid
+
+.. autoapisummary::
+
+   monarchs.physics.Numba.solver.args_array
+   monarchs.physics.Numba.solver.firn_heateqn_solver
+   monarchs.physics.Numba.solver.lake_development_eqn
+   monarchs.physics.Numba.solver.lake_formation_eqn
+   monarchs.physics.Numba.solver.lake_solver
+   monarchs.physics.Numba.solver.lid_heateqn_solver
+   monarchs.physics.Numba.solver.lid_seb_solver
+   monarchs.physics.Numba.solver.sfc_energy_lid
+   monarchs.physics.Numba.solver.sfc_energy_virtual_lid
+
+
+Module Contents
+---------------
+
+.. py:data:: dev_eqn_cfunc
+
+.. py:data:: dev_eqnaddress
+
+.. py:data:: form_eqn_cfunc
+
+.. py:data:: form_eqnaddress
+
+.. py:data:: heq
+
+.. py:data:: heqfs
+
+.. py:data:: heqlid
+
+.. py:data:: sfc_energy_lid
+
+.. py:data:: sfc_energy_lid_address
+
+.. py:data:: sfc_energy_virtual_lid
+
+.. py:data:: sfc_energy_vlid_address
+

@@ -1,0 +1,157 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>monarchs.core.initial_conditions &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="monarchs.core.initial_conditions.check_for_isolated_cells" href="check_for_isolated_cells.html" />
+    <link rel="prev" title="monarchs.core.iceshelf_class.get_spec" href="../iceshelf_class/get_spec.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../MONARCHS_model_setup.html">Setting up a model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../running_MONARCHS.html">How to run MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../numba.html">Optimised performance using Numba (the <code class="docutils literal notranslate"><span class="pre">use_numba</span></code> flag)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">monarchs</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">monarchs.core</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../physics/index.html">monarchs.physics</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">monarchs</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">monarchs.core</a></li>
+      <li class="breadcrumb-item active">monarchs.core.initial_conditions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/monarchs/core/initial_conditions/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-monarchs.core.initial_conditions">
+<span id="monarchs-core-initial-conditions"></span><h1>monarchs.core.initial_conditions<a class="headerlink" href="#module-monarchs.core.initial_conditions" title="Link to this heading"></a></h1>
+<p>Functions used by run_MONARCHS.py to convert a model runscript (default model_setup.py) to the format actually used
+by MONARCHS. This includes setting up the initial firn profile information, loading in meteorological data and
+interpolating it, and loading in/interpolating the digital elevation map (DEM) if applicable.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+</div>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="check_for_isolated_cells.html#monarchs.core.initial_conditions.check_for_isolated_cells" title="monarchs.core.initial_conditions.check_for_isolated_cells"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_for_isolated_cells</span></code></a>(valid_cells)</p></td>
+<td><p>Ensure that cells aren't isolated - e.g. a cell in the middle of the land doesn't pointlessly</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="create_model_grid.html#monarchs.core.initial_conditions.create_model_grid" title="monarchs.core.initial_conditions.create_model_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_model_grid</span></code></a>(row_amount, col_amount, firn_depth, ...)</p></td>
+<td><p>Create a grid of IceShelf objects based on a set of input parameters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="initialise_firn_profile.html#monarchs.core.initial_conditions.initialise_firn_profile" title="monarchs.core.initial_conditions.initialise_firn_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">initialise_firn_profile</span></code></a>(model_setup[, diagnostic_plots])</p></td>
+<td><p>DEM/initial firn profile</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="interpolate_met_data.html#monarchs.core.initial_conditions.interpolate_met_data" title="monarchs.core.initial_conditions.interpolate_met_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interpolate_met_data</span></code></a>(model_setup[, lat_array, lon_array])</p></td>
+<td><p>Meteorological data input</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="rho_init_emp.html#monarchs.core.initial_conditions.rho_init_emp" title="monarchs.core.initial_conditions.rho_init_emp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rho_init_emp</span></code></a>(z, rho_sfc, z_t)</p></td>
+<td><p>Initialise the firn column with a density derived from an empirical formula.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../iceshelf_class/get_spec.html" class="btn btn-neutral float-left" title="monarchs.core.iceshelf_class.get_spec" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="check_for_isolated_cells.html" class="btn btn-neutral float-right" title="monarchs.core.initial_conditions.check_for_isolated_cells" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

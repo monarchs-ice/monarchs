@@ -1,0 +1,16 @@
+monarchs
+========
+
+.. py:module:: monarchs
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/monarchs/core/index
+   /autoapi/monarchs/physics/index
+
+

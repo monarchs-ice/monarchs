@@ -1,0 +1,39 @@
+monarchs.core.iceshelf_class
+============================
+
+.. py:module:: monarchs.core.iceshelf_class
+
+.. autoapi-nested-parse::
+
+   Define IceShelf class and initialise grid
+
+   S Buzzard created, last updated 06/07/2021
+
+
+
+Classes
+-------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/iceshelf_class/IceShelf
+
+.. autoapisummary::
+
+   monarchs.core.iceshelf_class.IceShelf
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/iceshelf_class/get_spec
+
+.. autoapisummary::
+
+   monarchs.core.iceshelf_class.get_spec
+
+
