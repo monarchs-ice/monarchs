@@ -9,6 +9,21 @@ I like to take advantage of the fact that the model setup script is a Python scr
 ``reload_state`` to ``False``/``False``/``False``/``True`` respectively , so that I can speedily load in the
 state immediately before the model crashes and run it in a debugger to diagnose the problem.
 
+A feature to allow for selection of a single column (denoted by its `x` and `y` coordinates on the grid) is WIP.
+This would allow for users to run only on the cells that crash out, so they can debug.
+
+If an error happens during the lateral movement step, and you don't want to run the entire single-column phase in
+serial so that you can debug the lateral bit that happens at the end, you can add the `dump_data_pre_lateral_movement`
+flag and set it to `True` in `model_setup`. This will create a dump file directly after the single column physics
+finishes, rather than at the end of the model day.
+
+A possible workflow if you see a lateral movement error might be to:
+-   restart the run in parallel with `dump_data_pre_lateral_movement = True`
+-   wait for it to finish, then re-run in serial with a debugger loading in from this dump file, ensuring that
+`single_column_toggle` is set to `False` so the model goes straight to the lateral bit you want to debug.
+
+
+
 Common errors
 =============
 
