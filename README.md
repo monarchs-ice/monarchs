@@ -1,9 +1,11 @@
 # MONARCHS
 
+[![DOI](https://zenodo.org/badge/890500319.svg)](https://doi.org/10.5281/zenodo.14217406)
+
 MOdel of aNtARtic iCe shelf Hydrology and Stability 
 
 Code associated with the ice shelf surface hydrology model MONARCHS. Please check out the documentation at the
-[MONARCHS website](https://monarchs-ice.github.io) for more info on setting up and running the model, and how best to contribute.
+[MONARCHS website](https://monarchs-ice.github.io/monarchs) for more info on setting up and running the model, and how best to contribute.
 
 MONARCHS was developed by [Sammie Buzzard](https://www.northumbria.ac.uk/about-us/our-staff/b/sammie-buzzard/) at Northumbria University and [Jon Elsey](https://profiles.cardiff.ac.uk/staff/elseyj1) at the University of 
 Leeds (both formerly Cardiff University), in collaboration with Alex Robel and the [Ice and Climate](https://iceclimate.eas.gatech.edu/) group at 
@@ -44,9 +46,8 @@ You can install MONARCHS on your system by cloning this repository and from the 
 
 `pip install -e .`
 
-If you want changes you have made to be picked up on your system, ensure that you use the `-e` flag when installing.
+If you want changes you have made to be picked up on your system, ensure that you use the `-e` flag when installing. See `pyproject.toml` for details.
 
-See `pyproject.toml` for details.
 In future, it will be possible to install a stable, version of MONARCHS with all its dependencies by doing 
 
 `pip install monarchs`
@@ -108,7 +109,7 @@ MONARCHS from.
 ## Plotting output
 
 To plot output, you can do this yourself by adding your relevant plotting functionality to run_MONARCHS.py, 
-or there are some functions provided in /plots which can help you with this. This is WIP.
+or there are some functions provided in `/plots` which can help you with this. This is WIP.
 
 ## Issues and pull requests
 Please, if possible, submit problems/feature requests via GitHub Issues rather than email.
