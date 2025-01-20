@@ -14,8 +14,8 @@ print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 1  # Number of rows in your model grid, looking from top-down.
-col_amount = 1  # Number of columns in your model grid, looking from top-down.
+row_amount = 10  # Number of rows in your model grid, looking from top-down.
+col_amount = 10  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 2000  # size of each lateral grid cell in m - possible to automate
 # TODO - calc based on DEM automatically
 # lat_grid_size = 'dem'
@@ -25,7 +25,7 @@ vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 # Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
 # Set to a number if you want to manually specify a bounding box.
-#lat_bounds = 'dem'
+lat_bounds = 'dem'
 latmax = np.nan  # Maximum latitude to use in our DEM and met data files.
 latmin = np.nan  # Minimum latitude to use in our DEM and met data files.
 longmax = np.nan  # Maximum longitude to use in our DEM and met data files.
@@ -47,7 +47,7 @@ longmin = np.nan  # Minimum longitude to use in our DEM and met data files.
 """
 Timestepping parameters
 """
-num_days = 365  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 100  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
@@ -62,7 +62,7 @@ DEM/initial firn profile
         interpolated to size(<row_amount>, <col_amount>).
         If using a relative import, it is a relative import from the folder you are running
         MONARCHS from, not the folder that the code repository is included in. 
-    
+
     firn_depth : float, or array_like, float, dimension(<row_amount, <col_amount>)
         Initial depth of the firn columns making up the MONARCHS model grid.
         If a valid DEM path is specified, then this is overridden by the DEM. Use this only if you want to manually
@@ -71,7 +71,7 @@ DEM/initial firn profile
         If an array is specified, this should be an array of dimension(<row_amount>, <col_amount>), 
         i.e. the firn depth is user-specified across the whole grid. This is likely the safest option if you want to
         pre-process your firn profile, or don't trust MONARCHS to interpolate it to your desired model grid for you.
-    
+
     firn_max_height : float
         Maximum height that your firn column can be at. Use this if you're loading in a DEM which has large height
         ranges. 
@@ -86,10 +86,10 @@ DEM/initial firn profile
             to these cells. This means they effectively stay the same throughout the whole model.
             'clip' - Set all cells above the max firn height to ``firn_max_height``. This will not prevent MONARCHS
             from running physics on these cells.
-            
+
 """
 
-# DEM_path = 'DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
+DEM_path = 'DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
 # DEM_path = "DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
 
 # firn_depth - by default overridden by the presence of a valid DEM
@@ -108,7 +108,7 @@ Model initial conditions (density/temperature profiles)
         using the formula of Schytt, V. (1958). Glaciology. A: Snow studies at Maudheim. Glaciology. B: Snow studies
         inland. Glaciology. C: The inner structure of the ice shelf at Maudheim as shown by
         core drilling. Norwegian- British- Swedish Antarctic Expedition, 1949-5, IV.)
-        
+
         Defaults to 'default', in which case MONARCHS will calculate an empirical density profile with <rho_sfc> = 500 
         and <z_t> = 37.        
         Alternatively, specify as either a) a pair of points in the form [rho_sfc, zt] to use this equation and specify 
@@ -116,7 +116,7 @@ Model initial conditions (density/temperature profiles)
         uniform density profile across the whole grid, or c) an array of 
         dimension(<row_amount>, <col_amount>, <vertical_points_firn>) to specify different density profiles across your
         model grid. 
-        
+
     T_init : str, or array_like, float
         Initial temperature profile. 
         Defaults to 'default', which MONARCHS reads in and uses an assumed firn top temperature of 260 K and
@@ -126,7 +126,7 @@ Model initial conditions (density/temperature profiles)
         uniform temperature profile across the whole grid, or c) an array of 
         dimension(<row_amount>, <col_amount>, <vertical_points_firn>) to specify different temperature profiles across 
         your model grid. 
-        
+
     rho_sfc: float
         Initial surface density used to calculate the profile if using `rho_init` = 'default'.
 """
@@ -142,14 +142,14 @@ Meteorological parameters and input
          If this is a relative filepath, then you should ensure that is relative to the folder in which
          you are running MONARCHS from, not the source code directory.
          # TODO - write full list of variable names that can be read into MONARCHS
-         
+
     met_start_index : int
         If specified, start reading the data from <met_input> at this index. Useful if you e.g. have a met data file
         that starts at a point sooner than you want to run MONARCHS from.
         This only affects runs starting at iteration 0, i.e. runs that have not been reloaded from a dump. 
         Such runs will continue from the index it would have run next were the code not to have stopped regardless
         of this parameter.
-    
+
     met_timestep : str, or int
         Default 'hourly'.
         Temporal resolution of your input meteorological data. 
@@ -160,7 +160,7 @@ Meteorological parameters and input
         specify an integer, corresponding to how many hours each point in your data corresponds to. 
         In this integer form, 'hourly' corresponds to met_timestep = 1, 'three_hourly' to met_timestep = 3, and 
         'daily' to met_timestep = 24.
-        
+
     met_output_filepath : str
         Filepath for the interpolated grid used by MONARCHS to be saved. 
         Default 'interpolated_met_data.nc'.
@@ -191,18 +191,18 @@ Model output
         possible to restart MONARCHS from the output defined here. See the documentation on dumping and reload
         parameters for information on how to enable restarting MONARCHS.
         # TODO - hyperlink to documentation on dumping
-        
+
     vars_to_save : tuple, str
         Default ('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth', 'lake', 'lid', 'v_lid').
         Tuple containing the names of the variables that we wish to save during the evolution of MONARCHS over time.
         See <iceshelf_class> for details on the full list of variables that <vars_to_save> accepts.
         # TODO - flag so that if var in vars to save not in iceshelf_class, flag this and either exit or write a warning
-        
+
     output_filepath : str
         Path to the file that you want to save output into, including file extension. 
         MONARCHS uses netCDF for saving output data, so you should include ".nc" at the end of your filepath.
     output_grid_size : int
-    
+
         Size of the vertical grid that you want to write to. This can be different from the size of the grid used in the 
         actual model calculations, in which case the results are interpolated to this grid size. Useful to reduce the 
         size of output files, which can be large.
@@ -242,7 +242,7 @@ Dumping and reloading parameters
 """
 dump_data = True
 dump_filepath = (
-    "../MONARCHS_runs/progress.nc"  # Filename of our previously dumped state
+    "../MONARCHS_runs/progress_df.nc"  # Filename of our previously dumped state
 )
 reload_state = False  # Flag to determine whether to reload the state or not
 
@@ -250,7 +250,7 @@ reload_state = False  # Flag to determine whether to reload the state or not
 Computing and numerical parameters
 """
 use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
-parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
+parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a non-cluster machine set this False
 # Note that this is not yet compatible with Numba. The code will fail if you attempt to run with both
@@ -288,5 +288,5 @@ if simulated_water_toggle:
 ignore_errors = False  # don't flag if model reaches unphysical state
 heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 
-met_dem_diagnostic_plots = True
+met_dem_diagnostic_plots = False
 radiation_forcing_factor = 1

@@ -8,7 +8,7 @@ usability, so that the different solvers can be generated according to the value
 """
 
 import numpy as np
-from scipy.optimize import root
+from scipy.optimize import root, fsolve
 import scipy
 from monarchs.physics import heateqn
 
@@ -68,10 +68,18 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
         args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
 
     soldict = scipy.optimize.root(eqn, x, args=args, method='df-sane')
+
     root = soldict.x
     ier = soldict.success
     mesg = soldict.message
     infodict = soldict.success
+    if not fixed_sfc and root[0] > 320:
+        print('x0 = ', root[:10])
+        raise ValueError("Surface temperature too high - heateqn")
+    if fixed_sfc and root[0] > 273.16:
+        print('x0 = ', root[:10])
+        raise ValueError("Surface temperature too high - heateqn_fixedsfc")
+
     # print(f'LW = {LW_in}, SW = {SW_in}, T_air = {T_air}, p_air = {p_air}, T_dp = {T_dp}')
     # print('Root[0] = ', root[:10], 'for fixedsfc = ', fixed_sfc)
 
@@ -186,11 +194,8 @@ def lake_solver(x, args, formation=False):
     else:
         eqn = lake_development_eqn
 
-    soldict = scipy.optimize.root(eqn, x, args=args, method='df-sane')
-    root = soldict.x
-    ier = soldict.success
-    mesg = soldict.message
-    infodict = soldict.success
+    root, ier, mesg, infodict = fsolve(eqn, x, args=args, full_output=True)
+
     return root, infodict, ier, mesg
 
 
