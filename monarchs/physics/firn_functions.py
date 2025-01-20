@@ -168,6 +168,9 @@ def regrid_after_melt(cell, height_change, lake=False):
     sfrac_hold = np.zeros(np.shape(cell.Sfrac))
     lfrac_hold = np.zeros(np.shape(cell.Lfrac))
     T_hold = np.zeros(np.shape(cell.firn_temperature))
+    if np.isnan(cell.firn_temperature).any():
+        print(cell.firn_temperature)
+        raise ValueError("NaN in firn temperature before regridding")
 
     for i in range(len(cell.Sfrac) - 1):
         if (
@@ -193,6 +196,8 @@ def regrid_after_melt(cell, height_change, lake=False):
         weight_2 = (old_firn_depth - ((i + 1) * dz_old)) - (
             cell.firn_depth - ((i + 1) * dz_new)
         )  # old bottom of upper layer - new bottom of upper layer
+        if weight_1 < 0 or weight_2 < 0:
+            raise ValueError('regridding weights negative')
         lfrac_hold[i] = (
             (cell.Lfrac[i] * weight_1) + (cell.Lfrac[i + 1] * weight_2)
         ) / (weight_1 + weight_2)
@@ -210,7 +215,14 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     cell.Sfrac = sfrac_hold
     cell.Lfrac = lfrac_hold
+
     cell.firn_temperature = T_hold
+    if np.isnan(T_hold).any():
+        print(T_hold)
+        print(cell.firn_temperature)
+        print(cell.x)
+        print(cell.y)
+        raise ValueError("NaN in firn temperature after regridding")
     # add meltwater to surface Lfrac
     cell.Lfrac[0] += meltwater
 
@@ -221,7 +233,9 @@ def regrid_after_melt(cell, height_change, lake=False):
             cell.lake_depth += excess_water * (cell.firn_depth / cell.vert_grid)
             # print('Excess water depth = ', excess_water * (cell.firn_depth / cell.vert_grid))
             cell.Lfrac[0] = 1 - cell.Sfrac[0]
-
+    if np.isnan(cell.firn_temperature).any():
+        print(cell.firn_temperature)
+        raise ValueError("NaN in firn temperature after regridding")
     # error checking
     if np.any(cell.Sfrac > 1.00000000001):
         where = np.where(cell.Sfrac > 1)

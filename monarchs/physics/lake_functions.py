@@ -367,7 +367,9 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             k_ice[i] = 1000 * (
                 1.017 * 10 ** (-4) + 1.695 * 10 ** (-6) * cell.firn_temperature[i]
             )
-            print('Firn temperature > 273.15?')
+
+            if cell.firn_temperature[i] > 273.15000001:
+                raise ValueError('Firn temperature > 273.15')
         else:
             k_ice[i] = 1000 * (
                 2.24 * 10 ** (-3)
@@ -437,6 +439,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     root, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True)
     if success:
         cell.firn_temperature = root
+
 
     # if there is a virtual lid then the top layer needs
     # to be set to the freezing temperature as it is an

@@ -47,7 +47,7 @@ longmin = np.nan  # Minimum longitude to use in our DEM and met data files.
 """
 Timestepping parameters
 """
-num_days = 100  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 1000  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)

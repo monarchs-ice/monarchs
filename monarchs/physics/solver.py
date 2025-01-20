@@ -8,7 +8,7 @@ usability, so that the different solvers can be generated according to the value
 """
 
 import numpy as np
-from scipy.optimize import root, fsolve
+from scipy.optimize import root, fsolve, OptimizeResult
 import scipy
 from monarchs.physics import heateqn
 
@@ -59,34 +59,55 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
     p_air = args[6]
     T_dp = args[7]
     wind = args[8]
-
+    x_copy = np.copy(x)
     if fixed_sfc:
         eqn = heateqn.heateqn_fixedsfc
         args = (cell, dt, dz, 273.15)
     else:
         eqn = heateqn.heateqn
         args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
+    try:
+        soldict: OptimizeResult = root(eqn, x, args=args, method='df-sane')
+        if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or not soldict.success:
+            print(np.isnan(soldict.x).any())
+            raise Exception('Bad spectral solver output')
+    except Exception as e:
+        print(e)
+        # fall back to hybr if df-sane fails
+        print('Falling back to hybrd...')
+        print('Input = ', x)
+        soldict = root(eqn, x_copy, args=args, method='hybr')
 
-    soldict = scipy.optimize.root(eqn, x, args=args, method='df-sane')
-
-    root = soldict.x
+    if np.isnan(soldict.x).any() or np.any(soldict.x > 320):
+        print(soldict.x)
+        raise ValueError('Bad solver output after fallback to hybrd')
+    sol = soldict.x
     ier = soldict.success
     mesg = soldict.message
     infodict = soldict.success
-    if not fixed_sfc and root[0] > 320:
-        print('x0 = ', root[:10])
+
+    if not fixed_sfc and (sol > 320).any():
+        print('x0 = ', sol[:10])
         raise ValueError("Surface temperature too high - heateqn")
-    if fixed_sfc and root[0] > 273.16:
-        print('x0 = ', root[:10])
+
+    if fixed_sfc and (sol > 273.151).any():
+        print('x0 = ', sol[:10])
         raise ValueError("Surface temperature too high - heateqn_fixedsfc")
 
+    if (np.isnan(sol)).any() and soldict.success:
+        print('x0 = ', sol[:10])
+        for key in soldict.keys():
+            print(f'{key}: {soldict[key]}')
+        raise ValueError("NaN in root - heateqn")
     # print(f'LW = {LW_in}, SW = {SW_in}, T_air = {T_air}, p_air = {p_air}, T_dp = {T_dp}')
     # print('Root[0] = ', root[:10], 'for fixedsfc = ', fixed_sfc)
 
     # we only return root in the model (hence why in driver.py we index the function by [0],
     # but the other info is useful for testing so can be used if calling solver directly
-    return root, infodict, ier, mesg
-
+    if soldict.success:
+        return sol, infodict, ier, mesg
+    else:
+        return x, infodict, ier, mesg
 
 def lake_development_eqn(x, args):
     """

@@ -72,7 +72,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             return cell
         else:
             return
-
+    if np.isnan(cell.firn_temperature).any():
+        raise ValueError('NaN in firn temperature')
     # TODO:
     # We can have a situation where lateral movement of water can completely
     # drain a lake. If this is the case, we need to turn exposed_water to False.
@@ -148,7 +149,19 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             x = cell.firn_temperature
 
             if firn_heat_toggle:
-                cell.firn_temperature = solver.firn_heateqn_solver(x, args, fixed_sfc=True)[0]
+                sol, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True)
+                if success:
+                    cell.firn_temperature = sol
+                else:
+                    print('Warning - solver failed to converge - lake development')
+                    print(x)
+                    print(cell.lake)
+                    print(cell.lid)
+                    print(cell.lake_depth)
+                    print(success)
+                    print(cell.firn_depth)
+                    print(cell.firn_temperature)
+
 
             cell.rho = cell.Sfrac * cell.rho_ice + cell.Lfrac * cell.rho_water
 
