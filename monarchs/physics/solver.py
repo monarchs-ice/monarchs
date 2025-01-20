@@ -8,8 +8,8 @@ usability, so that the different solvers can be generated according to the value
 """
 
 import numpy as np
-from scipy.optimize import fsolve
-
+from scipy.optimize import root
+import scipy
 from monarchs.physics import heateqn
 
 
@@ -67,8 +67,11 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
         eqn = heateqn.heateqn
         args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
 
-    root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
-
+    soldict = scipy.optimize.root(eqn, x, args=args, method='df-sane')
+    root = soldict.x
+    ier = soldict.success
+    mesg = soldict.message
+    infodict = soldict.success
     # print(f'LW = {LW_in}, SW = {SW_in}, T_air = {T_air}, p_air = {p_air}, T_dp = {T_dp}')
     # print('Root[0] = ', root[:10], 'for fixedsfc = ', fixed_sfc)
 
@@ -183,7 +186,11 @@ def lake_solver(x, args, formation=False):
     else:
         eqn = lake_development_eqn
 
-    root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
+    soldict = scipy.optimize.root(eqn, x, args=args, method='df-sane')
+    root = soldict.x
+    ier = soldict.success
+    mesg = soldict.message
+    infodict = soldict.success
     return root, infodict, ier, mesg
 
 
