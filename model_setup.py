@@ -14,8 +14,8 @@ print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 1  # Number of rows in your model grid, looking from top-down.
-col_amount = 1  # Number of columns in your model grid, looking from top-down.
+row_amount = 10  # Number of rows in your model grid, looking from top-down.
+col_amount = 10  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 2000  # size of each lateral grid cell in m - possible to automate
 # TODO - calc based on DEM automatically
 # lat_grid_size = 'dem'
@@ -25,7 +25,7 @@ vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 # Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
 # Set to a number if you want to manually specify a bounding box.
-#lat_bounds = 'dem'
+lat_bounds = 'dem'
 latmax = np.nan  # Maximum latitude to use in our DEM and met data files.
 latmin = np.nan  # Minimum latitude to use in our DEM and met data files.
 longmax = np.nan  # Maximum longitude to use in our DEM and met data files.
@@ -47,7 +47,7 @@ longmin = np.nan  # Minimum longitude to use in our DEM and met data files.
 """
 Timestepping parameters
 """
-num_days = 365  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 100  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
@@ -89,7 +89,8 @@ DEM/initial firn profile
             
 """
 
-# DEM_path = 'DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
+
+DEM_path = 'DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
 # DEM_path = "DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
 
 # firn_depth - by default overridden by the presence of a valid DEM
