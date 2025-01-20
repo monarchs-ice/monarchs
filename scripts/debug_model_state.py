@@ -3,7 +3,7 @@ from monarchs.core.utils import get_2d_grid
 from matplotlib import pyplot as plt
 import numpy as np
 
-path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_test_run/dump_tocheck_inprogress.nc'
+path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/dump_archer2.nc'
 
 
 # Set up a dummy IceShelf instance, create a grid of these, then write out our dumpfile into this.
@@ -25,9 +25,14 @@ test, _, _, _ = reload_state(path, grid)
 
 # Now we can interact with the model, plot stuff out etc.
 lakedepth = get_2d_grid(grid, 'lake_depth')
-plt.imshow(lakedepth, vmax=3)
+plt.imshow(lakedepth)
 plt.colorbar()
 plt.title('Lake depth')
+plt.figure()
+lakedepth = get_2d_grid(grid, 'lake_depth')
+plt.imshow(lakedepth, vmax=2, cmap='magma')
+plt.colorbar()
+plt.title('Lake depth (max shown = 2)')
 plt.figure()
 firndepth = get_2d_grid(grid, 'firn_depth')
 plt.imshow(firndepth, vmax=80)
@@ -54,17 +59,14 @@ plt.figure()
 lakepresent = get_2d_grid(grid, 'lake')
 plt.imshow(lakepresent)
 plt.colorbar()
-plt.title('lake?')
+plt.title('lake present')
 lidpresent = get_2d_grid(grid, 'lid')
 plt.figure()
 plt.imshow(lidpresent)
 plt.colorbar()
-plt.title('lid?')
+plt.title('lid present')
 lidpresent = get_2d_grid(grid, 'v_lid')
-plt.figure()
-plt.imshow(lidpresent)
-plt.colorbar()
-plt.title('v_lid?')
+
 #
 
 # # contour plots

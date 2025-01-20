@@ -1,3 +1,15 @@
+"""
+Functions used to solve the heat equation using NumbaMinpack's hybrd function.
+This gives significant performance boosts over scipy's fsolve(hybrd = True).
+
+For the version of heateqn used with Scipy's optimize.fsolve, see /physics/heateqn.
+
+These are kept separate as there is significantly more complexity required to get the
+inputs in the correct format for this version, and the requirement to not return anything
+(whereas scipy.optimize.fsolve requires a return value)
+"""
+
+
 import numpy as np
 from numba import cfunc
 from NumbaMinpack import minpack_sig
@@ -9,16 +21,6 @@ from monarchs.physics.Numba.extract_args import (
 )
 from monarchs.physics.surface_fluxes import sfc_flux
 
-"""
-Functions used to solve the heat equation using NumbaMinpack's hybrd function.
-This gives significant performance boosts over scipy's fsolve(hybrd = True).
-
-For the version of heateqn used with Scipy's optimize.fsolve, see /physics/heateqn.
-
-These are kept separate as there is significantly more complexity required to get the 
-inputs in the correct format for this version, and the requirement to not return anything
-(whereas scipy.optimize.fsolve requires a return value)
-"""
 
 
 def heateqn(x, output, args):

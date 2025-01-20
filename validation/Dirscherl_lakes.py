@@ -6,21 +6,37 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 from PIL.TiffTags import TAGS
+import geotiff as gt
+from cartopy import crs as ccrs
 
 Image.MAX_IMAGE_PIXELS = 3172163365  # Number of pixels in image from error
-im = Image.open("202001_1_max_extent.tif")
-# im=np.loadtxt(tiffname, delimiter=',')
-lake_data = np.array(im)
-test1 = lake_data[100][:]
-test2 = lake_data[1000][:]
-meta_dict = {TAGS[key]: im.tag[key] for key in im.tag_v2}
+iceshelves = ["George_VI"]#, "Wilkins", "Riiser-Larsen", "Nivlisen", "Amery", "Bach"]
+for iceshelf in iceshelves:
+    im = gt.GeoTiff(f"AntarcticLakes/{iceshelf}/202001_1_max_extent.tif")
+    print(f'{iceshelf} coordinates ((min long, min lat), (max long, max lat)):', im.tif_bBox_converted)
+    projection = ccrs.PlateCarree()
+    fig = plt.figure()
+    cmap = "viridis"
+    projection = ccrs.PlateCarree()
+    # first panel
+    area_box = ((-69.5, -72.3), (-66.5, -71.25))
+    lons, lats = im.get_coord_arrays(area_box)
+    ax = fig.add_subplot(111, projection=projection)
+    lake_data = np.array(im.read_box(area_box))
 
+    cont = ax.contourf(
+        lons,
+        lats,
+        lake_data,
+        cmap=cmap,
+        transform=projection
+    )
 
-plt.imshow(lake_data, cmap="gray")
-plt.colorbar(label="Pixel values")
-plt.title("TIF Image")
-plt.xlabel("Column")
-plt.ylabel("Row")
+    #meta_dict = {TAGS[key]: im.tag[key] for key in im.tag_v2}
+    # plt.colorbar(label="Pixel values")
+    plt.title(f"TIF Image, {iceshelf}")
+    ax.coastlines()
+    ax.gridlines(draw_labels=True)
 plt.show(block=True)
 
 

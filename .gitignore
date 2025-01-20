@@ -12,6 +12,7 @@ data/*.tif
 data/*.jpg
 plots/
 DEM/
+!monarchs/DEM
 *.gif
 *.jpg
 *.m
@@ -33,3 +34,4 @@ docs/build
 !data/ERA5_small.nc
 dist/
 validation/*.png
+validation/AntarcticLakes/
