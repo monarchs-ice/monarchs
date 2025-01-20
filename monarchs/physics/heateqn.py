@@ -210,7 +210,8 @@ def heateqn_lid(
     """
     # print('here')
     # k_ice = (1000 * 2.24 * 0.001 + 5.975 * 0.000001 * (273.15 - cell.lid_temperature) ** 1.156)
-    # k = cell.Sfrac_lid * k_ice + (1 - cell.Sfrac_lid - cell.Lfrac_lid) * cell.k_air + cell.Lfrac_lid * cell.k_water
+    # k = cell.Sfrac_lid * k_ice + (1 - cell.Sfrac_lid - cell.Lfrac_lid) \
+    # * cell.k_air + cell.Lfrac_lid * cell.k_water
     cp_ice = 1000 * (0.00716 * cell.lid_temperature + 0.138)
     cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cell.cp_air
     kappa = k_lid / (cp * cell.rho_ice)  # thermal diffusivity [m^2 s^-1]

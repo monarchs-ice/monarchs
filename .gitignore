@@ -11,7 +11,9 @@ monarchs/data/38_12_32m_v2.0_meta.txt
 data/*.tif
 data/*.jpg
 plots/
-DEM/
+DEM/38_12_32m_v2.0/
+DEM/42_07_32m_v2.0/
+DEM/geotiff_test.py
 *.gif
 *.jpg
 *.m
@@ -33,3 +35,4 @@ docs/build
 !data/ERA5_small.nc
 dist/
 validation/*.png
+validation/AntarcticLakes/

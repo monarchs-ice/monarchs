@@ -446,6 +446,3 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     cell.lake_temperature[-1] = 273.15  # bottom of lake is ice-lake boundary so set
     # to the freezing temperature
-
-
-
