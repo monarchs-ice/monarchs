@@ -67,12 +67,15 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
         eqn = heateqn.heateqn
         args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
     try:
-        soldict: OptimizeResult = root(eqn, x, args=args, method='df-sane')
-        if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or not soldict.success:
-            print(np.isnan(soldict.x).any())
+        soldict: OptimizeResult = root(eqn, x, args=args, method='df-sane',
+                                       options={'line_search': 'cheng', 'maxfev': 1000,
+                                                'ftol': 1e-10})
+        if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or np.any(soldict.x < 220) or not soldict.success:
             raise Exception('Bad spectral solver output')
+
     except Exception as e:
         print(e)
+        print(soldict.message)
         # fall back to hybr if df-sane fails
         print('Falling back to hybrd...')
         print('Input = ', x)
@@ -104,10 +107,11 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
 
     # we only return root in the model (hence why in driver.py we index the function by [0],
     # but the other info is useful for testing so can be used if calling solver directly
-    if soldict.success:
-        return sol, infodict, ier, mesg
-    else:
-        return x, infodict, ier, mesg
+    # if soldict.success:
+    return sol, infodict, ier, mesg
+    # else:
+    #     return x, infodict, ier, mesg
+
 
 def lake_development_eqn(x, args):
     """
@@ -139,9 +143,9 @@ def lake_development_eqn(x, args):
     T_core = lake_temperature[int(vert_grid_lake / 2)]
 
     output = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
-        + Q
-        + (np.sign(T_core - x[0]) * 1000 * 4181 * J * (abs(T_core - x[0]) ** (4 / 3)))
+            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+            + Q
+            + (np.sign(T_core - x[0]) * 1000 * 4181 * J * (abs(T_core - x[0]) ** (4 / 3)))
     )
 
     return output
@@ -172,9 +176,9 @@ def lake_formation_eqn(x, args):
     T1 = args[4]
 
     output = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
-        + Q
-        - k * (-T1 + x[0]) / (firn_depth / vert_grid)
+            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+            + Q
+            - k * (-T1 + x[0]) / (firn_depth / vert_grid)
     )
     return output
 
@@ -243,11 +247,11 @@ def sfc_energy_virtual_lid(x, args):
         lake_temperature[i] = args[5 + i]
 
     output = (
-        -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
-        + Q
-        - k_v_lid
-        * (-lake_temperature[-2] + x[0])
-        / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
+            -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
+            + Q
+            - k_v_lid
+            * (-lake_temperature[-2] + x[0])
+            / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
     )
     return output
 
@@ -272,9 +276,9 @@ def sfc_energy_lid(x, args):
     sub_T = args[4]
 
     output = (
-        -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
-        + Q
-        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+            -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
+            + Q
+            - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
     return output
 

@@ -196,8 +196,17 @@ def regrid_after_melt(cell, height_change, lake=False):
         weight_2 = (old_firn_depth - ((i + 1) * dz_old)) - (
             cell.firn_depth - ((i + 1) * dz_new)
         )  # old bottom of upper layer - new bottom of upper layer
-        if weight_1 < 0 or weight_2 < 0:
-            raise ValueError('regridding weights negative')
+        if weight_1 < 0:
+            if weight_1 > -1E-9:
+                weight_1 = 0
+            else:
+                raise ValueError('Regridding weight 1 is negative and exceeds tolerance')
+        if weight_2 < 0:
+            if weight_2 > -1E-9:
+                weight_2 = 0
+            else:
+                raise ValueError('Regridding weight 2 is negative and exceeds tolerance')
+
         lfrac_hold[i] = (
             (cell.Lfrac[i] * weight_1) + (cell.Lfrac[i + 1] * weight_2)
         ) / (weight_1 + weight_2)
