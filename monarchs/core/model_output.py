@@ -8,17 +8,17 @@ from monarchs.core.utils import get_2d_grid
 
 
 def setup_output(
-    fname,
-    grid,
-    vars_to_save=(
-        "firn_temperature",
-        "Sfrac",
-        "Lfrac",
-        "firn_depth",
-        "lake_depth",
-        "lid_depth",
-    ),
-    vert_grid_size=False,
+        fname,
+        grid,
+        vars_to_save=(
+                "firn_temperature",
+                "Sfrac",
+                "Lfrac",
+                "firn_depth",
+                "lake_depth",
+                "lid_depth",
+        ),
+        vert_grid_size=False,
 ):
     """
     Generate a netCDF file that we can use to save key diagnostics from our IceShelf grid over time.
@@ -137,20 +137,20 @@ def setup_output(
 
 
 def update_model_output(
-    fname,
-    grid,
-    iteration,
-    vars_to_save=(
-        "firn_temperature",
-        "Sfrac",
-        "Lfrac",
-        "firn_depth",
-        "lake_depth",
-        "lid_depth",
-    ),
-    hourly=False,
-    t_step=0,
-    vert_grid_size=False,
+        fname,
+        grid,
+        iteration,
+        vars_to_save=(
+                "firn_temperature",
+                "Sfrac",
+                "Lfrac",
+                "firn_depth",
+                "lake_depth",
+                "lid_depth",
+        ),
+        hourly=False,
+        t_step=0,
+        vert_grid_size=False,
 ):
     """
     Update the netCDF file generated in setup_output with data from the grid at the current timestep.
@@ -195,7 +195,7 @@ def update_model_output(
             var_write = data.variables[key]
             # Interpolate to a smaller output size if needed.
             if "vert_grid" in var_write.dimensions:
-                if vert_grid_size != grid[0][0].vert_grid:
+                if vert_grid_size != grid[0][0].vert_grid and vert_grid_size is not False:
                     new_var = np.zeros((len(grid), len(grid[0]), vert_grid_size))
                     for i in range(len(grid)):
                         for j in range(len(grid[i])):

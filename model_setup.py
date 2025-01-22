@@ -207,7 +207,7 @@ Model output
         actual model calculations, in which case the results are interpolated to this grid size. Useful to reduce the 
         size of output files, which can be large.
 """
-save_output = False
+save_output = True
 vars_to_save = (
     "firn_temperature",
     "Sfrac",
@@ -220,9 +220,9 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "model_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
-output_grid_size = 400  # Size of interpolated output
-
+output_filepath = "sample_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_grid_size = 200  # Size of interpolated output
+output_timestep = 30
 """
 Dumping and reloading parameters
 
@@ -257,7 +257,7 @@ use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a 
 # this switch and use_numba both True.
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = 12  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+cores = 16  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 

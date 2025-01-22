@@ -340,7 +340,7 @@ def main(model_setup, grid):
     met_start_idx = 0
     met_end_idx = model_setup.t_steps_per_day
     # very likely 24h, so we get one days worth of data each time
-
+    output_counter = 0  # Index for output file
     # Check if we want to shrink output
     if hasattr(model_setup, "output_grid_size"):
         output_grid_size = model_setup.output_grid_size
@@ -481,10 +481,11 @@ def main(model_setup, grid):
         # By default, we save at every timestep.
 
         if model_setup.save_output and day % model_setup.output_timestep == 0:
+            output_counter += 1
             update_model_output(
                 model_setup.output_filepath,
                 grid,
-                day,
+                output_counter,
                 vars_to_save=model_setup.vars_to_save,
                 vert_grid_size=output_grid_size,
             )
