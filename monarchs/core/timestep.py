@@ -65,6 +65,16 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     ignore_errors = toggle_dict["ignore_errors"]
     # if the cell is not "valid" (e.g. filtered out as land by our firn threshold), then we don't want to run any
     # of the physics here, so we just return and move onto the next cell
+    use_mpi = toggle_dict["use_mpi"]
+    if use_mpi:
+        from mpi4py import MPI
+
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        if rank == 0:
+            print(f"Running timestep loop on rank {rank}")
+        else:
+            print(f"Running timestep loop on nonzero rank {rank}")
 
     if not cell.valid_cell:
         # print(f'Skipping over invalid cell at x = {cell.x}, y = {cell.y}')

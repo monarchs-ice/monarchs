@@ -74,11 +74,11 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
             raise Exception('Bad spectral solver output')
 
     except Exception as e:
-        print(e)
-        print(soldict.message)
-        # fall back to hybr if df-sane fails
-        print('Falling back to hybrd...')
-        print('Input = ', x)
+        # print(e)
+        # print(soldict.message)
+        # # fall back to hybr if df-sane fails
+        # print('Falling back to hybrd...')
+        # print('Input = ', x)
         soldict = root(eqn, x_copy, args=args, method='hybr')
 
     if np.isnan(soldict.x).any() or np.any(soldict.x > 320):

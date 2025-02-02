@@ -3,7 +3,7 @@ from monarchs.core.utils import get_2d_grid
 from matplotlib import pyplot as plt
 import numpy as np
 
-path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/dump_archer2.nc'
+path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/progress_df.nc'
 #path = "../MONARCHS_runs/progress_df.nc"
 
 # Set up a dummy IceShelf instance, create a grid of these, then write out our dumpfile into this.

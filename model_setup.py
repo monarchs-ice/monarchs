@@ -7,16 +7,15 @@ Since this is a Python script, you can specify parameters e.g. as numpy arrays.
 """
 
 import os
-
 import numpy as np
 
 print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 50  # Number of rows in your model grid, looking from top-down.
-col_amount = 50  # Number of columns in your model grid, looking from top-down.
-lat_grid_size = 2000  # size of each lateral grid cell in m - possible to automate
+row_amount = 5  # Number of rows in your model grid, looking from top-down.
+col_amount = 5  # Number of columns in your model grid, looking from top-down.
+lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 # TODO - calc based on DEM automatically
 # lat_grid_size = 'dem'
 vertical_points_firn = 400  # Number of vertical grid cells
@@ -25,7 +24,7 @@ vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 # Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
 # Set to a number if you want to manually specify a bounding box.
-lat_bounds = 'dem'
+#lat_bounds = 'dem'
 latmax = np.nan  # Maximum latitude to use in our DEM and met data files.
 latmin = np.nan  # Minimum latitude to use in our DEM and met data files.
 longmax = np.nan  # Maximum longitude to use in our DEM and met data files.
@@ -47,7 +46,7 @@ longmin = np.nan  # Minimum longitude to use in our DEM and met data files.
 """
 Timestepping parameters
 """
-num_days = 500  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 10  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
@@ -89,7 +88,7 @@ DEM/initial firn profile
 
 """
 
-DEM_path = 'DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
+#DEM_path = 'DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
 # DEM_path = "DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
 
 # firn_depth - by default overridden by the presence of a valid DEM
@@ -220,9 +219,9 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "sample_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = "../MONARCHS_runs/sample_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
 output_grid_size = 200  # Size of interpolated output
-output_timestep = 30
+output_timestep = 1
 """
 Dumping and reloading parameters
 
@@ -257,7 +256,7 @@ use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a 
 # this switch and use_numba both True.
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = 16  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+cores = 24  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 

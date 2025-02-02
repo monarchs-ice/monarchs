@@ -84,6 +84,8 @@ def setup_toggle_dict(model_setup):
     toggle_dict["perc_time_toggle"] = model_setup.perc_time_toggle
     toggle_dict["densification_toggle"] = model_setup.densification_toggle
     toggle_dict["ignore_errors"] = model_setup.ignore_errors
+    toggle_dict['use_mpi'] = model_setup.use_mpi
+
     return toggle_dict
 
 

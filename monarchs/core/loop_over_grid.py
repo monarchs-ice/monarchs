@@ -102,21 +102,23 @@ def loop_over_grid(
         if use_mpi:
             from mpi4py import MPI
             from mpi4py.futures import MPIPoolExecutor
-            comm = MPI.COMM_WORLD
+
+            COMM = MPI.COMM_WORLD
             iceshelf = []
+
             with MPIPoolExecutor(max_workers=ncores) as pool:
                 print(f"monarchs.core.loop_over_grid: ")
                 print(f"Running with MPI w/ {ncores} procs")
                 for result in pool.map(
-                    timestep_loop,
-                    flat_grid,
-                    dt,
-                    met_data_grid,
-                    t_steps_per_day,
-                    toggle_dict_grid,
+                        timestep_loop,
+                        flat_grid,
+                        dt,
+                        met_data_grid,
+                        t_steps_per_day,
+                        toggle_dict_grid,
                 ):
                     iceshelf.append(result)
-            comm.Barrier()
+            # COMM.Barrier()
         else:
             with Pool(nodes=ncores) as p:
                 # we want to get out our IceShelf and our Logger grids, so get out an array res and index it
@@ -155,3 +157,4 @@ def loop_over_grid(
                 t_steps_per_day,
                 toggle_dict,  # , flat_log_grid[i]
             )
+

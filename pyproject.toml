@@ -1,6 +1,6 @@
 [project]
 name = 'monarchs'
-version = '0.1.0'
+version = '0.1.1'
 description = 'A numerical model of ice shelf development'
 requires-python = ">3.8"
 authors = [
@@ -13,6 +13,14 @@ dependencies = [
     'numpy >= 1.26.3, < 2.0',
     'Numba >= 0.59',
     'scipy >= 1.12.0',
+    'h5py',
+    'netCDF4',
+    'cartopy',
+    'matplotlib',
+    'geotiff',
+    'Pillow',
+    'imagecodecs',
+    'pathos'
 ]
 
 classifiers = [
@@ -24,27 +32,14 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-multithreading = [
-    'pathos',
-]
+
 numba = [
     'NumbaMinpack',
-]
-netcdf = [
-    'h5py',
-    'netCDF4',
 ]
 mpi = [
     'mpi4py',
 ]
-plotting = [
-    'cartopy',
-    'matplotlib',
-]
-dem = [
-    'geotiff',
-    'Pillow',
-]
+
 
 [project.scripts]
 monarchs = 'run_MONARCHS:monarchs'

@@ -343,7 +343,21 @@ def jit_classes():
 
 # load in the model setup file and create the `model_setup` class instance to store
 # our configuration data.
-model_setup_path = parse_args()
+# First check if using MPI. This should only be done on HPC systems, and since argparse doesn't play nice
+# with MPI, we need to check the environment variables. This can easily be set in a job submission script.
+
+import os
+if os.environ.get('MONARCHS_MPI', None) is not None:
+    mpi = True
+else:
+    mpi = False
+mpi = True
+
+if mpi == True:
+    model_setup_path = 'model_setup.py'
+else:
+    model_setup_path = parse_args()
+
 model_setup = ModelSetup(model_setup_path)
 
 # if using Numba,
