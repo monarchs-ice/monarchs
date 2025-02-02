@@ -353,8 +353,13 @@ else:
     mpi = False
 mpi = True
 
-if mpi == True:
-    model_setup_path = 'model_setup.py'
+if mpi:
+    # In this case, we instead use a pre-defined model setup file, by default `model_setup.py`. This is again set
+    # via an environment variable.
+    if os.environ.get('MONARCHS_MODEL_SETUP_PATH') is not None:
+        model_setup_path = os.environ.get('MONARCHS_MODEL_SETUP_PATH')
+    else:
+        model_setup_path = 'model_setup.py'
 else:
     model_setup_path = parse_args()
 
