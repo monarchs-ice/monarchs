@@ -19,6 +19,7 @@ def parse_args():
     # Check if `pytest` is currently running by checking the current environment variables. If so, then select the
     # appropriate test runscript. This is necessary since we want to run the model but cannot pass a runscript
     # directly when running `pytest`.
+
     if "PYTEST_CURRENT_TEST" in os.environ:
         if "numba" in run_dir.split("/")[-1]:
             runscript = "model_test_setup_numba.py"
@@ -351,6 +352,7 @@ if os.environ.get('MONARCHS_MPI', None) is not None:
     mpi = True
 else:
     mpi = False
+
 mpi = True
 
 if mpi:
