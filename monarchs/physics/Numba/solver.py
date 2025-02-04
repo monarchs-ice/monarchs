@@ -563,7 +563,7 @@ def lid_heateqn_solver(x, args):
         k_lid=k_lid,
         Sfrac_lid=Sfrac_lid,
     )
-    # print(f'Lid heat equation solver, loaded in args... x = {cell.x}, y = {cell.y}')
+    # print(f'Lid heat equation solver, loaded in args... col = {cell.column}, row = {cell.row}')
     # for idx, arg in enumerate(args):
     #     print(f'index = {idx}')
     #     print(arg)

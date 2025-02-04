@@ -7,7 +7,8 @@ import numpy as np
 from monarchs.physics.percolation_functions import percolation
 from monarchs.physics.surface_fluxes import sfc_flux
 from monarchs.physics import solver
-
+from monarchs.core.utils import calc_mass_sum
+from numpy.testing import assert_almost_equal
 def firn_column(
     cell,
     dt,
@@ -70,7 +71,7 @@ def firn_column(
     -------
     None (amends cell inplace)
     """
-
+    original_mass = calc_mass_sum(cell)
     percolation_toggle = toggle_dict["percolation_toggle"]
     # spinup = toggle_dict["spinup"]
     perc_time_toggle = toggle_dict["perc_time_toggle"]
@@ -123,7 +124,8 @@ def firn_column(
         percolation(cell, dt, perc_time_toggle=perc_time_toggle)
 
     cell.rho = cell.Sfrac * cell.rho_ice + cell.Lfrac * cell.rho_water
-
+    new_mass = calc_mass_sum(cell)
+    assert_almost_equal(original_mass, new_mass)
 
 def regrid_after_melt(cell, height_change, lake=False):
     """
@@ -147,6 +149,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     -------
     None
     """
+    original_mass = calc_mass_sum(cell)
     # Removes melted portion of domain and regrids remaining domain to regular grid
     dz_old = cell.firn_depth / cell.vert_grid
     old_firn_depth = cell.firn_depth + 0
@@ -177,10 +180,10 @@ def regrid_after_melt(cell, height_change, lake=False):
             height_change > (i + 1) * dz_old
         ):  # whole layer melts - so it no longer exists
             print(
-                "Whole layer melted - x = ",
-                cell.x,
-                "y = ",
-                cell.y,
+                "Whole layer melted - column = ",
+                cell.column,
+                "row = ",
+                cell.row,
                 "layer = ",
                 i,
             )
@@ -229,8 +232,8 @@ def regrid_after_melt(cell, height_change, lake=False):
     if np.isnan(T_hold).any():
         print(T_hold)
         print(cell.firn_temperature)
-        print(cell.x)
-        print(cell.y)
+        print(cell.column)
+        print(cell.row)
         raise ValueError("NaN in firn temperature after regridding")
     # add meltwater to surface Lfrac
     cell.Lfrac[0] += meltwater
@@ -242,6 +245,8 @@ def regrid_after_melt(cell, height_change, lake=False):
             cell.lake_depth += excess_water * (cell.firn_depth / cell.vert_grid)
             # print('Excess water depth = ', excess_water * (cell.firn_depth / cell.vert_grid))
             cell.Lfrac[0] = 1 - cell.Sfrac[0]
+        assert_almost_equal(calc_mass_sum(cell), original_mass)
+
     if np.isnan(cell.firn_temperature).any():
         print(cell.firn_temperature)
         raise ValueError("NaN in firn temperature after regridding")
@@ -251,13 +256,13 @@ def regrid_after_melt(cell, height_change, lake=False):
         print(where[0])
         print("Old Sfrac = ", bs[where])
         print("Sfrac = ", cell.Sfrac[where])
-        print("x = ", cell.x, "y = ", cell.y)
+        print("x = ", cell.column, "y = ", cell.row)
         print("height change = ", height_change)
         print("dz old = ", dz_old)
         print("firn depth = ", cell.firn_depth)
         raise ValueError("Sfrac > 1 in firn regridding")
     cell.vertical_profile = np.linspace(0, cell.firn_depth, cell.vert_grid)
-
+    assert_almost_equal(calc_mass_sum(cell), original_mass)
 
 def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, surf_T):
     """

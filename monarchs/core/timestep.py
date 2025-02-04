@@ -77,7 +77,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             print(f"Running timestep loop on nonzero rank {rank}")
 
     if not cell.valid_cell:
-        # print(f'Skipping over invalid cell at x = {cell.x}, y = {cell.y}')
+        # print(f'Skipping over invalid cell at x = {cell.column}, y = {cell.row}')
         if parallel and not use_numba:
             return cell
         else:
@@ -200,7 +200,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             elif (
                 cell.lake is True and cell.lid is False
             ):  # Lake present, but no frozen lid
-                # print('lake development', 'x = ', cell.x, 'y = ', cell.y)
+                # print('lake development', 'x = ', cell.column, 'y = ', cell.row)
                 if lake_development_toggle:
                     lake_functions.lake_development(
                         cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind

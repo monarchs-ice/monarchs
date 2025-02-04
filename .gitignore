@@ -36,3 +36,4 @@ docs/build
 dist/
 validation/*.png
 validation/AntarcticLakes/
+model_setup.py

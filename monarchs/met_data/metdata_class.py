@@ -18,6 +18,8 @@ def initialise_met_data_grid(
     dewpoint_temperature,
     LW_down,
     SW_down,
+    latitude,
+    longitude,
     use_numba=False
 ):
     """
@@ -64,12 +66,12 @@ def initialise_met_data_grid(
     else:
         grid = []
 
-    for j in range(row_amount):
+    for i in range(row_amount):
         if use_numba:
             _l = List()
         else:
             _l = []
-        for i in range(col_amount):
+        for j in range(col_amount):
             _l.append(
                 MetData(
                     snowfall[:, i, j],
@@ -80,6 +82,8 @@ def initialise_met_data_grid(
                     dewpoint_temperature[:, i, j],
                     LW_down[:, i, j],
                     SW_down[:, i, j],
+                    latitude[i, j],
+                    longitude[i, j],
                 )
             )
 
@@ -125,6 +129,8 @@ class MetData:
         dew_point_temperature,
         LW_down,
         SW_down,
+        latitude,
+        longitude
     ):
         self.snowfall = snowfall
         self.temperature = temperature
@@ -134,6 +140,8 @@ class MetData:
         self.LW_down = LW_down
         self.SW_down = SW_down
         self.snow_dens = snow_dens
+        self.lat = latitude
+        self.lon = longitude
 
 def get_spec():
     from numba import float64
@@ -146,5 +154,7 @@ def get_spec():
         ("dew_point_temperature", float64[:]),
         ("LW_down", float64[:]),
         ("SW_down", float64[:]),
+        ("latitude", float64),
+        ("longitude", float64),
     ]
     return spec

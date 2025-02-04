@@ -139,7 +139,6 @@ def check_for_reload_state(model_setup, grid, met_start_idx, met_end_idx):
         first_iteration = 0
         reload_dump_success = False
         grid = grid
-        print(grid)
     # Return everything in both cases - if we haven't reloaded from dump we just return the initial state
     return grid, met_start_idx, met_end_idx, first_iteration, reload_dump_success
 
@@ -166,7 +165,7 @@ def get_num_cores(model_setup):
 
 
 def update_met_conditions(
-    model_setup, grid, met_start_idx, met_end_idx, start=True, snow_added=0
+    model_setup, grid, met_start_idx, met_end_idx, start=False, snow_added=0
 ):
     """
 
@@ -186,7 +185,7 @@ def update_met_conditions(
 
         if start:
             met_start_idx = met_start_idx % met_data_len
-        print('Start idx for met data = ',met_start_idx)
+        print('Start idx for met data = ', met_start_idx)
         # Initial met conditions
         # call .data so we get a Numpy ndarray, not a numpy masked array. This is crucial for Numba support
         met_data_grid = initialise_met_data_grid(
@@ -200,16 +199,17 @@ def update_met_conditions(
             met_data.variables["dew_point_temperature"][met_start_idx:met_end_idx].data,
             met_data.variables["LW_surf"][met_start_idx:met_end_idx].data,
             met_data.variables["SW_surf"][met_start_idx:met_end_idx].data,
+            met_data.variables['cell_latitude'][:].data,
+            met_data.variables['cell_longitude'][:].data,
             model_setup.use_numba
         )
         # initialise total mass calculation - check how much snow was added during the next iteration and add it
         for i in range(len(grid)):
             for j in range(len(grid[0])):
                 if grid[i][j].valid_cell:
-                    snow_added += np.sum(
-                        met_data.variables["snow_dens"][met_start_idx:met_end_idx, i, j]
-                        * met_data.variables["snowfall"][met_start_idx:met_end_idx, i, j]
-                    )
+                    snow_array = (np.array(met_data.variables["snow_dens"][met_start_idx:met_end_idx, i,j]) *
+                    np.array(met_data.variables["snowfall"][met_start_idx:met_end_idx, i, j]))
+                    snow_added += np.sum(snow_array)
 
         # Check to make sure we are not going out of bounds
         for key in met_data.variables.keys():
@@ -287,6 +287,8 @@ def print_model_end_of_timestep_messages(
             "Original mass accounting for catchment outflow = ",
             total_mass_start - catchment_outflow,
         )
+    else:
+        print("Original mass = ", total_mass_start)
 
     print(f"Time at end of day {day + 1} is {toc - tic:0.4f} seconds")
     print("Firn depth = ", get_2d_grid(grid, "firn_depth"))
@@ -370,7 +372,7 @@ def main(model_setup, grid):
     # dump file, and convert some of the model_setup switches into a dictionary so the model can read it later
     snow_added = 0
     met_data_grid, met_data_len, snow_added = update_met_conditions(
-        model_setup, grid, met_start_idx, met_end_idx, start=True
+        model_setup, grid, met_start_idx, met_end_idx, start=True, snow_added=snow_added
     )
     toggle_dict = setup_toggle_dict(model_setup)
 
@@ -469,6 +471,7 @@ def main(model_setup, grid):
         met_end_idx = (day + 2) * model_setup.t_steps_per_day % (met_data_len)
         if met_start_idx > met_end_idx:
             met_end_idx = met_data_len
+
         met_data_grid, met_data_len, snow_added = update_met_conditions(
             model_setup, grid, met_start_idx, met_end_idx, snow_added=snow_added
         )
@@ -532,7 +535,6 @@ def initialise(model_setup):
         lats=lat_array,
         lons=lon_array,
     )
-    print(grid[0][0].firn_depth)
     return grid
 
 

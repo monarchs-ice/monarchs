@@ -239,11 +239,11 @@ Dumping and reloading parameters
         Flag to determine whether we want to reload from a dump (see <dump_data> for details). If True, reload model
         state from file at the path determined by <reload_filepath>.
 """
-dump_data = False
+dump_data = True
 dump_filepath = (
     "../MONARCHS_runs/progress_df.nc"  # Filename of our previously dumped state
 )
-reload_state = False # Flag to determine whether to reload the state or not
+reload_state = True  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters

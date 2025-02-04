@@ -70,7 +70,7 @@ def percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=Tr
                     cell.saturation[v_lev] = True
                     if v_lev < cell.ice_lens_depth:
                         print(
-                            f"Ice lens formation at v_lev = {v_lev}, x = {cell.x}, y = {cell.y}"
+                            f"Ice lens formation at v_lev = {v_lev}, column = {cell.column}, row = {cell.row}"
                         )
                         cell.ice_lens_depth = v_lev
 

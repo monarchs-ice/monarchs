@@ -332,14 +332,25 @@ def interpolate_met_data(model_setup, lat_array=False, lon_array=False):
     with Dataset(ERA5_grid_path, "w") as f:
         f.createGroup("variables")
         f.createDimension("time", len(ERA5_grid["SW_surf"]))
-        f.createDimension("lat", model_setup.col_amount)
-        f.createDimension("long", model_setup.row_amount)
+        f.createDimension("column", model_setup.col_amount)
+        f.createDimension("row", model_setup.row_amount)
 
         for key, value in ERA5_grid.items():
             if key in ["long", "lat", "time"]:
-                continue
+                if key == 'long':
+                    var = f.createVariable('cell_longitude',
+                    np.dtype("float64").char, ("column", "row"))
+                    var.long_name = 'Longitude of grid cell'
+                    var[:] = value
+                if key == 'lat':
+                    var = f.createVariable('cell_latitude',
+                     np.dtype("float64").char, ("column", "row"))
+                    var.long_name = 'Latitude of grid cell'
+                    var[:] = value
+                else:
+                    continue
             var = f.createVariable(
-                key, np.dtype("float64").char, ("time", "long", "lat")
+                key, np.dtype("float64").char, ("time", "column", "row")
             )
             var.long_name = key
             var[:] = value
@@ -487,13 +498,13 @@ def create_model_grid(
     else:
         grid = []
 
-    for j in range(col_amount):
+    for i in range(col_amount):
         if use_numba:
             _l = List()
         else:
             _l = []
 
-        for i in range(row_amount):
+        for j in range(row_amount):
             _l.append(
                 IceShelf(
                     j,  # x

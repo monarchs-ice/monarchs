@@ -9,8 +9,8 @@ embarassingly parallel), unless model_setup.parallel = False.
 from pathos.pools import ParallelPool as Pool
 import numpy as np
 from monarchs.core.timestep import timestep_loop
-from monarchs.core.configuration import model_setup
-
+#from monarchs.core.configuration import model_setup
+from monarchs.core.utils import get_2d_grid
 
 def loop_over_grid(
     row_amount,
@@ -88,12 +88,12 @@ def loop_over_grid(
     met_data_grid = []
     # need to make our dict of toggles a grid, else it will just pass individual elements of the dict to each process
     toggle_dict_grid = []
+    x0 = get_2d_grid(grid, "column")
     for i in range(row_amount):
         for j in range(col_amount):
             flat_grid.append(grid[i][j])
             met_data_grid.append(met_data[i][j])
             toggle_dict_grid.append(toggle_dict)
-            # flat_log_grid.append(log_grid[i][j])
 
     if parallel:
         dt = [dt] * len(flat_grid)
@@ -142,6 +142,8 @@ def loop_over_grid(
  Check the logs to diagnose potential errors, or run without parallel = True."""
                 )
             flat_grid[i] = iceshelf[i]
+        xnew = get_2d_grid(grid, "column")
+        assert(xnew == x0).all()
         return np.reshape(
             flat_grid, np.shape(grid)
         )
@@ -158,3 +160,5 @@ def loop_over_grid(
                 toggle_dict,  # , flat_log_grid[i]
             )
 
+        xnew = get_2d_grid(grid, "column")
+        assert(xnew == x0).all()

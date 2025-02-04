@@ -4,15 +4,15 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_030225/dump.nc'
-#path = "../MONARCHS_runs/progress_df.nc"
+path = "../../MONARCHS_runs/progress_df.nc"
 
 # Set up a dummy IceShelf instance, create a grid of these, then write out our dumpfile into this.
 class IceShelf():
     pass
 
 
-row_amount = 100
-col_amount = 100
+row_amount = 20
+col_amount = 20
 
 grid = []
 for i in range(col_amount):

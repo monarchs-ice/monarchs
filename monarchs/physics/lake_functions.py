@@ -1,8 +1,9 @@
 import numpy as np
-
+from numpy.testing import assert_almost_equal
 from monarchs.physics.firn_functions import regrid_after_melt
 from monarchs.physics.surface_fluxes import sfc_flux, sfc_albedo
 from monarchs.physics import solver
+from monarchs.core.utils import calc_mass_sum
 # conditional import - use Numba version of solvers if necessary
 
 
@@ -184,6 +185,8 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     -------
     None (amends cell inplace).
     """
+
+    original_mass = calc_mass_sum(cell)
     dz = cell.firn_depth / cell.vert_grid
     cp_ice = np.zeros(cell.vert_grid)
     k_ice = np.zeros(cell.vert_grid)
@@ -224,7 +227,8 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     )
 
     old_T_sfc = sfc_energy_lake_formation(T_air, Q, k, cell)
-
+    new_mass = calc_mass_sum(cell)
+    assert_almost_equal(original_mass, new_mass)
     if old_T_sfc >= 273.15 and Q > 0:  # melting occurring at the surface
         kdTdz = (
             (cell.firn_temperature[0] - cell.firn_temperature[1])
@@ -242,21 +246,34 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         regrid_after_melt(
             cell, dHdt, lake=True
         )  # we reduce the firn height and add to the lake depth here
-
-    else:  # JE TODO - I think this might refreeze the lake somewhat if it hasn't fully formed yet? Otherwise the model
-        # TODO - can get sort of stuck in a state where a lake hasn't fully formed, but is incapable of refreezing as
-        # TODO - a virtual lid can't form.
-        kdTdz = (
-            (cell.firn_temperature[0] - cell.firn_temperature[1])
-            * abs(k[0])
-            / ((cell.firn_depth / cell.vert_grid))
-        )
-        dHdt = -kdTdz / (cell.L_ice * cell.rho_ice) * dt
-        cell.lake_depth -= dHdt
-        cell.lake_depth = max(cell.lake_depth, 0)
-
-    if abs(dHdt) > 0:
-        dz = cell.firn_depth / cell.vert_grid
+        new_mass = calc_mass_sum(cell)
+        assert_almost_equal(original_mass, new_mass)
+    # else:  # JE TODO - I think this might refreeze the lake somewhat if it hasn't fully formed yet? Otherwise the model
+    #     # TODO - can get sort of stuck in a state where a lake hasn't fully formed, but is incapable of refreezing as
+    #     # TODO - a virtual lid can't form.
+    #     kdTdz = (
+    #         (cell.firn_temperature[0] - cell.firn_temperature[1])
+    #         * abs(k[0])
+    #         / ((cell.firn_depth / cell.vert_grid))
+    #     )
+    #     dHdt = kdTdz / (cell.L_ice * cell.rho_ice) * dt
+    #     orig_lake_depth = cell.lake_depth + 0
+    #     orig_firn_depth = cell.firn_depth + 0
+    #     cell.lake_depth -= dHdt
+    #     cell.firn_depth += dHdt * (cell.rho_water/cell.rho_ice)
+    #     cell.lake_depth = max(cell.lake_depth, 0)
+    #     new_mass = calc_mass_sum(cell)
+    #     try:
+    #         assert_almost_equal(original_mass, new_mass) # actual, desired
+    #     except AssertionError:
+    #         print('Row = ', cell.row, 'Column = ', cell.column, 'Timestep = ', cell.t_step)
+    #         print(f'original_mass = {original_mass}, new_mass = {new_mass}')
+    #         print('New lake depth = ', cell.lake_depth)
+    #         print('Orig lake depth = ', orig_lake_depth)
+    #         print('New firn depth = ', cell.firn_depth)
+    #         print('Orig firn depth = ', orig_firn_depth)
+    # if abs(dHdt) > 0:
+    #     dz = cell.firn_depth / cell.vert_grid
 
     # for i in np.arange(0, cell.vert_grid):
     #     if cell.firn_temperature[i] > 273.15:
@@ -286,7 +303,8 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     if cell.lake_depth >= 0.1:
         cell.lake = True
-
+    new_mass = calc_mass_sum(cell)
+    assert_almost_equal(original_mass, new_mass)
 
 def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     """
@@ -321,7 +339,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     J = 0.1 * ((9.8 * 5 * 10 ** (-5) * (1.19 * 10 ** (-7)) ** 2) / (10 ** (-6))) ** (
         1 / 3
     )
-
+    original_mass = calc_mass_sum(cell)
     if not cell.v_lid and not cell.lid:
         x = cell.lake_temperature
         # If no refrozen lid is present then the temperature of the top of the lake
@@ -412,14 +430,14 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     if cell.lake_depth > 10:
         print("Lake depth = ", cell.lake_depth)
-        print("x = ", cell.x)
-        print("y = ", cell.y)
+        print("column = ", cell.column)
+        print("row = ", cell.row)
 
     if cell.lake_depth > 0:
         new_depth_grid = np.linspace(0, cell.lake_depth, cell.vert_grid_lake)
     else:
         print("Lake depth less than zero - problem")
-        print("Lake depth = ", cell.lake_depth, "x = ", cell.x, "y = ", cell.y)
+        print("Lake depth = ", cell.lake_depth, "column = ", cell.column, "row = ", cell.row)
         return
 
 
@@ -449,3 +467,5 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     cell.lake_temperature[-1] = 273.15  # bottom of lake is ice-lake boundary so set
     # to the freezing temperature
+    new_mass = calc_mass_sum(cell)
+    assert_almost_equal(original_mass, new_mass)
