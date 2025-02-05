@@ -161,7 +161,8 @@ def create_defaults_for_missing_flags(model_setup):
         "bbox_top_left",
         "bbox_bottom_right",
         "dump_data_pre_lateral_movement",
-        "use_numba"
+        "use_numba",
+        "use_mpi"
     ]
 
     for attr in optional_args_to_true:
