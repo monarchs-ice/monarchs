@@ -353,7 +353,6 @@ if os.environ.get('MONARCHS_MPI', None) is not None:
 else:
     mpi = False
 
-mpi = True
 
 if mpi:
     # In this case, we instead use a pre-defined model setup file, by default `model_setup.py`. This is again set
