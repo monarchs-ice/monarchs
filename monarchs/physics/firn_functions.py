@@ -8,7 +8,7 @@ from monarchs.physics.percolation_functions import percolation
 from monarchs.physics.surface_fluxes import sfc_flux
 from monarchs.physics import solver
 from monarchs.core.utils import calc_mass_sum
-from numpy.testing import assert_almost_equal
+
 def firn_column(
     cell,
     dt,
@@ -125,7 +125,7 @@ def firn_column(
 
     cell.rho = cell.Sfrac * cell.rho_ice + cell.Lfrac * cell.rho_water
     new_mass = calc_mass_sum(cell)
-    assert_almost_equal(original_mass, new_mass)
+    assert abs(original_mass - new_mass) < (1.5 * 10**-7)
 
 def regrid_after_melt(cell, height_change, lake=False):
     """
@@ -245,7 +245,7 @@ def regrid_after_melt(cell, height_change, lake=False):
             cell.lake_depth += excess_water * (cell.firn_depth / cell.vert_grid)
             # print('Excess water depth = ', excess_water * (cell.firn_depth / cell.vert_grid))
             cell.Lfrac[0] = 1 - cell.Sfrac[0]
-        assert_almost_equal(calc_mass_sum(cell), original_mass)
+        assert abs(calc_mass_sum(cell) - original_mass) < (1.5 * 10**-7)
 
     if np.isnan(cell.firn_temperature).any():
         print(cell.firn_temperature)
@@ -262,7 +262,7 @@ def regrid_after_melt(cell, height_change, lake=False):
         print("firn depth = ", cell.firn_depth)
         raise ValueError("Sfrac > 1 in firn regridding")
     cell.vertical_profile = np.linspace(0, cell.firn_depth, cell.vert_grid)
-    assert_almost_equal(calc_mass_sum(cell), original_mass)
+    assert abs(calc_mass_sum(cell) - original_mass) < (1.5 * 10**-7)
 
 def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, surf_T):
     """

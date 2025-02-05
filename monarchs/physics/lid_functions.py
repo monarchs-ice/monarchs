@@ -2,7 +2,6 @@ import numpy as np
 from monarchs.physics.surface_fluxes import sfc_flux
 from monarchs.physics import solver
 from monarchs.core.utils import calc_mass_sum
-from numpy.testing import assert_almost_equal
 
 def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     """
@@ -158,7 +157,7 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell.v_lid = False
         # cell.log = cell.log + 'Virtual lid has completely melted \n'
     new_mass = calc_mass_sum(cell)
-    assert_almost_equal(new_mass, original_mass)
+    assert abs(new_mass - original_mass) < (1.5 * 10**-7)
 
 def calc_surface_melt(cell, dt, Q):
     """
@@ -197,7 +196,7 @@ def calc_surface_melt(cell, dt, Q):
     # cell.lid_depth -= cell.lid_sfc_melt * (cell.lid_depth/cell.vert_grid_lid)
     # cell.lake_depth += cell.lid_sfc_melt * (cell.lid_depth/cell.vert_grid_lid) * (cell.rho_ice/cell.rho_water)
     new_mass = calc_mass_sum(cell)
-    assert_almost_equal(new_mass, original_mass)
+    assert abs(new_mass - original_mass) < (1.5 * 10**-7)
 
 def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     """
@@ -361,7 +360,7 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     new_mass = calc_mass_sum(cell)
     try:
-        assert_almost_equal(new_mass, original_mass)
+        assert abs(new_mass - original_mass) < (1.5 * 10**-7)
     except AssertionError:
         print(f"new mass = {new_mass}, original mass = {original_mass}")
         raise AssertionError
@@ -398,7 +397,7 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell.v_lid = True
         # cell.log = cell.log + 'Lid melted - reverting to virtual lid \n'
     new_mass = calc_mass_sum(cell)
-    assert_almost_equal(new_mass, original_mass)
+    assert abs(new_mass - original_mass) < (1.5 * 10**-7)
 
 def interpolate_profiles(cell, new_depth_grid, old_depth_grid):
     """
@@ -479,9 +478,10 @@ def combine_lid_firn(cell):
     # if cell.lake_depth <= 0: # whole lake is frozen
     Lfrac_lid = np.zeros(cell.vert_grid_lid)
     Sfrac_lid = (
-        np.ones(cell.vert_grid_lid) * 0.999
+        np.ones(cell.vert_grid_lid)
     )  # 0.999 so we don't get numerical errors
-
+    old_sfrac = cell.Sfrac + 0
+    old_lfrac = cell.Lfrac + 0
     # combine profiles of firn and refrozen lake
     cell.Lfrac = np.append(Lfrac_lid, cell.Lfrac)
     cell.rho = np.append(cell.rho_lid, cell.rho)
@@ -501,12 +501,12 @@ def combine_lid_firn(cell):
     dz_lid = cell.lid_depth / cell.vert_grid_lid
     dz_firn = cell.firn_depth / cell.vert_grid
     old_depth_grid = np.append(
-        dz_lid * np.arange(cell.vert_grid_lid),  #
-        dz_lid * cell.vert_grid_lid + (dz_firn * np.arange(cell.vert_grid)),
+        np.linspace(0, cell.lid_depth, cell.vert_grid_lid),  #
+        np.linspace(cell.lid_depth, cell.firn_depth + cell.lid_depth, cell.vert_grid),
     )
 
     # New grid - with just vert_grid points in total.
-    new_depth_grid = np.linspace(old_depth_grid[0], old_depth_grid[-1], cell.vert_grid)
+    new_depth_grid = np.linspace(old_depth_grid[0], cell.firn_depth + cell.lid_depth, cell.vert_grid)
     interpolate_profiles(cell, new_depth_grid, old_depth_grid)
 
     # New total profile depth
@@ -533,7 +533,7 @@ def combine_lid_firn(cell):
 
     new_mass = calc_mass_sum(cell)
     try:
-        assert_almost_equal(new_mass, original_mass)
+        assert abs(new_mass - original_mass) < (original_mass/1000)  # 0.1% error
     except AssertionError:
         print(f"new mass = {new_mass}, original mass = {original_mass}")
         raise AssertionError

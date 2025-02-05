@@ -7,7 +7,6 @@ Created on Tue May  9 17:04:04 2023
 
 import numpy as np
 from monarchs.core.utils import calc_mass_sum
-from numpy.testing import assert_almost_equal
 
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
@@ -146,7 +145,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             cell.Sfrac = sfrac_hold
             cell.Lfrac = lfrac_hold
             cell.firn_temperature = T_hold
-            assert_almost_equal(calc_mass_sum(cell), original_mass + (snow_depth * snow_rho))
+            assert abs(calc_mass_sum(cell) - original_mass + (snow_depth * snow_rho)) < (1.5 * 10**-7)
 
 def densification(cell, t_steps_per_day):
     """

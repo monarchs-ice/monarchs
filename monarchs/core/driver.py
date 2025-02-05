@@ -213,11 +213,12 @@ def update_met_conditions(
 
         # Check to make sure we are not going out of bounds
         for key in met_data.variables.keys():
-            if met_end_idx > len(met_data[key]):
-                raise IndexError(
-                    "monarchs.core.driver.main: met_end_idx > days * hours, i.e. your grid of meteorological data "
-                    "is too small for the number of timesteps you wish to run"
-                )
+            if key != 'cell_latitude' and key != 'cell_longitude':
+                if met_end_idx > len(met_data[key]):
+                    raise IndexError(
+                        "monarchs.core.driver.main: met_end_idx > days * hours, i.e. your grid of meteorological data "
+                        "is too small for the number of timesteps you wish to run"
+                    )
     return met_data_grid, met_data_len, snow_added
 
 

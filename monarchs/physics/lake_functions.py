@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.testing import assert_almost_equal
 from monarchs.physics.firn_functions import regrid_after_melt
 from monarchs.physics.surface_fluxes import sfc_flux, sfc_albedo
 from monarchs.physics import solver
@@ -228,7 +227,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     old_T_sfc = sfc_energy_lake_formation(T_air, Q, k, cell)
     new_mass = calc_mass_sum(cell)
-    assert_almost_equal(original_mass, new_mass)
+    assert abs(original_mass - new_mass) < (1.5 * 10**-7)
     if old_T_sfc >= 273.15 and Q > 0:  # melting occurring at the surface
         kdTdz = (
             (cell.firn_temperature[0] - cell.firn_temperature[1])
@@ -247,7 +246,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             cell, dHdt, lake=True
         )  # we reduce the firn height and add to the lake depth here
         new_mass = calc_mass_sum(cell)
-        assert_almost_equal(original_mass, new_mass)
+        assert abs(original_mass - new_mass) < (1.5 * 10**-7)
     # else:  # JE TODO - I think this might refreeze the lake somewhat if it hasn't fully formed yet? Otherwise the model
     #     # TODO - can get sort of stuck in a state where a lake hasn't fully formed, but is incapable of refreezing as
     #     # TODO - a virtual lid can't form.
@@ -264,7 +263,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     #     cell.lake_depth = max(cell.lake_depth, 0)
     #     new_mass = calc_mass_sum(cell)
     #     try:
-    #         assert_almost_equal(original_mass, new_mass) # actual, desired
+    #         assert abs(original_mass - new_mass) < (1.5 * 10**-7)
     #     except AssertionError:
     #         print('Row = ', cell.row, 'Column = ', cell.column, 'Timestep = ', cell.t_step)
     #         print(f'original_mass = {original_mass}, new_mass = {new_mass}')
@@ -304,7 +303,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     if cell.lake_depth >= 0.1:
         cell.lake = True
     new_mass = calc_mass_sum(cell)
-    assert_almost_equal(original_mass, new_mass)
+    assert abs(original_mass - new_mass) < (1.5 * 10**-7)
 
 def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     """
@@ -468,4 +467,4 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     cell.lake_temperature[-1] = 273.15  # bottom of lake is ice-lake boundary so set
     # to the freezing temperature
     new_mass = calc_mass_sum(cell)
-    assert_almost_equal(original_mass, new_mass)
+    assert abs(original_mass - new_mass) < (1.5 * 10**-7)
