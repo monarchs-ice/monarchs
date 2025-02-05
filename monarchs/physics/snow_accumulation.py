@@ -145,7 +145,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             cell.Sfrac = sfrac_hold
             cell.Lfrac = lfrac_hold
             cell.firn_temperature = T_hold
-            assert abs(calc_mass_sum(cell) - original_mass + (snow_depth * snow_rho)) < (1.5 * 10**-7)
+            assert abs(calc_mass_sum(cell) - (original_mass + (snow_depth * snow_rho))) < (1.5 * 10**-7)
 
 def densification(cell, t_steps_per_day):
     """
