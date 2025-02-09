@@ -154,7 +154,7 @@ def get_spec():
         ("dew_point_temperature", float64[:]),
         ("LW_down", float64[:]),
         ("SW_down", float64[:]),
-        ("latitude", float64),
-        ("longitude", float64),
+        ("lat", float64),
+        ("lon", float64),
     ]
     return spec
