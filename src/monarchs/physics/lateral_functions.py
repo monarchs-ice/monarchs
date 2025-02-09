@@ -332,7 +332,7 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
     )
     if cell.lake:  # remove water from the lake directly.
         water_out = np.copy(water_to_move)
-        if cell.lake_depth > water_to_move:
+        if cell.lake_depth < water_to_move:
             water_to_move = cell.lake_depth
             temporary_cell.lake_depth -= water_to_move
             water_out = water_to_move
