@@ -409,7 +409,8 @@ lateral processes. By default these should all be on unless specified, but you m
         it can no longer move.
 
 
-### Other flags - mostly for testing
+Other flags - mostly for testing
+------------------------------------------------------
 
 This section includes miscellaneous flags that have been used during the development of MONARCHS to test certain things, but have been
 and retained as possible configuration flags for testing purposes for other users. These can be entirely ignored.

@@ -4,10 +4,11 @@ If MONARCHS has been installed via ``pip`` or ``conda``, you can run the model u
 
 ``monarchs``
 
-or by navigating to the MONARCHS root folder and doing
+or via
 
-``python run_MONARCHS.py``
+``python <path_to_src_folder>/run_MONARCHS.py``
 
+where `<path_to_src_folder>` is the full or relative path to run_MONARCHS.py in `monarchs/src`.
 This assumes that your runscript (:doc:`MONARCHS_model_setup`) is in the folder you are currently in.  If your model
 setup script has a different name or is in a different folder, you can pass the name of that folder to the code
 by using:
@@ -45,3 +46,5 @@ to use ``cores = 'all'`` to ensure that you use all of the cores you have availa
 
 Attempting to do mpirun with more than 1 process will result in several processes running the whole code, which will result
 in an attempt to spawn ``<cores>`` processes for each of the N processes you create with the call to ``mpirun``.
+
+Currently this implementation does not work on ARCHER2 - this is a known issue and is being worked on.

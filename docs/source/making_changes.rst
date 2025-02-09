@@ -2,21 +2,26 @@
 
 Making changes to MONARCHS
 ====================================
+Some of the below is only relevant if you want your change to be merged into the main branch of MONARCHS, or you want
+your changes to benefit from the performance gains obtained by using Numba.
+
 
 Adding new diagnostics or physics
 **********************************
 
 If adding new variables to the code, you will need to do the following:
     - Add the variable into the ``IceShelf`` class, found in ``monarchs.core.iceshelf_class``, and initialising it if appropriate in ``monarchs.core.initial_conditions.create_model_grid``.
-    - Add the variable into ``spec``, found in ``monarchs.core.iceshelf_class.get_spec()``, including its ``dtype``. Compare with other variables in ``spec`` for the syntax. This step is essential for the code to work with Numba support.
     - Add the variable into the model code itself. This likely involves making the relevant changes to the various files/functions in ``monarchs.physics``.
     - If your new variable is a diagnostic, add the variable to ``vars_to_save`` in your runscript, so that the code knows to track it over time and save it to the output netCDF file.
     - If your new variable relies on a toggle or other ``model_setup`` variable, set a default value for this in ``monarchs.core.configuration.create_defaults_for_missing_flags``.
+If using Numba:
+    - Add the variable into ``spec``, found in ``monarchs.core.iceshelf_class.get_spec()``, including its ``dtype``. Compare with other variables in ``spec`` for the syntax. This step is essential for the code to work with Numba support.
 
 Adding functions
 ****************
 
-#### Numba support
+Numba support
+-------------
 (first, see :doc:`numba` for some background information).
 If Numba support is useful for your change, consult [the Numba documentation](https://numba.readthedocs.io/en/stable/user/5minguide.html#will-numba-work-for-my-code) to ensure that your code uses only pure Python and `numpy` functions.
 Using other modules (e.g. `scipy`) is not supported by Numba, and therefore the code won't work with the `use_numba` optimisation flag set in `model_setup.py`. This will mean that the model as a whole runs slower.
@@ -24,6 +29,7 @@ Using other modules (e.g. `scipy`) is not supported by Numba, and therefore the 
 If your function is included within any of the existing `physics` modules (with the exception of `heateqn` and `solver`), or within `utils` or `timestep` in `core`, then provided that it fits the Numba specifications, Numba support should be
 automatic, i.e. MONARCHS will automatically try and jit the function. If you add a function that you specifically do not want to apply Numba decoration to (e.g. the code is not called by other Numba code and contains incompatible code),
 you can ensure that this step is avoided using the `do_not_jit` decorator in `core.utils`.
+
 Merging your changes into the MONARCHS source
 *********************************************
 

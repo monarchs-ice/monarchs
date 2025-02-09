@@ -21,6 +21,9 @@ model developers.
 The model source code is located in the `monarchs` folder. The model initial conditions and attributes are included 
 in `model_setup.py`. 
 
+If you have any feedback or issues, please submit via Github Issues if a problem with the code, or email j.d.elsey@leeds.ac.uk
+for help setting up on HPC systems etc.
+
 Todos
 -----
 - Validation tests (Moussavi lakes)

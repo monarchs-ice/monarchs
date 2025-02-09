@@ -58,7 +58,7 @@ Instead of cloning the repo and installing the requirements yourself, you can ge
 contains a barebones Linux distribution, with all of the required libraries (including a Fortran compiler and MPI
 implementation) pre-installed.
 
-To obtain this, # TODO - instructions here
+To obtain this, please email j.d.elsey@leeds.ac.uk for access as the image is currently private.
 
 On HPC systems, you likely won't have Docker installed, but may have Singularity or Apptainer.
 You can obtain the repo with Singularity (replace ``singularity`` with ``apptainer`` if required) via

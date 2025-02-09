@@ -29,7 +29,7 @@ For more details on the runscript, see :doc:`model_setup_reference`.
 Inputting meteorological data
 =============================
 This input data should be specified hourly, if possible. If using data at a lower temporal resolution, specify
-``met_timestep`` in your runscript. See the detailed ``model_setup.py`` documentation for details. # TODO - link to this
+``met_timestep`` in your runscript. See the detailed ``model_setup.py`` documentation for details. :doc:`model_setup_reference`
 Alternatively, a python Dictionary object can be passed in, with the dict values being a set of Numpy arrays and the
 keys in the same format as ERA5. The Numpy arrays should be of dimension(time) or
 dimension(<time, row_amount>, <col_amount>). In the former case, at each timestep, the value will be used over the
