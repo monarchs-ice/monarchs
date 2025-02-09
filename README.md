@@ -7,7 +7,7 @@ MOdel of aNtARtic iCe shelf Hydrology and Stability
 Code associated with the ice shelf surface hydrology model MONARCHS. Please check out the documentation at the
 [MONARCHS website](https://monarchs-ice.github.io/monarchs) for more info on setting up and running the model, and how best to contribute.
 
-MONARCHS was developed by [Sammie Buzzard](https://www.northumbria.ac.uk/about-us/our-staff/b/sammie-buzzard/) at Northumbria University and [Jon Elsey](https://profiles.cardiff.ac.uk/staff/elseyj1) at the University of 
+MONARCHS was developed by [Sammie Buzzard](https://www.northumbria.ac.uk/about-us/our-staff/b/sammie-buzzard/) at Northumbria University and [Jon Elsey](https://environment.leeds.ac.uk/see/staff/12908/dr-jon-elsey) at the University of 
 Leeds (both formerly Cardiff University), in collaboration with Alex Robel and the [Ice and Climate](https://iceclimate.eas.gatech.edu/) group at 
 Georgia Tech.
 
@@ -23,29 +23,32 @@ in `model_setup.py`.
 
 Todos
 -----
-- Change protection settings on Github repo. Once the model is published, any commits will need to be on a separate
-branch, and then merged into `main` via a pull request, with at least one reviewer
-signing off on it. This will ensure that any commits pass tests! This will also ensure that we don't submit tests 
-constantly to the Github Actions runner. At the moment, the runner is only activated when a push or pull request
-is made to `main`.
 - Validation tests (Moussavi lakes)
 - How to handle DEMs with large vertical changes - e.g. 100m-0m firn.
 - Type hints 
 - Full unit test suite
 - Longer term - a MONARCHS GUI may be really handy for specifying the inputs in model_setup.
-
+- MPI - still WIP to get working on e.g. ARCHER2
 
 Installation
 ------------
-You can install MONARCHS on your system by cloning this repository and from the project root folder do
+I recommend setting up a new virtual environment and using it for MONARCHS only, to avoid dependency issues. You 
+can do this using `conda create -n monarchs python=3.9` or `python -m venv monarchs`.
 
-`pip install -e .`
+You can install MONARCHS and its core dependencies on your system by cloning this repository and from the project root folder do
+
+`python -m pip install -e .`
+
+Note that this requires an up-to-date version of `pip` (e.g. if you get an error related to `pyproject.toml`-based projects).
+You may first need to do
+
+`python -m pip install --upgrade pip`.
 
 If you want changes you have made to be picked up on your system, ensure that you use the `-e` flag when installing. See `pyproject.toml` for details.
 
 In future, it will be possible to install a stable, version of MONARCHS with all its dependencies by doing 
 
-`pip install monarchs`
+`python -m pip install monarchs`
 
 or 
 
@@ -54,16 +57,14 @@ or
 It is still recommended to clone the repository and install with `pip install -e .` if you are intending to make 
 changes to the model source code.
 
-## Installing dependencies
-I recommend setting up a new virtual environment and using it for MONARCHS only, to avoid dependency issues.
+## Installing optional dependencies
+The simplest way to install the extra MONARCHS dependencies from an existing build is doing
 
-The simplest way to install the MONARCHS dependencies is doing
+`python -m pip install -r requirements.txt`
 
-`pip install -r requirements.txt`
+Alternatively, you can install MONARCHS from scratch with all optional dependencies using 
 
-Alternatively, you can install MONARCHS with its dependencies using 
-
-`pip install -e .[mpi, numba]`
+`python -m pip install -e .[mpi,numba]`
 
 Some systems may be incompatible with certain libraries. For example. the install will fail on ```NumbaMinpack```
 if you don't have a Fortran/C++ compiler. 
@@ -97,14 +98,15 @@ where `<path_to_runscript>` is the location of a file with the model running par
 You can use `-i` as shorthand for `--input_path`. 
 
 You may omit `--input_path` entirely if your runscript is called `model_setup.py` and is in the same folder you run 
-MONARCHS from.
+MONARCHS from. In general, it is recommended to use a separate runscript for each run, and point to these directly.
 
 
 
 ## Plotting output
-
 To plot output, you can do this yourself by adding your relevant plotting functionality to run_MONARCHS.py, 
-or there are some functions provided in `/plots` which can help you with this. This is WIP.
+or there are some functions provided in `/plots` which can help you with this. This is WIP. Additionally, in `/scripts` 
+there is a script `debug_model_state` which is useful for loading in a snapshot of the model state and plotting it out,
+e.g. for looking for the presence of melt lakes quickly.
 
 ## Issues and pull requests
 Please, if possible, submit problems/feature requests via GitHub Issues rather than email.
