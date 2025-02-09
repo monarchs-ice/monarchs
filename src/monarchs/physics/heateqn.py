@@ -100,6 +100,7 @@ def heateqn(x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind):
         - x[len(x) - 1]
         + dt * (kappa[len(x) - 1] / dz**2) * (-x[len(x) - 1] + x[len(x) - 2])
     )
+
     return output
 
 
@@ -167,6 +168,7 @@ def heateqn_fixedsfc(x, cell, dt, dz, T_sfc):
         + dt * (kappa[len(x) - 1] / dz**2) * (-x[len(x) - 1] + x[len(x) - 2])
     )
     # exit()
+
     return output
 
 

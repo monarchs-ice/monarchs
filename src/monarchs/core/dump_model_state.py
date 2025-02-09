@@ -108,7 +108,7 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
         met_end_write[:] = met_end_idx
 
 
-def reload_state(fname, grid):
+def reload_state(fname, grid, keys='all'):
     """
     Loads in the netCDF file containing the model state, and loads the data into
     the format required for MONARCHS to function. This allows us to restart the model in the event of a failure.
@@ -121,7 +121,8 @@ def reload_state(fname, grid):
         Filename we want to load our data from.
     grid : List, or numba.typed.List
         grid of IceShelf objects to update with the reloaded values
-
+    keys: list, optional
+        List of keys to load in from the netCDF file. If not specified, all keys will be loaded in.
     Returns
     -------
     grid : List, or numba.typed.List
@@ -161,7 +162,10 @@ def reload_state(fname, grid):
             "L_ice",
             "iteration",
         ]
-        desired_keys = [key for key in data.variables.keys() if key not in scalars]
+        if keys == 'all':
+            desired_keys = [key for key in data.variables.keys() if key not in scalars]
+        else:
+            desired_keys = keys
         print(f"monarchs.core.dump_model_state.reload_state: ")
 
         for key in desired_keys:

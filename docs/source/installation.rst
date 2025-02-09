@@ -7,30 +7,30 @@ The best way to get MONARCHS if you are planning on developing/changing the code
 .. code-block:: console
 
     git clone https://github.com/monarchs-ice/MONARCHS
-and doing
+and doing (ideally in a new virtual environment)
 
 .. code-block:: console
 
-    pip install -e .
+    python -m pip install -e .
 from the top level MONARCHS folder.
 
-To install the required modules to get MONARCHS to work, It is best set up a new pip or conda virtual environment, and then doing either:
-
+To install the required modules to get MONARCHS to work (if it doesn't work after doing `pip install -e .`,
+you can install the required modules using:
 .. code-block:: console
 
-    pip install -r requirements.txt
+    python -m pip install -r requirements.txt
     conda install --yes --file requirements.txt
 
 Alternatively, you can install MONARCHS with its dependencies in one line using (from the top level MONARCHS folder):
 
 .. code-block:: console
 
-    pip install -e .[netcdf,mpi,numba,multithreading,dem]
+    pip install -e .[mpi,numba]
 
 .. note::
     Not all of the modules in requirements.txt are required to make MONARCHS work, but are required to enable certain features.
     If ``pip install -r requirements.txt`` fails on either of the following, MONARCHS will still work, but only without the
-    relevant ``model_setup`` flags enabled.
+    relevant ``model_setup`` flags enabled. MPI is suggested only for running on HPC systems.
 
 .. warning::
     The install will fail on ``NumbaMinpack`` if you don't have a Fortran/C++ compiler.

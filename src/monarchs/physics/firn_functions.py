@@ -7,6 +7,7 @@ import numpy as np
 from monarchs.physics.percolation_functions import percolation
 from monarchs.physics.surface_fluxes import sfc_flux
 from monarchs.physics import solver
+from monarchs.core.utils import calc_mass_sum
 
 def firn_column(
     cell,
@@ -70,7 +71,7 @@ def firn_column(
     -------
     None (amends cell inplace)
     """
-
+    original_mass = calc_mass_sum(cell)
     percolation_toggle = toggle_dict["percolation_toggle"]
     # spinup = toggle_dict["spinup"]
     perc_time_toggle = toggle_dict["perc_time_toggle"]
@@ -123,7 +124,8 @@ def firn_column(
         percolation(cell, dt, perc_time_toggle=perc_time_toggle)
 
     cell.rho = cell.Sfrac * cell.rho_ice + cell.Lfrac * cell.rho_water
-
+    new_mass = calc_mass_sum(cell)
+    assert abs(original_mass - new_mass) < (1.5 * 10**-7)
 
 def regrid_after_melt(cell, height_change, lake=False):
     """
@@ -147,6 +149,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     -------
     None
     """
+    original_mass = calc_mass_sum(cell)
     # Removes melted portion of domain and regrids remaining domain to regular grid
     dz_old = cell.firn_depth / cell.vert_grid
     old_firn_depth = cell.firn_depth + 0
@@ -168,16 +171,19 @@ def regrid_after_melt(cell, height_change, lake=False):
     sfrac_hold = np.zeros(np.shape(cell.Sfrac))
     lfrac_hold = np.zeros(np.shape(cell.Lfrac))
     T_hold = np.zeros(np.shape(cell.firn_temperature))
+    if np.isnan(cell.firn_temperature).any():
+        print(cell.firn_temperature)
+        raise ValueError("NaN in firn temperature before regridding")
 
     for i in range(len(cell.Sfrac) - 1):
         if (
             height_change > (i + 1) * dz_old
         ):  # whole layer melts - so it no longer exists
             print(
-                "Whole layer melted - x = ",
-                cell.x,
-                "y = ",
-                cell.y,
+                "Whole layer melted - column = ",
+                cell.column,
+                "row = ",
+                cell.row,
                 "layer = ",
                 i,
             )
@@ -193,6 +199,17 @@ def regrid_after_melt(cell, height_change, lake=False):
         weight_2 = (old_firn_depth - ((i + 1) * dz_old)) - (
             cell.firn_depth - ((i + 1) * dz_new)
         )  # old bottom of upper layer - new bottom of upper layer
+        if weight_1 < 0:
+            if weight_1 > -1E-9:
+                weight_1 = 0
+            else:
+                raise ValueError('Regridding weight 1 is negative and exceeds tolerance')
+        if weight_2 < 0:
+            if weight_2 > -1E-9:
+                weight_2 = 0
+            else:
+                raise ValueError('Regridding weight 2 is negative and exceeds tolerance')
+
         lfrac_hold[i] = (
             (cell.Lfrac[i] * weight_1) + (cell.Lfrac[i + 1] * weight_2)
         ) / (weight_1 + weight_2)
@@ -210,7 +227,14 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     cell.Sfrac = sfrac_hold
     cell.Lfrac = lfrac_hold
+
     cell.firn_temperature = T_hold
+    if np.isnan(T_hold).any():
+        print(T_hold)
+        print(cell.firn_temperature)
+        print(cell.column)
+        print(cell.row)
+        raise ValueError("NaN in firn temperature after regridding")
     # add meltwater to surface Lfrac
     cell.Lfrac[0] += meltwater
 
@@ -221,20 +245,24 @@ def regrid_after_melt(cell, height_change, lake=False):
             cell.lake_depth += excess_water * (cell.firn_depth / cell.vert_grid)
             # print('Excess water depth = ', excess_water * (cell.firn_depth / cell.vert_grid))
             cell.Lfrac[0] = 1 - cell.Sfrac[0]
+        assert abs(calc_mass_sum(cell) - original_mass) < (1.5 * 10**-7)
 
+    if np.isnan(cell.firn_temperature).any():
+        print(cell.firn_temperature)
+        raise ValueError("NaN in firn temperature after regridding")
     # error checking
     if np.any(cell.Sfrac > 1.00000000001):
         where = np.where(cell.Sfrac > 1)
         print(where[0])
         print("Old Sfrac = ", bs[where])
         print("Sfrac = ", cell.Sfrac[where])
-        print("x = ", cell.x, "y = ", cell.y)
+        print("x = ", cell.column, "y = ", cell.row)
         print("height change = ", height_change)
         print("dz old = ", dz_old)
         print("firn depth = ", cell.firn_depth)
         raise ValueError("Sfrac > 1 in firn regridding")
     cell.vertical_profile = np.linspace(0, cell.firn_depth, cell.vert_grid)
-
+    assert abs(calc_mass_sum(cell) - original_mass) < (1.5 * 10**-7)
 
 def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, surf_T):
     """

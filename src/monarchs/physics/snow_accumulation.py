@@ -6,7 +6,7 @@ Created on Tue May  9 17:04:04 2023
 """
 
 import numpy as np
-
+from monarchs.core.utils import calc_mass_sum
 
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
@@ -37,6 +37,11 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             cell.lake_depth += snow_depth * snow_rho / cell.rho_water
             # TODO - lake temperature change due to snow falling
         else:
+            original_mass = calc_mass_sum(cell)
+            orig_liquid = np.sum((cell.Lfrac * cell.rho_water * (cell.firn_depth / cell.vert_grid)))
+            orig_solid = np.sum((cell.Sfrac * cell.rho_ice * (cell.firn_depth / cell.vert_grid)))
+            old_sfrac = np.copy(cell.Sfrac)
+            old_sfrac_0 = cell.Sfrac[0]
             # Set temperature just below freezing if it is somehow above 0 degrees, which it shouldn't be
             # if we don't do this, we can run into errors when solving the heat equation later
             if snow_T > 273.15:
@@ -48,6 +53,12 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             # add height to the firn
             cell.firn_depth += snow_depth
             dz_new = cell.firn_depth / cell.vert_grid
+            # create a new layer for the firn depth
+
+            # Write some code to interpolate the new snow into the existing firn profile. This should conserve mass,
+            # so that the sum of the mass of the firn and the snow is equal to the mass of the firn before the snow was
+            # added. This is done by weighting the mass of the new snow and the mass of the existing firn in each layer
+            # by the proportion of the new cell that is made up by the old cells.
 
             # First interpolate the existing profiles
             sfrac_hold = np.zeros(np.shape(cell.Sfrac))
@@ -67,7 +78,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             weight1 = snow_depth
             weight2 = dz_old
             cell.Sfrac[0] = (
-                weight1 * (snow_rho / cell.rho_ice) + weight2 * cell.Sfrac[0]
+                weight1 * (snow_rho / cell.rho_ice) + (weight2 * cell.Sfrac[0])
             ) / (weight1 + weight2)
 
             # error handling
@@ -96,10 +107,10 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             for i in range(1, len(cell.Sfrac)):
                 weight_1 = (
                     cell.firn_depth - (i * dz_new) - (old_firn_depth - (i * dz_old))
-                )  # new top of upper layer - bottom of upper layer
-                weight_2 = (old_firn_depth - (i * dz_old)) - (
-                    cell.firn_depth - ((i + 1) * dz_new)
-                )  # old bottom of upper layer - new bottom of upper layer
+                )  # new top of upper layer - bottom of old upper layer
+                weight_2 = (old_firn_depth - (i * dz_old)) - (cell.firn_depth - ((i + 1) * dz_new))
+                # old bottom of upper layer - new bottom of upper layer
+
                 lfrac_hold[i] = (
                     (cell.Lfrac[i - 1] * weight_1) + cell.Lfrac[i] * weight_2
                 ) / (weight_1 + weight_2)
@@ -134,7 +145,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             cell.Sfrac = sfrac_hold
             cell.Lfrac = lfrac_hold
             cell.firn_temperature = T_hold
-
+            assert abs(calc_mass_sum(cell) - (original_mass + (snow_depth * snow_rho))) < (1.5 * 10**-7)
 
 def densification(cell, t_steps_per_day):
     """

@@ -32,7 +32,7 @@ extensions = [
 
 extensions.append("autoapi.extension")
 
-autoapi_dirs = ["../../monarchs"]
+autoapi_dirs = ["../../src/monarchs"]
 autoapi_ignore = ["*venv*", "*.run*", "*data*", "*conf.py*", "tests"]
 # autosummary_generate = True # Turn on sphinx.ext.autosummary
 # autoapi_keep_files = True

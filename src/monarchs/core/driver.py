@@ -24,7 +24,7 @@ from monarchs.core import configuration, initial_conditions
 from monarchs.core.dump_model_state import dump_state, reload_state
 from monarchs.core.model_output import setup_output, update_model_output
 from monarchs.core.loop_over_grid import loop_over_grid
-from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct, check_energy_conservation
+from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct
 from monarchs.met_data.metdata_class import initialise_met_data_grid
 from monarchs.physics import lateral_functions
 
@@ -84,6 +84,8 @@ def setup_toggle_dict(model_setup):
     toggle_dict["perc_time_toggle"] = model_setup.perc_time_toggle
     toggle_dict["densification_toggle"] = model_setup.densification_toggle
     toggle_dict["ignore_errors"] = model_setup.ignore_errors
+    toggle_dict['use_mpi'] = model_setup.use_mpi
+
     return toggle_dict
 
 
@@ -137,7 +139,6 @@ def check_for_reload_state(model_setup, grid, met_start_idx, met_end_idx):
         first_iteration = 0
         reload_dump_success = False
         grid = grid
-        print(grid)
     # Return everything in both cases - if we haven't reloaded from dump we just return the initial state
     return grid, met_start_idx, met_end_idx, first_iteration, reload_dump_success
 
@@ -164,7 +165,7 @@ def get_num_cores(model_setup):
 
 
 def update_met_conditions(
-    model_setup, grid, met_start_idx, met_end_idx, start=True, snow_added=0
+    model_setup, grid, met_start_idx, met_end_idx, start=False, snow_added=0
 ):
     """
 
@@ -184,7 +185,7 @@ def update_met_conditions(
 
         if start:
             met_start_idx = met_start_idx % met_data_len
-        print('Start idx for met data = ',met_start_idx)
+        print('Start idx for met data = ', met_start_idx)
         # Initial met conditions
         # call .data so we get a Numpy ndarray, not a numpy masked array. This is crucial for Numba support
         met_data_grid = initialise_met_data_grid(
@@ -198,24 +199,26 @@ def update_met_conditions(
             met_data.variables["dew_point_temperature"][met_start_idx:met_end_idx].data,
             met_data.variables["LW_surf"][met_start_idx:met_end_idx].data,
             met_data.variables["SW_surf"][met_start_idx:met_end_idx].data,
+            met_data.variables['cell_latitude'][:].data,
+            met_data.variables['cell_longitude'][:].data,
             model_setup.use_numba
         )
         # initialise total mass calculation - check how much snow was added during the next iteration and add it
         for i in range(len(grid)):
             for j in range(len(grid[0])):
                 if grid[i][j].valid_cell:
-                    snow_added += np.sum(
-                        met_data.variables["snow_dens"][met_start_idx:met_end_idx, i, j]
-                        * met_data.variables["snowfall"][met_start_idx:met_end_idx, i, j]
-                    )
+                    snow_array = (np.array(met_data.variables["snow_dens"][met_start_idx:met_end_idx, i,j]) *
+                    np.array(met_data.variables["snowfall"][met_start_idx:met_end_idx, i, j]))
+                    snow_added += np.sum(snow_array)
 
         # Check to make sure we are not going out of bounds
         for key in met_data.variables.keys():
-            if met_end_idx > len(met_data[key]):
-                raise IndexError(
-                    "monarchs.core.driver.main: met_end_idx > days * hours, i.e. your grid of meteorological data "
-                    "is too small for the number of timesteps you wish to run"
-                )
+            if key != 'cell_latitude' and key != 'cell_longitude':
+                if met_end_idx > len(met_data[key]):
+                    raise IndexError(
+                        "monarchs.core.driver.main: met_end_idx > days * hours, i.e. your grid of meteorological data "
+                        "is too small for the number of timesteps you wish to run"
+                    )
     return met_data_grid, met_data_len, snow_added
 
 
@@ -285,6 +288,8 @@ def print_model_end_of_timestep_messages(
             "Original mass accounting for catchment outflow = ",
             total_mass_start - catchment_outflow,
         )
+    else:
+        print("Original mass = ", total_mass_start)
 
     print(f"Time at end of day {day + 1} is {toc - tic:0.4f} seconds")
     print("Firn depth = ", get_2d_grid(grid, "firn_depth"))
@@ -340,7 +345,7 @@ def main(model_setup, grid):
     met_start_idx = 0
     met_end_idx = model_setup.t_steps_per_day
     # very likely 24h, so we get one days worth of data each time
-
+    output_counter = 0  # Index for output file
     # Check if we want to shrink output
     if hasattr(model_setup, "output_grid_size"):
         output_grid_size = model_setup.output_grid_size
@@ -368,7 +373,7 @@ def main(model_setup, grid):
     # dump file, and convert some of the model_setup switches into a dictionary so the model can read it later
     snow_added = 0
     met_data_grid, met_data_len, snow_added = update_met_conditions(
-        model_setup, grid, met_start_idx, met_end_idx, start=True
+        model_setup, grid, met_start_idx, met_end_idx, start=True, snow_added=snow_added
     )
     toggle_dict = setup_toggle_dict(model_setup)
 
@@ -444,6 +449,7 @@ def main(model_setup, grid):
                 model_setup.lat_grid_size,
                 model_setup.lateral_timestep,
                 catchment_outflow=model_setup.catchment_outflow,
+                flow_into_land=model_setup.flow_into_land,
                 lateral_movement_percolation_toggle=model_setup.lateral_movement_percolation_toggle,
             )
 
@@ -467,6 +473,7 @@ def main(model_setup, grid):
         met_end_idx = (day + 2) * model_setup.t_steps_per_day % (met_data_len)
         if met_start_idx > met_end_idx:
             met_end_idx = met_data_len
+
         met_data_grid, met_data_len, snow_added = update_met_conditions(
             model_setup, grid, met_start_idx, met_end_idx, snow_added=snow_added
         )
@@ -481,10 +488,11 @@ def main(model_setup, grid):
         # By default, we save at every timestep.
 
         if model_setup.save_output and day % model_setup.output_timestep == 0:
+            output_counter += 1
             update_model_output(
                 model_setup.output_filepath,
                 grid,
-                day,
+                output_counter,
                 vars_to_save=model_setup.vars_to_save,
                 vert_grid_size=output_grid_size,
             )
@@ -529,7 +537,6 @@ def initialise(model_setup):
         lats=lat_array,
         lons=lon_array,
     )
-    print(grid[0][0].firn_depth)
     return grid
 
 

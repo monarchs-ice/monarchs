@@ -222,8 +222,8 @@ class IceShelf:
         """
         # y is 'i' in matrix (column), x is 'j' (row)
         # Variables
-        self.x = x  # x coordinate of cell on grid
-        self.y = y  # y coordinate of cell on grid
+        self.column = x  # x (column) coordinate of cell on grid
+        self.row = y  # y (row) coordinate of cell on grid, i.e. in grid[row][col]
         self.firn_depth = firn_depth  # Firn column height
         self.vert_grid = vert_grid  # Number of vertical grid cells
         self.vertical_profile = np.linspace(0, self.firn_depth, self.vert_grid)
@@ -352,8 +352,8 @@ def get_spec():
     from numba import int32, float64, boolean
     from numba.types import string
     spec = [
-        ("x", int32),
-        ("y", int32),
+        ("column", int32),
+        ("row", int32),
         ("firn_depth", float64),
         ("vert_grid", int32),
         ("vertical_profile", float64[:]),

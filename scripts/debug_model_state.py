@@ -1,18 +1,17 @@
-from monarchs.core.dump_model_state import reload_state
-from monarchs.core.utils import get_2d_grid
+from monarchs.core import reload_state
+from monarchs.core import get_2d_grid
 from matplotlib import pyplot as plt
-import numpy as np
 
-path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/dump_archer2.nc'
-
+path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_030225/dump.nc'
+path = "C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_030225/38m_dem/progress.nc"
 
 # Set up a dummy IceShelf instance, create a grid of these, then write out our dumpfile into this.
 class IceShelf():
     pass
 
 
-row_amount = 50
-col_amount = 50
+row_amount = 100
+col_amount = 100
 
 grid = []
 for i in range(col_amount):
@@ -21,7 +20,7 @@ for i in range(col_amount):
         _l.append(IceShelf())
     grid.append(_l)
 
-test, _, _, _ = reload_state(path, grid)
+test, _, _, _ = reload_state(path, grid, keys=['lake_depth', 'firn_depth', 'lid_depth', 'lake', 'lid', 'v_lid'])
 
 # Now we can interact with the model, plot stuff out etc.
 lakedepth = get_2d_grid(grid, 'lake_depth')

@@ -122,10 +122,10 @@ def check_correct(cell):
         raise ValueError("Lake depth must not be negative \n")
     if cell.firn_depth < 0:
         print(
-            "Error: x = ",
-            cell.x,
-            ", y = ",
-            cell.y,
+            "Error: column = ",
+            cell.column,
+            ", row = ",
+            cell.row,
             ", firn_depth = ",
             cell.firn_depth,
             "\n",
@@ -140,7 +140,7 @@ def check_correct(cell):
     if np.any(cell.Sfrac[cell.Sfrac < -0.01]) or np.any(cell.Sfrac[cell.Sfrac > 1.01]):
         print(
             f"{np.max(cell.Sfrac)} at level {np.where((cell.Sfrac > 1) | (cell.Sfrac < 0))},"
-            f" x = {cell.x}, y = {cell.y}\n"
+            f" x = {cell.column}, y = {cell.row}\n"
         )
         print("Minimum Sfrac = ", np.min(cell.Sfrac))
         raise ValueError(

@@ -24,21 +24,16 @@ in `model_setup.py`.
 Todos
 -----
 - Change protection settings on Github repo. Once the model is published, any commits will need to be on a separate
-branch, and then merged into `main` (need to rename `master` also) via a pull request, with at least one reviewer
+branch, and then merged into `main` via a pull request, with at least one reviewer
 signing off on it. This will ensure that any commits pass tests! This will also ensure that we don't submit tests 
 constantly to the Github Actions runner. At the moment, the runner is only activated when a push or pull request
-is made to `master`.
-- As an aside, need to rename `master` to `main` in `.github/workflows/python-package.yml`.
-- An additional side effect is that it means that any commits or PRs made to `main` can be pushed to PyPI or 
-conda-forge, or to make the Docker image. 
+is made to `main`.
 - Validation tests (Moussavi lakes)
 - How to handle DEMs with large vertical changes - e.g. 100m-0m firn.
 - Type hints 
 - Full unit test suite
 - Longer term - a MONARCHS GUI may be really handy for specifying the inputs in model_setup.
-- Also longer term - proper MPI support. The idea here is to do something akin to a hybrid MPI+OpenMP approach,
-i.e. do one MPI task per node, and then distribute the columns using OpenMP-like threads (separate Numba prange calls
-or pathos Pools in each MPI task)
+
 
 Installation
 ------------
@@ -68,7 +63,7 @@ The simplest way to install the MONARCHS dependencies is doing
 
 Alternatively, you can install MONARCHS with its dependencies using 
 
-`pip install -e .[netcdf,mpi,numba,multithreading,dem]`
+`pip install -e .[mpi, numba]`
 
 Some systems may be incompatible with certain libraries. For example. the install will fail on ```NumbaMinpack```
 if you don't have a Fortran/C++ compiler. 
@@ -77,12 +72,12 @@ To solve, on Windows, you need to get a Fortran compiler. See https://fortran-la
 On linux, doing ```apt-get install gfortran build-essential``` will work.
 
 Alternatively, do
-`pip install -e .[netcdf,mpi,multithreading,dem]`, i.e. omitting `numba`, and run with `use_numba = False` in all 
+`pip install -e .`, and run with `use_numba = False` in all 
 of your runscripts.
 
 The installation will fail on ```mpi4py``` if you don't have a working MPI installation. On Windows, you need to install
 https://learn.microsoft.com/en-us/message-passing-interface/microsoft-mpi
-On Linux, ```apt-get install mpich``` should suffice.
+On Linux, ```apt-get install mpich``` should suffice. This is only suggested for advanced users running on HPC systems.
 
 It should be re-iterated that neither NumbaMinpack nor Pyina are required to be installed for the code to run, 
 provided that you set ```use_numba = False``` and/or ```use_mpi = False``` in your runscript (see below).

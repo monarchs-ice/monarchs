@@ -7,12 +7,10 @@ import numpy as np
 
 from monarchs.core.utils import check_correct
 from monarchs.physics import (
-    lake_functions,
-    lid_functions,
-    snow_accumulation,
-    firn_functions,
-    solver
+    snow_accumulation
 )
+from monarchs.physics import firn_functions, lake_functions, solver, lid_functions
+
 
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """
@@ -67,12 +65,13 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     # of the physics here, so we just return and move onto the next cell
 
     if not cell.valid_cell:
-        # print(f'Skipping over invalid cell at x = {cell.x}, y = {cell.y}')
+        # print(f'Skipping over invalid cell at x = {cell.column}, y = {cell.row}')
         if parallel and not use_numba:
             return cell
         else:
             return
-
+    if np.isnan(cell.firn_temperature).any():
+        raise ValueError('NaN in firn temperature')
     # TODO:
     # We can have a situation where lateral movement of water can completely
     # drain a lake. If this is the case, we need to turn exposed_water to False.
@@ -148,7 +147,19 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             x = cell.firn_temperature
 
             if firn_heat_toggle:
-                cell.firn_temperature = solver.firn_heateqn_solver(x, args, fixed_sfc=True)[0]
+                sol, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True)
+                if success:
+                    cell.firn_temperature = sol
+                else:
+                    print('Warning - solver failed to converge - lake development')
+                    print(x)
+                    print(cell.lake)
+                    print(cell.lid)
+                    print(cell.lake_depth)
+                    print(success)
+                    print(cell.firn_depth)
+                    print(cell.firn_temperature)
+
 
             cell.rho = cell.Sfrac * cell.rho_ice + cell.Lfrac * cell.rho_water
 
@@ -177,7 +188,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             elif (
                 cell.lake is True and cell.lid is False
             ):  # Lake present, but no frozen lid
-                # print('lake development', 'x = ', cell.x, 'y = ', cell.y)
+                # print('lake development', 'x = ', cell.column, 'y = ', cell.row)
                 if lake_development_toggle:
                     lake_functions.lake_development(
                         cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind

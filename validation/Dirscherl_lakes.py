@@ -15,15 +15,19 @@ for iceshelf in iceshelves:
     im = gt.GeoTiff(f"AntarcticLakes/{iceshelf}/202001_1_max_extent.tif")
     print(f'{iceshelf} coordinates ((min long, min lat), (max long, max lat)):', im.tif_bBox_converted)
     projection = ccrs.PlateCarree()
+    area_box = ((-69.5, -72.3), (-66.5, -71.25))
+    lake_data = np.array(im.read_box(area_box))
+
+    lons, lats = im.get_coord_arrays(area_box)
+    plt.figure()
+    plt.imshow(lake_data)
+
     fig = plt.figure()
     cmap = "viridis"
     projection = ccrs.PlateCarree()
     # first panel
-    area_box = ((-69.5, -72.3), (-66.5, -71.25))
-    lons, lats = im.get_coord_arrays(area_box)
-    ax = fig.add_subplot(111, projection=projection)
-    lake_data = np.array(im.read_box(area_box))
 
+    ax = fig.add_subplot(111, projection=projection)
     cont = ax.contourf(
         lons,
         lats,

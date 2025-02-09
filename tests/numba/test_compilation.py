@@ -2,7 +2,8 @@ import numpy as np
 
 
 def run(model_setup):
-    from monarchs.core import initial_conditions, driver
+    from monarchs.core import driver
+    from monarchs.core import initial_conditions
 
     T_firn, rho, firn_depth, valid_cells = initial_conditions.initialise_firn_profile(
         model_setup, diagnostic_plots=False

@@ -1,9 +1,7 @@
 import argparse
-import os
 import warnings
-
+import os
 import numpy as np
-from numba import jit_module
 
 
 def parse_args():
@@ -19,6 +17,7 @@ def parse_args():
     # Check if `pytest` is currently running by checking the current environment variables. If so, then select the
     # appropriate test runscript. This is necessary since we want to run the model but cannot pass a runscript
     # directly when running `pytest`.
+
     if "PYTEST_CURRENT_TEST" in os.environ:
         if "numba" in run_dir.split("/")[-1]:
             runscript = "model_test_setup_numba.py"
@@ -139,6 +138,7 @@ def create_defaults_for_missing_flags(model_setup):
         "lateral_movement_percolation_toggle",
         "percolation_toggle",
         "catchment_outflow",
+        "flow_into_land",
         "perc_time_toggle",
         "snowfall_toggle",
         "firn_heat_toggle",
@@ -284,8 +284,9 @@ def jit_modules():
     """
 
     from numba import jit
-    fastmath = False
     from inspect import getmembers, isfunction
+
+    fastmath = False
 
     # import the modules we want to apply `@jit` to from `physics` and `core`.
     # All functions in these modules will have the decorator applied, except
@@ -294,14 +295,15 @@ def jit_modules():
     # wants to write their own functions but does not want to apply the `@jit`
     # decorator (see `monarchs.core.utils.get_2d_grid` for an example)
     from monarchs.physics import (
-                                  surface_fluxes,
-                                  firn_functions,
-                                  lake_functions,
-                                  lid_functions,
-                                  percolation_functions,
+        percolation_functions,
                                   snow_accumulation
                                   )
-    from monarchs.core import utils, timestep
+    from monarchs.physics import lid_functions
+    from monarchs.physics import surface_fluxes
+    from monarchs.physics import lake_functions
+    from monarchs.physics import firn_functions
+    from monarchs.core import timestep
+    from monarchs.core import utils
 
     # Go through all the modules we want to jit, find the `function` objects,
     module_list = [surface_fluxes, utils, firn_functions, lake_functions, lid_functions,
@@ -345,7 +347,25 @@ def jit_classes():
 
 # load in the model setup file and create the `model_setup` class instance to store
 # our configuration data.
-model_setup_path = parse_args()
+# First check if using MPI. This should only be done on HPC systems, and since argparse doesn't play nice
+# with MPI, we need to check the environment variables. This can easily be set in a job submission script.
+
+if os.environ.get('MONARCHS_MPI', None) is not None:
+    mpi = True
+else:
+    mpi = False
+
+
+if mpi:
+    # In this case, we instead use a pre-defined model setup file, by default `model_setup.py`. This is again set
+    # via an environment variable.
+    if os.environ.get('MONARCHS_MODEL_SETUP_PATH') is not None:
+        model_setup_path = os.environ.get('MONARCHS_MODEL_SETUP_PATH')
+    else:
+        model_setup_path = 'model_setup.py'
+else:
+    model_setup_path = parse_args()
+
 model_setup = ModelSetup(model_setup_path)
 
 # if using Numba,

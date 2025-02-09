@@ -1,7 +1,6 @@
 import numba
 from numba import prange
 from numba.typed import List
-import numpy as np
 from monarchs.core.timestep import timestep_loop
 
 
