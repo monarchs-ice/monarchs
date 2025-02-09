@@ -1,7 +1,7 @@
 import numpy as np
-from src.monarchs.physics.surface_fluxes import sfc_flux
-from src.monarchs.physics import solver
-from src.monarchs.core.utils import calc_mass_sum
+from monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics import solver
+from monarchs.core.utils import calc_mass_sum
 
 def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     """

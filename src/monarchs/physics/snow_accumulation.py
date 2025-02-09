@@ -6,7 +6,7 @@ Created on Tue May  9 17:04:04 2023
 """
 
 import numpy as np
-from src.monarchs.core.utils import calc_mass_sum
+from monarchs.core.utils import calc_mass_sum
 
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """

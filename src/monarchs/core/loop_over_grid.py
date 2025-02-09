@@ -8,9 +8,9 @@ embarassingly parallel), unless model_setup.parallel = False.
 """
 from pathos.pools import ParallelPool as Pool
 import numpy as np
-from src.monarchs.core.timestep import timestep_loop
+from monarchs.core.timestep import timestep_loop
 #from monarchs.core.configuration import model_setup
-from src.monarchs.core.utils import get_2d_grid
+from monarchs.core.utils import get_2d_grid
 
 def loop_over_grid(
     row_amount,

@@ -4,7 +4,7 @@ Functions to handle output of model data.
 
 import numpy as np
 from netCDF4 import Dataset
-from src.monarchs.core.utils import get_2d_grid
+from monarchs.core.utils import get_2d_grid
 
 
 def setup_output(

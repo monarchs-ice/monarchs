@@ -1,7 +1,7 @@
 # All functions related to the lateral transport of meltwater in the MONARCHS model
 import numpy as np
-from src.monarchs.core.utils import find_nearest
-from src.monarchs.physics.percolation_functions import percolation, calc_saturation
+from monarchs.core.utils import find_nearest
+from monarchs.physics.percolation_functions import percolation, calc_saturation
 
 
 def update_water_level(cell):

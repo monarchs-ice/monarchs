@@ -7,9 +7,9 @@ interpolating it, and loading in/interpolating the digital elevation map (DEM) i
 import numpy as np
 from netCDF4 import Dataset
 
-from src.monarchs.DEM.import_DEM import export_DEM_geotiff
-from src.monarchs.core.iceshelf_class import IceShelf
-from src.monarchs.met_data.import_ERA5 import (
+from monarchs.DEM.import_DEM import export_DEM_geotiff
+from monarchs.core.iceshelf_class import IceShelf
+from monarchs.met_data.import_ERA5 import (
     ERA5_to_variables,
     interpolate_grid,
     grid_subset,

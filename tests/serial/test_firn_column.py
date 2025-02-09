@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.monarchs.met_data.import_ERA5 import (
+from monarchs.met_data.import_ERA5 import (
     ERA5_to_variables,
     grid_subset,
     interpolate_grid,

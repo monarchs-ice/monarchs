@@ -310,8 +310,8 @@ def generate_met_dem_diagnostic_plots(old_ERA5_grid, ERA5_grid, ilats, ilons, ih
 def get_met_bounds_from_DEM(
     model_setup, ERA5_grid, lat_array, lon_array, diagnostic_plots=False
 ):
-    from src.monarchs.DEM.import_DEM import export_DEM_geotiff
-    from src.monarchs.core.utils import find_nearest
+    from monarchs.DEM.import_DEM import export_DEM_geotiff
+    from monarchs.core.utils import find_nearest
 
     # Handle cases where we don't have lat/long bounds set in the model setup file to avoid errors
     bounds = [
@@ -410,7 +410,7 @@ if __name__ == "__main__":
 
     # Load in geotiff - for testing
     tiffname = "DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
-    from src.monarchs.DEM.import_DEM import export_DEM_geotiff
+    from monarchs.DEM.import_DEM import export_DEM_geotiff
 
     iheights, ilats, ilons = export_DEM_geotiff(
         tiffname, num_points=50, diagnostic_plots=False, all_outputs=False
@@ -452,7 +452,7 @@ if __name__ == "__main__":
     ax2.gridlines(draw_labels=True)
     # Map our initial temperature variable to the correct lats/lons.
     new_T = np.zeros((50, 50))
-    from src.monarchs.core.utils import find_nearest
+    from monarchs.core.utils import find_nearest
 
     int_wind = ERA5_vars_subset_interpolated["temperature"]
     for i in range(50):

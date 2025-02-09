@@ -1,7 +1,7 @@
 import numba
 from numba import prange
 from numba.typed import List
-from src.monarchs.core.timestep import timestep_loop
+from monarchs.core.timestep import timestep_loop
 
 
 def loop_over_grid_numba(

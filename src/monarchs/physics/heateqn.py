@@ -10,7 +10,7 @@ rather than NumbaMinpack.hybrd), see heateqn in physics/Numba.
 
 import numpy as np
 
-from src.monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics.surface_fluxes import sfc_flux
 
 
 def heateqn(x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind):

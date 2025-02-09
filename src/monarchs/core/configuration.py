@@ -1,6 +1,6 @@
 import argparse
 import warnings
-
+import os
 import numpy as np
 
 
@@ -284,8 +284,9 @@ def jit_modules():
     """
 
     from numba import jit
-    fastmath = False
     from inspect import getmembers, isfunction
+
+    fastmath = False
 
     # import the modules we want to apply `@jit` to from `physics` and `core`.
     # All functions in these modules will have the decorator applied, except
@@ -293,16 +294,16 @@ def jit_modules():
     # The `monarchs.core.utils.do_not_jit` decorator can be useful here if a user
     # wants to write their own functions but does not want to apply the `@jit`
     # decorator (see `monarchs.core.utils.get_2d_grid` for an example)
-    from src.monarchs.physics import (
+    from monarchs.physics import (
         percolation_functions,
                                   snow_accumulation
                                   )
-    from src.monarchs.physics import lid_functions
-    from src.monarchs.physics import surface_fluxes
-    from src.monarchs.physics import lake_functions
-    from src.monarchs.physics import firn_functions
-    from src.monarchs.core import timestep
-    from src.monarchs.core import utils
+    from monarchs.physics import lid_functions
+    from monarchs.physics import surface_fluxes
+    from monarchs.physics import lake_functions
+    from monarchs.physics import firn_functions
+    from monarchs.core import timestep
+    from monarchs.core import utils
 
     # Go through all the modules we want to jit, find the `function` objects,
     module_list = [surface_fluxes, utils, firn_functions, lake_functions, lid_functions,
@@ -316,8 +317,8 @@ def jit_modules():
             jitted_function = jit(function, nopython=True, fastmath=fastmath)
             setattr(module, name, jitted_function)
 
-    from src.monarchs.physics import solver
-    from src.monarchs.physics.Numba import solver as numba_solver
+    from monarchs.physics import solver
+    from monarchs.physics.Numba import solver as numba_solver
     # relax the isfunction stipulation for `numba_solver` since it is mostly jitted functions
     # (which are `<CPUDispatcher>` objects rather than `<function>` objects
     jit_functions_list = getmembers(numba_solver)
@@ -332,8 +333,8 @@ def jit_modules():
 def jit_classes():
 
         from numba.experimental import jitclass
-        from src.monarchs.core import iceshelf_class
-        from src.monarchs.met_data import metdata_class
+        from monarchs.core import iceshelf_class
+        from monarchs.met_data import metdata_class
 
         # load in the "spec" for the Numba jitclasses
         # see `iceshelf_class` and `metdata_class` for the definitions of these,
@@ -349,7 +350,6 @@ def jit_classes():
 # First check if using MPI. This should only be done on HPC systems, and since argparse doesn't play nice
 # with MPI, we need to check the environment variables. This can easily be set in a job submission script.
 
-import os
 if os.environ.get('MONARCHS_MPI', None) is not None:
     mpi = True
 else:
