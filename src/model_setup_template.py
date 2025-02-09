@@ -88,7 +88,7 @@ DEM/initial firn profile
 
 """
 
-DEM_path = '../DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
+DEM_path = 'DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
 # DEM_path = "DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
 
 # firn_depth - by default overridden by the presence of a valid DEM
@@ -169,13 +169,13 @@ Meteorological parameters and input
 """
 
 # met_input_filepath = "data/ERA5_new_dem_fixed.nc"
-met_input_filepath = "../data/ERA5_small.nc"
+met_input_filepath = "data/ERA5_small.nc"
 
 met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
 
 met_timestep = "hourly"
-met_output_filepath = "../met_data.nc"
+met_output_filepath = "met_data.nc"
 
 """
 Model output
@@ -219,7 +219,7 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "../../MONARCHS_runs/sample_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = "../MONARCHS_runs/sample_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
 output_grid_size = 200  # Size of interpolated output
 output_timestep = 1
 """
@@ -243,13 +243,13 @@ dump_data = True
 dump_filepath = (
     "../MONARCHS_runs/progress_df.nc"  # Filename of our previously dumped state
 )
-reload_state = True  # Flag to determine whether to reload the state or not
+reload_state = False  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters
 """
 use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
-parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you mayTru
+parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you mayTru
 # wish to run serial if doing single-column calculations.
 use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a non-cluster machine set this False
 # Note that this is not yet compatible with Numba. The code will fail if you attempt to run with both
