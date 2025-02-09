@@ -21,7 +21,7 @@ for i in range(col_amount):
         _l.append(IceShelf())
     grid.append(_l)
 
-test, _, _, _ = reload_state(path, grid)
+test, _, _, _ = reload_state(path, grid, keys=['lake_depth', 'firn_depth', 'lid_depth', 'lake', 'lid', 'v_lid'])
 
 # Now we can interact with the model, plot stuff out etc.
 lakedepth = get_2d_grid(grid, 'lake_depth')

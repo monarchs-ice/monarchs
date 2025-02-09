@@ -64,49 +64,10 @@ def update_water_level(cell):
         cell.water = cell.Lfrac * (cell.firn_depth / cell.vert_grid)
 
 
-def find_biggest_neighbour(
-        cell, grid, col, row, max_grid_col, max_grid_row, catchment_outflow
-):
-    """
-    Finds the points in grid surrounding a central point cell that have the highest difference
-    in water level.
-    Called in <move_water>.
-
-    Parameters
-    ----------
-    cell: IceShelf
-        IceShelf object corresponding to a point in grid.
-    grid: List or numba.typed.List()
-        List containing multiple instances of IceShelf objects.
-    i: int
-        Iteration index along the x-axis of grid.
-    j: int
-        Iteration index along the y-axis of grid.
-    max_grid_row: int
-        Number of x points in grid.
-    max_grid_col: int
-        Number of y points in grid.
-
-    Returns
-    -------
-    biggest_height_difference: List
-        List containing the values of the largest difference(s) in water level between cell and its neighbours.
-    max_list: List
-        List containing the indices corresponding to the largest neighbour(s).
-
-    all_neighbours = {
-        "1": [-1, -1],  # NW
-        "2": [-1, 0],  # N
-        "3": [-1, 1],  # NE
-        "4": [0, -1],  # W
-        "5": [0, 1],  # E
-        "6": [1, -1],  # SW
-        "7": [1, 0],  # S
-        "8": [1, 1],  # SE
-    }
-    """
-    neighbours = {}
+def get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row):
     # if not on left edge of domain - init W, possibly NW/NW
+    neighbours = {}
+
     if row > 0:
         neighbours['W'] = cell.water_level - grid[col][row - 1].water_level
 
@@ -147,17 +108,74 @@ def find_biggest_neighbour(
         neighbours['S'] = -999
         neighbours['SE'] = -999
         neighbours['SW'] = -999
+    return neighbours
 
 
+def find_biggest_neighbour(
+        cell, grid, col, row, max_grid_col, max_grid_row, catchment_outflow, flow_into_land=False
+):
+    """
+    Finds the points in grid surrounding a central point cell that have the highest difference
+    in water level.
+    Called in <move_water>.
 
+    Parameters
+    ----------
+    cell: IceShelf
+        IceShelf object corresponding to a point in grid.
+    grid: List or numba.typed.List()
+        List containing multiple instances of IceShelf objects.
+    i: int
+        Iteration index along the x-axis of grid.
+    j: int
+        Iteration index along the y-axis of grid.
+    max_grid_row: int
+        Number of x points in grid.
+    max_grid_col: int
+        Number of y points in grid.
 
-    # Ensure that if this flag is set, water that reaches the edge of the
+    Returns
+    -------
+    biggest_height_difference: List
+        List containing the values of the largest difference(s) in water level between cell and its neighbours.
+    max_list: List
+        List containing the indices corresponding to the largest neighbour(s).
+
+    all_neighbours = {
+        "1": [-1, -1],  # NW
+        "2": [-1, 0],  # N
+        "3": [-1, 1],  # NE
+        "4": [0, -1],  # W
+        "5": [0, 1],  # E
+        "6": [1, -1],  # SW
+        "7": [1, 0],  # S
+        "8": [1, 1],  # SE
+    }
+    """
+
+    neighbours = get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row)
+    # Ensure that if catchment_outflow is set, water that reaches the edge of the
     # catchment area will flow outward, if it is in the lowest cell locally.
     # This way, water will preferentially stay in the model.
     if catchment_outflow and max(neighbours.values()) <= 0:
         for key in neighbours.keys():
             if neighbours[key] == -999:
-                neighbours[key] = 999
+                neighbours[key] = 9999  # set to 9999 so that this overrides flow_into_land
+
+    # if flow_into_land is True, then if the cell is at a local mininum aside
+    # from invalid cells, then it will flow into the land. This is motivated by the appearance
+    # of lakes on the ice shelf-land boundary in testing runs, which is not seen in the validation
+    # data. This is placed after the initial loop, since this should only occur if the water level
+    # is a local minimum.
+    if flow_into_land and max(neighbours.values()) <= 0:
+        for i in range(-1, 2, 1):
+            for j in range(-1, 2, 1):
+                neighbour_cell = grid[col + i][row + j]
+                if not neighbour_cell.valid_cell:
+                    neighbour_cell.water_level = -999
+
+        # run the algorithm again based on the new water levels.
+        neighbours = get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row)
 
     # Find neighbour with the biggest height difference in water level
     biggest_height_difference = max(neighbours.values())
@@ -347,6 +365,7 @@ def move_to_neighbours(
         water_frac,
         split,
         catchment_outflow,
+        flow_into_land=False
 ):
     """
     Moves water from the central cell (grid[i][j]) to the neighbours with the lowest water level.
@@ -417,8 +436,15 @@ def move_to_neighbours(
                 neighbour_cell = grid[col + n_s_index][row + w_e_index]
                 temporary_neighbour = temp_grid[col + n_s_index][row + w_e_index]
                 # If cell is invalid, we aren't interested in flowing water
-                if not neighbour_cell.valid_cell:
+                if not neighbour_cell.valid_cell and not flow_into_land:
                     continue
+
+                # unless water can flow into the land (i.e. through crevices etc.) - in which case
+                # do the catchment outflow algorithm.
+                elif not neighbour_cell.valid_cell and flow_into_land:
+                    water_out = calc_catchment_outflow(cell, temporary_cell, water_frac, split)
+                    return water_out
+
                 if cell.lid or neighbour_cell.lid:
                     # Too complicated to model, so we just ignore this for now
                     continue
