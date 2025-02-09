@@ -352,8 +352,8 @@ def get_spec():
     from numba import int32, float64, boolean
     from numba.types import string
     spec = [
-        ("x", int32),
-        ("y", int32),
+        ("column", int32),
+        ("row", int32),
         ("firn_depth", float64),
         ("vert_grid", int32),
         ("vertical_profile", float64[:]),
