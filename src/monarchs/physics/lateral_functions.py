@@ -335,7 +335,7 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
         if cell.lake_depth > water_to_move:
             water_to_move = cell.lake_depth
             temporary_cell.lake_depth -= water_to_move
-
+            water_out = water_to_move
         else:
             temporary_cell.lake_depth -= water_to_move
     else:  # Otherwise, loop through the column and remove water from it, going from the top.
@@ -450,6 +450,8 @@ def move_to_neighbours(
                     water_out = calc_catchment_outflow(cell, temporary_cell, water_frac, split)
                     if water_out > 0:
                         print(f'Moved {water_out} units of water into the land')
+                    if temporary_cell.lake_depth < 0:
+                        print(f'Lake depth = {temporary_cell.lake_depth}, i = {col}, j = {row}')
                     return water_out
 
                 if cell.lid or neighbour_cell.lid:
