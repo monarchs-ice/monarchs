@@ -359,11 +359,8 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell.lid_depth += new_boundary_change
 
     new_mass = calc_mass_sum(cell)
-    try:
-        assert abs(new_mass - original_mass) < (1.5 * 10**-7)
-    except AssertionError:
-        print(f"new mass = {new_mass}, original mass = {original_mass}")
-        raise AssertionError
+    assert abs(new_mass - original_mass) < (1.5 * 10**-7)
+
 
 
     x = cell.lid_temperature
@@ -534,7 +531,7 @@ def combine_lid_firn(cell):
     new_mass = calc_mass_sum(cell)
     try:
         assert abs(new_mass - original_mass) < (original_mass/1000)  # 0.1% error
-    except AssertionError:
+    except Exception:
         print(f"new mass = {new_mass}, original mass = {original_mass}")
-        raise AssertionError
+        raise Exception
 # Conditional jitting of functions if Numba optimisation is required
