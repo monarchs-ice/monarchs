@@ -443,6 +443,8 @@ def move_to_neighbours(
                 # do the catchment outflow algorithm.
                 elif not neighbour_cell.valid_cell and flow_into_land:
                     water_out = calc_catchment_outflow(cell, temporary_cell, water_frac, split)
+                    if water_out > 0:
+                        print(f'Moved {water_out} units of water into the land')
                     return water_out
 
                 if cell.lid or neighbour_cell.lid:
