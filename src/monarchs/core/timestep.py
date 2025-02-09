@@ -5,14 +5,12 @@ state of the column, then running firn_column and lake/lid functions accordingly
 """
 import numpy as np
 
-from monarchs.core.utils import check_correct
-from monarchs.physics import (
-    lake_functions,
-    lid_functions,
-    snow_accumulation,
-    firn_functions,
-    solver
+from src.monarchs.core.utils import check_correct
+from src.monarchs.physics import (
+    snow_accumulation
 )
+from src.monarchs.physics import firn_functions, lake_functions, solver, lid_functions
+
 
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """

@@ -9,7 +9,7 @@ import os
 import numpy as np
 from netCDF4 import Dataset
 
-from monarchs.core.utils import get_2d_grid
+from src.monarchs.core.utils import get_2d_grid
 
 
 def dump_state(fname, grid, met_start_idx, met_end_idx):

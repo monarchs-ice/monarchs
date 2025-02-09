@@ -336,6 +336,26 @@ how many CPU cores to use if running in parallel, and whether to use Numba to ji
         of cores on your system if e.g. running on a laptop which you are using for other purposes,
         or if running on HPC and you are experiencing memory bottleneck issues.
 
+Lateral flow settings
+------------------------------------------------------
+These parameters determine the behaviour of the lateral flow algorithm, i.e. how water is moved around between
+grid cells.
+
+    catchment_outflow : bool, optional
+        Default ``True``.
+
+        If ``True``, then water that a) reaches the edge of the grid and b) is at a local minimum in terms of the cell's water level
+        will disappear from the model, i.e. it moves outside of the model domain. This may or may not be a good assumption
+        depending on location.
+    flow_into_land: bool, optional
+        Default ``True``.
+
+        If ``True``, then similarly to ``catchment_outflow``, water that reaches the edge of the grid and is at a local minimum
+        will flow out of the model if it is adjacent to a land cell. This is motivated by the presence of large lakes at the edge
+        of the ice shelf in the validation runs, which are not seen in observational datasets. This occurs since the water has
+        nowhere else to go, and thus a positive feedback loop occurs where the lake grows, melts the firn underneath,
+        and more water flows in.
+
 Debug settings
 ------------------------------------------------------
 These can be safely ignored unless you are actively developing the model.
@@ -387,12 +407,7 @@ lateral processes. By default these should all be on unless specified, but you m
 
         Determines if percolation occurs over timescales (if ``True``), or all water can percolate forever until
         it can no longer move.
-    catchment_outflow : bool, optional
-        Default ``True``.
 
-        If ``True``, then water that a) reaches the edge of the grid and b) is at a local minimum in terms of the cell's water level
-        will disappear from the model, i.e. it moves outside of the model domain. This may or may not be a good assumption
-        depending on location.
 
 ### Other flags - mostly for testing
 

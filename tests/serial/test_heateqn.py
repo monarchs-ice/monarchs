@@ -37,7 +37,7 @@ def test_surface_fluxes():
     """Test to ensure solver function gives the same result in Numba and non-Numba cases, assuming fixed surface"""
     cell, x, args = setup_test()
     from create_test_MetData import met_data
-    from monarchs.physics.surface_fluxes import sfc_flux
+    from src.monarchs.physics.surface_fluxes import sfc_flux
 
     Q = sfc_flux(
         cell.melt,

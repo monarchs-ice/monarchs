@@ -1,7 +1,6 @@
-from monarchs.core.dump_model_state import reload_state
-from monarchs.core.utils import get_2d_grid
+from src.monarchs.core import reload_state
+from src.monarchs.core import get_2d_grid
 from matplotlib import pyplot as plt
-import numpy as np
 
 path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_030225/dump.nc'
 path = "C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_030225/38m_dem/progress.nc"

@@ -1,7 +1,7 @@
 # All functions related to the lateral transport of meltwater in the MONARCHS model
 import numpy as np
-from monarchs.core.utils import find_nearest
-from monarchs.physics.percolation_functions import percolation, calc_saturation
+from src.monarchs.core.utils import find_nearest
+from src.monarchs.physics.percolation_functions import percolation, calc_saturation
 
 
 def update_water_level(cell):
@@ -586,6 +586,7 @@ def move_water(
         timestep,
         catchment_outflow=True,
         lateral_movement_percolation_toggle=True,
+        flow_into_land=False
 ):
     """
     Loop over our grid and determine which cells water is allowed to move from/to, then perform this movement
@@ -666,6 +667,7 @@ def move_water(
                     max_grid_col,
                     max_grid_row,
                     catchment_outflow,
+                    flow_into_land=flow_into_land
                 )
                 # If more than one cell is equally lower than central the water is split between them
                 split = len(max_list)
@@ -690,6 +692,7 @@ def move_water(
                         water_frac,
                         split,
                         catchment_outflow,
+                        flow_into_land=flow_into_land
                     )
 
             if (cell.water < 0).any():

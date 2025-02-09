@@ -11,7 +11,7 @@ import numpy as np
 from NumbaMinpack import hybrd, minpack_sig
 from numba import cfunc, jit
 
-import monarchs.physics.Numba.heateqn_nb as hnb
+import src.monarchs.physics.Numba.heateqn_nb as hnb
 
 heqlid = hnb.heateqn_lid.address
 heq = hnb.heateqn.address

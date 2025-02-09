@@ -1,8 +1,8 @@
 import numpy as np
-from monarchs.physics.firn_functions import regrid_after_melt
-from monarchs.physics.surface_fluxes import sfc_flux, sfc_albedo
-from monarchs.physics import solver
-from monarchs.core.utils import calc_mass_sum
+from src.monarchs.physics.firn_functions import regrid_after_melt
+from src.monarchs.physics.surface_fluxes import sfc_flux, sfc_albedo
+from src.monarchs.physics import solver
+from src.monarchs.core.utils import calc_mass_sum
 # conditional import - use Numba version of solvers if necessary
 
 

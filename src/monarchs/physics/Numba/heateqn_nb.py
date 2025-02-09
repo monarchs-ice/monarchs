@@ -14,12 +14,12 @@ import numpy as np
 from numba import cfunc
 from NumbaMinpack import minpack_sig
 
-from monarchs.physics.Numba.extract_args import (
+from src.monarchs.physics.Numba.extract_args import (
     extract_args,
     extract_args_fixedsfc,
     extract_args_lid,
 )
-from monarchs.physics.surface_fluxes import sfc_flux
+from src.monarchs.physics.surface_fluxes import sfc_flux
 
 
 

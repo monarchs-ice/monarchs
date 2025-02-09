@@ -1,9 +1,7 @@
 import argparse
-import os
 import warnings
 
 import numpy as np
-from numba import jit_module
 
 
 def parse_args():
@@ -140,6 +138,7 @@ def create_defaults_for_missing_flags(model_setup):
         "lateral_movement_percolation_toggle",
         "percolation_toggle",
         "catchment_outflow",
+        "flow_into_land",
         "perc_time_toggle",
         "snowfall_toggle",
         "firn_heat_toggle",
@@ -293,15 +292,16 @@ def jit_modules():
     # The `monarchs.core.utils.do_not_jit` decorator can be useful here if a user
     # wants to write their own functions but does not want to apply the `@jit`
     # decorator (see `monarchs.core.utils.get_2d_grid` for an example)
-    from monarchs.physics import (
-                                  surface_fluxes,
-                                  firn_functions,
-                                  lake_functions,
-                                  lid_functions,
-                                  percolation_functions,
+    from src.monarchs.physics import (
+        percolation_functions,
                                   snow_accumulation
                                   )
-    from monarchs.core import utils, timestep
+    from src.monarchs.physics import lid_functions
+    from src.monarchs.physics import surface_fluxes
+    from src.monarchs.physics import lake_functions
+    from src.monarchs.physics import firn_functions
+    from src.monarchs.core import timestep
+    from src.monarchs.core import utils
 
     # Go through all the modules we want to jit, find the `function` objects,
     module_list = [surface_fluxes, utils, firn_functions, lake_functions, lid_functions,
@@ -315,8 +315,8 @@ def jit_modules():
             jitted_function = jit(function, nopython=True, fastmath=fastmath)
             setattr(module, name, jitted_function)
 
-    from monarchs.physics import solver
-    from monarchs.physics.Numba import solver as numba_solver
+    from src.monarchs.physics import solver
+    from src.monarchs.physics.Numba import solver as numba_solver
     # relax the isfunction stipulation for `numba_solver` since it is mostly jitted functions
     # (which are `<CPUDispatcher>` objects rather than `<function>` objects
     jit_functions_list = getmembers(numba_solver)
@@ -331,8 +331,8 @@ def jit_modules():
 def jit_classes():
 
         from numba.experimental import jitclass
-        from monarchs.core import iceshelf_class
-        from monarchs.met_data import metdata_class
+        from src.monarchs.core import iceshelf_class
+        from src.monarchs.met_data import metdata_class
 
         # load in the "spec" for the Numba jitclasses
         # see `iceshelf_class` and `metdata_class` for the definitions of these,

@@ -4,10 +4,10 @@ Module containing functions relating to the firn column. Some physics is contain
 
 import numpy as np
 
-from monarchs.physics.percolation_functions import percolation
-from monarchs.physics.surface_fluxes import sfc_flux
-from monarchs.physics import solver
-from monarchs.core.utils import calc_mass_sum
+from src.monarchs.physics.percolation_functions import percolation
+from src.monarchs.physics.surface_fluxes import sfc_flux
+from src.monarchs.physics import solver
+from src.monarchs.core.utils import calc_mass_sum
 
 def firn_column(
     cell,

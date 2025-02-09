@@ -20,13 +20,13 @@ import time
 import numpy as np
 import pathos
 from netCDF4 import Dataset
-from monarchs.core import configuration, initial_conditions
-from monarchs.core.dump_model_state import dump_state, reload_state
-from monarchs.core.model_output import setup_output, update_model_output
-from monarchs.core.loop_over_grid import loop_over_grid
-from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct, check_energy_conservation
-from monarchs.met_data.metdata_class import initialise_met_data_grid
-from monarchs.physics import lateral_functions
+from src.monarchs.core import configuration, initial_conditions
+from src.monarchs.core.dump_model_state import dump_state, reload_state
+from src.monarchs.core.model_output import setup_output, update_model_output
+from src.monarchs.core.loop_over_grid import loop_over_grid
+from src.monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct
+from src.monarchs.met_data.metdata_class import initialise_met_data_grid
+from src.monarchs.physics import lateral_functions
 
 model_setup = configuration.model_setup
 
@@ -35,7 +35,7 @@ model_setup = configuration.model_setup
 if model_setup.use_numba:
     from numba import jit
 
-    from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
+    from src.monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
     from numba import set_num_threads
 
     if model_setup.cores in ["all", False]:
@@ -449,6 +449,7 @@ def main(model_setup, grid):
                 model_setup.lat_grid_size,
                 model_setup.lateral_timestep,
                 catchment_outflow=model_setup.catchment_outflow,
+                flow_into_land=model_setup.flow_into_land,
                 lateral_movement_percolation_toggle=model_setup.lateral_movement_percolation_toggle,
             )
 

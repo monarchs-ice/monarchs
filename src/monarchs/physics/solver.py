@@ -9,8 +9,7 @@ usability, so that the different solvers can be generated according to the value
 
 import numpy as np
 from scipy.optimize import root, fsolve, OptimizeResult
-import scipy
-from monarchs.physics import heateqn
+from src.monarchs.physics import heateqn
 
 
 def firn_heateqn_solver(x, args, fixed_sfc=False):

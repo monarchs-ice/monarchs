@@ -278,6 +278,7 @@ perc_time_toggle = True  # Determines if percolation occurs over timescales,
 catchment_outflow = False  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
+flow_into_land = False  # Determines if water will flow into land cells at local minima
 """
 Other flags for doing tests - e.g. adding water from outside catchment area
 """
