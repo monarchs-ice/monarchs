@@ -369,11 +369,18 @@ def main(model_setup, grid):
             vars_to_save=model_setup.vars_to_save,
             vert_grid_size=output_grid_size,
         )
+
+    # if loading in from a dump file - want to make sure that the met data is consistent with the firn data
+    # i.e. don't set start True else we will start from index 0
+    if reload_dump_success:
+        start = True
+    else:
+        start = False
     # A few more setup steps - set up a grid of met data, with the correct start indices as read from the
     # dump file, and convert some of the model_setup switches into a dictionary so the model can read it later
     snow_added = 0
     met_data_grid, met_data_len, snow_added = update_met_conditions(
-        model_setup, grid, met_start_idx, met_end_idx, start=True, snow_added=snow_added
+        model_setup, grid, met_start_idx, met_end_idx, start=start, snow_added=snow_added
     )
     toggle_dict = setup_toggle_dict(model_setup)
 

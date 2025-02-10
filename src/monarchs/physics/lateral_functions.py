@@ -334,10 +334,12 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
         water_out = np.copy(water_to_move)
         if cell.lake_depth < water_to_move:
             water_to_move = cell.lake_depth
-            temporary_cell.lake_depth -= water_to_move
+            temporary_cell.lake_depth = 0
             water_out = water_to_move
+            water_to_move = 0
         else:
             temporary_cell.lake_depth -= water_to_move
+            water_to_move = 0
     else:  # Otherwise, loop through the column and remove water from it, going from the top.
         water_out = 0
         try:
@@ -431,6 +433,9 @@ def move_to_neighbours(
             if cell.lid:
                 return 0
 
+            # This try/except block happens in all non-lid cases, and determines how much water can move from the
+            # central cell to the neighbour cell. If the neighbour cell is invalid, then we don't want to move water
+            # (or maybe we do if flow_into_land is True).
             try:
                 if (
                         col + n_s_index == -1 or row + w_e_index == -1
@@ -445,7 +450,7 @@ def move_to_neighbours(
                     continue
 
                 # unless water can flow into the land (i.e. through crevices etc.) - in which case
-                # do the catchment outflow algorithm.
+                # do the catchment outflow algorithm, then return out of the function.
                 elif not neighbour_cell.valid_cell and flow_into_land:
                     water_out = calc_catchment_outflow(cell, temporary_cell, water_frac, split)
                     if water_out > 0:
