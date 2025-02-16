@@ -298,6 +298,12 @@ Output settings - dumping and reloading model state
         Flag to determine whether we want to reload from a dump (see ``dump_data`` for details). If ``True``, reload model
         state from file at the path determined by ``dump_filepath``.
 
+    dump_format : bool, optional
+        Default ``NETCDF4``.
+
+        Format to save the dump file in. Can be either ``NETCDF4`` or ``pickle``. Pickle is much faster to load back in, but
+        is not human-readable and is not Numba-compatible.
+
 Computational and numerical settings
 ------------------------------------------------------
 These parameters mostly control whether the code runs in parallel, which flavour of parallelism to use if so,

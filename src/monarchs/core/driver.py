@@ -92,6 +92,7 @@ def setup_toggle_dict(model_setup):
 def check_for_reload_state(model_setup, grid, met_start_idx, met_end_idx):
     """
     Determine if the model needs to re-initialise parameters from a dump file.
+    TODO - add support for reloading from pickle
 
     Parameters
     ----------
@@ -340,7 +341,6 @@ def main(model_setup, grid):
         grid of IceShelf objects, amended from the original state by the model
 
     """
-
     tic = time.perf_counter()
     met_start_idx = 0
     met_end_idx = model_setup.t_steps_per_day
@@ -431,6 +431,10 @@ def main(model_setup, grid):
                     use_mpi=model_setup.use_mpi,
                     ncores=cores,
                 )
+        print("Single-column physics finished")
+        # Lateral movement of water - this is not an embarrassingly parallel process,
+        # and is comparatively very fast, so we do it outside the parallelised block
+
 
         # Save progress information as netCDF - this allows us to reload in the file
         # if the code stops for whatever reason and continue from there. This is an
@@ -439,12 +443,13 @@ def main(model_setup, grid):
         # want to debug, in which case you don't want to have to run the single-column
         # physics all over again.
         if model_setup.dump_data_pre_lateral_movement:
-            dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
-
-        print("Single-column physics finished")
-        # Lateral movement of water - this is not an embarrassingly parallel process,
-        # and is comparatively very fast, so we do it outside the parallelised block
-
+            if model_setup.dump_format == 'NETCDF4':
+                dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
+            elif model_setup.dump_format == 'pickle':
+                import pickle
+                outfile = open(model_setup.dump_filepath, 'wb')
+                pickle.dump(grid, outfile)
+                outfile.close()
         # Handle the lateral movement, but only if the toggle is set to True.
         if model_setup.lateral_movement_toggle:
             print("Moving water laterally...")
@@ -488,8 +493,13 @@ def main(model_setup, grid):
         # Save progress information as netCDF - this allows us to reload in the file
         # if the code stops for whatever reason and continue from there.
         if model_setup.dump_data:
-            dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
-
+            if model_setup.dump_format == 'NETCDF4':
+                dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
+            elif model_setup.dump_format == 'pickle':
+                import pickle
+                outfile = open(model_setup.dump_filepath, 'wb')
+                pickle.dump(grid, outfile)
+                outfile.close()
         # Save model variables as a time series. Do this at the rate desired by the user
         # (i.e. if model_setup.output_timestep = 3, then do this every 3 timesteps).
         # By default, we save at every timestep.

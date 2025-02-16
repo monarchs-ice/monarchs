@@ -147,6 +147,7 @@ def reload_state(fname, grid, keys='all'):
             "ice_lens",
             "has_had_lid",
             "reset_combine",
+            "valid_cell"
         ]
         int_keys = [
             "ice_lens_depth",
@@ -204,5 +205,6 @@ def reload_state(fname, grid, keys='all'):
         )  # we track iteration for each gridcell - but invalid ones
         # stay at 0 so we want the maximum
         # but only want one value here.
-
+    # transpose to get the correct way round
+    grid = np.transpose(grid)
     return grid, met_start_idx, met_end_idx, iteration

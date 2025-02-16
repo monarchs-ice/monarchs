@@ -106,6 +106,12 @@ def handle_incompatible_flags(model_setup):
                     f"a filepath to write the saved data into via the <output_filepath> attribute."
                 )
 
+    dump_formats = ['NETCDF4', 'pickle']
+    if hasattr(model_setup, 'dump_format') and model_setup.dump_format not in dump_formats:
+        raise ValueError(
+            f"monarchs.core.configuration.handle_incompatible_flags(): "
+            f"dump_format must be one of {dump_formats}, not {model_setup.dump_format}"
+        )
 
 def create_defaults_for_missing_flags(model_setup):
     """
@@ -225,6 +231,7 @@ def create_defaults_for_missing_flags(model_setup):
         "v_lid",
         "ice_lens_depth",
     )
+    vardict['dump_format'] = 'NETCDF4'
     # Keys that have special print messages - e.g. those that have default values that depend on model_setup variables
     # go in here, and a specific print message is written for them
     special_keys = ["lateral_timestep"]
