@@ -342,25 +342,17 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
     )
     if cell.lake:  # remove water from the lake directly.
         water_out = np.copy(water_to_move)
-        print('Temp cell lake depth (before move) = ', temporary_cell.lake_depth)
-        print('Original cell lake depth (before move) = ', cell.lake_depth)
-        if cell.lake_depth > temporary_cell.lake_depth:
-            print('Temp < original. Temporary lake depth = ', temporary_cell.lake_depth)
-            print('Original lake depth = ', cell.lake_depth)
-            print(f'Row = {cell.row}, Col = {cell.column}')
-            print(f'Split = {split}, water_frac = {water_frac}, water_to_move = {water_to_move}')
+        
         if cell.lake_depth < water_to_move:
             water_to_move = cell.lake_depth
-            temporary_cell.lake_depth = 0
-            water_out = water_to_move
-            water_to_move = 0
-        else:
-            temporary_cell.lake_depth -= water_to_move
-            if temporary_cell.lake_depth < 0:
+
+        if min(temporary_cell.lake_depth, cell.lake_depth) < water_to_move:
+            water_to_move = min(temporary_cell.lake_depth, cell.lake_depth)
                 print(f'temp lake depth = {temporary_cell.lake_depth}, i = {cell.row}, j = {cell.column}')
                 print('Original lake depth = ', cell.lake_depth)
                 print(f'Split = {split}, water_frac = {water_frac}, water_to_move = {water_to_move}')
                 raise ValueError
+
     else:  # Otherwise, loop through the column and remove water from it, going from the top.
         water_out = 0
         try:
@@ -480,7 +472,8 @@ def move_to_neighbours(
                     if water_out > 0:
                         print(f'Moved {water_out} units of water into the land')
                     if temporary_cell.lake_depth < 0:
-                        print(f'Lake depth = {temporary_cell.lake_depth}, i = {col}, j = {row}')
+                        print(f'temporary_cell.lake_depth = {temporary_cell.lake_depth}, col = {col}, row = {row}')
+                        print(f'split = {split}, water_frac = {water_frac}, cell.lake_depth = {cell.lake_depth}')
                     return water_out
 
                 if cell.lid or neighbour_cell.lid:
