@@ -345,14 +345,13 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
         
         if cell.lake_depth < water_to_move:
             water_to_move = cell.lake_depth
-
-        if min(temporary_cell.lake_depth, cell.lake_depth) < water_to_move:
-            water_to_move = min(temporary_cell.lake_depth, cell.lake_depth)
-                print(f'temp lake depth = {temporary_cell.lake_depth}, i = {cell.row}, j = {cell.column}')
-                print('Original lake depth = ', cell.lake_depth)
-                print(f'Split = {split}, water_frac = {water_frac}, water_to_move = {water_to_move}')
-                raise ValueError
-
+            temporary_cell.lake_depth = 0
+            water_out = water_to_move
+            water_to_move = 0
+        else:
+            temporary_cell.lake_depth -= water_to_move
+            if temporary_cell.lake_depth < 0:
+                raise ValueError('Lake depth has gone below 0')
     else:  # Otherwise, loop through the column and remove water from it, going from the top.
         water_out = 0
         try:
@@ -435,10 +434,8 @@ def move_to_neighbours(
 
     # for each of the neighbours we wish to move water to, which depends on the difference
     # in water level between the central cell and the cells at each cardinal point
-    debug_idx = 0
     for idx, neighbour in enumerate(all_neighbours.keys()):
         if neighbour in biggest_neighbours:
-            debug_idx += 1
             n_s_index = all_neighbours[neighbour][0]
             w_e_index = all_neighbours[neighbour][1]
             cell = grid[col][row]
@@ -466,8 +463,6 @@ def move_to_neighbours(
                 # unless water can flow into the land (i.e. through crevices etc.) - in which case
                 # do the catchment outflow algorithm, then return out of the function.
                 elif not neighbour_cell.valid_cell and flow_into_land:
-
-                    print('Debug idx = ', debug_idx)
                     water_out = calc_catchment_outflow(cell, temporary_cell, water_frac, split)
                     if water_out > 0:
                         print(f'Moved {water_out} units of water into the land')
