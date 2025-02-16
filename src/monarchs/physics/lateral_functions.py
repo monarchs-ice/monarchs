@@ -60,7 +60,7 @@ def update_water_level(cell):
     elif cell.lid:
         # cell.water_level = (cell.water_level + cell.firn_depth
         #                     + cell.lake_depth + cell.lid_depth)
-        cell.water_level = 999
+        cell.water_level = 9999
         cell.water = cell.Lfrac * (cell.firn_depth / cell.vert_grid)
 
 
@@ -162,17 +162,27 @@ def find_biggest_neighbour(
             if neighbours[key] == -999:
                 neighbours[key] = 9999  # set to 9999 so that this overrides flow_into_land
 
-    # if flow_into_land is True, then if the cell is at a local mininum aside
+    # if flow_into_land is True, then if the cell is at a local minimum aside
     # from invalid cells, then it will flow into the land. This is motivated by the appearance
     # of lakes on the ice shelf-land boundary in testing runs, which is not seen in the validation
     # data. This is placed after the initial loop, since this should only occur if the water level
     # is a local minimum.
-    if flow_into_land and max(neighbours.values()) <= 0:
+    if flow_into_land:
         for i in range(-1, 2, 1):
             for j in range(-1, 2, 1):
-                neighbour_cell = grid[col + i][row + j]
-                if not neighbour_cell.valid_cell:
-                    neighbour_cell.water_level = -999
+                try:
+                    neighbour_cell = grid[col + i][row + j]
+                    # If the water level is a local minimum, then we want to flow water into the land.
+                    if max(neighbours.values()) <= 0:
+                        if not neighbour_cell.valid_cell:
+                            neighbour_cell.water_level = -999
+                    # Otherwise, ensure we *don't* flow water into land as it has places it can go within the model.
+                    else:
+                        if not neighbour_cell.valid_cell:
+                            neighbour_cell.water_level = 9999
+                except IndexError:
+                    continue
+
 
         # run the algorithm again based on the new water levels.
         neighbours = get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row)
@@ -332,6 +342,13 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
     )
     if cell.lake:  # remove water from the lake directly.
         water_out = np.copy(water_to_move)
+        print('Temp cell lake depth (before move) = ', temporary_cell.lake_depth)
+        print('Original cell lake depth (before move) = ', cell.lake_depth)
+        if cell.lake_depth > temporary_cell.lake_depth:
+            print('Temp < original. Temporary lake depth = ', temporary_cell.lake_depth)
+            print('Original lake depth = ', cell.lake_depth)
+            print(f'Row = {cell.row}, Col = {cell.column}')
+            print(f'Split = {split}, water_frac = {water_frac}, water_to_move = {water_to_move}')
         if cell.lake_depth < water_to_move:
             water_to_move = cell.lake_depth
             temporary_cell.lake_depth = 0
@@ -339,7 +356,11 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
             water_to_move = 0
         else:
             temporary_cell.lake_depth -= water_to_move
-            water_to_move = 0
+            if temporary_cell.lake_depth < 0:
+                print(f'temp lake depth = {temporary_cell.lake_depth}, i = {cell.row}, j = {cell.column}')
+                print('Original lake depth = ', cell.lake_depth)
+                print(f'Split = {split}, water_frac = {water_frac}, water_to_move = {water_to_move}')
+                raise ValueError
     else:  # Otherwise, loop through the column and remove water from it, going from the top.
         water_out = 0
         try:
@@ -422,9 +443,10 @@ def move_to_neighbours(
 
     # for each of the neighbours we wish to move water to, which depends on the difference
     # in water level between the central cell and the cells at each cardinal point
-
+    debug_idx = 0
     for idx, neighbour in enumerate(all_neighbours.keys()):
         if neighbour in biggest_neighbours:
+            debug_idx += 1
             n_s_index = all_neighbours[neighbour][0]
             w_e_index = all_neighbours[neighbour][1]
             cell = grid[col][row]
@@ -452,6 +474,8 @@ def move_to_neighbours(
                 # unless water can flow into the land (i.e. through crevices etc.) - in which case
                 # do the catchment outflow algorithm, then return out of the function.
                 elif not neighbour_cell.valid_cell and flow_into_land:
+
+                    print('Debug idx = ', debug_idx)
                     water_out = calc_catchment_outflow(cell, temporary_cell, water_frac, split)
                     if water_out > 0:
                         print(f'Moved {water_out} units of water into the land')
@@ -667,7 +691,11 @@ def move_water(
     for col in range(max_grid_col):
         for row in range(max_grid_row):
             cell = grid[col][row]
-            if (cell.ice_lens and (cell.water > 0).any()) or (cell.lake and cell.lake_depth > 0):
+            temporary_cell = temp_grid[col][row]
+            if row == 71 and col == 75:
+                print('LD = ', cell.lake_depth)
+                print('TLD = ', temporary_cell.lake_depth)
+            if cell.valid_cell and ((cell.ice_lens and (cell.water > 0).any()) or (cell.lake and cell.lake_depth > 0)):
                 # Get the points with the largest difference in heights
                 # TODO | Is the thing we are really interested in just "if water level > neighbour level, move water"?
                 # TODO | So rather than moving all to one lower gridcell, move equally to all adjacent grid cells

@@ -1,17 +1,16 @@
-from monarchs.core import reload_state
-from monarchs.core import get_2d_grid
+from monarchs.core.dump_model_state import reload_state
+from monarchs.core.utils import get_2d_grid
 from matplotlib import pyplot as plt
-
-path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_030225/dump.nc'
-path = "C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_030225/38m_dem/progress.nc"
-
+from monarchs.physics.lateral_functions import move_water
+path = "../../lake_depth_error.nc"
+import numpy.testing as npt
 # Set up a dummy IceShelf instance, create a grid of these, then write out our dumpfile into this.
 class IceShelf():
     pass
 
 
-row_amount = 100
-col_amount = 100
+row_amount = 3
+col_amount = 3
 
 grid = []
 for i in range(col_amount):
@@ -20,51 +19,64 @@ for i in range(col_amount):
         _l.append(IceShelf())
     grid.append(_l)
 
-test, _, _, _ = reload_state(path, grid, keys=['lake_depth', 'firn_depth', 'lid_depth', 'lake', 'lid', 'v_lid'])
-
-# Now we can interact with the model, plot stuff out etc.
-lakedepth = get_2d_grid(grid, 'lake_depth')
-plt.imshow(lakedepth)
-plt.colorbar()
-plt.title('Lake depth')
-plt.figure()
-lakedepth = get_2d_grid(grid, 'lake_depth')
-plt.imshow(lakedepth, vmax=2, cmap='magma')
-plt.colorbar()
-plt.title('Lake depth (max shown = 2)')
-plt.figure()
-firndepth = get_2d_grid(grid, 'firn_depth')
-plt.imshow(firndepth, vmax=80)
-plt.colorbar()
-plt.title('Firn depth')
-plt.figure()
-bothdepth = lakedepth + firndepth
-plt.imshow(bothdepth, vmax=80)
-plt.colorbar()
-plt.title('Lake depth + firn depth')
-plt.figure()
-liddepth = get_2d_grid(grid, 'lid_depth')
-plt.imshow(liddepth)
-plt.colorbar()
-plt.title('lid depth')
-plt.figure()
-alldepth = lakedepth + firndepth + liddepth
-plt.imshow(alldepth, vmax=80)
-plt.colorbar()
-plt.title('all depth')
+test, _, _, _ = reload_state(path, grid)
+# #
+import pickle
+import numpy as np
+outfile = open(r'C:\Users\jdels\Documents\Work\MONARCHS\src\dump_test.pkl', 'rb')
+test2 = pickle.load(outfile)
+# move_water(test, row_amount, col_amount, 1000, 3600*12,
+#                 catchment_outflow=True,
+#                 flow_into_land=True,
+#                 lateral_movement_percolation_toggle=True)
+for i in range(col_amount):
+    for j in range(row_amount):
+        for key in test[0][0].__dict__.keys():
+            print(key)
+            npt.assert_equal(getattr(test[i][j], key), getattr(test2[i][j], key))
+# # Now we can interact with the model, plot stuff out etc.
+# lakedepth = get_2d_grid(grid, 'lake_depth')
+# plt.imshow(lakedepth)
+# plt.colorbar()
+# plt.title('Lake depth')
+# plt.figure()
+# lakedepth = get_2d_grid(grid, 'lake_depth')
+# plt.imshow(lakedepth, vmax=2, cmap='magma')
+# plt.colorbar()
+# plt.title('Lake depth (max shown = 2)')
+# plt.figure()
+# firndepth = get_2d_grid(grid, 'firn_depth')
+# plt.imshow(firndepth, vmax=80)
+# plt.colorbar()
+# plt.title('Firn depth')
+# plt.figure()
+# bothdepth = lakedepth + firndepth
+# plt.imshow(bothdepth, vmax=80)
+# plt.colorbar()
+# plt.title('Lake depth + firn depth')
+# plt.figure()
+# liddepth = get_2d_grid(grid, 'lid_depth')
+# plt.imshow(liddepth)
+# plt.colorbar()
+# plt.title('lid depth')
+# plt.figure()
+# alldepth = lakedepth + firndepth + liddepth
+# plt.imshow(alldepth, vmax=80)
+# plt.colorbar()
+# plt.title('all depth')
+# #
 #
-
-plt.figure()
-lakepresent = get_2d_grid(grid, 'lake')
-plt.imshow(lakepresent)
-plt.colorbar()
-plt.title('lake present')
-lidpresent = get_2d_grid(grid, 'lid')
-plt.figure()
-plt.imshow(lidpresent)
-plt.colorbar()
-plt.title('lid present')
-lidpresent = get_2d_grid(grid, 'v_lid')
+# plt.figure()
+# lakepresent = get_2d_grid(grid, 'lake')
+# plt.imshow(lakepresent)
+# plt.colorbar()
+# plt.title('lake present')
+# lidpresent = get_2d_grid(grid, 'lid')
+# plt.figure()
+# plt.imshow(lidpresent)
+# plt.colorbar()
+# plt.title('lid present')
+# lidpresent = get_2d_grid(grid, 'v_lid')
 
 #
 

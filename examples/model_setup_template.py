@@ -244,7 +244,7 @@ dump_filepath = (
     "../MONARCHS_runs/progress_df.nc"  # Filename of our previously dumped state
 )
 reload_state = False  # Flag to determine whether to reload the state or not
-
+dump_format = 'NETCDF4' # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
 """
 Computing and numerical parameters
 """
