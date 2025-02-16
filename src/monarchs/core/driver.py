@@ -92,6 +92,7 @@ def setup_toggle_dict(model_setup):
 def check_for_reload_state(model_setup, grid, met_start_idx, met_end_idx):
     """
     Determine if the model needs to re-initialise parameters from a dump file.
+    TODO - add support for reloading from pickle
 
     Parameters
     ----------
