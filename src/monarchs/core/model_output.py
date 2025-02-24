@@ -70,7 +70,6 @@ def setup_output(
                 dtype = "b"
             else:
                 dtype = var.dtype
-
             # Ensure we always write out lat/long.
             if key in dims:
                 var_write = data.createVariable(key, dtype, ("x", "y"))
