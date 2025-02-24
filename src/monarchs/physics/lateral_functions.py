@@ -27,7 +27,11 @@ def update_water_level(cell):
     """
     # cell.water is only used for the lateral movement. So we first need to update it based on Lfrac,
     # which is used in the rest of MONARCHS.
-    if not cell.lake and not cell.lid:
+    if not cell.valid_cell:
+        cell.water_level = 999
+        return
+
+    elif not cell.lake and not cell.lid:
         if cell.ice_lens:
             # We find the water level by the topmost bit of saturated firn above the ice lens.
 
@@ -60,7 +64,7 @@ def update_water_level(cell):
     elif cell.lid:
         # cell.water_level = (cell.water_level + cell.firn_depth
         #                     + cell.lake_depth + cell.lid_depth)
-        cell.water_level = 9999
+        cell.water_level = 999
         cell.water = cell.Lfrac * (cell.firn_depth / cell.vert_grid)
 
 
@@ -171,21 +175,30 @@ def find_biggest_neighbour(
         for i in range(-1, 2, 1):
             for j in range(-1, 2, 1):
                 try:
+                    code = ''
+                    if i == -1:
+                        code += 'N'
+                    elif i == 1:
+                        code += 'S'
+                    if j == -1:
+                        code += 'W'
+                    elif j == 1:
+                        code += 'E'
+
                     neighbour_cell = grid[col + i][row + j]
                     # If the water level is a local minimum, then we want to flow water into the land.
                     if max(neighbours.values()) <= 0:
                         if not neighbour_cell.valid_cell:
-                            neighbour_cell.water_level = -999
+                            neighbours[code] = 9998
                     # Otherwise, ensure we *don't* flow water into land as it has places it can go within the model.
                     else:
                         if not neighbour_cell.valid_cell:
-                            neighbour_cell.water_level = 9999
+                            neighbours[code] = -9999
                 except IndexError:
                     continue
 
 
         # run the algorithm again based on the new water levels.
-        neighbours = get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row)
 
     # Find neighbour with the biggest height difference in water level
     biggest_height_difference = max(neighbours.values())
@@ -679,10 +692,7 @@ def move_water(
     for col in range(max_grid_col):
         for row in range(max_grid_row):
             cell = grid[col][row]
-            temporary_cell = temp_grid[col][row]
-            if row == 71 and col == 75:
-                print('LD = ', cell.lake_depth)
-                print('TLD = ', temporary_cell.lake_depth)
+
             if cell.valid_cell and ((cell.ice_lens and (cell.water > 0).any()) or (cell.lake and cell.lake_depth > 0)):
                 # Get the points with the largest difference in heights
                 # TODO | Is the thing we are really interested in just "if water level > neighbour level, move water"?

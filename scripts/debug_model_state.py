@@ -2,38 +2,47 @@ from monarchs.core.dump_model_state import reload_state
 from monarchs.core.utils import get_2d_grid
 from matplotlib import pyplot as plt
 from monarchs.physics.lateral_functions import move_water
-path = "../../lake_depth_error.nc"
+
+path = "C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem/progress.pkl"
 import numpy.testing as npt
 # Set up a dummy IceShelf instance, create a grid of these, then write out our dumpfile into this.
 class IceShelf():
     pass
 
 
-row_amount = 3
-col_amount = 3
+row_amount = 100
+col_amount = 100
 
-grid = []
-for i in range(col_amount):
-    _l = []
-    for j in range(row_amount):
-        _l.append(IceShelf())
-    grid.append(_l)
+file_fmt = 'pickle'
 
-test, _, _, _ = reload_state(path, grid)
+if file_fmt == 'netcdf':
+    grid = []
+    for i in range(col_amount):
+        _l = []
+        for j in range(row_amount):
+            _l.append(IceShelf())
+        grid.append(_l)
+
+    test, _, _, _ = reload_state(path, grid)
+
+else:
+    import pickle
+
+    with open(path, 'rb') as f:
+        test = pickle.load(f)
 # #
-import pickle
-import numpy as np
-outfile = open(r'C:\Users\jdels\Documents\Work\MONARCHS\src\dump_test.pkl', 'rb')
-test2 = pickle.load(outfile)
-# move_water(test, row_amount, col_amount, 1000, 3600*12,
-#                 catchment_outflow=True,
-#                 flow_into_land=True,
-#                 lateral_movement_percolation_toggle=True)
-for i in range(col_amount):
-    for j in range(row_amount):
-        for key in test[0][0].__dict__.keys():
-            print(key)
-            npt.assert_equal(getattr(test[i][j], key), getattr(test2[i][j], key))
+move_water(test, row_amount, col_amount, 1000, 3600*12,
+                catchment_outflow=True,
+                flow_into_land=True,
+                lateral_movement_percolation_toggle=True)
+
+
+
+# for i in range(col_amount):
+#     for j in range(row_amount):
+#         for key in test[0][0].__dict__.keys():
+#             print(key)
+#             npt.assert_equal(getattr(test[i][j], key), getattr(test2[i][j], key))
 # # Now we can interact with the model, plot stuff out etc.
 # lakedepth = get_2d_grid(grid, 'lake_depth')
 # plt.imshow(lakedepth)

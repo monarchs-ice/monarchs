@@ -1,92 +1,58 @@
-from monarchs.core.dump_model_state import reload_state
-from monarchs.core.utils import get_2d_grid
+"""
+Sample script to plot some basic images from the model output.
+In this script, I load in both the model dump (from progress.nc), and the
+diagnostic output (model_output.nc). The dump file gives an indication of the current state of the model.
+The diagnostic file is only used here to plot the initial conditions of the firn column, so I can do a diff to see
+visually how it has changed over time.
+"""
+
+from netCDF4 import Dataset
 from matplotlib import pyplot as plt
-from monarchs.physics.lateral_functions import move_water
-path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem/progress.nc'
-import numpy.testing as npt
-# Set up a dummy IceShelf instance, create a grid of these, then write out our dumpfile into this.
-class IceShelf():
-    pass
+import numpy.ma as ma
 
+dumppath = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem/progress.nc'
+diagpath = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem/model_output.nc'
 
-row_amount = 100
-col_amount = 100
+flowdata = Dataset(dumppath)
+t0data = Dataset(diagpath)
 
-grid = []
-for i in range(col_amount):
-    _l = []
-    for j in range(row_amount):
-        _l.append(IceShelf())
-    grid.append(_l)
+def plot_variable(dset, variable_name, cmap='viridis', vmax=None, title_flow=True):
+    variable = dset.variables[variable_name]
+    plt.figure()
+    plt.imshow(variable, vmax=vmax, cmap=cmap)
+    plt.colorbar()
+    title_str = variable_name.replace('_', ' ')
+    if vmax:
+        title_str += ', (max shown = {})'.format(vmax)
+    if title_flow:
+        title_str += ', flow_into_land = `True`'
+    plt.title(title_str)
+    return variable
 
-test, _, _, _ = reload_state(path, grid, keys=('lake_depth', 'firn_depth', 'lid_depth', 'lake', 'lid', 'lat', 'lon'))
-#
-# Now we can interact with the model, plot stuff out etc.
-lakedepth = get_2d_grid(grid, 'lake_depth')
-plt.imshow(lakedepth)
-plt.colorbar()
-plt.title('Lake depth')
-plt.figure()
-lakedepth = get_2d_grid(grid, 'lake_depth')
-plt.imshow(lakedepth, vmax=2, cmap='magma')
-plt.colorbar()
-plt.title('Lake depth (max shown = 2)')
-plt.figure()
-firndepth = get_2d_grid(grid, 'firn_depth')
-plt.imshow(firndepth, vmax=80)
-plt.colorbar()
-plt.title('Firn depth')
-plt.figure()
-bothdepth = lakedepth + firndepth
-plt.imshow(bothdepth, vmax=80)
-plt.colorbar()
-plt.title('Lake depth + firn depth')
-plt.figure()
-liddepth = get_2d_grid(grid, 'lid_depth')
-plt.imshow(liddepth)
-plt.colorbar()
-plt.title('lid depth')
-plt.figure()
-alldepth = lakedepth + firndepth + liddepth
-plt.imshow(alldepth, vmax=80)
-plt.colorbar()
-plt.title('all depth')
-#
+lakedepth = plot_variable(flowdata, 'lake_depth')
+plot_variable(flowdata,'lake_depth', vmax=1)
+ice_lens = plot_variable(flowdata,'ice_lens')
+ice_lens_depth = plot_variable(flowdata,'ice_lens_depth', vmax=500)
+firndepth = plot_variable(flowdata,'firn_depth', vmax=150)
+liddepth = plot_variable(flowdata,'lid_depth')
+lake = plot_variable(flowdata,'lake')
+lid = plot_variable(flowdata,'lid')
 
 plt.figure()
-lakepresent = get_2d_grid(grid, 'lake')
-plt.imshow(lakepresent)
+ofd = t0data.variables['firn_depth'][0]
+plt.imshow(ofd, vmax=80)
 plt.colorbar()
-plt.title('lake present')
-lidpresent = get_2d_grid(grid, 'lid')
+plt.title('Firn depth (original)')
+
 plt.figure()
-plt.imshow(lidpresent)
+diff = firndepth[:] - ofd[:]
+plt.imshow(diff)
 plt.colorbar()
-plt.title('lid present')
-lidpresent = get_2d_grid(grid, 'v_lid')
+plt.title('Firn depth difference (m)')
 
+lakedepthbool = ma.masked_outside(lakedepth[:], 0.001, 0.1)
+plt.figure()
+plt.imshow(lakedepthbool)
+plt.colorbar()
+plt.title('Lake depth boolean')
 
-
-# contour plots
-import cartopy.crs as ccrs
-import cartopy
-import numpy as np
-projection = ccrs.PlateCarree()
-lat = get_2d_grid(grid, 'lat')
-lon = get_2d_grid(grid, 'lon')
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection=projection)
-ax.coastlines()
-vmin = 0
-vmax = firndepth.max()
-levels = np.linspace(vmin, vmax, 20)
-ax.contourf(lon, lat, firndepth, transform=projection, levels=levels)
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection=projection)
-ax.coastlines()
-vmin = 0
-vmax = 2
-levels = np.linspace(vmin, vmax, 20)
-ax.contourf(lon, lat, lakedepth, transform=projection, levels=levels)

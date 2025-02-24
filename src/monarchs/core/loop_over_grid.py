@@ -89,8 +89,8 @@ def loop_over_grid(
     # need to make our dict of toggles a grid, else it will just pass individual elements of the dict to each process
     toggle_dict_grid = []
     x0 = get_2d_grid(grid, "column")
-    for i in range(row_amount):
-        for j in range(col_amount):
+    for i in range(col_amount):
+        for j in range(row_amount):
             flat_grid.append(grid[i][j])
             met_data_grid.append(met_data[i][j])
             toggle_dict_grid.append(toggle_dict)
