@@ -7,7 +7,7 @@ interpolating it, and loading in/interpolating the digital elevation map (DEM) i
 import numpy as np
 from netCDF4 import Dataset
 
-from monarchs.DEM.import_DEM import export_DEM_geotiff
+from monarchs.DEM.load_DEM import export_DEM
 from monarchs.core.iceshelf_class import IceShelf
 from monarchs.met_data.import_ERA5 import (
     ERA5_to_variables,
@@ -30,7 +30,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     # Check if we have the relevant parameters in our model setup file, and if so, either load the DEM, or
     # initialise the firn depth from the values in the model setup file.
     if hasattr(model_setup, "DEM_path"):
-        firn_depth, lat_array, lon_array = export_DEM_geotiff(
+        firn_depth, lat_array, lon_array = export_DEM(
             model_setup.DEM_path,
             num_points=model_setup.row_amount,
             diagnostic_plots=diagnostic_plots,
@@ -38,6 +38,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             top_left=model_setup.bbox_top_left,
             bottom_right=model_setup.bbox_bottom_right,
             bottom_left=model_setup.bbox_bottom_left,
+            input_crs=model_setup.input_crs
         )
     elif hasattr(model_setup, "firn_depth"):
         firn_depth = model_setup.firn_depth

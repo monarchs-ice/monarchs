@@ -310,7 +310,7 @@ def generate_met_dem_diagnostic_plots(old_ERA5_grid, ERA5_grid, ilats, ilons, ih
 def get_met_bounds_from_DEM(
     model_setup, ERA5_grid, lat_array, lon_array, diagnostic_plots=False
 ):
-    from monarchs.DEM.import_DEM import export_DEM_geotiff
+    from monarchs.DEM.load_DEM import export_DEM
     from monarchs.core.utils import find_nearest
 
     # Handle cases where we don't have lat/long bounds set in the model setup file to avoid errors
@@ -327,7 +327,7 @@ def get_met_bounds_from_DEM(
         else:
             bdict[bound] = getattr(model_setup, bound)
     # Get lat/long from DEM
-    iheights, ilats, ilons = export_DEM_geotiff(
+    iheights, ilats, ilons = export_DEM(
         model_setup.DEM_path,
         top_right=bdict["bbox_top_right"],
         bottom_left=bdict["bbox_bottom_left"],
@@ -336,6 +336,7 @@ def get_met_bounds_from_DEM(
         num_points=model_setup.row_amount,
         diagnostic_plots=False,
         all_outputs=False,
+        input_crs=model_setup.input_crs
     )
 
     print("Testing - loading lat/long bounds from DEM")
@@ -410,9 +411,9 @@ if __name__ == "__main__":
 
     # Load in geotiff - for testing
     tiffname = "DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
-    from monarchs.DEM.import_DEM import export_DEM_geotiff
+    from monarchs.DEM.load_DEM import export_DEM
 
-    iheights, ilats, ilons = export_DEM_geotiff(
+    iheights, ilats, ilons = export_DEM(
         tiffname, num_points=50, diagnostic_plots=False, all_outputs=False
     )
     import cartopy.crs as ccrs

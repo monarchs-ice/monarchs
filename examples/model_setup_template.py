@@ -30,18 +30,18 @@ latmin = np.nan  # Minimum latitude to use in our DEM and met data files.
 longmax = np.nan  # Maximum longitude to use in our DEM and met data files.
 longmin = np.nan  # Minimum longitude to use in our DEM and met data files.
 
-# bbox_top_right = [
-#     (-66.52, -62.814)
-# ]  # bounding box top right coordinates, [(lat, long)]
-# bbox_bottom_left = [
-#     (-66.289, -64.68)
-# ]  # bounding box bottom left coordinates, [(lat, long)]
-# bbox_top_left = [
-#     (-66.04, -63.42)
-# ]  # bounding box top left coordinates, [(lat, long)]
-# bbox_bottom_right = [
-#     (-66.778, -64.099)
-# ]  # bounding box bottom right coordinates, [(lat, long)]
+bbox_top_right = [
+    (-66.52, -62.814)
+]  # bounding box top right coordinates, [(lat, long)]
+bbox_bottom_left = [
+    (-66.289, -64.68)
+]  # bounding box bottom left coordinates, [(lat, long)]
+bbox_top_left = [
+    (-66.04, -63.42)
+]  # bounding box top left coordinates, [(lat, long)]
+bbox_bottom_right = [
+    (-66.778, -64.099)
+]  # bounding box bottom right coordinates, [(lat, long)]
 
 """
 Timestepping parameters
@@ -85,7 +85,9 @@ DEM/initial firn profile
             to these cells. This means they effectively stay the same throughout the whole model.
             'clip' - Set all cells above the max firn height to ``firn_max_height``. This will not prevent MONARCHS
             from running physics on these cells.
-
+    input_crs: int
+        Coordinate reference system of the input data. Default is 3038, i.e. WGS84 Antarctic Polar Stereographic.
+        
 """
 
 DEM_path = 'DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
@@ -97,6 +99,7 @@ firn_max_height = 100
 firn_min_height = 35
 max_height_handler = "filter"
 min_height_handler = "extend"
+input_crs = 3031  # Coordinate reference system of the input data
 
 """
 Model initial conditions (density/temperature profiles)

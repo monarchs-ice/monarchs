@@ -17,7 +17,6 @@ dependencies = [
     'netCDF4',
     'cartopy',
     'matplotlib',
-    'geotiff',
     'Pillow',
     'imagecodecs',
     'pathos'
@@ -39,7 +38,7 @@ numba = [
 mpi = [
     'mpi4py',
 ]
-
+dem = ['rasterio', 'pyproj']
 
 [project.scripts]
 monarchs = 'run_MONARCHS:monarchs'

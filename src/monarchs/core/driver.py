@@ -525,13 +525,13 @@ def initialise(model_setup):
     if hasattr(model_setup, "lat_bounds") and model_setup.lat_bounds.lower() == "dem":
         T_firn, rho, firn_depth, valid_cells, lat_array, lon_array = (
             initial_conditions.initialise_firn_profile(
-                model_setup, diagnostic_plots=False
+                model_setup, diagnostic_plots=True
             )
         )
     else:
         T_firn, rho, firn_depth, valid_cells = (
             initial_conditions.initialise_firn_profile(
-                model_setup, diagnostic_plots=False
+                model_setup, diagnostic_plots=True
             )
         )
         lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan

@@ -2,11 +2,8 @@
 # RBIS from Sophie
 
 import numpy as np
-from PIL import Image
-from PIL.TiffTags import TAGS
-from geotiff import GeoTiff
 from scipy.interpolate import RegularGridInterpolator
-
+import rioxarray
 
 def interpolate_DEM(heights, num_points):
     """
@@ -35,76 +32,9 @@ def interpolate_DEM(heights, num_points):
     return interp((X, Y))
 
 
-def export_DEM(tiffname, num_points=10, diagnostic_plots=False):
-    """
-    Load in a DEM TIFF file, and return an array with the elevation map covering the
-    requested number of model gridpoints.
-
-    Parameters
-    ----------
-    tiffname : str
-        Name of the geoTIFF file containing the digital elevation map (DEM) we want to load in.
-    num_points : int, optional
-        number of gridpoints. Currently only supports squares (i.e.
-        gridpoint number is same in x and y). Default 10.
-    diagnostic_plots : bool, optional
-        Flag to trigger plotting of the exported DEM, for testing. Default False (i.e. no plots).
-
-    Returns
-    -------
-    heights : array_like, float, dimension(lat, long)
-        Raw elevation data from the DEM.
-    interpolated_heights : array_like, float, dimension(lat, long)
-        DEM elevation data interpolated to the number of points specified by num_points.
-        Likely the desired output of the function.
-    meta_dict : dict
-        Dictionary containing metadata about the input TIFF file, in case there is something the user wants to check.
-    """
-    im = Image.open(tiffname)
-    # im=np.loadtxt(tiffname, delimiter=',')
-    DEM_grid = np.array(im)
-
-    meta_dict = {TAGS[key]: im.tag[key] for key in im.tag_v2}
-
-    # The indices in "heights" reflect how much of the DEM we are interested in - in
-    # this case a 45000 x 45000 m subset of the total?
-
-    heights = DEM_grid  # [1580:2080, 760:1760]
-    water_level = 0 * heights
-    # print(DEM_grid)
-
-    # Regridding to different resolution
-    scale = len(heights) / num_points
-
-    interpolated_heights = interpolate_DEM(heights, scale)
-
-    # Show plots for diagnostics if running this as as script
-    if diagnostic_plots:
-        plt.imshow(DEM_grid, vmax=100, vmin=0)
-        plt.colorbar()
-        plt.title("Initial Height Whole RBIS")
-
-        fig = plt.figure(figsize=(4, 2))
-        plt.imshow(heights, vmin=0, vmax=100)
-        # plt.set_cmap("Reds")
-        cbar = plt.colorbar()
-        cbar.set_label("Height (m)")
-        plt.title("Initial Height Subset")
-        # plt.savefig('RBISInit_height.jpg')
-
-        fig = plt.figure(figsize=(4, 2))
-        plt.imshow(interpolated_heights, vmin=0, vmax=100)
-        # plt.set_cmap("Reds")
-        cbar = plt.colorbar()
-        cbar.set_label("Height (m)")
-        plt.title("Initial Height Subset_Interpolated")
-        # plt.savefig('RBISInit_height.jpg')
-        plt.show()
-
-    return heights, interpolated_heights, meta_dict
 
 
-def export_DEM_geotiff(
+def export_DEM(
         tiffname,
         num_points=50,
         top_right=False,
@@ -114,6 +44,7 @@ def export_DEM_geotiff(
         diagnostic_plots=False,
         all_outputs=False,
         return_lats=True,
+        input_crs=3031 # Antarctic polar stereographic projection by default
 ):
     """
     Load in a DEM from a GeoTIFF file, and turn it into an elevation map in the form of a Numpy array.
@@ -180,71 +111,58 @@ def export_DEM_geotiff(
         Array containing the longitude coordinates of the elevation data after applying scipy.ndimage.zoom.
         Only output when all_outputs is True.
     """
-    gt = GeoTiff(tiffname)
-    # print(f'Box boundary = {gt.tif_bBox_converted}')
-    print("Reading in firn depth from DEM")
-    # if all the box boundary coordinates aren't False or Nan, then take a subset defined by these bounds
-    # use concatenate to turn into a single vector and check all values are ok, index by [0]
-
-    if not any(val == False for val in[top_right, top_left, bottom_right, bottom_left])  and not any(
-            np.isnan(val) for val in np.concatenate([top_right, top_left, bottom_right, bottom_left], axis=1)[0]
-    ):
-        heights = np.array(gt.read())
-        lon_array, lat_array = gt.get_coord_arrays()
-        heights[heights < -100] = np.nan  # filter out overly negative values
-        # smooth over NaNs using nearest neighbour interpolation
-        mask = np.where(~np.isnan(heights))
-        from scipy import interpolate, spatial
-        interp = interpolate.NearestNDInterpolator(np.transpose(mask), heights[mask])
-        heights = interp(*np.indices(heights.shape))
-
-        # find the nearest points in the DEM array to the chosen bounding box points
-        coord_array = np.c_[lat_array.ravel(), lon_array.ravel()]
-        coord_ref = np.dstack((lat_array, lon_array))
-        trd, tri = spatial.KDTree(coord_array).query(top_right, k=1)  # top right index is what we want (tri)
-        bld, bli = spatial.KDTree(coord_array).query(bottom_left, k=1)
-        brd, bri = spatial.KDTree(coord_array).query(bottom_right, k=1)
-        tld, tli = spatial.KDTree(coord_array).query(top_left, k=1)
-
-        tri = np.unravel_index(tri, lat_array.shape)
-        bli = np.unravel_index(bli, lat_array.shape)
-        bri = np.unravel_index(bri, lat_array.shape)
-        tli = np.unravel_index(tli, lat_array.shape)
-        print('Top right - at ', tri)
-        print('Bottom left - at ', bli)
-        print('Bottom right - at ', bri)
-        print('Top left - at ', tli)
-
-        # Now we need to convert these into our slice. Take the average of our arrays.
-        lat_start = int(np.floor((tri[0] + tli[0]) / 2)[0])
-        lat_end = int(np.floor((bri[0] + bli[0]) / 2)[0])
-        lon_start = int(np.floor((tli[1] + bli[1]) / 2)[0])
-        lon_end = int(np.floor((tri[1] + bri[1]) / 2)[0])
-
-        print('Length of lat arrays = ', lat_end - lat_start)
-        print('Length of lon arrays = ', lon_end - lon_start)
-
-        # Slice to get the final result
-        lon_array = lon_array[lat_start:lat_end, lon_start:lon_end]
-        lat_array = lat_array[lat_start:lat_end, lon_start:lon_end]
-        heights = heights[lat_start:lat_end, lon_start:lon_end]
-
-    else:  # otherwise get the whole array
-        # print('Reading whole array')
-        heights = np.array(gt.read())
-        lon_array, lat_array = gt.get_coord_arrays()
-
-    # Remove NaN/overly negative values
-    heights[heights < -10] = 0
-    # interpolate the lat/long coordinates
+    from pyproj import CRS, Transformer
     from scipy.ndimage import zoom
 
-    zoomlevel = 1 / 3
-    newlons = zoom(lon_array, zoomlevel)
-    newlats = zoom(lat_array, zoomlevel)
+    # print(f'Box boundary = {input_raster.tif_bBox_converted}')
+    print("Reading in firn depth from DEM")
+    input_raster = rioxarray.open_rasterio(tiffname).rio.reproject("EPSG:3031")
+    # Get the lat/long coordinates of the DEM
+
+    transformer = Transformer.from_crs(input_crs, CRS.from_epsg(4326), always_xy=True)
+    x, y = np.meshgrid(input_raster.x.values, input_raster.y.values)
+    x_flat, y_flat = x.flatten(), y.flatten()
+    lon_array, lat_array = transformer.transform(x_flat, y_flat)
+    lat_array = lat_array.reshape(x.shape)
+    lon_array = lon_array.reshape(y.shape)
+
+    # if all the box boundary coordinates aren't False or Nan, then take a subset defined by these bounds
+    # use concatenate to turn into a single vector and check all values are ok, index by [0]
+    if not any(val in [False, np.nan] for val in np.ravel([top_right, top_left, bottom_right, bottom_left])):
+        custom_bbox = True
+        projected_raster = input_raster.rio.reproject("EPSG:4326")
+        # we need to transform our bounding box coordinates to the EPSG:3031 projection, then back again
+        # into lat/long.
+        from matplotlib.path import Path
+        import xarray as xr
+        corners = [bottom_left, bottom_right, top_right, top_left]
+
+        lon_min, lon_max = min([corner[1] for corner in corners]), max([corner[1] for corner in corners])
+        lat_min, lat_max = min([corner[0] for corner in corners]), max([corner[0] for corner in corners])
+        subset_raster = projected_raster.rio.clip_box(minx=lon_min, miny=lat_min, maxx=lon_max, maxy=lat_max,
+                                                   crs="EPSG:4326")
+
+        from matplotlib import pyplot as plt
+        heights = subset_raster.values[0]
+        lat_subset = subset_raster.y.values
+        lon_subset = subset_raster.x.values
+        if diagnostic_plots:
+            bounding_box_diagnostic_plots(input_raster, subset_raster, lon_array, lat_array, lon_subset, lat_subset)
+        # set the values that we use from here to the subset values
+        lon_array, lat_array = np.meshgrid(lon_subset, lat_subset)
+        plt.figure()
+        plt.imshow(subset_raster.values[0])
+        plt.title('reprojected')
+    # Remove NaN/overly negative values
+    heights[heights < -10] = -10
+    # interpolate the lat/long coordinates
+
+    # speed up the interpolation step by first applying a zoom
+    newlons = lon_array
+    newlats = lat_array
+    new_heights = heights
     nans = np.where(np.isnan(heights))
-    heights[nans] = 0
-    new_heights = zoom(heights, zoomlevel)
+    heights[nans] = 999
     new_heights_interpolated = interpolate_DEM(heights, num_points)
     lat_interp = interpolate_DEM(newlats, num_points)
     lon_interp = interpolate_DEM(newlons, num_points)
@@ -276,26 +194,84 @@ def export_DEM_geotiff(
         return new_heights_interpolated
     # return new_heights_interpolated#, newlons, newlats
 
+def bounding_box_diagnostic_plots(input_raster, subset_raster, lon_array, lat_array, lon_subset, lat_subset):
+    """
+
+    Parameters
+    ----------
+    input_raster
+    subset_raster
+    lon_array
+    lat_array
+    lon_subset
+    lat_subset
+
+    Returns
+    -------
+
+    """
+    from matplotlib import pyplot as plt
+    import cartopy.crs as ccrs
+    projection = ccrs.PlateCarree(central_longitude=0)
+    cmap = "viridis"
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111, projection=projection)
+    levels = np.arange(np.nanmin(subset_raster.values[0]), np.nanmax(subset_raster.values[0]), 1)
+    cont = ax1.contourf(
+        lon_array,
+        lat_array,
+        input_raster.values[0],
+        cmap=cmap,
+        transform=ccrs.PlateCarree(),
+        vmax=np.nanmax(subset_raster.values[0]),
+        vmin=np.nanmin(subset_raster.values[0]),
+        levels=levels
+    )
+    ax1.coastlines()
+    ax1.gridlines(draw_labels=True)
+    ax1.title.set_text('DEM height profile with subset')
+    cont = ax1.contourf(
+        lon_subset,
+        lat_subset,
+        subset_raster.values[0],
+        cmap='magma',
+        transform=ccrs.PlateCarree(),
+        levels=levels
+    )
+
+    plt.figure()
+    plt.imshow(subset_raster.values[0])
+    plt.figure()
+    plt.imshow(input_raster.values[0])
+    plt.show()
 
 def generate_diagnostic_plots(
         lons, lats, heights, newlons, newlats, newheights, new_heights_interpolated
 ):
+    """
+    Diagnostics for the DEM interpolation process.
+    Parameters
+    ----------
+    lons
+    lats
+    heights
+    newlons
+    newlats
+    newheights
+    new_heights_interpolated
+
+    Returns
+    -------
+
+    """
     import cartopy.crs as ccrs
-
-    plt.figure()
-    plt.imshow(heights)
-
-    plt.figure()
-    plt.imshow(newheights)
-    plt.show()
+    from matplotlib import pyplot as plt
     projection = ccrs.PlateCarree(central_longitude=0)
     cmap = "viridis"
     fig = plt.figure()
     ax1 = fig.add_subplot(211, projection=projection)
     ax1.coastlines()
     bounds = np.arange(0, 500, 1)
-
-    plt.figure()
 
     cont = ax1.contourf(
         lons,
@@ -346,7 +322,7 @@ if __name__ == "__main__":
     tiffname = "DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
 
     heights, lats, lons, newheights, new_heights_interpolated, newlons, newlats = (
-        export_DEM_geotiff(
+        export_DEM(
             tiffname,
             num_points=50,
             diagnostic_plots=False,
@@ -357,7 +333,7 @@ if __name__ == "__main__":
             all_outputs=True,
         )
     )
-    # iheights, ilats, ilons = export_DEM_geotiff(
+    # iheights, ilats, ilons = export_DEM(
     #     tiffname,
     #     num_points=50,
     #     diagnostic_plots=False,

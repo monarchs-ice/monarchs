@@ -232,6 +232,7 @@ def create_defaults_for_missing_flags(model_setup):
         "ice_lens_depth",
     )
     vardict['dump_format'] = 'NETCDF4'
+    vardict['input_crs'] = 3031
     # Keys that have special print messages - e.g. those that have default values that depend on model_setup variables
     # go in here, and a specific print message is written for them
     special_keys = ["lateral_timestep"]
