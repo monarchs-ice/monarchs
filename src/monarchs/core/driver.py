@@ -458,7 +458,6 @@ def main(model_setup, grid):
                 grid,
                 model_setup.row_amount,
                 model_setup.col_amount,
-                model_setup.lat_grid_size,
                 model_setup.lateral_timestep,
                 catchment_outflow=model_setup.catchment_outflow,
                 flow_into_land=model_setup.flow_into_land,
@@ -489,7 +488,10 @@ def main(model_setup, grid):
         met_data_grid, met_data_len, snow_added = update_met_conditions(
             model_setup, grid, met_start_idx, met_end_idx, snow_added=snow_added
         )
-
+        if model_setup.row_amount == 1:
+            print('Air temperature - ', met_data_grid[0][0].temperature)
+            print('SW - ', met_data_grid[0][0].SW_down)
+            print('LW - ', met_data_grid[0][0].LW_down)
         # Save progress information as netCDF - this allows us to reload in the file
         # if the code stops for whatever reason and continue from there.
         if model_setup.dump_data:
@@ -523,15 +525,15 @@ def main(model_setup, grid):
 def initialise(model_setup):
     # Initialise firn column. Obtain the lat/long boundaries from the DEM if we want to use these.
     if hasattr(model_setup, "lat_bounds") and model_setup.lat_bounds.lower() == "dem":
-        T_firn, rho, firn_depth, valid_cells, lat_array, lon_array = (
+        T_firn, rho, firn_depth, valid_cells, lat_array, lon_array, dx, dy = (
             initial_conditions.initialise_firn_profile(
-                model_setup, diagnostic_plots=True
+                model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
             )
         )
     else:
-        T_firn, rho, firn_depth, valid_cells = (
+        T_firn, rho, firn_depth, valid_cells, dx, dy = (
             initial_conditions.initialise_firn_profile(
-                model_setup, diagnostic_plots=True
+                model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
             )
         )
         lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
@@ -553,6 +555,8 @@ def initialise(model_setup):
         valid_cells=valid_cells,
         lats=lat_array,
         lons=lon_array,
+        size_dx=dx,
+        size_dy=dy,
     )
     return grid
 

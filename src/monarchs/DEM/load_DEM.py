@@ -141,22 +141,24 @@ def export_DEM(
         lat_min, lat_max = min([corner[0] for corner in corners]), max([corner[0] for corner in corners])
         subset_raster = projected_raster.rio.clip_box(minx=lon_min, miny=lat_min, maxx=lon_max, maxy=lat_max,
                                                    crs="EPSG:4326")
-
-        from matplotlib import pyplot as plt
         heights = subset_raster.values[0]
         lat_subset = subset_raster.y.values
         lon_subset = subset_raster.x.values
-        if diagnostic_plots:
-            bounding_box_diagnostic_plots(input_raster, subset_raster, lon_array, lat_array, lon_subset, lat_subset)
-        # set the values that we use from here to the subset values
-        lon_array, lat_array = np.meshgrid(lon_subset, lat_subset)
-        plt.figure()
-        plt.imshow(subset_raster.values[0])
-        plt.title('reprojected')
+        if len(lat_subset) != 0 and len(lon_subset) != 0:
+            dx, dy = get_xy_distance(lat_subset, lon_subset)
+
+            from matplotlib import pyplot as plt
+            if diagnostic_plots:
+                bounding_box_diagnostic_plots(input_raster, subset_raster, lon_array, lat_array, lon_subset, lat_subset)
+            # set the values that we use from here to the subset values
+            lon_array, lat_array = np.meshgrid(lon_subset, lat_subset)
+            plt.figure()
+            plt.imshow(subset_raster.values[0])
+            plt.title('reprojected')
+
     # Remove NaN/overly negative values
     heights[heights < -10] = -10
     # interpolate the lat/long coordinates
-
     # speed up the interpolation step by first applying a zoom
     newlons = lon_array
     newlats = lat_array
@@ -166,6 +168,10 @@ def export_DEM(
     new_heights_interpolated = interpolate_DEM(heights, num_points)
     lat_interp = interpolate_DEM(newlats, num_points)
     lon_interp = interpolate_DEM(newlons, num_points)
+    if np.size(lat_interp) > 1 and np.size(lon_interp) > 1:
+        dx, dy = get_xy_distance(lat_interp, lon_interp)
+    else:
+        dx, dy = np.array([[0]]), np.array([[0]])
 
     if diagnostic_plots:
         generate_diagnostic_plots(
@@ -187,12 +193,45 @@ def export_DEM(
             new_heights_interpolated,
             newlons,
             newlats,
+            dx,
+            dy
         )  # , meta_dict
     elif return_lats:
-        return new_heights_interpolated, lat_interp, lon_interp
+        return new_heights_interpolated, lat_interp, lon_interp, dx, dy
     else:
-        return new_heights_interpolated
+        return new_heights_interpolated, dx, dy
     # return new_heights_interpolated#, newlons, newlats
+
+def get_xy_distance(latitudes, longitudes):
+    import numpy as np
+    from pyproj import Geod
+
+    # Load the raster (already in EPSG:4326)
+
+    # Define the WGS84 geodetic model
+    geod = Geod(ellps="WGS84")
+
+    # Create 2D meshgrid of lat/lon if not passing a mesh grid already
+    if np.ndim(latitudes) == 1 and np.ndim(longitudes) == 1:
+        lon_grid, lat_grid = np.meshgrid(longitudes, latitudes)
+    else:
+        lon_grid, lat_grid = longitudes, latitudes
+    # Compute dy (North-South size of each grid cell in metres)
+    lat1_dy = lat_grid[:-1, :]  # Take all but last row
+    lat2_dy = lat_grid[1:, :]  # Take all but first row
+    dy_metres = geod.inv(lon_grid[:-1, :], lat1_dy, lon_grid[:-1, :], lat2_dy)[-1]
+
+    # Compute dx (East-West size of each grid cell in metres)
+    lon1_dx = lon_grid[:, :-1]  # Take all but last column
+    lon2_dx = lon_grid[:, 1:]  # Take all but first column
+    dx_metres = geod.inv(lon1_dx, lat_grid[:, :-1], lon2_dx, lat_grid[:, :-1])[-1]
+
+    # Convert dx/dy to full-sized arrays by padding (so they match raster size)
+    dy_metres = np.pad(dy_metres, ((0, 1), (0, 0)), mode='edge')  # Pad last row
+    dx_metres = np.pad(dx_metres, ((0, 0), (0, 1)), mode='edge')  # Pad last column
+
+    print("Grid cell sizes computed for all points!")
+    return dx_metres, dy_metres
 
 def bounding_box_diagnostic_plots(input_raster, subset_raster, lon_array, lat_array, lon_subset, lat_subset):
     """
@@ -321,7 +360,7 @@ if __name__ == "__main__":
     """
     tiffname = "DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
 
-    heights, lats, lons, newheights, new_heights_interpolated, newlons, newlats = (
+    heights, lats, lons, newheights, new_heights_interpolated, newlons, newlats, dx, dy = (
         export_DEM(
             tiffname,
             num_points=50,

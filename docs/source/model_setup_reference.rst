@@ -12,18 +12,23 @@ Spatial resolution parameters
 ------------------------------------------------------
 Parameters controlling the spatial resolution of MONARCHS, in terms of the number of grid points and the vertical resolution.
 
-    row_amount : ``int``, required
-        Number of rows (i.e. y-points) you want to run MONARCHS with.
+    row_amount : int
+        Number of rows (i.e. `y`-points) in your model grid, looking from top-down.
+        MONARCHS indexes the model grid via `grid[col][row]`, i.e. the `y`-coordinate is the second index.
         This has only been tested with the same # of points as ``col_amount``, so use caution
         if using different values for each of these.
 
-    col_amount : ``int``, required
-        Number of columns (i.e. x-points) you want to run MONARCHS with.
-        This has only been tested with the same number of points as ``col_amount``, so use caution
+    col_amount : int
+        Number of columns (i.e. `x`-points) in your model grid, looking from top-down.
+        MONARCHS indexes the model grid via `grid[col][row]`, i.e. the `x`-coordinate is the first index.
+        This has only been tested with the same # of points as ``row_amount``, so use caution
         if using different values for each of these.
 
-    lat_grid_size : ``float``, required
-        Size of each gridcell in metres. This determines how long it takes for water to move laterally. WIP is to automate this process, and possibly
+    lat_grid_size : ``float`` or ``str``, required
+        Size of each grid cell in m. This is used to determine how much water can flow during the lateral
+        flow calculations. If set to a number, then the cells are assumed square. If set to ``'dem'``, then the ``x`` and
+        `y` dimensions are calculated separately - in which case the cells are not necessarily assumed to be square.
+        This value is stored in the IceShelf class as ``cell.grid_size_dx`` and ``cell.grid_size_dy``
 
     vertical_points_firn : ``int``
         Number of vertical grid cells in the firn profile. Default is 400. This determines the resolution of the model vertically.
@@ -233,6 +238,12 @@ Parameters controlling how MONARCHS brings together DEM and met data inputs and 
         Useful as a sanity check to make sure that this has worked as intended. Typically you might run a test
         (in serial, on a local machine) where you cancel the run during the first model day to check these plots,
         then re-run (in parallel, possibly on HPC) with this set to ``False``.
+
+    dem_diagnostic_plots: bool, optional
+        Default ``False``.
+
+        If ``True``, generate some plots to check that we have read in the DEM correctly. This is useful if using a
+        bounding box to select a subset of the original DEM, so you can check visually that it is working as intended.
 
 
 Output settings - time series (i.e. scientific output)

@@ -216,7 +216,7 @@ def find_biggest_neighbour(
     return biggest_height_difference, max_list
 
 
-def water_fraction(cell, m, cell_size, timestep):
+def water_fraction(cell, m, timestep, direction):
     """
     Determine the fraction of water that is allowed to move through the solid firn, dependent on its density.
     Called in <move_water>.
@@ -227,10 +227,10 @@ def water_fraction(cell, m, cell_size, timestep):
         IceShelf object that water is moving through
     m : float
         difference in heights between this cell and the cell the water is moving to
-    cell_size : float
-        size of each lateral grid cell [m]
     timestep : int
         time in which the water can move - default 3600 (set by user in runscript) [s]
+    direction: str
+        direction of the water flow - used to determine the "cell size", as these can be non-square.
 
     Returns
     -------
@@ -238,6 +238,17 @@ def water_fraction(cell, m, cell_size, timestep):
         Fraction of the total water that is allowed to move. Either a single number if a lake is present,
         or a Numpy array of length cell.vert_grid if not. M is biggest height difference
     """
+
+    # first calculate the distance the water has to move
+    if direction in ["NW", "NE", "SW", "SE"]:
+        cell_size = np.sqrt(cell.size_dx ** 2 + cell.size_dy ** 2)
+    elif direction in ["N", "S"]:
+        cell_size = cell.size_dy
+    elif direction in ["E", "W"]:
+        cell_size = cell.size_dx
+    # TODO - should cell_size be divided by 2? Since water is moving from the centre of the cell. But if
+    # we consider that it is moving from centre to centre, is probably fine
+
     Big_pi = -2.53 * 10 ** -10  # hydraulic permeability (m^2)
     eta = 1.787 * 10 ** -3  # viscosity(Pa/s)
     if cell.lake:
@@ -246,16 +257,15 @@ def water_fraction(cell, m, cell_size, timestep):
     cell_density = cell.rho
 
     u = Big_pi / eta * m / cell_size * cell_density * -9.8  # flow speed (m/s)
+    water_frac = u * timestep / cell_size
 
     # This block ensures that u is not greater than 1, which would be unphysical.
-    if (
-            cell.lake
-    ):  # if lake, then we only are interested in rho_water so u is a float (not an array)
-        u = min(u, 1)
+    # if lake, then we only are interested in rho_water so u is a float (not an array)
+    if cell.lake:
+        water_frac = min(water_frac, 1)
     else:  # otherwise we look at the density of a specific point in the firn so u is an array
-        u[np.where(u > 1)] = 1  # All water can move in one timestep
+        water_frac[np.where(water_frac > 1)] = 1  # All water can move in one timestep
 
-    water_frac = u * timestep / cell_size
 
     # water_move = cell.water * water_frac
     return water_frac
@@ -394,9 +404,10 @@ def move_to_neighbours(
         biggest_neighbours,
         col,
         row,
-        water_frac,
         split,
         catchment_outflow,
+        biggest_height_difference,
+        timestep,
         flow_into_land=False
 ):
     """
@@ -416,8 +427,8 @@ def move_to_neighbours(
         current row index
     j : int
         current column index
-    water_frac : float
-        Fraction of water that is allowed to move, from water_fraction
+    biggest_height_difference : float
+        largest difference in water level between the central cell and its neighbours. Used in `water_fraction`.
     split : int
         Number determining whether water is split between two or more neighbour grid cells, if there are cells of
         equal water_level
@@ -449,6 +460,10 @@ def move_to_neighbours(
     # in water level between the central cell and the cells at each cardinal point
     for idx, neighbour in enumerate(all_neighbours.keys()):
         if neighbour in biggest_neighbours:
+
+            water_frac = water_fraction(
+                cell, biggest_height_difference, timestep, neighbour
+            )
             n_s_index = all_neighbours[neighbour][0]
             w_e_index = all_neighbours[neighbour][1]
             cell = grid[col][row]
@@ -621,7 +636,6 @@ def move_water(
         grid,
         max_grid_col,
         max_grid_row,
-        cell_size,
         timestep,
         catchment_outflow=True,
         lateral_movement_percolation_toggle=True,
@@ -640,8 +654,6 @@ def move_water(
         Number of grid rows
     max_grid_col : int
         Number of grid columns
-    cell_size : float
-        size of each lateral grid cell [m]
     timestep : int
         Time taken for the lateral movement to occur. This is typically 24 hours, i.e. 3600 * 24 seconds. [s]
     lateral_movement_percolation_toggle : bool, optional
@@ -709,16 +721,12 @@ def move_water(
                     catchment_outflow,
                     flow_into_land=flow_into_land
                 )
+
                 # If more than one cell is equally lower than central the water is split between them
                 split = len(max_list)
-                # print('Split = ', split)
-                if (
-                        biggest_height_difference > 0
-                ):  # Water moves if one of surrounding grid is lower than central cell
-                    water_frac = water_fraction(
-                        cell, biggest_height_difference, cell_size, timestep
-                    )
 
+                # Water moves if one of surrounding grid is lower than central cell
+                if biggest_height_difference > 0:
                     # Now calculate the amount of water to move.
                     # Note that this is in the form of temporary arrays, as we need to avoid
                     # race conditions (i.e. order matters).
@@ -729,9 +737,10 @@ def move_water(
                         max_list,
                         col,
                         row,
-                        water_frac,
                         split,
                         catchment_outflow,
+                        biggest_height_difference,
+                        timestep,
                         flow_into_land=flow_into_land
                     )
 

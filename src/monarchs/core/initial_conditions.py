@@ -30,7 +30,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     # Check if we have the relevant parameters in our model setup file, and if so, either load the DEM, or
     # initialise the firn depth from the values in the model setup file.
     if hasattr(model_setup, "DEM_path"):
-        firn_depth, lat_array, lon_array = export_DEM(
+        firn_depth, lat_array, lon_array, dx, dy = export_DEM(
             model_setup.DEM_path,
             num_points=model_setup.row_amount,
             diagnostic_plots=diagnostic_plots,
@@ -42,6 +42,9 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
         )
     elif hasattr(model_setup, "firn_depth"):
         firn_depth = model_setup.firn_depth
+        dx = model_setup.lat_grid_size
+        dy = model_setup.lat_grid_size
+
     else:
         raise ValueError(
             f"monarchs.core.initial_conditions.initialise_firn_profile: "
@@ -184,9 +187,9 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
         and model_setup.lat_bounds == "dem"
     ):
 
-        return T, rho, firn_depth, valid_cells, lat_array, lon_array
+        return T, rho, firn_depth, valid_cells, lat_array, lon_array, dx, dy
     else:
-        return T, rho, firn_depth, valid_cells
+        return T, rho, firn_depth, valid_cells, dx, dy
 
 
 def check_for_isolated_cells(valid_cells):
@@ -399,6 +402,8 @@ def create_model_grid(
     use_numba=False,
     lats=np.array([np.nan]),
     lons=np.array([np.nan]),
+    size_dx=1000,
+    size_dy=1000
 ):
     """
     Create a grid of IceShelf objects based on a set of input parameters.
@@ -543,6 +548,8 @@ def create_model_grid(
                     valid_cell=valid_cells[i, j],
                     lat=lats[i, j],
                     lon=lons[i, j],
+                    size_dx=size_dx[i, j],
+                    size_dy=size_dy[i, j]
                 )
             )
         grid.append(_l)

@@ -12,12 +12,25 @@ import numpy as np
 print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
+
+    row_amount : int
+        Number of rows (i.e. `y`-points) in your model grid, looking from top-down. 
+        MONARCHS indexes the model grid via `grid[col][row]`, i.e. the `y`-coordinate is the second index.
+
+    col_amount : int
+        Number of columns (i.e. `x`-points) in your model grid, looking from top-down.
+        MONARCHS indexes the model grid via `grid[col][row]`, i.e. the `x`-coordinate is the first index.
+    
+    lat_grid_size : float, or str
+        Size of each grid cell in m. This is used to determine how much water can flow during the lateral
+        flow calculations. If set to a number, then the cells are assumed square. If set to `'dem'`, then the `x` and
+        `y` dimensions are calculated separately - in which case the cells are not necessarily assumed to be square.
+        This value is stored in the IceShelf class as `cell.grid_size_dx` and `cell.grid_size_dy`
 """
-row_amount = 50  # Number of rows in your model grid, looking from top-down.
 col_amount = 50  # Number of columns in your model grid, looking from top-down.
-lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
-# TODO - calc based on DEM automatically
-# lat_grid_size = 'dem'
+row_amount = 50  # Number of rows in your model grid, looking from top-down.
+lat_grid_size = 'dem'  # size of each lateral grid cell in m - can either be a number or 'dem' to calculate
+# x and y grid sizes from the DEM itself.
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake

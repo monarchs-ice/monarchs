@@ -147,6 +147,10 @@ class IceShelf:
         Latitude of the cell in degrees. Taken from the input DEM.
     lon: float
         Longitude of the cell in degrees. Taken from the input DEM.
+    size_dx: float
+        Size of the grid cell in the x (along rows) direction [m]
+    size_dy: float
+        Size of the grid cell in the y (along columns) direction [m]
     """
 
     def __init__(
@@ -186,6 +190,8 @@ class IceShelf:
             valid_cell=True,
             lat=0,
             lon=0,
+            size_dx=1000,
+            size_dy=1000,
     ):
         """
         **__init__**
@@ -332,6 +338,8 @@ class IceShelf:
         self.valid_cell = valid_cell
         self.lat = lat
         self.lon = lon
+        self.size_dx = size_dx
+        self.size_dy = size_dy
 
 
 
@@ -403,5 +411,7 @@ def get_spec():
         ("valid_cell", boolean),
         ("lat", float64),
         ("lon", float64),
+        ("size_dx", float64),
+        ("size_dy", float64),
     ]
     return spec
