@@ -41,3 +41,5 @@ class IceShelf:
     col: int
     firn_temperature: np.ndarray
     meltflag: np.ndarray
+    size_dx: float
+    size_dy: float

@@ -40,7 +40,9 @@ def test_ice_lens():
                     firn_temperature=np.linspace(240, 273.15, 40)[::-1],
                     col=i,
                     row=j,
-                    meltflag=np.zeros(40)
+                    meltflag=np.zeros(40),
+                    size_dx=20,
+                    size_dy=20,
                 )
             )
 
@@ -51,7 +53,6 @@ def test_ice_lens():
         grid,
         3,
         2,
-        20,
         3600 * 24,
         catchment_outflow=False,
         lateral_movement_percolation_toggle=False,
@@ -61,7 +62,6 @@ def test_ice_lens():
         grid,
         3,
         2,
-        20,
         3600 * 24,
         catchment_outflow=True,
         lateral_movement_percolation_toggle=False,
@@ -102,7 +102,9 @@ def test_ice_lens():
                     firn_temperature=np.linspace(240, 273.15, 40)[::-1],
                     col=i,
                     row=j,
-                    meltflag=np.zeros(40)
+                    meltflag=np.zeros(40),
+                    size_dx=20,
+                    size_dy=20,
                 )
             )
 
@@ -113,7 +115,6 @@ def test_ice_lens():
         grid,
         3,
         2,
-        20,
         3600 * 24,
         catchment_outflow=False,
         lateral_movement_percolation_toggle=False,
@@ -123,7 +124,6 @@ def test_ice_lens():
         grid,
         3,
         2,
-        20,
         3600 * 24,
         catchment_outflow=True,
         lateral_movement_percolation_toggle=False,

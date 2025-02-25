@@ -327,7 +327,7 @@ def get_met_bounds_from_DEM(
         else:
             bdict[bound] = getattr(model_setup, bound)
     # Get lat/long from DEM
-    iheights, ilats, ilons = export_DEM(
+    iheights, ilats, ilons,dx, dy = export_DEM(
         model_setup.DEM_path,
         top_right=bdict["bbox_top_right"],
         bottom_left=bdict["bbox_bottom_left"],
@@ -399,108 +399,65 @@ def get_met_bounds_from_DEM(
 if __name__ == "__main__":
     #  Run this script directly to test some output generation and plot out the results.
 
-    ERA5_input = "data/ERA5_small.nc"
+    ERA5_input = "../../../data/ERA5_small.nc"
     ERA5_data = netCDF4.Dataset(ERA5_input)
     ERA5_vars = ERA5_to_variables(ERA5_input)
-    # ERA5_vars_subset = grid_subset(ERA5_vars, -71, -73, -66, -70)
-    ERA5_vars_subset_interpolated = interpolate_grid(ERA5_vars, 50, 50)
-    #
-    T = ERA5_vars_subset_interpolated["temperature"]
+    row_amount = 5
+    col_amount = 5
+    ERA5_vars_subset_interpolated = interpolate_grid(ERA5_vars, row_amount, col_amount)
+
+    import cartopy.crs as ccrs
+    fig, ax = plt.subplots()
+    projection = ccrs.PlateCarree(central_longitude=0)
+    lons = ERA5_vars_subset_interpolated["long"][:]
+    lats = ERA5_vars_subset_interpolated["lat"][:]
+    T = ERA5_vars_subset_interpolated["temperature"][0]
+    plt.figure()
+    plt.imshow(T)
+    plt.figure()
+    plt.imshow(ERA5_vars["temperature"][0])
     vmin = np.min(T)
     vmax = np.max(T)
-
-    # Load in geotiff - for testing
-    tiffname = "DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
-    from monarchs.DEM.load_DEM import export_DEM
-
-    iheights, ilats, ilons = export_DEM(
-        tiffname, num_points=50, diagnostic_plots=False, all_outputs=False
-    )
-    import cartopy.crs as ccrs
-
-    fig1, ax = plt.subplots()
-    ax.set(xlabel="x [m]", ylabel="y [m]")
-    im = ax.imshow(
-        T[0], cmap="viridis"
-    )  # norm=colours.TwoSlopeNorm(vmin=vmin, vcenter=np.mean(T), vmax=vmax)
-    cbar = plt.colorbar(im)
-    cbar.set_label("Surface air temperature (K)")
-    plt.title("Air temperature")
-    projection = ccrs.PlateCarree(central_longitude=0)
     cmap = "viridis"
-    latmax = ilats.max()
-    latmin = ilats.min()
-    lonmax = ilons.max()
-    lonmin = ilons.min()
-
-    fig = plt.figure()
-    lons = ERA5_data.variables["longitude"][:]
-    lats = ERA5_data.variables["latitude"][:]
-    temperature = ERA5_data.variables["t2m"][:]
-    ax1 = fig.add_subplot(111, projection=projection)
+    ax1 = fig.add_subplot(211, projection=projection)
     ax1.coastlines()
     ax1.gridlines(draw_labels=True)
-
     frames = 364 * 24
-
-    ax1.set_extent([lonmin, lonmax, latmin, latmax], crs=ccrs.PlateCarree())
-
-    fig2 = plt.figure()
-
-    # temperature = ERA5_data.variables['t2m'][:]
-    ax2 = fig2.add_subplot(111, projection=projection)
-    ax2.coastlines()
-    ax2.gridlines(draw_labels=True)
-    # Map our initial temperature variable to the correct lats/lons.
-    new_T = np.zeros((50, 50))
-    from monarchs.core.utils import find_nearest
-
-    int_wind = ERA5_vars_subset_interpolated["temperature"]
-    for i in range(50):
-        for j in range(50):
-            lat_index = find_nearest(ERA5_vars_subset_interpolated["lat"], ilats[i, j])
-            lon_index = find_nearest(ERA5_vars_subset_interpolated["long"], ilons[i, j])
-            new_T[i, j] = int_wind[0, lat_index, lon_index]
-
-    vmin = np.min(new_T)
-    vmax = np.max(new_T)
     cont = ax1.contourf(
         lons,
         lats,
-        ERA5_data["t2m"][0],
+        T,
         cmap=cmap,
         transform=projection,
         levels=20,
         vmin=vmin,
         vmax=vmax,
-    )  # np.sqrt(ERA5_data['u10'][0] **2 + ERA5_data['v10'][0] **2)
-    fig1.colorbar(cont)
-    cont2 = ax2.contourf(
-        ilons,
-        ilats,
-        new_T,
-        cmap=cmap,
-        transform=projection,
-        levels=20,
-        vmin=vmin,
-        vmax=vmax,
-        extend="both",
     )
-    fig2.colorbar(cont2)
-    plt.show()
+    # ax1.set_extent([lonmin, lonmax, latmin, latmax], crs=ccrs.PlateCarree())
 
-    plt.figure()
-    plt.imshow(new_T, cmap=cmap)
-    plt.figure()
-    plt.imshow(iheights, cmap=cmap)
 
-    def animate_T(frame):
+    # temperature = ERA5_data.variables['t2m'][:]
+    ax2 = fig.add_subplot(212, projection=projection)
+    ax2.coastlines()
+    ax2.gridlines(draw_labels=True)
+    orig_lons = ERA5_data.variables["longitude"][:]
+    orig_lats = ERA5_data.variables["latitude"][:]
+    orig_T = ERA5_data.variables["t2m"][0]
+    cont = ax2.contourf(
+        orig_lons,
+        orig_lats,
+        orig_T,
+        cmap=cmap,
+        transform=projection,
+        levels=20,
+        vmin=vmin,
+        vmax=vmax,
+    )
+
+    def animate_T(frame, im):
         day = int(np.floor(frame / 24))
         hour = (frame % 24) + 1
         # vmax = np.max(T[frame])
         im.set_data(T[frame])
         ax.set_title(f"Temperature, day = {day}, hour = {hour}")
         # im.set_clim(vmin, vmax)
-
-    # ani1 = animation.FuncAnimation(fig=fig, frames=frames, func=animate_T, interval=70, repeat_delay=200)
-    # ani1.save('met_data.gif')
