@@ -94,7 +94,7 @@ def firn_column(
     # If we have melting at the surface - we need to calculate the change
     # in firn depth, regrid everything to the new firn depth, resolve the
     # heat equation with a fixed surface of 273.15 K,
-    print('Root - ', root[0])
+    #print('Root - ', root[0])
     if root[0] > 273.15:
         cell.meltflag[0] = 1
         cell.melt = True

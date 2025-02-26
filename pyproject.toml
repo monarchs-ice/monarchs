@@ -38,7 +38,7 @@ numba = [
 mpi = [
     'mpi4py',
 ]
-dem = ['rasterio', 'pyproj']
+dem = ['rioxarray', 'rasterio', 'pyproj']
 
 [project.scripts]
 monarchs = 'run_MONARCHS:monarchs'
