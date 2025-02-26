@@ -10,8 +10,8 @@ from netCDF4 import Dataset
 from matplotlib import pyplot as plt
 import numpy.ma as ma
 
-dumppath = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem/progress.nc'
-diagpath = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem/model_output.nc'
+dumppath = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem_edge_fixed/progress.nc'
+diagpath = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem_edge_fixed/model_output.nc'
 
 flowdata = Dataset(dumppath)
 t0data = Dataset(diagpath)

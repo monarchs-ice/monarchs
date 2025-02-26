@@ -155,6 +155,9 @@ def export_DEM(
             plt.figure()
             plt.imshow(subset_raster.values[0])
             plt.title('reprojected')
+    else:
+        heights = input_raster.values[0]
+        custom_bbox = False
 
     # Remove NaN/overly negative values
     heights[heights < -10] = -10

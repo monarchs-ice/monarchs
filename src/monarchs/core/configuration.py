@@ -251,6 +251,15 @@ def create_defaults_for_missing_flags(model_setup):
                     f"Setting missing model_setup attribute <{key}> to default value model_setup.t_steps_per_day * 3600"
                 )
 
+    # Special case - set lat_grid_size to 'dem' if a valid DEM is provided
+    if hasattr(model_setup, "DEM_path"):
+        if not hasattr(model_setup, "lat_grid_size"):
+            setattr(model_setup, "lat_grid_size", "dem")
+            print(
+                f"monarchs.core.configuration.create_defaults_for_missing_flags: "
+                f"Setting missing model_setup attribute <lat_grid_size> to default value 'dem' since a valid DEM"
+                f"was provided."
+            )
 
 class ModelSetup:
     def __init__(self, script_path):
