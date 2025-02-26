@@ -24,11 +24,13 @@ Parameters controlling the spatial resolution of MONARCHS, in terms of the numbe
         This has only been tested with the same # of points as ``row_amount``, so use caution
         if using different values for each of these.
 
-    lat_grid_size : ``float`` or ``str``, required
+    lat_grid_size : ``float`` or ``str``, required if no DEM specified, optional otherwise
         Size of each grid cell in m. This is used to determine how much water can flow during the lateral
         flow calculations. If set to a number, then the cells are assumed square. If set to ``'dem'``, then the ``x`` and
         `y` dimensions are calculated separately - in which case the cells are not necessarily assumed to be square.
-        This value is stored in the IceShelf class as ``cell.grid_size_dx`` and ``cell.grid_size_dy``
+        This value is stored in the IceShelf class as ``cell.size_dx`` and ``cell.size_dy``.
+        If a valid DEM is provided, then this is calculated from the DEM automatically, *but is overwritten* if the user
+        specifies a value other than 'dem' here..
 
     vertical_points_firn : ``int``
         Number of vertical grid cells in the firn profile. Default is 400. This determines the resolution of the model vertically.
