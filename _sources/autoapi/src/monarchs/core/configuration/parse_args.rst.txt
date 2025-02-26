@@ -1,0 +1,8 @@
+src.monarchs.core.configuration.parse_args
+==========================================
+
+.. py:function:: src.monarchs.core.configuration.parse_args()
+
+   Parse input. Most things are controlled by `model_setup.py`; the only input here is (optionally) the location
+   (as a filepath, so including the filename) of that setup file.
+

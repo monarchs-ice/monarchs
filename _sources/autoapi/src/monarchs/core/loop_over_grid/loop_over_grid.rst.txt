@@ -1,0 +1,48 @@
+src.monarchs.core.loop_over_grid.loop_over_grid
+===============================================
+
+.. py:function:: src.monarchs.core.loop_over_grid.loop_over_grid(row_amount, col_amount, grid, dt, met_data, t_steps_per_day, toggle_dict, parallel=False, use_mpi=False, ncores='all')
+
+   This function wraps timestep_loop, allowing for it to be
+   run in parallel over an arbitrarily sized grid.
+
+   This version works with the Pure Python implementation, i.e.
+   with use_numba=False.
+
+   The respective Numba version of loop_over_grid is found in
+   the respective folders in /core.
+
+   There is no need to reshape flat_grid back into np.shape(grid), as each element
+   of flat_grid is a pointer to each element of grid, i.e. operating on
+   flat_grid changes the corresponding element of grid (and likewise for log_grid).
+
+   :Parameters: * **row_amount** (*int*)
+                * **Number of rows in <grid>.**
+                * **col_amount** (*int*) -- Number of columns in <grid>.
+                * **grid** (*list, or numba.typed.List*) -- Nested list containing the instances of the IceShelf class for each
+                  x and y point. Vertical (z) information is stored within each class
+                  instance.
+                * **met_data** (*list, or numba.typed.List*) -- Nested list of the same shape as grid, containing instances of the
+                  MetData class for each x and y point.
+                * **parallel** (*bool, optional*) -- Flag to determine whether the model is to be run in parallel across
+                  multiple cores or not.
+                  Default False.
+                  Defined in the model setup script.
+                * **use_numba** (*bool, optional*) -- Flag to determine whether to use Numba optimisations or not.
+                  Default False.
+                  Defined in the model setup script.
+                * **use_mpi** (*bool, optional*) -- Flag to determine whether to use MPI for parallelisation.
+                  Default False.
+                  Defined in the model setup script.
+                * **cores** (*int*) -- How many cores to use if running in parallel.
+                  Defined in the model setup script. If this is set to 'all' or False there, then all cores will be used.
+                  This is determined by logic in `driver.main`.
+                  If you set a number greater than the number of cores on the machine
+                  you are running on, then all will be used.
+                * **For all other arguments see documentation for timestep_loop.**
+
+   :rtype: None. The function amends the instance of <grid> passed to it.
+
+   :raises ValueError: if one parallel process fails and returns None, then ValueError is returned to ensure the code
+       stops rather than continuing fruitlessly.
+

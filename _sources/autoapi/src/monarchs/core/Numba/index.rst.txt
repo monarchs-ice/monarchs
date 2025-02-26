@@ -1,0 +1,15 @@
+src.monarchs.core.Numba
+=======================
+
+.. py:module:: src.monarchs.core.Numba
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/src/monarchs/core/Numba/loop_over_grid/index
+
+

@@ -1,0 +1,17 @@
+src.monarchs.core.iceshelf_class.get_spec
+=========================================
+
+.. py:function:: src.monarchs.core.iceshelf_class.get_spec()
+
+   Define class datatypes for the IceShelf class.
+   This is necessary for all the optimisations provided by Numba to work.
+   When/if adding new variables to the IceShelf class, ensure that you add
+   the respective variable and its datatype to this list.
+   e.g. if it is a single number use int32 or float64, if an array use
+   float64[:] if a float array, int32[:] if integer, boolean[:] if Bool etc.
+   Be *very* careful about making sure that you get the right dtype between
+   float and int, If in doubt use float; if you specify an integer then the
+   code will give you integers for any calculation without throwing an error
+   or being intelligent (e.g. float - int will give an int, which will just be
+   a rounded up or down version of the number you'd expect).
+

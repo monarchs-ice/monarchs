@@ -1,0 +1,32 @@
+src.monarchs.physics.heateqn
+============================
+
+.. py:module:: src.monarchs.physics.heateqn
+
+.. autoapi-nested-parse::
+
+   Functions used to solve the heat equation using NumbaMinpack's hybrd function.
+   This gives significant performance boosts over scipy's fsolve(hybrd = True).
+
+   For the equivalent functions for use with Numba (and therefore using fsolve
+   rather than NumbaMinpack.hybrd), see heateqn in physics/Numba.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/physics/heateqn/heateqn
+   /autoapi/src/monarchs/physics/heateqn/heateqn_fixedsfc
+   /autoapi/src/monarchs/physics/heateqn/heateqn_lid
+
+.. autoapisummary::
+
+   src.monarchs.physics.heateqn.heateqn
+   src.monarchs.physics.heateqn.heateqn_fixedsfc
+   src.monarchs.physics.heateqn.heateqn_lid
+
+

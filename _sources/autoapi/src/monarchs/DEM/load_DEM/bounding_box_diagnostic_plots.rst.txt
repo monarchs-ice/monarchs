@@ -1,0 +1,12 @@
+src.monarchs.DEM.load_DEM.bounding_box_diagnostic_plots
+=======================================================
+
+.. py:function:: src.monarchs.DEM.load_DEM.bounding_box_diagnostic_plots(input_raster, subset_raster, lon_array, lat_array, lon_subset, lat_subset)
+
+   :Parameters: * **input_raster**
+                * **subset_raster**
+                * **lon_array**
+                * **lat_array**
+                * **lon_subset**
+                * **lat_subset**
+

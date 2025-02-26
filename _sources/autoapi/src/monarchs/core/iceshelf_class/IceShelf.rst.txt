@@ -1,0 +1,378 @@
+src.monarchs.core.iceshelf_class.IceShelf
+=========================================
+
+.. py:class:: src.monarchs.core.iceshelf_class.IceShelf(y, x, firn_depth, vert_grid, vert_grid_lake, vert_grid_lid, rho, firn_temperature, Sfrac_in=np.array([np.nan]), Lfrac_in=np.array([np.nan]), meltflag_in=np.array([np.nan]), saturation_in=np.array([np.nan]), lake_depth=0, lake_temperature_in=np.array([np.nan]), lid_depth=0, lid_temperature_in=np.array([np.nan]), melt=False, exposed_water=False, lake=False, v_lid=False, lid=False, water_level=0, water=np.array([np.nan]), ice_lens=False, ice_lens_depth=999, has_had_lid=False, lid_sfc_melt=0, lid_melt_count=0, melt_hours=0, exposed_water_refreeze_counter=0, virtual_lid_temperature=273.15, total_melt=0.0, valid_cell=True, lat=0, lon=0, size_dx=1000, size_dy=1000)
+
+   Class containing column information about the state of the ice shelf at coordinates x and y.
+   This class is the primary building block of MONARCHS, and the object in which all information is stored.
+   A single IceShelf just contains information for a single column - a grid of IceShelf objects is required to
+   construct information for a real ice shelf in practice.
+
+   If adding additional variables to IceShelf, e.g. to track certain things, ensure that they are also added to the
+   variable <spec>, found in <iceshelf_class.py>, else you will run into issues if trying to run with Numba.
+
+   Several of these attributes are constants, and are labelled as such.
+   All Boolean flags are True if their documented condition is met, and False if not met.
+   All array_like variables are dimension(vert_grid).
+
+   A long-term goal is to refactor IceShelf to utilise inheritance and split things up somewhat.
+   However, Numba jitclasses do not currently support inheritance, and this is required for use of NumbaMinpack.hybrd,
+   in such a way that we retain the ability to select whether to use that or scipy.optimize.fsolve.
+
+   :ivar x: x (row) coordinate of the current IceShelf on the model grid. int
+   :vartype x: int
+   :ivar y: y (column) coordinate of the current IceShelf on the model grid. int
+   :vartype y: int
+   :ivar firn_depth: Height of the firn column [m]
+   :vartype firn_depth: float
+   :ivar lake_depth: Height of the surface lake, 0 if not present [m]
+   :vartype lake_depth: float
+   :ivar lid_depth: Height of the frozen lid on top of the surface lake, 0 if not present [m]
+   :vartype lid_depth: float
+   :ivar v_lid_depth: Height of the virtual lid on top of the surface lake, 0 if not present, converts to lid if > 0.1 [m]
+   :vartype v_lid_depth: float
+   :ivar vert_grid: Number of vertical grid points in the firn column.
+   :vartype vert_grid: int
+   :ivar vertical_profile: Array containing the vertical profile (top = 0, bottom = firn_depth, len = vert_grid) of the IceShelf. [m],
+   :vartype vertical_profile: array_like, float, dimension(vert_grid)
+   :ivar vert_grid_lake: Number of vertical grid points in the lake. int
+   :vartype vert_grid_lake: int
+   :ivar vert_grid_lid: Number of vertical grid points in the frozen lid. int
+   :vartype vert_grid_lid: int
+   :ivar rho: Firn density profile. Mostly used for convenience as all calculations use Sfrac and Lfrac. [kg m^-3]
+   :vartype rho: array_like, float, dimension(vert_grid)
+   :ivar rho_lid: Lid density [kg m^-3]
+   :vartype rho_lid: array_like, float, dimension(vert_grid_lid)
+   :ivar firn_temperature: Temperature profile of t
+   :vartype firn_temperature: array_like, float, dimension(vert_grid)
+   :ivar Sfrac: Solid fraction of the firn.
+   :vartype Sfrac: array_like, float, dimension(vert_grid)
+   :ivar Lfrac: Liquid fraction of the firn.
+   :vartype Lfrac: array_like, float, dimension(vert_grid)
+   :ivar meltflag: Boolean flag to determine if there is melt at a given vertical point
+   :vartype meltflag: array_like, bool, dimension(vert_grid)
+   :ivar saturation: Boolean flag to determine whether a vertical layer is saturated.
+   :vartype saturation: array_like, bool, dimension(vert_grid)
+   :ivar lake_temperature: Temperature of the lake as a function of vertical level [K]
+   :vartype lake_temperature: array_like, float, dimension(vert_grid_lake)
+   :ivar lid_temperature: Temperature of the lid as a function of vertical level [K]
+   :vartype lid_temperature: array_like, float, dimension(vert_grid_lid)
+   :ivar water_level: Water level of the cell. Can be either at the height of the lake, infinite (in the case of a lid), or
+                      at the height of the highest vertical level with saturated firn.
+   :vartype water_level: float
+   :ivar water: Water content of each grid cell. Used only in lateral_functions.move_water, where it is necessary to combine
+                water from the lake and from the firn (which is determined by Lfrac).
+   :vartype water: array_like, float, dimension(vert_grid)
+   :ivar melt_hours: Tracks the number of hours of melt that have occurred. Currently only tracks melting of the firn due to
+                     the temperature of the lake above it.
+   :vartype melt_hours: int
+   :ivar exposed_water_refreeze_counter: Tracks the number of times that exposed water at the surface freezes due to surface conditions.
+   :vartype exposed_water_refreeze_counter: int
+   :ivar lid_sfc_melt: Tracks the amount of meltwater resulting from melting of the frozen lid. Used to
+   :vartype lid_sfc_melt: float
+   :ivar melt: Flag to determine whether the model is in a melting state or not. This affects the surface albedo for the
+               surface flux calculation, used variously but mostly in the surface energy balance for the lake and lid, and for
+               the calculation of the heat equation.
+   :vartype melt: bool
+   :ivar exposed_water: Flag to track whether there is exposed water due to surface melting.
+   :vartype exposed_water: bool
+   :ivar lake: Flag to track whether the model is in a state that includes a lake or not. Is True even if there is a
+               frozen lid, until the lid freezes enough to create a single firn profile.
+   :vartype lake: bool
+   :ivar v_lid: Flag to track whether a virtual lid is present. Set to False if a true lid is present.
+   :vartype v_lid: bool
+   :ivar virtual_lid_temperature: Temperature of the virtual lid, if there is one. The virtual lid is so small that this can be a single number
+                                  rather than a vertical profile. [K]
+   :vartype virtual_lid_temperature: float
+   :ivar lid: Flag to track whether a frozen lid has formed.
+   :vartype lid: bool
+   :ivar ice_lens: Flag to track whether there is pore closure and the formation of a lens of solid ice. Necessary for
+                   saturation to occur and lakes to form.
+   :vartype ice_lens: bool
+   :ivar ice_lens_depth: Vertical layer (not physical depth) of the ice lens if there is one. Default 999, i.e. no lens present.
+   :vartype ice_lens_depth: int
+   :ivar has_had_lid: Flag to determine whether the model has undergone lid development.
+                      Set True if lid depth exceeds 0.1.
+                      Resets to False if lid melts below 0.1 m depth.
+   :vartype has_had_lid: bool
+   :ivar lid_melt_count: Track the number of times that the lid has undergone melting. Used as a tracker.
+   :vartype lid_melt_count: int
+   :ivar total_melt: Total amount of melting that has occurred. Not used for any physics, but as a tracker.
+   :vartype total_melt: float
+   :ivar rho_ice: Density of ice. Constant. [kg m^-3]
+   :vartype rho_ice: int
+   :ivar rho_water: Density of water. Constant. [kg m^-3]
+   :vartype rho_water: int
+   :ivar L_ice: Latent heat of fusion of ice, i.e. change in enthalpy due to state change. Constant. [J kg^-1]
+   :vartype L_ice: int
+   :ivar pore_closure: Density at which pores close and water can no longer percolate. Constant. [kg m^-3]
+   :vartype pore_closure: int
+   :ivar k_air: Thermal conductivity of air. Constant. [W m^-1 K^-1]
+   :vartype k_air: float
+   :ivar cp_air: Heat capacity of air. Constant. [J K^-1]
+   :vartype cp_air: int
+   :ivar k_water: Thermal conductivity of water. Constant. [W m^-1 K^-1]
+   :vartype k_water: float
+   :ivar cp_water: Heat capacity of water. Constant. [J K^-1]
+   :vartype cp_water: int
+   :ivar t_step: Current hour. Almost certainly between 1 and 24.
+   :vartype t_step: int
+   :ivar iteration: Current iteration (i.e. day). Updated at each timestep.
+   :vartype iteration: int
+   :ivar snow_added: Track how much snow mass has been added to the model via snowfall, in arbitrary units. [a.u.]
+   :vartype snow_added: float
+   :ivar log: Logging information about the state of the model, to track which paths the model takes in the logic, and to
+                inform the user of warnings.
+   :vartype log: string
+   :ivar reset_combine: Flag to track whether a frozen lid has completely frozen and been combined with the firn column
+                        to make one profile.
+   :vartype reset_combine: bool
+   :ivar valid_cell: Flag that determines whether a cell is "valid" or not. If not, then we don't care about the physics of that
+                     cell, and it is ignored accordingly.
+                     Default True, i.e. the cell is valid.
+                     For example, if a DEM has an ice shelf, with land either side, we are unlikely to care about that land, and
+                     the ice shelf physics would not apply there anyway, so we can safely ignore it.
+   :vartype valid_cell: bool
+   :ivar lat: Latitude of the cell in degrees. Taken from the input DEM.
+   :vartype lat: float
+   :ivar lon: Longitude of the cell in degrees. Taken from the input DEM.
+   :vartype lon: float
+   :ivar size_dx: Size of the grid cell in the x (along rows) direction [m]
+   :vartype size_dx: float
+   :ivar size_dy: Size of the grid cell in the y (along columns) direction [m]
+
+   :vartype size_dy: float
+   :ivar \*\*__init__**:
+   :ivar Initialise our IceShelf class. For most variables, see class-level documentation. The parameters below are only: 
+   :ivar those which differ between the initialiser and the class attributes.:
+   :ivar :   calculated by rho_init_emp.
+             Required to be an array even if setting to nan if using Numba as Numba expects an array.
+           * **Lfrac_in** (*array_like, float, optional*) -- Input liquid fraction. Can be set to np.array([np.nan]) (the default) to use the default profile as
+             calculated by rho_init_emp.
+             Required to be an array even if setting to nan if using Numba as Numba expects an array.
+           * **meltflag_in** (*array_like, float, optional*) -- Array of booleans determining whether meltwater is present at that vertical layer. As above, can be set
+             to np.array([np.nan]) to use a default profile (all zeros).
+           * **saturation_in** (*array_like, float, optional*) --
+
+             Array of booleans determining whether each vertical layer is saturated or not. As above, can be set
+                 to np.array([np.nan]) to use a default profile (all zeros).
+           * **lake_temperature_in** (*array_like, float, optional*) -- Vertical profile of lake temperature.
+             As above, can be set to np.array([np.nan]) to use a default profile (all zeros), as lakes are not present
+             by default (so it doesn't matter).
+           * **lid_temperature_in** (*array_like, float, optional*) -- As above, can be set to np.array([np.nan]) to use a default profile (all zeros), as lids are not present
+             by default (so it doesn't matter).
+           * **valid_cell** (*bool, optional*) -- Flag that determines whether we actually run any of the physics or not for this cell.
+             See documentation in the class docstring for details.
+
+   :vartype : Parameters: * **Sfrac_in** (*array_like, float, optional*) -- Input solid fraction. Can be set to np.array([np.nan]) (the default) to use the default profile as
+
+
+   .. py:attribute:: L_ice
+      :value: 334000
+
+
+
+   .. py:attribute:: column
+
+
+   .. py:attribute:: cp_air
+      :value: 1004
+
+
+
+   .. py:attribute:: cp_water
+      :value: 4217
+
+
+
+   .. py:attribute:: day
+      :value: 0
+
+
+
+   .. py:attribute:: exposed_water
+      :value: False
+
+
+
+   .. py:attribute:: exposed_water_refreeze_counter
+      :value: 0
+
+
+
+   .. py:attribute:: firn_depth
+
+
+   .. py:attribute:: firn_temperature
+
+
+   .. py:attribute:: has_had_lid
+      :value: False
+
+
+
+   .. py:attribute:: ice_lens
+      :value: False
+
+
+
+   .. py:attribute:: ice_lens_depth
+      :value: 999
+
+
+
+   .. py:attribute:: k_air
+      :value: 0.022
+
+
+
+   .. py:attribute:: k_water
+      :value: 0.5818
+
+
+
+   .. py:attribute:: lake
+      :value: False
+
+
+
+   .. py:attribute:: lake_depth
+      :value: 0
+
+
+
+   .. py:attribute:: lat
+      :value: 0
+
+
+
+   .. py:attribute:: lid
+      :value: False
+
+
+
+   .. py:attribute:: lid_depth
+      :value: 0
+
+
+
+   .. py:attribute:: lid_melt_count
+      :value: 0
+
+
+
+   .. py:attribute:: lid_sfc_melt
+      :value: 0
+
+
+
+   .. py:attribute:: log
+      :value: ''
+
+
+
+   .. py:attribute:: lon
+      :value: 0
+
+
+
+   .. py:attribute:: melt
+      :value: False
+
+
+
+   .. py:attribute:: melt_hours
+      :value: 0
+
+
+
+   .. py:attribute:: pore_closure
+      :value: 830
+
+
+
+   .. py:attribute:: reset_combine
+      :value: False
+
+
+
+   .. py:attribute:: rho
+
+
+   .. py:attribute:: rho_ice
+      :value: 917
+
+
+
+   .. py:attribute:: rho_lid
+
+
+   .. py:attribute:: rho_water
+      :value: 1000
+
+
+
+   .. py:attribute:: row
+
+
+   .. py:attribute:: size_dx
+      :value: 1000
+
+
+
+   .. py:attribute:: size_dy
+      :value: 1000
+
+
+
+   .. py:attribute:: snow_added
+      :value: 0
+
+
+
+   .. py:attribute:: t_step
+      :value: 0
+
+
+
+   .. py:attribute:: total_melt
+      :value: 0.0
+
+
+
+   .. py:attribute:: v_lid
+      :value: False
+
+
+
+   .. py:attribute:: v_lid_depth
+      :value: 0
+
+
+
+   .. py:attribute:: valid_cell
+      :value: True
+
+
+
+   .. py:attribute:: vert_grid
+
+
+   .. py:attribute:: vert_grid_lake
+
+
+   .. py:attribute:: vert_grid_lid
+
+
+   .. py:attribute:: vertical_profile
+
+
+   .. py:attribute:: virtual_lid_temperature
+      :value: 273.15
+
+
+
+   .. py:attribute:: water_level
+      :value: 0
+
+
