@@ -230,8 +230,8 @@ def get_xy_distance(latitudes, longitudes):
     dx_metres = geod.inv(lon1_dx, lat_grid[:-1, :], lon2_dx, lat_grid[:-1, :])[-1]
 
     # Convert dx/dy to full-sized arrays by padding (so they match raster size)
-    dy_metres = np.pad(dy_metres, ((0, 1), (0, 0)), mode='edge')  # Pad last row
-    dx_metres = np.pad(dx_metres, ((0, 0), (0, 1)), mode='edge')  # Pad last column
+    dy_metres = np.pad(dy_metres, ((0, 0), (0, 1)), mode='edge')  # Pad last row
+    dx_metres = np.pad(dx_metres, ((0, 1), (0, 0)), mode='edge')  # Pad last column
 
     print("Grid cell sizes computed for all points!")
     return dx_metres, dy_metres
