@@ -44,9 +44,10 @@ plt.imshow(ofd, vmax=80)
 plt.colorbar()
 plt.title('Firn depth (original)')
 
+from matplotlib.colors import TwoSlopeNorm
 plt.figure()
 diff = firndepth[:] - ofd[:]
-plt.imshow(diff)
+plt.imshow(diff, cmap='coolwarm', norm=TwoSlopeNorm(vmin=-3, vcenter=0, vmax=3))
 plt.colorbar()
 plt.title('Firn depth difference (m)')
 

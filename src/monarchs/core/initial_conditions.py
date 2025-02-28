@@ -504,6 +504,9 @@ def create_model_grid(
     else:
         grid = []
 
+    if isinstance(size_dx, int) or isinstance(size_dy, int):
+        size_dx = np.ones((row_amount, col_amount)) * size_dx
+        size_dy = np.ones((row_amount, col_amount)) * size_dy
     if isinstance(size_dx, float) or isinstance(size_dy, float):
         size_dx = np.ones((row_amount, col_amount)) * size_dx
         size_dy = np.ones((row_amount, col_amount)) * size_dy
