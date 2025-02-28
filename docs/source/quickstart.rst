@@ -1,0 +1,115 @@
+Quickstart tutorial and instructions for running MONARCHS
+------------------------------------------
+
+Running via the command line
+=============================
+First, follow the (non-advanced) instructions in the :doc:`installation` section to install the model.
+
+To run MONARCHS, the best way is to use the command line. From a terminal (you can open this in PyCharm, Spyder or whatever your
+preferred IDE is if you prefer), make sure you activate the virtual environment MONARCHS is installed in.
+
+Then, navigate to the ``examples/1D_test_case`` folder in the MONARCHS repository, and run the model using:
+
+``monarchs``
+
+.. note::
+    If you are uncomfortable using the command line, you can run ``1D_test_case/model_setup.py`` as a Python script
+    directly to run MONARCHS. This works since it has the following code at the end of the file.
+
+    .. code-block:: python
+
+        if __name__ == '__main__':
+            from monarchs.core.driver import monarchs
+            monarchs()
+
+    The other examples in the ``examples`` folder can be run in the same way.
+
+This will run a 1D column test case. It should run in a few seconds. The code will write a lot of output into the
+console. The first few lines will be from ``monarchs.core.configuration``. You can ignore these for now, since this
+is the model telling you that it is using default values for several parameters that are not included in our simple
+1D runscript (``model_setup.py``).
+
+
+
+The model will run for 20 days and then stop. It will print out some simple diagnostics - the firn depth, lake depth
+and lid depth, and how much water was detected during the lateral movement step (which doesn't occur here of course
+as we are running a 1D case!).
+
+Model outputs
+=============
+You should notice a new folder in the ``1D_test_case`` directory called ``output``. This contains three files. In ``model_setup.py``,
+there are variables ``met_output_filepath``, ``output_filepath``  and ``dump_filepath``. The model will write these files to the
+location set in these variables, and create any folders necessary to do this. In this case, we are running from the
+``1D_test_case`` folder, and we have specified in ``model_setup.py`` that we want to write these outputs to ``output/*.nc``, so the ``output`` folder
+is created here and the files written to this path.
+
+The first of the created files is a file called ``met_data_1D_test_case.nc``. This is a netCDF file containing the meteorological data that
+is used in the model, and is not useful to us aside from for debugging.
+
+The other files are ``1d_testcase_dump.nc``, and
+``1d_testcase_output.nc``. The first of these is a dump file, which contains the full state of the model at the end of the run.
+This can be useful to get a quick view of the state of the model at the end of the run, but more importantly can be loaded
+into the model to restart a run from the end of the previous one (or from a run that crashed). We will do this later in this tutorial.
+
+The second file, ``1d_testcase_output.nc``, contains the output of the model. This contains information collected
+over the course of the model run. By default, it will output the firn depth, lake depth, lid depth, firn temperature,
+and ice lens depths. You can tell MONARCHS exactly which variables you are interested in by changing the ``vars_to_save``
+variable in ``model_setup.py``. You can also change the frequency at which the model save the output, and the
+vertical resolution, as for larger model sizes this file can get very big.
+
+A more complex test case
+========================
+Let's ignore the outputs for now, and move onto a more complex test case.
+Change directory to ``examples/10x10_gaussian_threelake`` (or open up ``model_setup.py`` from this file if running directly
+as a Python script), and run it in the same way as before. You will notice that this takes significantly longer to run
+than the 1D case. Wait for it to complete, and make a note of the time taken displayed at the end of the model run.
+We can make it faster by delving into ``model_setup.py``.
+
+In the ``model_setup.py`` file, you will see a variable called ``parallel``. This is set to ``False`` by default.
+Set this to ``True``, and re-run the model. You can specify how many cores you want to use by changing the ``cores``
+variable. By default, it is set to ``'all'``, so if you are doing other things on your machine it may be best to set this
+to e.g. ``4`` for now.
+
+Since we are now running in parallel, the model should run significantly faster. Let's take advantage of this and run
+the model for a bit longer. You can control this via the ``num_days`` variable. Since our model is quite large, and
+we are running for a longer time, our output files can become quite large. We can reduce the temporal frequency of the output
+using the ``output_timestep`` variable. This is the number of days between each output file. You can also reduce the vertical
+resolution of the output by changing ``output_grid_size`` from e.g. ``400`` to ``200``.
+
+You can see that the model setup script has a few additional parameters compared to the 1D case. As mentioned earlier,
+MONARCHS will set "sensible" default values for any parameters that are not specified in the model setup script, aside
+from those that the model will not be able to run without - i.e. an initial firn profile, and meteorological data.
+
+You can see all of the possible ``model_setup`` variables in the :doc:`model_setup_reference` section of the documentation.
+This tutorial will not cover all of these, as many of them are for testing and debugging purposes. Many of these
+are related to the use of a Digital Elevation Map (DEM) to set the initial firn profile, and synchronising this
+to the input meterorological data. This is covered more in the :doc:`dem` section of the documentation.
+
+Restarting a model run
+======================
+
+If you have a model that has crashed, or you want to restart a model from the end of a previous run, you can use the
+``reload_state`` variable in the model setup script. This will load in the state from the dump file specified in the
+``dump_filepath`` variable, and restart the model from this point. This allows for finishing of crashed runs, or to
+use the initial conditions of a previous run as a starting point for a subsequent one.
+
+If your model run was not successful, then re-running will run it until your initially-intended
+finishing point. If it was successful, then you can re-start it by increasing ``num_days``.
+Try this now with your 10x10 case.
+
+Having more control over output directories
+===========================================
+
+You can call your run scripts anything you want, rather than just ``model_setup.py``, and they can be in any folder, not
+just the folder you are running in. This is useful if you want to e.g. keep several test cases in the same folder, and write
+the outputs elsewhere. You can tell MONARCHS exactly which setup script to run from by using the `-i` flag on the command line.
+For example, from anywhere on your PC, assuming MONARCHS is installed in ``/home/users/username/monarchs``, you can do:
+
+``monarchs -i monarchs/examples/10x10_gaussian_threelake/model_setup.py``
+
+You could rename ``model_setup.py`` to ``model_setup_threelake.py`` and pass this as the name, and it would work the same
+were you to pass this as the argument.
+
+
+
+

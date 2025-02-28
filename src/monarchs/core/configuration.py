@@ -57,6 +57,18 @@ def parse_args():
     model_setup_path = args.input_path
     return model_setup_path
 
+def create_output_folders(model_setup):
+    """
+    Create the output folders for the model output, meteorological data and dump files, if they do not already exist.
+    """
+    if not os.path.exists(model_setup.output_filepath.rsplit("/", 1)[0]):
+        os.makedirs(model_setup.output_filepath.rsplit("/", 1)[0])
+
+    if not os.path.exists(model_setup.dump_filepath.rsplit("/", 1)[0]):
+        os.makedirs(model_setup.dump_filepath.rsplit("/", 1)[0])
+
+    if not os.path.exists(model_setup.met_output_filepath.rsplit("/", 1)[0]):
+        os.makedirs(model_setup.met_output_filepath.rsplit("/", 1)[0])
 
 def handle_incompatible_flags(model_setup):
     """
@@ -206,7 +218,7 @@ def create_defaults_for_missing_flags(model_setup):
                 f"Setting missing model_setup attribute <{attr}> to default value np.nan"
             )
 
-    # These parameters have bespoke values - use a dictionary to create these
+    # These parameters have bespoke default values rather than e.g. True or False - use a dictionary to create these
     vardict = {}
     vardict["output_grid_size"] = model_setup.vertical_points_firn
     vardict["met_timestep"] = "hourly"
@@ -234,6 +246,7 @@ def create_defaults_for_missing_flags(model_setup):
     )
     vardict['dump_format'] = 'NETCDF4'
     vardict['input_crs'] = 3031
+
     # Keys that have special print messages - e.g. those that have default values that depend on model_setup variables
     # go in here, and a specific print message is written for them
     special_keys = ["lateral_timestep"]

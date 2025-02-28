@@ -46,6 +46,7 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
     folder_path = fname.rsplit("/", 1)[0]
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
+
     with Dataset(fname, clobber=True, mode="w") as data:
         # Set up dimensions first
         data.createDimension("vert_grid", size=grid[0][0].vert_grid)
@@ -106,7 +107,6 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
         met_end_write = data.createVariable("met_end_idx", "i4")
         met_start_write[:] = met_start_idx
         met_end_write[:] = met_end_idx
-
 
 def reload_state(fname, grid, keys='all'):
     """

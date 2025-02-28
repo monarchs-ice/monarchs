@@ -1,3 +1,5 @@
+Advanced users
+=============
 Optimised performance using Numba (the ``use_numba`` flag)
 **********************************
 
@@ -59,3 +61,26 @@ Are there any differences between the two versions?
 The model flow and algorithms are exactly the same in the non-Numba and Numba versions. However, there may be some
 small differences in the numerics, which can evolve over time. In general, the output of the two versions is extremely
 close, with no significant divergence observed over multi-year runs.
+Running with MPI
+----------------
+
+It is possible to run MONARCHS across multiple nodes on HPC systems using MPI. This is achieved without the need for
+significant MPI code using an ``mpi4py.futures`` ``Pool``. This allows us to spawn MPI processes as and when they are needed, in
+a similar way to how a ``multiprocessing`` ``Pool`` works, and allows for the code to be mostly free of complex MPI directives
+and boilerplate. This does not have a significant overhead compared to using ``multiprocessing`` even on single-node
+systems.
+
+Currently, it is not possible to use MPI with Numba. This is current WIP but will not be ready on release.
+
+Running MONARCHS with MPI may be slightly different to how you may have used MPI in the past, since it uses this pool/spawning
+approach. You should run with only a single MPI process, i.e. do:
+
+``mpirun -n 1 python run_MONARCHS.py -i <model_setup_path>``
+
+The number of MPI processes is controlled by the model setup variable ``cores``. If running on HPC, you likely want
+to use ``cores = 'all'`` to ensure that you use all of the cores you have available in your job.
+
+Attempting to do mpirun with more than 1 process will result in several processes running the whole code, which will result
+in an attempt to spawn ``<cores>`` processes for each of the N processes you create with the call to ``mpirun``.
+
+Currently this implementation does not work on ARCHER2 - this is a known issue and is being worked on.

@@ -21,11 +21,11 @@ Contents
    :maxdepth: 1
 
    installation
+   quickstart
    usage
    MONARCHS_model_setup
-   running_MONARCHS
+   dem
    model_setup_reference
-   numba
    common_errors
    making_changes
 

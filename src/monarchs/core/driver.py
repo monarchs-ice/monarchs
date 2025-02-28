@@ -488,10 +488,7 @@ def main(model_setup, grid):
         met_data_grid, met_data_len, snow_added = update_met_conditions(
             model_setup, grid, met_start_idx, met_end_idx, snow_added=snow_added
         )
-        if model_setup.row_amount == 1:
-            print('Air temperature - ', met_data_grid[0][0].temperature)
-            print('SW - ', met_data_grid[0][0].SW_down)
-            print('LW - ', met_data_grid[0][0].LW_down)
+
         # Save progress information as netCDF - this allows us to reload in the file
         # if the code stops for whatever reason and continue from there.
         if model_setup.dump_data:
@@ -564,6 +561,7 @@ def initialise(model_setup):
 def monarchs():
     # Load in the model setup file from the filepath defined by the user args, or default 'model_setup.py'
     model_setup = configuration.model_setup
+    configuration.create_output_folders(model_setup)
     # Handle incompatible flags in runscript
     configuration.handle_incompatible_flags(model_setup)
     configuration.create_defaults_for_missing_flags(model_setup)

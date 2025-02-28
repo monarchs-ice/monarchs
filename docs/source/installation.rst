@@ -2,34 +2,37 @@
 Installation
 ************
 
-The best way to get MONARCHS if you are planning on developing/changing the code is to clone the github repository using
+The best way to get MONARCHS is to clone the github repository using
 
 .. code-block:: console
 
     git clone https://github.com/monarchs-ice/MONARCHS
-and doing (ideally in a new virtual environment)
+and doing (ideally in a new virtual environment created via e.g. ``conda create --name monarchs_env`` or ``python -m venv monarchs_env``)
 
 .. code-block:: console
 
     python -m pip install -e .
 from the top level MONARCHS folder.
 
-To install the required modules to get MONARCHS to work (if it doesn't work after doing `pip install -e .`,
-you can install the required modules using:
+.. note::
+    If the model gives an ``ImportError`` for any reason,
+    you can install the required modules using:
+    .. code-block:: console
+
+        python -m pip install -r requirements.txt
+        conda install --yes --file requirements.txt
+    This will install all the required modules for MONARCHS to run.
+
+Installation for use on HPC
+-------------------------------
+You can install MONARCHS with its advanced dependencies using (from the top level MONARCHS folder):
+
 .. code-block:: console
-
-    python -m pip install -r requirements.txt
-    conda install --yes --file requirements.txt
-
-Alternatively, you can install MONARCHS with its dependencies in one line using (from the top level MONARCHS folder):
-
-.. code-block:: console
-
     pip install -e .[mpi,numba]
 
 .. note::
     Not all of the modules in requirements.txt are required to make MONARCHS work, but are required to enable certain features.
-    If ``pip install -r requirements.txt`` fails on either of the following, MONARCHS will still work, but only without the
+    If ``python -m pip install -r requirements.txt`` fails on either of the following, MONARCHS will still work, but only without the
     relevant ``model_setup`` flags enabled. MPI is suggested only for running on HPC systems.
 
 .. warning::
@@ -37,16 +40,14 @@ Alternatively, you can install MONARCHS with its dependencies in one line using 
     To solve, on Windows, you need to get a Fortran compiler. See https://fortran-lang.org/compilers/
     On linux, doing ``apt-get install gfortran build-essential`` will work.
     On HPC, you may need to use ``module load <name>`` to load in whichever compiler setup your HPC has.
-    Alternatively, do
-    ``pip install -e .[netcdf,mpi,multithreading,dem]``, i.e. omitting ``numba``, and run with ``use_numba = False`` in all
-    of your runscripts.
+    You can get around the need for ``NumbaMinpack`` by setting ``use_numba = False`` in ``model_setup.py``.
 
 .. warning::
     The installation will fail on ``mpi4py`` if you don't have a working MPI installation. On Windows, you need to install
     https://learn.microsoft.com/en-us/message-passing-interface/microsoft-mpi.
     On Linux, ``apt-get install mpich`` should suffice.
     If you don't want to run with MPI at any point, you can do
-    ``pip install -e .[netcdf, multithreading, dem, numba]`` to install MONARCHS with all the dependencies except
+    ``pip install -e .[numba]`` to install MONARCHS with all the dependencies except
     ``mpi4py``.
 .. note::
     It should be re-iterated that neither NumbaMinpack nor Pyina are required to be installed for the code to run,

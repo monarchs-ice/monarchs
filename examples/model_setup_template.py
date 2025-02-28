@@ -306,3 +306,8 @@ heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 
 met_dem_diagnostic_plots = False
 radiation_forcing_factor = 1
+
+if __name__ == '__main__':
+    from monarchs.core.driver import monarchs
+
+    monarchs()
