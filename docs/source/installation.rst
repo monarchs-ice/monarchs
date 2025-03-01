@@ -1,27 +1,58 @@
 
-Installation
+Installing MONARCHS
 ************
 
-The best way to get MONARCHS is to clone the github repository using
+Requirements
+------------
+
+MONARCHS requires Python 3.9 or later, and is specifically tested with versions 3.9-3.12.
+It is highly recommended that before installing MONARCHS, you set up and activate a
+fresh virtual environment. You can do this either via e.g.
+
+``conda``
+
+.. code-block:: console
+
+    conda create -n monarchs_env python=3.9
+    conda activate monarchs_env
+
+or using ``venv`` by first creating the environment with
+
+.. code-block:: console
+
+    python -m venv monarchs_env
+
+and then activating (on Linux) via:
+
+.. code-block:: console
+
+    ./monarchs_env/Scripts/activate
+
+or on Windows via:
+
+.. code-block:: console
+
+    source ./monarchs_env/bin/activate
+
+Installation
+-----------
+The best way to get MONARCHS itself is to clone the github repository using
 
 .. code-block:: console
 
     git clone https://github.com/monarchs-ice/MONARCHS
-and doing (ideally in a new virtual environment created via e.g. ``conda create --name monarchs_env`` or ``python -m venv monarchs_env``)
+
+and doing (ideally in a virtual environment)
 
 .. code-block:: console
 
     python -m pip install -e .
+
 from the top level MONARCHS folder.
 
-.. note::
-    If the model gives an ``ImportError`` for any reason,
-    you can install the required modules using:
-    .. code-block:: console
-
-        python -m pip install -r requirements.txt
-        conda install --yes --file requirements.txt
-    This will install all the required modules for MONARCHS to run.
+This will install MONARCHS with all of its required dependencies, except those required for specific optimisation flags
+designed for use on HPC systems (see below). If when trying to run MONARCHS you get an ``ImportError``, please submit
+an Issue on GitHub.
 
 Installation for use on HPC
 -------------------------------
@@ -32,8 +63,8 @@ You can install MONARCHS with its advanced dependencies using (from the top leve
 
 .. note::
     Not all of the modules in requirements.txt are required to make MONARCHS work, but are required to enable certain features.
-    If ``python -m pip install -r requirements.txt`` fails on either of the following, MONARCHS will still work, but only without the
-    relevant ``model_setup`` flags enabled. MPI is suggested only for running on HPC systems.
+    If the install fails on either of the following, MONARCHS will still work, but only without the
+    relevant ``model_setup`` flags enabled. MPI especially is suggested only for running on HPC systems.
 
 .. warning::
     The install will fail on ``NumbaMinpack`` if you don't have a Fortran/C++ compiler.
@@ -59,15 +90,15 @@ Instead of cloning the repo and installing the requirements yourself, you can ge
 contains a barebones Linux distribution, with all of the required libraries (including a Fortran compiler and MPI
 implementation) pre-installed.
 
-To obtain this, please email j.d.elsey@leeds.ac.uk for access as the image is currently private.
+To obtain this, please get in touch with the model maintainers for access as the image is currently private.
 
 On HPC systems, you likely won't have Docker installed, but may have Singularity or Apptainer.
 You can obtain the repo with Singularity (replace ``singularity`` with ``apptainer`` if required) via
 
 ``singularity pull docker://jelsey92/monarchs``
 
-If you already have a copy of the repository, then you may need to delete it first.
-A shell script to do this is provided in the `/scripts` folder of the MONARCHS repository.
+If you already have a copy of the container, then you may need to delete it first.
+A shell script to do this is provided in the ``/scripts`` folder of the MONARCHS repository.
 Additionally provided is an example runscript for running a batch job using this Singularity container.
 
 The MONARCHS source is included in the ``/MONARCHS`` folder of the container. If you are running the container

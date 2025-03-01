@@ -5,7 +5,8 @@ Welcome to MONARCHS's documentation!
 
 **MONARCHS** is a model of Antarctic ice shelf stability and hydrology written in Python.
 Please see the :doc:`installation` section for information on how to obtain MONARCHS,
-and the :doc:`usage` and :doc:`running_MONARCHS` sections for how to set it up and run it.
+and the :doc:`usage` and :doc:`quickstart` sections for how to set it up and run it.
+
 
 .. note::
    This project is under active development. While we endeavour to keep the documentation as up-to-date as possible,
@@ -25,9 +26,12 @@ Contents
    usage
    MONARCHS_model_setup
    dem
+   met_data
    model_setup_reference
    common_errors
    making_changes
+   autoapi/index
+
 
 Indices and tables
 ==================

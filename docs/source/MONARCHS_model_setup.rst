@@ -1,5 +1,3 @@
-
-
 Setting up a model run
 *************************
 

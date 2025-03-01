@@ -13,21 +13,21 @@ Spatial resolution parameters
 Parameters controlling the spatial resolution of MONARCHS, in terms of the number of grid points and the vertical resolution.
 
     row_amount : int
-        Number of rows (i.e. `y`-points) in your model grid, looking from top-down.
-        MONARCHS indexes the model grid via `grid[col][row]`, i.e. the `y`-coordinate is the second index.
+        Number of rows (i.e. ``y``-points) in your model grid, looking from top-down.
+        MONARCHS indexes the model grid via ``grid[col][row]``, i.e. the ``y``-coordinate is the second index.
         This has only been tested with the same # of points as ``col_amount``, so use caution
         if using different values for each of these.
 
     col_amount : int
         Number of columns (i.e. `x`-points) in your model grid, looking from top-down.
-        MONARCHS indexes the model grid via `grid[col][row]`, i.e. the `x`-coordinate is the first index.
+        MONARCHS indexes the model grid via ``grid[col][row]``, i.e. the ``x``-coordinate is the first index.
         This has only been tested with the same # of points as ``row_amount``, so use caution
         if using different values for each of these.
 
     lat_grid_size : ``float`` or ``str``, required if no DEM specified, optional otherwise
         Size of each grid cell in m. This is used to determine how much water can flow during the lateral
         flow calculations. If set to a number, then the cells are assumed square. If set to ``'dem'``, then the ``x`` and
-        `y` dimensions are calculated separately - in which case the cells are not necessarily assumed to be square.
+        ``y`` dimensions are calculated separately - in which case the cells are not necessarily assumed to be square.
         This value is stored in the IceShelf class as ``cell.size_dx`` and ``cell.size_dy``.
         If a valid DEM is provided, then this is calculated from the DEM automatically, *but is overwritten* if the user
         specifies a value other than 'dem' here..
@@ -68,7 +68,7 @@ automatically from a Digital Elevation Model (DEM). If in doubt, write your own 
 load the result in as an array.
 
     DEM_path : str, optional
-        Path to a digital elevation map (DEM) to be read in by MONARCHS.
+        Path to a digital elevation model (DEM) to be read in by MONARCHS.
         This will be read in by MONARCHS according to its filetype, and
         interpolated to shape ``(row_amount, col_amount)``.
 
@@ -212,7 +212,7 @@ Parameters controlling how MONARCHS brings together DEM and met data inputs and 
     lat_bounds : str, optional
         Default ``False``.
 
-        Toggle whether to constrain the input met data file to lat/long bounds specified by a Digital Elevation Map (DEM) or not. If set to ``'dem'``, then the
+        Toggle whether to constrain the input met data file to lat/long bounds specified by a digital elevation model (DEM) or not. If set to ``'dem'``, then the
         model grid and input meteorological data are constrained to the lat/long of the DEM, i.e. the data from the
         met data netCDF is matched/regridded to the DEM, accounting for changes in e.g. the coordinate reference systems between the two.
 

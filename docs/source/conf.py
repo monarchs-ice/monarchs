@@ -12,7 +12,7 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.append(os.path.abspath("../.."))
+sys.path.insert(0, os.path.abspath('../../src'))
 
 project = "MONARCHS"
 copyright = "2024, Sammie Buzzard, Jon Elsey and Alex Robel"
@@ -25,7 +25,6 @@ extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.doctest",
     "sphinx.ext.autodoc",  # Core library for html generation from docstrings
-    "sphinx.ext.autosummary",  # Create neat summary tables
     "sphinx.ext.napoleon",
     "sphinx.ext.coverage",
 ]
@@ -42,10 +41,9 @@ autoapi_own_page_level = "function"
 napoleon_google_docstring = False
 napoleon_use_param = False
 napoleon_use_ivar = True
-
 # Add any paths that contain templates here, relative to this directory.
 autoapi_template_dir = (
-    "./_templates/autoapi"  # exclude_patterns = ['_build', '_templates']
+    "./source/_templates/autoapi"  # exclude_patterns = ['_build', '_templates']
 )
 autoapi_python_class_content = "both"
 # -- Options for HTML output -------------------------------------------------

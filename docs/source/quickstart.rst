@@ -1,8 +1,10 @@
-Quickstart tutorial and instructions for running MONARCHS
+Running MONARCHS
 ------------------------------------------
 
-Running via the command line
-=============================
+This section is a tutorial/quickstart on how to run MONARCHS.
+
+Running a basic (1D) test case
+==============================
 First, follow the (non-advanced) instructions in the :doc:`installation` section to install the model.
 
 To run MONARCHS, the best way is to use the command line. From a terminal (you can open this in PyCharm, Spyder or whatever your
@@ -59,7 +61,11 @@ vertical resolution, as for larger model sizes this file can get very big.
 
 A more complex test case
 ========================
-Let's ignore the outputs for now, and move onto a more complex test case.
+Let's ignore the outputs for now, and move onto a more complex test case. In our previous case, the firn profile was
+specified as a single value to the ``firn_depth`` variable in ``model_setup.py``. In this case, we now have a 2D grid
+to run on. We therefore need to specify our firn profile on a 2D grid. This example uses a Gaussian profile, with one
+large lake in the centre and two smaller lakes in the top-left and bottom-right corners.
+
 Change directory to ``examples/10x10_gaussian_threelake`` (or open up ``model_setup.py`` from this file if running directly
 as a Python script), and run it in the same way as before. You will notice that this takes significantly longer to run
 than the 1D case. Wait for it to complete, and make a note of the time taken displayed at the end of the model run.
@@ -80,9 +86,16 @@ You can see that the model setup script has a few additional parameters compared
 MONARCHS will set "sensible" default values for any parameters that are not specified in the model setup script, aside
 from those that the model will not be able to run without - i.e. an initial firn profile, and meteorological data.
 
+You will notice that the firn profile is determined by an imported Python function from ``monarchs.DEM.create_DEM_GaussianTestCase``.
+A neat feature of our model setup file being a Python script is that you can freely generate any input firn distribution
+you want using Python code, as long as it is passed in as a 2D `numpy` array.
+This can be useful for testing, but also for generating realistic initial conditions using
+meshes that aren't supported by default (see the :doc:`dem` section of the documentation for more on this).
+
+A more detailed introduction to ``model_setup.py`` can be found in :doc:`MONARCHS_model_setup.
 You can see all of the possible ``model_setup`` variables in the :doc:`model_setup_reference` section of the documentation.
 This tutorial will not cover all of these, as many of them are for testing and debugging purposes. Many of these
-are related to the use of a Digital Elevation Map (DEM) to set the initial firn profile, and synchronising this
+are related to the use of a digital elevation model (DEM) to set the initial firn profile, and synchronising this
 to the input meterorological data. This is covered more in the :doc:`dem` section of the documentation.
 
 Restarting a model run
