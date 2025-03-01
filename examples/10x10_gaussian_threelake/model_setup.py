@@ -70,8 +70,8 @@ vars_to_save = (
     "ice_lens_depth",
 )
 output_filepath = "output/gaussian_threelake_example_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
-output_grid_size = 400  # Size of interpolated output
-output_timestep = 1  # How often to save output, in days.
+# output_grid_size = 400  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.
+# output_timestep = 1  # How often to save output, in days. Commented out for this example.
 dump_data = True
 dump_filepath = (
     "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state

@@ -8,6 +8,7 @@ Created on Tue May  9 17:04:04 2023
 import numpy as np
 from monarchs.core.utils import calc_mass_sum
 
+
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
     Adds snowfall to surface of model and regrids model to incorporate it. This snow is added to the firn or lake
@@ -67,19 +68,19 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
 
             # Scale temperature in the top layer to account for the fact that we have added snow
             weight1 = dz_old * (
-                (cell.Sfrac[0] * cell.rho_ice) + (cell.Lfrac[0] * cell.rho_water)
+                    (cell.Sfrac[0] * cell.rho_ice) + (cell.Lfrac[0] * cell.rho_water)
             )
             weight2 = snow_depth * snow_rho
 
             cell.firn_temperature[0] = (
-                weight1 * cell.firn_temperature[0] + weight2 * snow_T
-            ) / (weight1 + weight2)
+                                               weight1 * cell.firn_temperature[0] + weight2 * snow_T
+                                       ) / (weight1 + weight2)
             # Scale Sfrac and Lfrac in the top layer also
             weight1 = snow_depth
             weight2 = dz_old
             cell.Sfrac[0] = (
-                weight1 * (snow_rho / cell.rho_ice) + (weight2 * cell.Sfrac[0])
-            ) / (weight1 + weight2)
+                                    weight1 * (snow_rho / cell.rho_ice) + (weight2 * cell.Sfrac[0])
+                            ) / (weight1 + weight2)
 
             # error handling
             if np.any(cell.Lfrac < -0.001):
@@ -87,7 +88,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
                 raise ValueError("Lfrac before snow < 0")
 
             cell.Lfrac[0] = (weight1 * 0 + weight2 * cell.Lfrac[0]) / (
-                weight1 + weight2
+                    weight1 + weight2
             )
 
             if np.any(cell.Lfrac < -0.001):
@@ -106,21 +107,21 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             # cells.
             for i in range(1, len(cell.Sfrac)):
                 weight_1 = (
-                    cell.firn_depth - (i * dz_new) - (old_firn_depth - (i * dz_old))
+                        cell.firn_depth - (i * dz_new) - (old_firn_depth - (i * dz_old))
                 )  # new top of upper layer - bottom of old upper layer
                 weight_2 = (old_firn_depth - (i * dz_old)) - (cell.firn_depth - ((i + 1) * dz_new))
                 # old bottom of upper layer - new bottom of upper layer
 
                 lfrac_hold[i] = (
-                    (cell.Lfrac[i - 1] * weight_1) + cell.Lfrac[i] * weight_2
-                ) / (weight_1 + weight_2)
+                                        (cell.Lfrac[i - 1] * weight_1) + cell.Lfrac[i] * weight_2
+                                ) / (weight_1 + weight_2)
                 sfrac_hold[i] = (
-                    (cell.Sfrac[i - 1] * weight_1) + cell.Sfrac[i] * weight_2
-                ) / (weight_1 + weight_2)
+                                        (cell.Sfrac[i - 1] * weight_1) + cell.Sfrac[i] * weight_2
+                                ) / (weight_1 + weight_2)
                 T_hold[i] = (
-                    cell.firn_temperature[i - 1] * weight_1
-                    + cell.firn_temperature[i] * weight_2
-                ) / (weight_1 + weight_2)
+                                    cell.firn_temperature[i - 1] * weight_1
+                                    + cell.firn_temperature[i] * weight_2
+                            ) / (weight_1 + weight_2)
 
             lfrac_hold[0] = cell.Lfrac[0]
             sfrac_hold[0] = cell.Sfrac[0]
@@ -145,7 +146,8 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             cell.Sfrac = sfrac_hold
             cell.Lfrac = lfrac_hold
             cell.firn_temperature = T_hold
-            assert abs(calc_mass_sum(cell) - (original_mass + (snow_depth * snow_rho))) < (1.5 * 10**-7)
+            assert abs(calc_mass_sum(cell) - (original_mass + (snow_depth * snow_rho))) < (1.5 * 10 ** -7)
+
 
 def densification(cell, t_steps_per_day):
     """
@@ -171,7 +173,7 @@ def densification(cell, t_steps_per_day):
     cell.rho = cell.Sfrac * cell.rho_ice + cell.Lfrac * cell.rho_water
 
     b = 0.4953 * (
-        1000 / 350
+            1000 / 350
     )  # total annual accumulation - TODO taken direct from MATLAB, need to calc
     for i in range(cell.vert_grid):
         if cell.rho[i] > cell.rho_ice:
@@ -186,7 +188,6 @@ def densification(cell, t_steps_per_day):
         cell.Sfrac[i] = cell.rho[i] / cell.rho_ice
         if cell.Sfrac[i] > 1:
             print("Snow accumulation has caused Sfrac to be > 1")
-
 
 # function[rho]=SnowDens(rho, M, b, T_Av, T, tsp_frac)
 # %1D firn densification

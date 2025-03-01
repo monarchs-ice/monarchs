@@ -39,5 +39,5 @@ A possible workflow if you see a lateral movement error might be to:
 -   restart the run in parallel with ``dump_data_pre_lateral_movement = True``
 -   wait for it to finish, then re-run in serial with a debugger loading in from this dump file, ensuring that
 ``single_column_toggle`` is set to ``False`` so the model goes straight to the lateral bit you want to debug.
-``scripts/debug_model_state.py`` shows an example of this, where a
+``scripts/debug_lateral_flow.py`` shows an example of this, where a
 dump file is loaded in and the lateral movement step is run outside of MONARCHS, which allows for quick debugging.

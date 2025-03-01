@@ -66,8 +66,8 @@ specified as a single value to the ``firn_depth`` variable in ``model_setup.py``
 to run on. We therefore need to specify our firn profile on a 2D grid. This example uses a Gaussian profile, with one
 large lake in the centre and two smaller lakes in the top-left and bottom-right corners.
 
-Change directory to ``examples/10x10_gaussian_threelake`` (or open up ``model_setup.py`` from this file if running directly
-as a Python script), and run it in the same way as before. You will notice that this takes significantly longer to run
+Change directory to ``examples/10x10_gaussian_threelake`` (or open up ``model_setup.py`` from this directory in your IDE
+if not using the command line), and run it in the same way as before. You will notice that this takes significantly longer to run
 than the 1D case. Wait for it to complete, and make a note of the time taken displayed at the end of the model run.
 We can make it faster by delving into ``model_setup.py``.
 
@@ -78,9 +78,10 @@ to e.g. ``4`` for now.
 
 Since we are now running in parallel, the model should run significantly faster. Let's take advantage of this and run
 the model for a bit longer. You can control this via the ``num_days`` variable. Since our model is quite large, and
-we are running for a longer time, our output files can become quite large. We can reduce the temporal frequency of the output
-using the ``output_timestep`` variable. This is the number of days between each output file. You can also reduce the vertical
-resolution of the output by changing ``output_grid_size`` from e.g. ``400`` to ``200``.
+we are running for a longer time, our output files can become quite large also. We can reduce the temporal frequency of the output
+by adding the ``output_timestep`` variable. This is the number of days between each output file. It is not included in this runscript,
+but MONARCHS notices that is not present and sets it to a default value of ``1``. Adding it in will override this default value.
+You can also reduce the vertical resolution of the output by addiing or changing ``output_grid_size`` from e.g. ``400`` to ``200``.
 
 You can see that the model setup script has a few additional parameters compared to the 1D case. As mentioned earlier,
 MONARCHS will set "sensible" default values for any parameters that are not specified in the model setup script, aside
@@ -107,8 +108,14 @@ If you have a model that has crashed, or you want to restart a model from the en
 use the initial conditions of a previous run as a starting point for a subsequent one.
 
 If your model run was not successful, then re-running will run it until your initially-intended
-finishing point. If it was successful, then you can re-start it by increasing ``num_days``.
-Try this now with your 10x10 case.
+finishing point.
+
+If it `was` successful, then attempting to re-run with no changes to the setup script will result in
+nothing happening. However, you can extend the run further by increasing ``num_days``.
+Try this now with your 10x10 case - set ``num_days`` to ``50`` and re-run.
+
+
+
 
 Having more control over output directories
 ===========================================

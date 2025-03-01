@@ -12,8 +12,8 @@ print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 50  # Number of rows in your model grid, looking from top-down.
-col_amount = 50  # Number of columns in your model grid, looking from top-down.
+row_amount = 20  # Number of rows in your model grid, looking from top-down.
+col_amount = 20  # Number of columns in your model grid, looking from top-down.
 # lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate via 'dem'
 lat_grid_size = 'dem'
 vertical_points_firn = 500  # Number of vertical grid cells
@@ -79,7 +79,7 @@ DEM/initial firn profile
             from running physics on these cells.
 
 """
-data_dir = '.'
+data_dir = '../..'
 DEM_path = f'{data_dir}/DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
 
 # firn_depth - by default overridden by the presence of a valid DEM
@@ -159,13 +159,13 @@ Meteorological parameters and input
 """
 
 # met_input_filepath = "data/ERA5_new_dem_fixed.nc"
-met_input_filepath = "../data/ERA5_small.nc"
+met_input_filepath = f"{data_dir}/data/ERA5_small.nc"
 
 met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
 
 met_timestep = "hourly"
-met_output_filepath = "met_data.nc"
+met_output_filepath = "output/met_data_george_vi.nc"
 
 """
 Model output
@@ -209,7 +209,7 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "../../MONARCHS_runs/sample_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = "output/george_VI_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
 output_grid_size = 200  # Size of interpolated output
 output_timestep = 30
 """
@@ -231,16 +231,16 @@ Dumping and reloading parameters
 """
 dump_data = True
 dump_filepath = (
-    "lake_depth_error.pkl"  # Filename of our previously dumped state
+    "output/lake_depth_error.nc"  # Filename of our previously dumped state
 )
 reload_state = False  # Flag to determine whether to reload the state or not
-dump_format = 'pickle'
+dump_format = 'NETCDF4'
 
 """
 Computing and numerical parameters
 """
 use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
-parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you mayTru
+parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you mayTru
 # wish to run serial if doing single-column calculations.
 use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a non-cluster machine set this False
 # Note that this is not yet compatible with Numba. The code will fail if you attempt to run with both
@@ -281,5 +281,10 @@ ignore_errors = False  # don't flag if model reaches unphysical state
 heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 
 met_dem_diagnostic_plots = False
-dem_diagnostic_plots = True
+dem_diagnostic_plots = False
 radiation_forcing_factor = 1
+
+if __name__ == '__main__':
+    from monarchs.core.driver import monarchs
+
+    monarchs()

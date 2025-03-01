@@ -36,8 +36,8 @@ that exist within this version of the model setup script that are used to handle
 
 A DEM of a real ice shelf will have a large range of values. MONARCHS is designed for modelling ice shelves, but the
 DEM we have loaded in also contains lots of actual land in addition to the ice shelf. These parameters are used to handle
-this. The land is much higher than the ice shelf - therefore we set the ``firn_max_height`` parameter, alongside
-the ``max_height_handler`` parameter to tell MONARCHS
+this. The land is much higher than the ice shelf - therefore we set the ``firn_max_height`` parameter to 100, alongside
+the ``max_height_handler`` parameter to ``'filter'`` to tell MONARCHS
 that anything in the initial firn profile above 100 metres should be filtered out. This sets a flag in the ``IceShelf``
 class used to contain the model data (see :doc:`structure` for more information on this, or see the API reference).
 This flag is called ``valid_cell``. If this flag is ``False``, then MONARCHS ignores the cell entirely, no single-column
@@ -50,3 +50,5 @@ up to 35m (if it is below this value), and increasing every other cell by the sa
 
 Other options to this can be found in the :doc:`model_setup_reference`.
 
+Selecting a subset of the DEM
+------------------------------
