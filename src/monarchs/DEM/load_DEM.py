@@ -63,22 +63,18 @@ def export_DEM(
     top_right : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the top right of the rectangle
         to be used as the bounding box to extract the part of the DEM we want.
-        Requires latmin, longmax and latmax to not be False to do anything.
         Default False
     top_left : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the top left of the rectangle
         to be used as the bounding box to extract the part of the DEM we want.
-        Requires longmin, longmax and latmax to not be False to do anything.
         Default False.
     bottom_right : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the bottom right of the rectangle
         to be used as the bounding box to extract the part of the DEM we want.
-        Requires latmin, longmin and latmax to not be False to do anything.
         Default False.
     bottom_left : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the bottom left of the rectangle
         to be used as the bounding box to extract the part of the DEM we want.
-        Requires latmin, longmin and longmax to not be False to do anything.
         Default False.
     diagnostic_plots : bool, optional
         Flag that triggers whether to generate plots of the output for testing.
@@ -292,14 +288,21 @@ def generate_diagnostic_plots(
 ):
     """
     Diagnostics for the DEM interpolation process.
+
     Parameters
     ----------
     lons
+
     lats
+
     heights
+
     newlons
+
     newlats
+
     newheights
+
     new_heights_interpolated
 
     Returns

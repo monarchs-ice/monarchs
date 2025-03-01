@@ -1,7 +1,7 @@
 """
 Functions used by run_MONARCHS.py to convert a model runscript (default model_setup.py) to the format actually used
 by MONARCHS. This includes setting up the initial firn profile information, loading in meteorological data and
-interpolating it, and loading in/interpolating the digital elevation map (DEM) if applicable.
+interpolating it, and loading in/interpolating the digital elevation model (DEM) if applicable.
 """
 
 import numpy as np
@@ -423,9 +423,9 @@ def create_model_grid(
         Height of the surface lake, 0 if not present [m]
     lid_depth : float
         Height of the frozen lid on top of the surface lake, 0 if not present [m]
-     vert_grid : int
+    vert_grid : int
         Number of vertical grid points in the firn column.
-        vert_grid_lake : int
+    vert_grid_lake : int
         Number of vertical grid points in the lake. int
     vert_grid_lid : int
         Number of vertical grid points in the frozen lid. int
@@ -489,10 +489,17 @@ def create_model_grid(
         Total amount of melting that has occurred. Not used for any physics, but as a tracker.
     valid_cells : array_like, bool
         Mask to filter out invalid (e.g. land) cells, so that we don't waste time running any physics on them.
-    use_numba : ara
-    lats : array, float, optional
-    lons : array, float, optional
-    # TODO - finish docstring
+    use_numba : bool, optional
+        Flag to determine whether to use Numba typed lists or not. Default False.
+    lat : float, optional
+        Input latitude.
+    lon : float, optional
+        Input longitude.
+    size_dx : float, optional
+        Size of the grid cell in the x direction [m]
+    size_dy : float, optional
+        Size of the grid cell in the y direction [m]
+
     """
     # Create a Numba typed list instead of a nested list. Each element of the
     # typed list is also a typed list, consisting of an instance of the

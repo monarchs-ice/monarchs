@@ -121,31 +121,31 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
 
 def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
     """
-        Calculate the latent and sensible heat fluxes given the wind speed and
-        surface meteorology.
+    Calculate the latent and sensible heat fluxes given the wind speed and
+    surface meteorology.
 
-        Parameters
-        ----------
-        wind : float
-            Wind speed. [m s^-1].
-        T_air : float
-            Surface-layer air temperature. [K].
-        T_sfc : float
-            Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
-        p_air : float
-            Surface air pressure. [hPa]
-        T_dp : float
-            2m dewpoint temperature. [K]
+    Parameters
+    ----------
+    wind : float
+        Wind speed. [m s^-1].
+    T_air : float
+        Surface-layer air temperature. [K].
+    T_sfc : float
+        Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
+    p_air : float
+        Surface air pressure. [hPa]
+    T_dp : float
+        2m dewpoint temperature. [K]
 
-        Returns
-        -------
-        Flat : float
-             Latent heat flux. [W m^-2].
-        Fsens : float
-             Sensible heat flux.   [W m^-2].
+    Returns
+    -------
+    Flat : float
+         Latent heat flux. [W m^-2].
+    Fsens : float
+         Sensible heat flux.   [W m^-2].
 
-        Documentation on how the saturation vapour pressure is calculated can be found in Section 12 of
-        https://www.ecmwf.int/sites/default/files/elibrary/2021/20198-ifs-documentation-cy47r3-part-vi-physical-processes.pdf
+    Documentation on how the saturation vapour pressure is calculated can be found in Section 12 of
+    https://www.ecmwf.int/sites/default/files/elibrary/2021/20198-ifs-documentation-cy47r3-part-vi-physical-processes.pdf
 
     =======
     """

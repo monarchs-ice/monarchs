@@ -69,7 +69,7 @@ lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of late
 DEM/initial firn profile
 
     DEM_path : str
-        Path to a digital elevation map (DEM) to be read in by MONARCHS.
+        Path to a digital elevation model (DEM) to be read in by MONARCHS.
         This will be read in by MONARCHS according to its filetype, and 
         interpolated to size(<row_amount>, <col_amount>).
         If using a relative import, it is a relative import from the folder you are running

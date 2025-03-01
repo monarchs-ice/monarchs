@@ -18,11 +18,10 @@ If you make changes to the code, please feel free to submit a pull request to ge
 Alternatively, if you have feature requests, please submit an Issue on the GitHub repo, or get in touch with one of the
 model developers.
 
-The model source code is located in the `monarchs` folder. The model initial conditions and attributes are included 
-in `model_setup.py`. 
+The model source code is located in the `src/monarchs` folder. 
 
-If you have any feedback or issues, please submit via Github Issues if a problem with the code, or email j.d.elsey@leeds.ac.uk
-for help setting up on HPC systems etc.
+If you have any feedback or issues, please submit via Github Issues if a problem with the code, or email Jon Elsey at 
+the University of Leeds for help setting up on HPC systems.
 
 Todos
 -----
