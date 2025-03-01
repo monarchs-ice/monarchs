@@ -226,8 +226,11 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     )
 
     old_T_sfc = sfc_energy_lake_formation(T_air, Q, k, cell)
+
+    # Check for conservation of mass
     new_mass = calc_mass_sum(cell)
     assert abs(original_mass - new_mass) < (1.5 * 10**-7)
+
     if old_T_sfc >= 273.15 and Q > 0:  # melting occurring at the surface
         kdTdz = (
             (cell.firn_temperature[0] - cell.firn_temperature[1])
@@ -274,20 +277,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     # if abs(dHdt) > 0:
     #     dz = cell.firn_depth / cell.vert_grid
 
-    # for i in np.arange(0, cell.vert_grid):
-    #     if cell.firn_temperature[i] > 273.15:
-    #         cp_ice[i] = 4186.8
-    #         k_ice[i] = 1000 * (
-    #             1.017 * 10 ** (-4) + 1.695 * 10 ** (-6) * cell.firn_temperature[i]
-    #         )
-    #     else:
-    #         cp_ice[i] = 1000 * (
-    #             7.16 * 10 ** (-3) * cell.firn_temperature[i] + 0.138
-    #         )  # Alexiades & Solomon pg. 8
-    #         k_ice[i] = 1000 * (
-    #             2.24 * 10 ** (-3)
-    #             + 5.975 * 10 ** (-6) * (273.15 - cell.firn_temperature[i]) ** 1.156
-    #         )
+
 
         air[i] = 1 - cell.Sfrac[i] - cell.Lfrac[i]
 

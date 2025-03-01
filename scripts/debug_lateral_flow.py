@@ -1,4 +1,4 @@
-from monarchs.core.dump_model_state import reload_state
+from monarchs.core.dump_model_state import reload_from_dump
 from monarchs.core.utils import get_2d_grid
 from matplotlib import pyplot as plt
 from monarchs.physics.lateral_functions import move_water
@@ -23,7 +23,7 @@ if file_fmt == 'netcdf':
             _l.append(IceShelf())
         grid.append(_l)
 
-    test, _, _, _ = reload_state(path, grid)
+    test, _, _, _ = reload_from_dump(path, grid)
 
 else:
     import pickle

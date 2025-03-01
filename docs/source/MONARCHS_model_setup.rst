@@ -36,11 +36,11 @@ whole model grid. In the latter, the data is gridded to the model grid.
 Making user-defined changes to the inputs
 =========================================
 It is possible to amend the input pipeline to force changes to certain variables if you want to run some tests.
-For example, to force the model temperature to a higher value, one could amend ``interpolate_met_data``
+For example, to force the model temperature to a higher value, one could amend ``setup_era5_met_data``
 in ``initial_conditions.py``, or to change the default temperature profile one could edit
 ``initialise_firn_profile`` in the same file.
 
-An example of this is shown in ``interpolate_met_data``, where a toggle ``radiation_forcing_factor`` may be specified in the
+An example of this is shown in ``setup_era5_met_data``, where a toggle ``radiation_forcing_factor`` may be specified in the
 runscript to adjust SW downwelling radiation by a multiplicative factor.
 
 Outputting data

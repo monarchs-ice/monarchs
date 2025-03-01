@@ -10,13 +10,34 @@ from netCDF4 import Dataset
 from matplotlib import pyplot as plt
 import numpy.ma as ma
 
-dumppath = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem_edge_fixed/progress.nc'
-diagpath = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem_edge_fixed/model_output.nc'
+dumppath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_dump.nc'
+diagpath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_output.nc'
 
 flowdata = Dataset(dumppath)
 t0data = Dataset(diagpath)
 
-def plot_variable(dset, variable_name, cmap='viridis', vmax=None, title_flow=True):
+def plot_variable(dset, variable_name, cmap='viridis', vmax=None):
+    """
+    Plot a variable from an input dump file as a 2D grid with plt.imshow. This is a shorthand to generate
+    plots from the final model state.
+
+    Parameters
+    ----------
+    dset : netCDF4.Dataset
+        The dataset containing the variable to plot.
+    variable_name : str
+        The name of the variable to plot.
+    cmap : str, optional
+        The colormap to use for the plot. Default is 'viridis'.
+    vmax : float, optional
+        The maximum value for the color scale. Default is None.
+
+    Returns
+    -------
+    variable : netCDF4.Variable
+        The variable from the input netCDF that was plotted.
+    """
+
     variable = dset.variables[variable_name]
     plt.figure()
     plt.imshow(variable, vmax=vmax, cmap=cmap)
@@ -24,8 +45,6 @@ def plot_variable(dset, variable_name, cmap='viridis', vmax=None, title_flow=Tru
     title_str = variable_name.replace('_', ' ')
     if vmax:
         title_str += ', (max shown = {})'.format(vmax)
-    if title_flow:
-        title_str += ', flow_into_land = `True`'
     plt.title(title_str)
     return variable
 
@@ -50,10 +69,4 @@ diff = firndepth[:] - ofd[:]
 plt.imshow(diff, cmap='coolwarm', norm=TwoSlopeNorm(vmin=-3, vcenter=0, vmax=3))
 plt.colorbar()
 plt.title('Firn depth difference (m)')
-
-lakedepthbool = ma.masked_outside(lakedepth[:], 0.001, 0.1)
-plt.figure()
-plt.imshow(lakedepthbool)
-plt.colorbar()
-plt.title('Lake depth boolean')
 

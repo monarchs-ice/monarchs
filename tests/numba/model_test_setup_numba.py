@@ -43,7 +43,7 @@ met_output_filepath = "parallel_test_met_data.nc"
 
 save_output = False
 dump_data = False
-reload_state = False  # Flag to determine whether to reload the state or not
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters
@@ -73,7 +73,7 @@ lateral_movement_toggle = True
 lateral_movement_percolation_toggle = True
 densification_toggle = False
 percolation_toggle = True  # only works if firn_column_toggle also True
-perc_time_toggle = True  # Determines if percolation occurs over timescales,
+_toggle = True  # Determines if percolation occurs over timescales,
 # or all water can percolate until it can no longer move
 catchment_outflow = False  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,

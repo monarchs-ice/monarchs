@@ -99,7 +99,7 @@ def handle_incompatible_flags(model_setup):
                 'You must provide a DEM file using the "DEM_path" argument to use DEM lat/long bounds.'
             )
 
-    dump_attrs = ["dump_data", "reload_state"]
+    dump_attrs = ["dump_data", "reload_from_dump"]
     for attr in dump_attrs:
         if hasattr(model_setup, attr) and not hasattr(model_setup, "dump_filepath"):
             if getattr(model_setup, attr) is True:
@@ -119,11 +119,18 @@ def handle_incompatible_flags(model_setup):
                 )
 
     dump_formats = ['NETCDF4', 'pickle']
-    if hasattr(model_setup, 'dump_format') and model_setup.dump_format not in dump_formats:
-        raise ValueError(
-            f"monarchs.core.configuration.handle_incompatible_flags(): "
-            f"dump_format must be one of {dump_formats}, not {model_setup.dump_format}"
-        )
+    if hasattr(model_setup, 'dump_format'):
+        if model_setup.dump_format not in dump_formats:
+            raise ValueError(
+                f"monarchs.core.configuration.handle_incompatible_flags(): "
+                f"dump_format must be one of {dump_formats}, not {model_setup.dump_format}"
+            )
+        if model_setup.dump_format == 'pickle' and hasattr(model_setup, 'use_numba') and model_setup.use_numba:
+            raise ValueError(
+                f"monarchs.core.configuration.handle_incompatible_flags(): "
+                f"dump_format is set to `'pickle'` but use_numba is `True`. This is not supported since Numba "
+                f'jitclasses are not picklable'
+            )
 
 def create_defaults_for_missing_flags(model_setup):
     """
@@ -155,7 +162,6 @@ def create_defaults_for_missing_flags(model_setup):
         "lateral_movement_toggle",
         "lateral_movement_percolation_toggle",
         "percolation_toggle",
-        "catchment_outflow",
         "flow_into_land",
         "perc_time_toggle",
         "snowfall_toggle",
@@ -171,7 +177,7 @@ def create_defaults_for_missing_flags(model_setup):
         "dump_data",
         "verbose_logging",
         "spinup",
-        "reload_state",
+        "reload_from_dump",
         "met_dem_diagnostic_plots",
         "bbox_top_right",
         "bbox_bottom_left",
@@ -181,6 +187,10 @@ def create_defaults_for_missing_flags(model_setup):
         "use_numba",
         "use_mpi",
         "dem_diagnostic_plots",
+        "parallel",
+        "use_numba",
+        "catchment_outflow"
+
     ]
 
     for attr in optional_args_to_true:
@@ -246,7 +256,18 @@ def create_defaults_for_missing_flags(model_setup):
     )
     vardict['dump_format'] = 'NETCDF4'
     vardict['input_crs'] = 3031
+    vardict['cores'] = 'all'
 
+    if hasattr(model_setup, 'met_input_filepath'):
+        vardict['met_data_source'] = 'ERA5'
+    elif hasattr(model_setup, 'met_data') and isinstance(model_setup.met_data, dict):
+        vardict['met_data_source'] = 'user_defined'
+    else:
+        raise ValueError('monarchs.core.configuration.create_defaults_for_missing_flags: '
+                         'No meteorological data source was detected. Either specify input data as an ERA5-format'
+                         'netCDF file, or as a ``dict`` of user-defined data in model_setup.py. '
+                         'See ``examples/1D_test_case/model_setup.py`` for an example of user-defined data, or '
+                         '``examples/10x10_gaussian_threelake/model_setup.py`` for an example of ERA5 data.')
     # Keys that have special print messages - e.g. those that have default values that depend on model_setup variables
     # go in here, and a specific print message is written for them
     special_keys = ["lateral_timestep"]
@@ -333,7 +354,7 @@ def jit_modules():
     from monarchs.physics import surface_fluxes
     from monarchs.physics import lake_functions
     from monarchs.physics import firn_functions
-    from monarchs.core import timestep
+    from monarchs.physics import timestep
     from monarchs.core import utils
 
     # Go through all the modules we want to jit, find the `function` objects,
@@ -400,6 +421,6 @@ else:
 model_setup = ModelSetup(model_setup_path)
 
 # if using Numba,
-if model_setup.use_numba:
+if hasattr(model_setup, 'use_numba') and model_setup.use_numba:
     jit_modules()
     jit_classes()

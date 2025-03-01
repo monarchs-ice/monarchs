@@ -3,7 +3,7 @@ import numpy as np
 
 def run(model_setup):
     from monarchs.core import driver
-    from monarchs.core import initial_conditions
+    from monarchs.core import initial_conditions, setup_met_data
 
     T_firn, rho, firn_depth, valid_cells, dx, dy = initial_conditions.initialise_firn_profile(
         model_setup, diagnostic_plots=False
@@ -12,7 +12,7 @@ def run(model_setup):
     lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
     lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
     # Set up meteorological data and return the path to the grid actually used by MONARCHS
-    initial_conditions.interpolate_met_data(model_setup, lat_array, lon_array)
+    setup_met_data.setup_era5(model_setup, lat_array, lon_array)
     # Initialise the model grid.
     grid = initial_conditions.create_model_grid(
         model_setup.row_amount,

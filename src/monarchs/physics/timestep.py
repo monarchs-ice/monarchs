@@ -70,6 +70,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             return cell
         else:
             return
+
     if np.isnan(cell.firn_temperature).any():
         raise ValueError('NaN in firn temperature')
     # TODO:
@@ -166,8 +167,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             # Lake and lid formation/development logic follows from here if there is
             # exposed water.
 
-            if cell.lake and not cell.lid and cell.lake_depth < 0.1:
+            if cell.lake and not cell.lid and not cell.v_lid and cell.lake_depth < 0.1 and cell.v_lid_depth <= 0:
                 cell.lake = False
+                # cell.Lfrac[0] += cell.lake_depth / (cell.firn_depth/cell.vert_grid)
 
             # # TODO - added this to test case where water moves laterally, meaning that we no longer have exposed water
             if cell.lake_depth == 0:

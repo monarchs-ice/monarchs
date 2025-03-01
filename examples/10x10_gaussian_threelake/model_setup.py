@@ -13,14 +13,16 @@ at monarchs-ice.github.io/monarchs/model_setup_reference.
 """
 
 import os
+
+from examples.george_vi_example.model_setup import radiation_forcing_factor
 from monarchs.DEM import create_DEM_GaussianTestCase as cgt
 
 print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 10  # Number of rows in your model grid, looking from top-down.
-col_amount = 10  # Number of columns in your model grid, looking from top-down.
+row_amount = 20  # Number of rows in your model grid, looking from top-down.
+col_amount = 20  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -32,7 +34,7 @@ vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 """
 Timestepping parameters
 """
-num_days = 10  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 1500  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
@@ -46,6 +48,10 @@ firn_depth = 35 * cgt.export_gaussian_DEM(row_amount, diagnostic_plots=True)
 rho_init = "default"  # Initial density, use 'default' to use empirical formula for initial density profile
 T_init = "default"  # Initial temperature profile.
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
+firn_max_height = 100
+firn_min_height = 35
+max_height_handler = "filter"
+min_height_handler = "extend"
 
 """
 Met data parameters
@@ -76,7 +82,7 @@ dump_data = True
 dump_filepath = (
     "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state
 )
-reload_state = True  # Flag to determine whether to reload the state or not
+reload_from_dump = True  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters
@@ -93,7 +99,7 @@ cores = "all"  # number of processing cores to use. 'all' or False will tell MON
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
 All of these default to True.
 """
-catchment_outflow = True  # Determines if water on the edge of the catchment area will
+catchment_outflow = False  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
 flow_into_land = True # As above, but for flowing into invalid cells in addition to the model edge boundaries.
@@ -101,4 +107,4 @@ flow_into_land = True # As above, but for flowing into invalid cells in addition
 if __name__ == '__main__':
     from monarchs.core.driver import monarchs
 
-    monarchs()
+    grid = monarchs()

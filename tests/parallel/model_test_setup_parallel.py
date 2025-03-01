@@ -42,7 +42,7 @@ met_output_filepath = "parallel_test_met_data.nc"
 
 save_output = False
 dump_data = False
-reload_state = False  # Flag to determine whether to reload the state or not
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters

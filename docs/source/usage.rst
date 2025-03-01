@@ -14,7 +14,7 @@ dump the entire model state into a file (called ``dump.nc`` by default, but this
 
 With this file, it is then possible to load this into Python to look at the model state (e.g. for debugging,
 see ``scripts/debug_lateral_flow`` for an example), or to use this to restart your MONARCHS run
-(by setting ``reload_state`` to ``True`` in ``model_setup``.
+(by setting ``reload_from_dump`` to ``True`` in ``model_setup``.
 
 ### Data analysis
 

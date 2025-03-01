@@ -94,7 +94,21 @@ def firn_column(
     # If we have melting at the surface - we need to calculate the change
     # in firn depth, regrid everything to the new firn depth, resolve the
     # heat equation with a fixed surface of 273.15 K,
-    #print('Root - ', root[0])
+
+    # if cell.column == 0 and cell.row == 0:
+    #     print('Surface flux Q = ', sfc_flux(cell.melt,
+    #                                         cell.exposed_water,
+    #                                         cell.lid,
+    #                                         cell.lake,
+    #                                         cell.lake_depth,
+    #                                         LW_in,
+    #                                         SW_in,
+    #                                         T_air,
+    #                                         p_air,
+    #                                         T_dp,
+    #                                         wind,
+    #                                         cell.firn_temperature[0]))
+
     if root[0] > 273.15:
         cell.meltflag[0] = 1
         cell.melt = True

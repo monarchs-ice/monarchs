@@ -224,16 +224,16 @@ Dumping and reloading parameters
         # TODO - hyperlink to model output doc 
     dump_filepath : str
         File path to dump the current model state into at the end of each timestep, 
-        for use if <dump_data> or <reload_state> are True. 
-    reload_state : bool
+        for use if <dump_data> or <reload_from_dump> are True. 
+    reload_from_dump : bool
         Flag to determine whether we want to reload from a dump (see <dump_data> for details). If True, reload model
         state from file at the path determined by <reload_filepath>.
 """
 dump_data = True
 dump_filepath = (
-    "output/lake_depth_error.nc"  # Filename of our previously dumped state
+    "output/george_vi_dump.nc"  # Filename of our previously dumped state
 )
-reload_state = False  # Flag to determine whether to reload the state or not
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 dump_format = 'NETCDF4'
 
 """

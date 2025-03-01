@@ -95,7 +95,7 @@ dump_data = True
 dump_filepath = (
     "output/50x50_numba_example_dump.nc"  # Filename of our previously dumped state
 )
-reload_state = False  # Flag to determine whether to reload the state or not
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters

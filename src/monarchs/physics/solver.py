@@ -69,6 +69,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
         soldict: OptimizeResult = root(eqn, x, args=args, method='df-sane',
                                        options={'line_search': 'cheng', 'maxfev': 1000,
                                                 'ftol': 1e-10})
+
         if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or np.any(soldict.x < 220) or not soldict.success:
             raise Exception('Bad spectral solver output')
 

@@ -514,7 +514,7 @@ def combine_lid_firn(cell):
     cell.v_lid = False
     cell.lid = False
     cell.lake = False
-    cell.lake_depth = 0
+    cell.lake_depth = 0.0
     cell.ice_lens = False
     cell.ice_lens_depth = 999
     cell.exposed_water = False

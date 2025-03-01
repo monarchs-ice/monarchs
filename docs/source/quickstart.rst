@@ -77,8 +77,11 @@ variable. By default, it is set to ``'all'``, so if you are doing other things o
 to e.g. ``4`` for now.
 
 Since we are now running in parallel, the model should run significantly faster. Let's take advantage of this and run
-the model for a bit longer. You can control this via the ``num_days`` variable. Since our model is quite large, and
-we are running for a longer time, our output files can become quite large also. We can reduce the temporal frequency of the output
+the model for a bit longer. You can control this via the ``num_days`` variable. We could also instead increase the resolution
+of the model, by changing ``row_amount`` and ``col_amount`` from 10 to 20. Note that this increase in resolution
+will make the model take at least ~4x longer to run!
+
+Since our model is quite large, and we are running for a longer time, our output files can become quite large also. We can reduce the temporal frequency of the output
 by adding the ``output_timestep`` variable. This is the number of days between each output file. It is not included in this runscript,
 but MONARCHS notices that is not present and sets it to a default value of ``1``. Adding it in will override this default value.
 You can also reduce the vertical resolution of the output by addiing or changing ``output_grid_size`` from e.g. ``400`` to ``200``.
@@ -103,7 +106,7 @@ Restarting a model run
 ======================
 
 If you have a model that has crashed, or you want to restart a model from the end of a previous run, you can use the
-``reload_state`` variable in the model setup script. This will load in the state from the dump file specified in the
+``reload_from_dump`` variable in the model setup script. This will load in the state from the dump file specified in the
 ``dump_filepath`` variable, and restart the model from this point. This allows for finishing of crashed runs, or to
 use the initial conditions of a previous run as a starting point for a subsequent one.
 
@@ -122,10 +125,10 @@ Having more control over output directories
 
 You can call your run scripts anything you want, rather than just ``model_setup.py``, and they can be in any folder, not
 just the folder you are running in. This is useful if you want to e.g. keep several test cases in the same folder, and write
-the outputs elsewhere. You can tell MONARCHS exactly which setup script to run from by using the `-i` flag on the command line.
-For example, from anywhere on your PC, assuming MONARCHS is installed in ``/home/users/username/monarchs``, you can do:
+the outputs elsewhere. You can tell MONARCHS exactly which setup script to run from by using the ``-i`` flag on the command line.
+For example, from anywhere on your machine, assuming MONARCHS is installed in ``/home/users/username/monarchs``, you can do:
 
-``monarchs -i monarchs/examples/10x10_gaussian_threelake/model_setup.py``
+``monarchs -i /home/users/username/monarchs/examples/10x10_gaussian_threelake/model_setup.py``
 
 You could rename ``model_setup.py`` to ``model_setup_threelake.py`` and pass this as the name, and it would work the same
 were you to pass this as the argument.

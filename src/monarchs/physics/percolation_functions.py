@@ -95,8 +95,8 @@ def percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=Tr
                         capillary_remain = capillary(cell, v_lev)
                         # percolation of remaining water to next cell
                         if capillary_remain < cell.Lfrac[v_lev]:
-                            # if we reach the bottom of the grid
-                            if v_lev == cell.vert_grid - 1:
+                            # if we would go beyond the end of the grid at the next timestep, stop percolating
+                            if v_lev == cell.vert_grid - 2:
                                 time_remaining = 0
 
                             cell.Lfrac[v_lev + 1] = (

@@ -20,8 +20,8 @@ import time
 import numpy as np
 import pathos
 from netCDF4 import Dataset
-from monarchs.core import configuration, initial_conditions
-from monarchs.core.dump_model_state import dump_state, reload_state
+from monarchs.core import configuration, initial_conditions, setup_met_data
+from monarchs.core.dump_model_state import dump_state, reload_from_dump
 from monarchs.core.model_output import setup_output, update_model_output
 from monarchs.core.loop_over_grid import loop_over_grid
 from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct
@@ -32,7 +32,7 @@ model_setup = configuration.model_setup
 
 # if we want to use Numba - apply just-in-time compilation to the relevant
 # functions
-if model_setup.use_numba:
+if hasattr(model_setup, 'use_numba') and model_setup.use_numba:
     from numba import jit
 
     from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
@@ -89,7 +89,7 @@ def setup_toggle_dict(model_setup):
     return toggle_dict
 
 
-def check_for_reload_state(model_setup, grid, met_start_idx, met_end_idx):
+def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
     """
     Determine if the model needs to re-initialise parameters from a dump file.
     TODO - add support for reloading from pickle
@@ -113,9 +113,9 @@ def check_for_reload_state(model_setup, grid, met_start_idx, met_end_idx):
     import warnings
 
     # If we are reloading from a failed run, then
-    if model_setup.reload_state:
+    if model_setup.reload_from_dump:
         print("Reloading state from dump...")
-        # If we have reload_state specified but no dumpfile, warn the user
+        # If we have reload_from_dump specified but no dumpfile, warn the user
         if not os.path.exists(reload_name):
             first_iteration = 0
             warnings.warn(
@@ -126,7 +126,7 @@ def check_for_reload_state(model_setup, grid, met_start_idx, met_end_idx):
 
         # Otherwise load in parameters from the dumpfile
         else:
-            grid, met_start_idx, met_end_idx, first_iteration = reload_state(
+            grid, met_start_idx, met_end_idx, first_iteration = reload_from_dump(
                 reload_name, grid
             )
             print(
@@ -277,7 +277,7 @@ def print_model_end_of_timestep_messages(
             total_mass_start + snow_added - catchment_outflow,
         )
 
-    elif model_setup.snowfall_toggle:
+    elif model_setup.snowfall_toggle and not model_setup.catchment_outflow:
         print("Total snow added = ", snow_added)
         print(
             "Original mass accounting for snowfall = ",
@@ -356,7 +356,7 @@ def main(model_setup, grid):
 
     # Check if we are reloading from a failed/stopped run, and load in the data if so
     grid, met_start_idx, met_end_idx, first_iteration, reload_dump_success = (
-        check_for_reload_state(model_setup, grid, met_start_idx, met_end_idx)
+        check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx)
     )
     print('firn depth = ', get_2d_grid(grid, 'firn_depth'))
     print('valid_cell = ', get_2d_grid(grid, 'valid_cell'))
@@ -492,6 +492,7 @@ def main(model_setup, grid):
         # Save progress information as netCDF - this allows us to reload in the file
         # if the code stops for whatever reason and continue from there.
         if model_setup.dump_data:
+            print(f'Dumping model state to {model_setup.dump_filepath}...')
             if model_setup.dump_format == 'NETCDF4':
                 dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
             elif model_setup.dump_format == 'pickle':
@@ -537,7 +538,12 @@ def initialise(model_setup):
         lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
 
     # Set up meteorological data and return the path to the grid actually used by MONARCHS
-    initial_conditions.interpolate_met_data(model_setup, lat_array, lon_array)
+    if model_setup.met_data_source == 'ERA5':
+        setup_met_data.setup_era5(model_setup, lat_array, lon_array)
+    elif model_setup.met_data_source == 'user_defined':
+        setup_met_data.prescribed_met_data(model_setup)
+
+
     # Initialise the model grid.
     grid = initial_conditions.create_model_grid(
         model_setup.row_amount,

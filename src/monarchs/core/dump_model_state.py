@@ -8,7 +8,6 @@ import os
 
 import numpy as np
 from netCDF4 import Dataset
-
 from monarchs.core.utils import get_2d_grid
 
 
@@ -108,7 +107,7 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
         met_start_write[:] = met_start_idx
         met_end_write[:] = met_end_idx
 
-def reload_state(fname, grid, keys='all'):
+def reload_from_dump(fname, grid, keys='all'):
     """
     Loads in the netCDF file containing the model state, and loads the data into
     the format required for MONARCHS to function. This allows us to restart the model in the event of a failure.
@@ -167,7 +166,7 @@ def reload_state(fname, grid, keys='all'):
             desired_keys = [key for key in data.variables.keys() if key not in scalars]
         else:
             desired_keys = keys
-        print(f"monarchs.core.dump_model_state.reload_state: ")
+        print(f"monarchs.core.dump_model_state.reload_from_dump: ")
 
         for key in desired_keys:
             print(f"Loading in key {key} from progress netCDF file")

@@ -303,9 +303,9 @@ Output settings - dumping and reloading model state
 
     dump_filepath : str, optional (required if ``dump_data`` is True)
         File path to dump the current model state into at the end of each timestep,
-        for use if ``dump_data`` or ``reload_state`` are True.
+        for use if ``dump_data`` or ``reload_from_dump`` are True.
 
-    reload_state : bool, optional
+    reload_from_dump : bool, optional
         Default ``False`` (i.e. model will start from the initial conditions specified by ``firn_depth`` or the DEM input file by default).
 
         Flag to determine whether we want to reload from a dump (see ``dump_data`` for details). If ``True``, reload model

@@ -238,9 +238,9 @@ class IceShelf:
         )
         self.vert_grid_lid = vert_grid_lid  # Number of vertical grid cells in ice lid
         self.rho = rho  # Initial density only, after this use only Sfrac
-        self.rho_lid = 917 * np.ones(vert_grid_lid)
+        self.rho_lid = 917.0 * np.ones(vert_grid_lid)
         self.firn_temperature = firn_temperature
-        self.v_lid_depth = 0
+        self.v_lid_depth = 0.0
         # JE - changed these conditionals from string "init" to one based on
         # whether the input is entirely NaNs. This stops Numba from throwing
         # an error due to incorrect dtypes.
