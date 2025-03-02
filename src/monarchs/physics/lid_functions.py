@@ -162,11 +162,11 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     try:
         assert abs(new_mass - original_mass) < (1.5 * 10**-7)
-    except AssertionError:
+    except Exception:
         print('Original mass = ', original_mass)
         print('New mass = ', new_mass)
         print('Difference = ', abs(new_mass - original_mass))
-        raise AssertionError
+        raise Exception
 def calc_surface_melt(cell, dt, Q):
     """
     Determine the amount of melting that occurs at the surface of the frozen lid when the surface temperature
