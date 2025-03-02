@@ -186,7 +186,7 @@ def update_met_conditions(
 
         if start:
             met_start_idx = met_start_idx % met_data_len
-        print('Start idx for met data = ', met_start_idx)
+        # print('Start idx for met data = ', met_start_idx)
         # Initial met conditions
         # call .data so we get a Numpy ndarray, not a numpy masked array. This is crucial for Numba support
         met_data_grid = initialise_met_data_grid(

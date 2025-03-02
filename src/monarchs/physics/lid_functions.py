@@ -87,7 +87,6 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     if cell.virtual_lid_temperature < 273.15:  # further freezing of the virtual lid
         # cell.log = cell.log + 'Further freezing of virtual lid...\n'
         if new_boundary_change > 0:
-            cell.v_lid_depth += new_boundary_change
 
             if new_boundary_change < cell.lake_depth:
                 # print('nbc = ', new_boundary_change)
@@ -105,8 +104,11 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
                 )
                 # print('lake_temperature after freezing = ', cell.lake_temperature)
                 # print('Lake depth after freezing = ', cell.lake_depth)
+                cell.v_lid_depth += new_boundary_change
 
             else:  # whole lake freezes
+                cell.v_lid_depth += cell.lake_depth * (cell.rho_water / cell.rho_ice)
+                orig_lake_depth = cell.lake_depth + 0
                 cell.lake_depth = 0
                 cell.lake = False
 
@@ -157,8 +159,14 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell.v_lid = False
         # cell.log = cell.log + 'Virtual lid has completely melted \n'
     new_mass = calc_mass_sum(cell)
-    assert abs(new_mass - original_mass) < (1.5 * 10**-7)
 
+    try:
+        assert abs(new_mass - original_mass) < (1.5 * 10**-7)
+    except AssertionError:
+        print('Original mass = ', original_mass)
+        print('New mass = ', new_mass)
+        print('Difference = ', abs(new_mass - original_mass))
+        raise AssertionError
 def calc_surface_melt(cell, dt, Q):
     """
     Determine the amount of melting that occurs at the surface of the frozen lid when the surface temperature

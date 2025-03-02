@@ -119,6 +119,10 @@ def firn_column(
         if prescribed_height_change is not False:
             height_change = 0.05  # force height change for testing
 
+        if np.isnan(height_change):
+            print('Root = ', root[0])
+            raise ValueError("Height change is NaN")
+
         dz = cell.firn_depth / cell.vert_grid
         args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
         root, fvec, success_fixedsfc, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True)
@@ -169,6 +173,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     dz_old = cell.firn_depth / cell.vert_grid
     old_firn_depth = cell.firn_depth + 0
     # remove height from the firn
+
     cell.firn_depth -= height_change
     bs = cell.Sfrac
 
@@ -313,6 +318,13 @@ def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, s
     sigma = 5.670373 * (10**-8)
     dz = cell.firn_depth / cell.vert_grid
     L_fus = 334000
+
+    # Prevent small errors in numerical scheme causing negative dHdt
+    if cell.firn_temperature[0] > 273.15 and cell.firn_temperature[0] < 273.151:
+        cell.firn_temperature[0] = 273.15
+    if cell.firn_temperature[1] > 273.15 and cell.firn_temperature[1] < 273.151:
+        cell.firn_temperature[1] = 273.15
+
     k_sfc = (
         1000 *  # unit conversion from [kJ / m s K] to [J / m s K]
         2.24 * 10**(-3)
@@ -352,6 +364,10 @@ def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, s
         raise ValueError(
             "Height change during melt is negative, and outside the bounds of a numerical error"
         )
+    elif np.isnan(dHdt):
+        pass
+        print('...')
+        raise ValueError("Height change during melt is NaN")
     return dHdt
 
 

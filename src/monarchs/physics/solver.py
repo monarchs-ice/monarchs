@@ -66,10 +66,10 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
         eqn = heateqn.heateqn
         args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
     try:
-        soldict: OptimizeResult = root(eqn, x, args=args, method='df-sane',
-                                       options={'line_search': 'cheng', 'maxfev': 1000,
-                                                'ftol': 1e-10})
-
+        # soldict: OptimizeResult = root(eqn, x, args=args, method='df-sane',
+        #                                options={'line_search': 'cheng', 'maxfev': 1000,
+        #                                         'ftol': 1e-10})
+        soldict: OptimizeResult = root(eqn, x, args=args, method='hybrd')
         if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or np.any(soldict.x < 220) or not soldict.success:
             raise Exception('Bad spectral solver output')
 
@@ -96,6 +96,9 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
     if fixed_sfc and (sol > 273.151).any():
         print('x0 = ', sol[:10])
         raise ValueError("Surface temperature too high - heateqn_fixedsfc")
+
+    # Fix small numerical/rounding errors by forcing max temperature = 273.15
+    sol[np.where((sol > 273.15) & (sol < 273.1501))] = 273.15
 
     if (np.isnan(sol)).any() and soldict.success:
         print('x0 = ', sol[:10])
