@@ -22,13 +22,13 @@ or using ``venv`` by first creating the environment with
 
     python -m venv monarchs_env
 
-and then activating (on Linux) via:
+and then activating (on Windows) via:
 
 .. code-block:: console
 
     ./monarchs_env/Scripts/activate
 
-or on Windows via:
+or on Linux via:
 
 .. code-block:: console
 
