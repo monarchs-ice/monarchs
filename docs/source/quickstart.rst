@@ -32,7 +32,6 @@ is the model telling you that it is using default values for several parameters 
 1D runscript (``model_setup.py``).
 
 
-
 The model will run for 20 days and then stop. It will print out some simple diagnostics - the firn depth, lake depth
 and lid depth, and how much water was detected during the lateral movement step (which doesn't occur here of course
 as we are running a 1D case!).
@@ -92,11 +91,11 @@ from those that the model will not be able to run without - i.e. an initial firn
 
 You will notice that the firn profile is determined by an imported Python function from ``monarchs.DEM.create_DEM_GaussianTestCase``.
 A neat feature of our model setup file being a Python script is that you can freely generate any input firn distribution
-you want using Python code, as long as it is passed in as a 2D `numpy` array.
+you want using Python code, as long as it is passed in as a 2D ``numpy`` array.
 This can be useful for testing, but also for generating realistic initial conditions using
 meshes that aren't supported by default (see the :doc:`dem` section of the documentation for more on this).
 
-A more detailed introduction to ``model_setup.py`` can be found in :doc:`MONARCHS_model_setup.
+A more detailed introduction to ``model_setup.py`` can be found in :doc:`MONARCHS_model_setup`.
 You can see all of the possible ``model_setup`` variables in the :doc:`model_setup_reference` section of the documentation.
 This tutorial will not cover all of these, as many of them are for testing and debugging purposes. Many of these
 are related to the use of a digital elevation model (DEM) to set the initial firn profile, and synchronising this

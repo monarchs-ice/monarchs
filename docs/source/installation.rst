@@ -36,13 +36,13 @@ or on Windows via:
 
 Installation
 -----------
-The best way to get MONARCHS itself is to clone the github repository using
+The best way to get MONARCHS is to clone the GitHub repository using
 
 .. code-block:: console
 
     git clone https://github.com/monarchs-ice/MONARCHS
 
-and doing (ideally in a virtual environment)
+and doing (ideally in a virtual environment, and including the ``.``)
 
 .. code-block:: console
 
