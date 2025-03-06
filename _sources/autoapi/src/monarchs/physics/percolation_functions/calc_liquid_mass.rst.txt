@@ -1,0 +1,7 @@
+src.monarchs.physics.percolation_functions.calc_liquid_mass
+===========================================================
+
+.. py:function:: src.monarchs.physics.percolation_functions.calc_liquid_mass(cell)
+
+   Calculate the mass of the liquid part of the column.
+
