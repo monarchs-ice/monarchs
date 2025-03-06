@@ -7,7 +7,10 @@ Requirements
 
 MONARCHS requires Python 3.9 or later, and is specifically tested with versions 3.9-3.12.
 It is highly recommended that before installing MONARCHS, you set up and activate a
-fresh virtual environment. You can do this either via e.g.
+fresh `virtual environment <https://learn.scientific-python.org/development/tutorials/dev-environment/>`_ (visit the
+hyperlink for more info on how and why to use virtual environments)
+
+You can do this either via e.g.
 
 ``conda``
 
@@ -36,13 +39,20 @@ or on Linux via:
 
 Installation
 -----------
-The best way to get MONARCHS is to clone the GitHub repository using
+The best way to get MONARCHS is to download the `GitHub repository <https://github.com/monarchs-ice/monarchs>`_ (where the code is stored)  via the command line.
+Git is installed natively on Mac - on Windows, I recommend
+installing `git bash <https://www.atlassian.com/git/tutorials/git-bash>`_ and using this.
+for info on how to install Git if using Windows or Mac.
+
+To clone the repository, from the command line
 
 .. code-block:: console
 
     git clone https://github.com/monarchs-ice/MONARCHS
 
-and doing (ideally in a virtual environment, and including the ``.``)
+You can alternatively download the repository as a zip file from the GitHub page, and unzip it.
+
+Once you have the code cloned or downloaded, do (ideally in a virtual environment, and including the ``.``)
 
 .. code-block:: console
 

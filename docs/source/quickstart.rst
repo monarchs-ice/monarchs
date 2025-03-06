@@ -7,8 +7,9 @@ Running a basic (1D) test case
 ==============================
 First, follow the (non-advanced) instructions in the :doc:`installation` section to install the model.
 
-To run MONARCHS, the best way is to use the command line. From a terminal (you can open this in PyCharm, Spyder or whatever your
-preferred IDE is if you prefer), make sure you activate the virtual environment MONARCHS is installed in.
+To run MONARCHS, the best way is to use the command line. From a terminal
+(you can open this in an IDE like PyCharm, Spyder, VSCode if you prefer to use one of these),
+make sure you activate the virtual environment MONARCHS is installed in.
 
 Then, navigate to the ``examples/1D_test_case`` folder in the MONARCHS repository, and run the model using:
 
@@ -81,9 +82,15 @@ of the model, by changing ``row_amount`` and ``col_amount`` from 10 to 20. Note 
 will make the model take at least ~4x longer to run!
 
 Since our model is quite large, and we are running for a longer time, our output files can become quite large also. We can reduce the temporal frequency of the output
-by adding the ``output_timestep`` variable. This is the number of days between each output file. It is not included in this runscript,
-but MONARCHS notices that is not present and sets it to a default value of ``1``. Adding it in will override this default value.
+by adding the ``output_timestep`` variable  into ``model_setup.py`` anywhere before the ``if __name__ == '__main__'`` section  - if you look at the output of the start of a model run
+without this variable included in the runscript you will see the line
+..code-block:: python
+    ``monarchs.core.configuration.create_defaults for missing flags: Setting missing model_setup attribute <output_timestep> to default value 1``
+
+i.e. that MONARCHS has detected that it is missing from ``model_setup.py`` and set a "sensible" default value.
+Adding ``output_timestep`` into ``model_setup.py`` will override this default value.
 You can also reduce the vertical resolution of the output by addiing or changing ``output_grid_size`` from e.g. ``400`` to ``200``.
+Both of these steps will give you less vertical/temporal information, but decrease the size of the output file.
 
 You can see that the model setup script has a few additional parameters compared to the 1D case. As mentioned earlier,
 MONARCHS will set "sensible" default values for any parameters that are not specified in the model setup script, aside
