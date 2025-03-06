@@ -94,9 +94,14 @@ or extend the data in some other way (e.g. `append`ing another array with a diff
 .. note::
     Note that ``warm_timesteps`` and ``cold_timesteps`` are not values used by MONARCHS itself, they are just used to control the
     size of the meteorological data fed into MONARCHS in *this particular case*. The ``met_data`` dictionary (or a path to a netCDF file in ERA5 format, see :doc:`met_data`)
-    is what is actually used by MONARCHS. We are merely exploiting the fact that our model setup script is a piece of Python code to generate an arbitrary set of values
+    is what is actually used by MONARCHS.
+
+    We are merely exploiting the fact that our model setup script is a piece of Python code to generate an arbitrary set of values
     to use as input for this example. You could put anything you like here, using this example as a guideline - by e.g. changing the values of the LW/SW that correspond to
     the "warm" and "cold" timesteps, or changing the arrays from being constant to ramping up over time, etc.
+
+    For a full list of variables that *are* used by MONARCHS, see :doc:`model_setup_reference`. Many of these you do not need to worry about
+    until running more advanced cases, to have more control over exactly how the model runs.
 
 Since our model is quite large, and we are running for a longer time, our output files can become quite large also. We can reduce the temporal frequency of the output
 by adding the ``output_timestep`` variable  into ``model_setup.py`` anywhere before the ``if __name__ == '__main__'`` section  - if you look at the output of the start of a model run
