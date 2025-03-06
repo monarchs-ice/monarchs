@@ -143,10 +143,13 @@ If your model run was not successful, then re-running will run it until your ini
 finishing point.
 
 If it `was` successful, then attempting to re-run with no changes to the setup script will result in
-nothing happening. However, you can extend the run further by increasing ``num_days``.
-Try this now with your 10x10 case - set ``num_days`` to ``50`` and re-run.
+nothing happening (as the model will try and start from the same day that it is supposed to finish at!).
+However, you can extend the run further by increasing ``num_days``.
 
-
+If you do this, remember that you will need to extend your
+meteorological dataset if you do this. MONARCHS will read from the index corresponding to the start day of the run,
+which in this case is not 0 - e.g. if restarting from day 5 it will read from ``met_data`` at index (5 * 24) = 120 - the
+prior indices have already been used in the model.
 
 
 Having more control over output directories
