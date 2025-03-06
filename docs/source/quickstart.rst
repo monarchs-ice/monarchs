@@ -77,14 +77,32 @@ variable. By default, it is set to ``'all'``, so if you are doing other things o
 to e.g. ``4`` for now.
 
 Since we are now running in parallel, the model should run significantly faster. Let's take advantage of this and run
-the model for a bit longer. You can control this via the ``num_days`` variable. We could also instead increase the resolution
-of the model, by changing ``row_amount`` and ``col_amount`` from 10 to 20. Note that this increase in resolution
+the model at higher resolution. You can control this  by changing ``row_amount`` and ``col_amount`` from 10 to 20. Note that this increase in resolution
 will make the model take at least ~4x longer to run!
+
+We could instead increase the time the model takes to run via the ``num_days`` variable. Currently is set to ``105``.
+However, if we increase this, we also need to give the model a larger array of meteorological data as input.
+Our current data (see the ``met_data`` dictionary) covers 2520 timesteps, with 800 "warm" timesteps,
+where the longwave radiation, shortwave radiation and temperature are set to quite high values and 1720 "cold" timesteps
+where they are set to lower values - these add up to 105 days at hourly resolution.
+
+If we increase the number of days, we could e.g. increase the number of warm and cold timesteps to match.
+We can do this by changing the ``warm_timesteps`` and ``cold_timesteps`` in this specific example.
+For example, if we set ``num_days`` to 110 from 105, we need to increase either ``cold_timesteps`` or ``warm_timesteps`` by 120 ``5 * 24``),
+or extend the data in some other way (e.g. `append`ing another array with a different set of values for a different number of timesteps).
+
+.. note::
+Note that ``warm_timesteps`` and ``cold_timesteps`` are not values used by MONARCHS itself, they are just used to control the
+size of the meteorological data fed into MONARCHS in *this particular case*. The ``met_data`` dictionary (or a path to a netCDF file in ERA5 format, see :doc:`met_data`)
+is what is actually used by MONARCHS. We are merely exploiting the fact that our model setup script is a piece of Python code to generate an arbitrary set of values
+to use as input for this example. You could put anything you like here, using this example as a guideline - by e.g. changing the values of the LW/SW that correspond to
+the "warm" and "cold" timesteps, or changing the arrays from being constant to ramping up over time, etc.
 
 Since our model is quite large, and we are running for a longer time, our output files can become quite large also. We can reduce the temporal frequency of the output
 by adding the ``output_timestep`` variable  into ``model_setup.py`` anywhere before the ``if __name__ == '__main__'`` section  - if you look at the output of the start of a model run
 without this variable included in the runscript you will see the line
-..code-block:: python
+
+.. code-block:: python
     ``monarchs.core.configuration.create_defaults for missing flags: Setting missing model_setup attribute <output_timestep> to default value 1``
 
 i.e. that MONARCHS has detected that it is missing from ``model_setup.py`` and set a "sensible" default value.
