@@ -1,4 +1,4 @@
-Setting up a model run
+Setting up your own model run
 *************************
 
 MONARCHS uses a Python file (by default called ``model_setup.py``) to handle user-defined input into the model.
