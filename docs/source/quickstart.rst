@@ -1,4 +1,4 @@
-Running MONARCHS
+Running MONARCHS (a quickstart guide)
 ------------------------------------------
 
 This section is a tutorial/quickstart on how to run MONARCHS.
@@ -88,8 +88,8 @@ where they are set to lower values - these add up to 105 days at hourly resoluti
 
 If we increase the number of days, we could e.g. increase the number of warm and cold timesteps to match.
 We can do this by changing the ``warm_timesteps`` and ``cold_timesteps`` in this specific example.
-For example, if we set ``num_days`` to 110 from 105, we need to increase either ``cold_timesteps`` or ``warm_timesteps`` by 120 ``5 * 24``),
-or extend the data in some other way (e.g. `append`ing another array with a different set of values for a different number of timesteps).
+For example, if we set ``num_days`` to 110 from 105, we need to increase the value of ``cold_timesteps`` or ``warm_timesteps`` by an additional 120 (``5 * 24``),
+or extend the data in some other way (e.g. ``append``ing another array with a different set of values for a different number of timesteps, or splitting the 120 extra timesteps required between ``cold_timesteps`` and ``warm_timesteps``).
 
 .. note::
     Note that ``warm_timesteps`` and ``cold_timesteps`` are not values used by MONARCHS itself, they are just used to control the
@@ -111,9 +111,16 @@ without this variable included in the runscript you will see the line
     ``monarchs.core.configuration.create_defaults for missing flags: Setting missing model_setup attribute <output_timestep> to default value 1``
 
 i.e. that MONARCHS has detected that it is missing from ``model_setup.py`` and set a "sensible" default value.
-Adding ``output_timestep`` into ``model_setup.py`` will override this default value.
-You can also reduce the vertical resolution of the output by addiing or changing ``output_grid_size`` from e.g. ``400`` to ``200``.
+Adding ``output_timestep`` into ``model_setup.py`` will override this default value. Sensible values might be e.g.
+``7`` for weekly output, or ``30`` for daily output.
+You can also reduce the vertical resolution of the output by adding or changing ``output_grid_size`` from e.g. ``400`` to ``200``.
 Both of these steps will give you less vertical/temporal information, but decrease the size of the output file.
+
+The size of the output file can also be significantly decreased by removing variables from the ``vars_to_save`` variable. For example,
+if we are only interested in the amount/depth of lakes in the model, and not the firn column properties, then we can remove
+``firn_temperature``, ``Sfrac`` and ``Lfrac`` from ``vars_to_save``. By default, these variables take up
+400 times as much space as e.g. the firn depth, lake depth and lid depth, since they are saved at the model vertical resolution (400 in this case)
+rather than being single values.
 
 You can see that the model setup script has a few additional parameters compared to the 1D case. As mentioned earlier,
 MONARCHS will set "sensible" default values for any parameters that are not specified in the model setup script, aside
