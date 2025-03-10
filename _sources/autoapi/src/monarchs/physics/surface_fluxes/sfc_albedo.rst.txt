@@ -1,0 +1,20 @@
+src.monarchs.physics.surface_fluxes.sfc_albedo
+==============================================
+
+.. py:function:: src.monarchs.physics.surface_fluxes.sfc_albedo(melt, exposed_water, lid, lake, lake_depth)
+
+   Determine the effective surface albedo depending on the situation at the
+   top of the ice shelf (i.e. is there exposed water, firn or snow etc.)
+
+   TODO - snow albedo, add later
+
+   :Parameters: * **melt** (*bool*) -- Flag which indicates whether melting has occurred.
+                * **exposed_water** (*bool*) -- Flag which describes whether there is exposed water at the surface.
+                * **lid** (*bool*) -- Flag which indicates whether there is a lid at the surface due to
+                  refreezing.
+                * **lake** (*bool*) -- Flag which indicates whether there is a lake present.
+                * **lake_depth** (*float*) -- Depth of the lake [m]
+
+   :returns: **alpha** -- Effective surface albedo for shortwave radiation.
+   :rtype: float
+

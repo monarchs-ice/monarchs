@@ -1,0 +1,16 @@
+src.monarchs.physics.firn_functions.interp_nb
+=============================================
+
+.. py:function:: src.monarchs.physics.firn_functions.interp_nb(x_vals, x, y)
+
+   Wrapper function for np.interp. This function exists purely so that an alternative interpolation algorithm can be
+   used throughout the code without needing to change every instance. Named interp_nb as this function also has
+   Numba compatibility in its default form.
+
+   :Parameters: * **x_vals** (*array_like*) -- New coordinates that we want to interpolate our input y values onto.
+                * **x** (*array_like*) -- Original coordinates of our y values.
+                * **y** (*array_like*) -- Values we want to interpolate.
+
+   :returns: **res** -- values from y, interpolated onto our new grid of x_vals
+   :rtype: array_like
+

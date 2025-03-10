@@ -1,0 +1,28 @@
+src.monarchs.core.dump_model_state
+==================================
+
+.. py:module:: src.monarchs.core.dump_model_state
+
+.. autoapi-nested-parse::
+
+   Functions to handle dumping of model state, so that runs can be restarted upon failure.
+   Separate from model_output, which just handles a user-defined subset of the outputs (i.e. ones that are useful
+   scientifically, rather than everything needed to restart the model).
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/core/dump_model_state/dump_state
+   /autoapi/src/monarchs/core/dump_model_state/reload_from_dump
+
+.. autoapisummary::
+
+   src.monarchs.core.dump_model_state.dump_state
+   src.monarchs.core.dump_model_state.reload_from_dump
+
+

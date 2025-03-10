@@ -1,0 +1,178 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.monarchs.core.initial_conditions.create_model_grid &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../making_changes.html#advanced-users">Advanced users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src.monarchs.core.initial_conditions.create_model_grid</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/src/monarchs/core/initial_conditions/create_model_grid.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="src-monarchs-core-initial-conditions-create-model-grid">
+<h1>src.monarchs.core.initial_conditions.create_model_grid<a class="headerlink" href="#src-monarchs-core-initial-conditions-create-model-grid" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.monarchs.core.initial_conditions.create_model_grid">
+<span class="sig-prename descclassname"><span class="pre">src.monarchs.core.initial_conditions.</span></span><span class="sig-name descname"><span class="pre">create_model_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row_amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col_amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firn_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_grid_lake</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_grid_lid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firn_temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Sfrac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lfrac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meltflag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lake_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lake_temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid_temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">melt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposed_water</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lake</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_lid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ice_lens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ice_lens_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_had_lid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid_sfc_melt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid_melt_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">melt_hours</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposed_water_refreeze_counter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">virtual_lid_temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">273.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_melt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_numba</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_dy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.monarchs.core.initial_conditions.create_model_grid" title="Link to this definition"></a></dt>
+<dd><p>Create a grid of IceShelf objects based on a set of input parameters.
+Called in the runscript (run_MONARCHS.py)
+When changing optional arguments, ensure that any inputs are in the correct format, particularly if using Numba.
+e.g. if a variable is default np.array([np.nan]), ensure that the changed variable is array_like.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>row_amount</strong> (<em>int</em>) – Number of rows in the model grid.</p></li>
+<li><p><strong>col_amount</strong> (<em>int</em>) – Number of columns in the model grid.</p></li>
+<li><p><strong>firn_depth</strong> (<em>float</em>) – Height of the firn column [m]</p></li>
+<li><p><strong>lake_depth</strong> (<em>float</em>) – Height of the surface lake, 0 if not present [m]</p></li>
+<li><p><strong>lid_depth</strong> (<em>float</em>) – Height of the frozen lid on top of the surface lake, 0 if not present [m]</p></li>
+<li><p><strong>vert_grid</strong> (<em>int</em>) – Number of vertical grid points in the firn column.</p></li>
+<li><p><strong>vert_grid_lake</strong> (<em>int</em>) – Number of vertical grid points in the lake. int</p></li>
+<li><p><strong>vert_grid_lid</strong> (<em>int</em>) – Number of vertical grid points in the frozen lid. int</p></li>
+<li><p><strong>rho</strong> (<em>array_like, float, dimension(vert_grid),</em>) – Firn density profile. Mostly used for convenience as all calculations use Sfrac and Lfrac. [kg m^-3]</p></li>
+<li><p><strong>firn_temperature</strong> (<em>array_like, float, dimension(vert_grid),</em>) – Temperature profile of t</p></li>
+<li><p><strong>Sfrac</strong> (<em>array_like, float, dimension(vert_grid), optional</em>) – Solid fraction of the firn.</p></li>
+<li><p><strong>Lfrac</strong> (<em>array_like, float, dimension(vert_grid), optional</em>) – Liquid fraction of the firn.</p></li>
+<li><p><strong>meltflag</strong> (<em>array_like, bool, dimension(vert_grid), optional</em>) – Boolean flag to determine if there is melt at a given vertical point</p></li>
+<li><p><strong>saturation</strong> (<em>array_like, bool, dimension(vert_grid), optional</em>) – Boolean flag to determine whether a vertical layer is saturated.</p></li>
+<li><p><strong>lake_temperature</strong> (<em>array_like, float, dimension(vert_grid_lake), optional</em>) – Temperature of the lake as a function of vertical level [K]</p></li>
+<li><p><strong>lid_temperature</strong> (<em>array_like, float, dimension(vert_grid_lake), optional</em>) – Temperature of the lid as a function of vertical level [K]</p></li>
+<li><p><strong>water_level</strong> (<em>float, optional</em>) – Water level of the cell. Can be either at the height of the lake, infinite (in the case of a lid), or
+at the height of the highest vertical level with saturated firn.</p></li>
+<li><p><strong>water</strong> (<em>array_like, float, dimension(vert_grid), optional</em>) – Water content of each grid cell. Used only in lateral_functions.move_water, where it is necessary to combine
+water from the lake and from the firn (which is determined by Lfrac).</p></li>
+<li><p><strong>melt_hours</strong> (<em>int, optional</em>) – Tracks the number of hours of melt that have occurred. Currently only tracks melting of the firn due to
+the temperature of the lake above it.</p></li>
+<li><p><strong>exposed_water_refreeze_counter</strong> (<em>int, optional</em>) – Tracks the number of times that exposed water at the surface freezes due to surface conditions.</p></li>
+<li><p><strong>lid_sfc_melt</strong> (<em>float, optional</em>) – Tracks the amount of meltwater resulting from melting of the frozen lid. Used to</p></li>
+<li><p><strong>melt</strong> (<em>bool, optional</em>) – Flag to determine whether the model is in a melting state or not. This affects the surface albedo for the
+surface flux calculation, used variously but mostly in the surface energy balance for the lake and lid, and for
+the calculation of the heat equation.</p></li>
+<li><p><strong>exposed_water</strong> (<em>bool, optional</em>) – Flag to track whether there is exposed water due to surface melting.</p></li>
+<li><p><strong>lake</strong> (<em>bool, optional</em>) – Flag to track whether the model is in a state that includes a lake or not. Is True even if there is a
+frozen lid, until the lid freezes enough to create a single firn profile.</p></li>
+<li><p><strong>v_lid</strong> (<em>bool, optional</em>) – Flag to track whether a virtual lid is present. Set to False if a true lid is present.</p></li>
+<li><p><strong>virtual_lid_temperature</strong> (<em>float, optional</em>) – Temperature of the virtual lid, if there is one. The virtual lid is so small that this can be a single number
+rather than a vertical profile. [K]</p></li>
+<li><p><strong>lid</strong> (<em>bool, optional</em>) – Flag to track whether a frozen lid has formed.</p></li>
+<li><p><strong>ice_lens</strong> (<em>bool, optional</em>) – Flag to track whether there is pore closure and the formation of a lens of solid ice. Necessary for
+saturation to occur and lakes to form.</p></li>
+<li><p><strong>ice_lens_depth</strong> (<em>int, optional</em>) – Vertical layer (not physical depth) of the ice lens if there is one. Default 999, i.e. no lens present.</p></li>
+<li><p><strong>has_had_lid</strong> (<em>bool, optional</em>) – Flag to determine whether the model has undergone lid development.
+Set True if lid depth exceeds 0.1.
+Resets to False if lid melts below 0.1 m depth.</p></li>
+<li><p><strong>lid_melt_count</strong> (<em>int, optional</em>) – Track the number of times that the lid has undergone melting. Used as a tracker.</p></li>
+<li><p><strong>total_melt</strong> (<em>float, optional</em>) – Total amount of melting that has occurred. Not used for any physics, but as a tracker.</p></li>
+<li><p><strong>valid_cells</strong> (<em>array_like, bool</em>) – Mask to filter out invalid (e.g. land) cells, so that we don’t waste time running any physics on them.</p></li>
+<li><p><strong>use_numba</strong> (<em>bool, optional</em>) – Flag to determine whether to use Numba typed lists or not. Default False.</p></li>
+<li><p><strong>lat</strong> (<em>float, optional</em>) – Input latitude.</p></li>
+<li><p><strong>lon</strong> (<em>float, optional</em>) – Input longitude.</p></li>
+<li><p><strong>size_dx</strong> (<em>float, optional</em>) – Size of the grid cell in the x direction [m]</p></li>
+<li><p><strong>size_dy</strong> (<em>float, optional</em>) – Size of the grid cell in the y direction [m]</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

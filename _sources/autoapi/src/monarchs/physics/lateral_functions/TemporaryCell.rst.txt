@@ -1,0 +1,29 @@
+src.monarchs.physics.lateral_functions.TemporaryCell
+====================================================
+
+.. py:class:: src.monarchs.physics.lateral_functions.TemporaryCell(lake_depth, water, saturation, meltflag)
+
+   Define a temporary class for us to store info on where water has moved to and from.
+   This allows us to do the lateral movement "simultaneously", rather than moving it iteratively
+   (causing the end result to be determined by which cells you start moving water from)
+
+   :ivar lake_depth: lake depth of the IceShelf we are mirroring
+   :vartype lake_depth: float
+   :ivar water: water content of the IceShelf
+   :vartype water: array_like, float, dimension(cell.vert_grid)
+   :ivar saturation: boolean array determining whether the IceShelf is saturated at each vertical point
+
+   :vartype saturation: array_like, bool, dimension(cell.vert_grid)
+
+
+   .. py:attribute:: lake_depth
+
+
+   .. py:attribute:: meltflag
+
+
+   .. py:attribute:: saturation
+
+
+   .. py:attribute:: water
+

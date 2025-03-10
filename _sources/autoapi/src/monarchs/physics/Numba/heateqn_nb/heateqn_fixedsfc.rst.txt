@@ -1,0 +1,22 @@
+src.monarchs.physics.Numba.heateqn_nb.heateqn_fixedsfc
+======================================================
+
+.. py:function:: src.monarchs.physics.Numba.heateqn_nb.heateqn_fixedsfc(x, output, args)
+
+   Heat equation function to be passed into a solver (e.g. hybrd), but
+   assuming a fixed surface temperature. This is split into a separate function
+   to heateqn since the arguments are different (trying to combine them
+   results in issues with Numba).
+
+   :Parameters: * **x** (*float64[:]*) -- Starting estimate for the roots of the PDE we are trying to solve.
+                  This is by default cell.firn_temperature.
+                * **output** (*float64[:]*) -- Output array, i.e. the values of x such that F(x) = 0.
+                  This array is handled automatically by the solver, so does not need
+                  to be initialised and explicitly entered as an argument.
+                * **args** (*float64[:]*) -- Vector describing arguments to the system of equations being solved.
+                  This comprises many of the attributes of an IceShelf instance, and
+                  some physical variables such as specific humidity, wind etc.
+                  See extract_args_fixedsfc for more details.
+
+   :rtype: None. (the output is handled by the solver)
+

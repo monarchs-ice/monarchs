@@ -1,0 +1,15 @@
+src.monarchs.core.initial_conditions.rho_init_emp
+=================================================
+
+.. py:function:: src.monarchs.core.initial_conditions.rho_init_emp(z, rho_sfc, z_t)
+
+   Initialise the firn column with a density derived from an empirical formula.
+   This follows Paterson, W. (2000). The Physics of Glaciers. Butterworth-Heinemann,
+   using the formula of Schytt, V. (1958). Glaciology. A: Snow studies at Maudheim. Glaciology. B: Snow studies
+   inland. Glaciology. C: The inner structure of the ice shelf at Maudheim as shown by
+   core drilling. Norwegian-British- Swedish Antarctic Expedition, 1949-5, IV.)
+
+   :Parameters: * **z** (*float*)
+                * **rho_sfc** (*float*) -- Density that you desire for the surface firn layer. [kg m^-3]
+                * **z_t** (*float*)
+

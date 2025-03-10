@@ -1,0 +1,19 @@
+src.monarchs.physics.lid_functions.combine_lid_firn
+===================================================
+
+.. py:function:: src.monarchs.physics.lid_functions.combine_lid_firn(cell)
+
+   When a lid completely freezes the underlying lake from above, we no longer have a meaningful difference between
+   the frozen lid and the firn column underneath. This function triggers when the lake depth hits zero, or if
+   the lake is completely frozen but the lake depth hasn't updated (i.e. temperature goes below 273.15 everywhere).
+   The profiles of the lake and the lid are combined, with some assumptions about the solid fraction of the
+   frozen lid, and some of the boolean flags e.g. saturation being set False. The firn depth is updated to be
+   equal to the sum of the firn and lid depth, and everything is interpolated to the new vertical profile, with
+   cell.vert_grid points.
+
+   Called in timestep_loop.
+
+   :Parameters: **cell** (*core.iceshelf_class.IceShelf*) -- Instance of IceShelf within the model grid that is to have the lid and firn profiles combined.
+
+   :rtype: None (amends cell inplace)
+

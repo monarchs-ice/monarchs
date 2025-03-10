@@ -1,0 +1,467 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.monarchs.core.iceshelf_class.IceShelf &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../making_changes.html#advanced-users">Advanced users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src.monarchs.core.iceshelf_class.IceShelf</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/src/monarchs/core/iceshelf_class/IceShelf.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="src-monarchs-core-iceshelf-class-iceshelf">
+<h1>src.monarchs.core.iceshelf_class.IceShelf<a class="headerlink" href="#src-monarchs-core-iceshelf-class-iceshelf" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.monarchs.core.iceshelf_class.</span></span><span class="sig-name descname"><span class="pre">IceShelf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firn_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_grid_lake</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_grid_lid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firn_temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Sfrac_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lfrac_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meltflag_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturation_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lake_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lake_temperature_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid_temperature_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">melt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposed_water</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lake</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_lid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ice_lens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ice_lens_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_had_lid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid_sfc_melt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid_melt_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">melt_hours</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposed_water_refreeze_counter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">virtual_lid_temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">273.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_melt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_cell</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_dy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf" title="Link to this definition"></a></dt>
+<dd><p>Class containing column information about the state of the ice shelf at coordinates x and y.
+This class is the primary building block of MONARCHS, and the object in which all information is stored.
+A single IceShelf just contains information for a single column - a grid of IceShelf objects is required to
+construct information for a real ice shelf in practice.</p>
+<p>If adding additional variables to IceShelf, e.g. to track certain things, ensure that they are also added to the
+variable &lt;spec&gt;, found in &lt;iceshelf_class.py&gt;, else you will run into issues if trying to run with Numba.</p>
+<p>Several of these attributes are constants, and are labelled as such.
+All Boolean flags are True if their documented condition is met, and False if not met.
+All array_like variables are dimension(vert_grid).</p>
+<p>A long-term goal is to refactor IceShelf to utilise inheritance and split things up somewhat.
+However, Numba jitclasses do not currently support inheritance, and this is required for use of NumbaMinpack.hybrd,
+in such a way that we retain the ability to select whether to use that or scipy.optimize.fsolve.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>int</em>) – x (row) coordinate of the current IceShelf on the model grid. int</p></li>
+<li><p><strong>y</strong> (<em>int</em>) – y (column) coordinate of the current IceShelf on the model grid. int</p></li>
+<li><p><strong>firn_depth</strong> (<em>float</em>) – Height of the firn column [m]</p></li>
+<li><p><strong>lake_depth</strong> (<em>float</em>) – Height of the surface lake, 0 if not present [m]</p></li>
+<li><p><strong>lid_depth</strong> (<em>float</em>) – Height of the frozen lid on top of the surface lake, 0 if not present [m]</p></li>
+<li><p><strong>v_lid_depth</strong> (<em>float</em>) – Height of the virtual lid on top of the surface lake, 0 if not present, converts to lid if &gt; 0.1 [m]</p></li>
+<li><p><strong>vert_grid</strong> (<em>int</em>) – Number of vertical grid points in the firn column.</p></li>
+<li><p><strong>vertical_profile</strong> (<em>array_like</em><em>, </em><em>float</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid</em><em>)</em>) – Array containing the vertical profile (top = 0, bottom = firn_depth, len = vert_grid) of the IceShelf. [m],</p></li>
+<li><p><strong>vert_grid_lake</strong> (<em>int</em>) – Number of vertical grid points in the lake. int</p></li>
+<li><p><strong>vert_grid_lid</strong> (<em>int</em>) – Number of vertical grid points in the frozen lid. int</p></li>
+<li><p><strong>rho</strong> (<em>array_like</em><em>, </em><em>float</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid</em><em>)</em>) – Firn density profile. Mostly used for convenience as all calculations use Sfrac and Lfrac. [kg m^-3]</p></li>
+<li><p><strong>rho_lid</strong> (<em>array_like</em><em>, </em><em>float</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid_lid</em><em>)</em>) – Lid density [kg m^-3]</p></li>
+<li><p><strong>firn_temperature</strong> (<em>array_like</em><em>, </em><em>float</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid</em><em>)</em>) – Temperature profile of t</p></li>
+<li><p><strong>Sfrac</strong> (<em>array_like</em><em>, </em><em>float</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid</em><em>)</em>) – Solid fraction of the firn.</p></li>
+<li><p><strong>Lfrac</strong> (<em>array_like</em><em>, </em><em>float</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid</em><em>)</em>) – Liquid fraction of the firn.</p></li>
+<li><p><strong>meltflag</strong> (<em>array_like</em><em>, </em><em>bool</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid</em><em>)</em>) – Boolean flag to determine if there is melt at a given vertical point</p></li>
+<li><p><strong>saturation</strong> (<em>array_like</em><em>, </em><em>bool</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid</em><em>)</em>) – Boolean flag to determine whether a vertical layer is saturated.</p></li>
+<li><p><strong>lake_temperature</strong> (<em>array_like</em><em>, </em><em>float</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid_lake</em><em>)</em>) – Temperature of the lake as a function of vertical level [K]</p></li>
+<li><p><strong>lid_temperature</strong> (<em>array_like</em><em>, </em><em>float</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid_lid</em><em>)</em>) – Temperature of the lid as a function of vertical level [K]</p></li>
+<li><p><strong>water_level</strong> (<em>float</em>) – Water level of the cell. Can be either at the height of the lake, infinite (in the case of a lid), or
+at the height of the highest vertical level with saturated firn.</p></li>
+<li><p><strong>water</strong> (<em>array_like</em><em>, </em><em>float</em><em>, </em><em>dimension</em><em>(</em><em>vert_grid</em><em>)</em>) – Water content of each grid cell. Used only in lateral_functions.move_water, where it is necessary to combine
+water from the lake and from the firn (which is determined by Lfrac).</p></li>
+<li><p><strong>melt_hours</strong> (<em>int</em>) – Tracks the number of hours of melt that have occurred. Currently only tracks melting of the firn due to
+the temperature of the lake above it.</p></li>
+<li><p><strong>exposed_water_refreeze_counter</strong> (<em>int</em>) – Tracks the number of times that exposed water at the surface freezes due to surface conditions.</p></li>
+<li><p><strong>lid_sfc_melt</strong> (<em>float</em>) – Tracks the amount of meltwater resulting from melting of the frozen lid. Used to</p></li>
+<li><p><strong>melt</strong> (<em>bool</em>) – Flag to determine whether the model is in a melting state or not. This affects the surface albedo for the
+surface flux calculation, used variously but mostly in the surface energy balance for the lake and lid, and for
+the calculation of the heat equation.</p></li>
+<li><p><strong>exposed_water</strong> (<em>bool</em>) – Flag to track whether there is exposed water due to surface melting.</p></li>
+<li><p><strong>lake</strong> (<em>bool</em>) – Flag to track whether the model is in a state that includes a lake or not. Is True even if there is a
+frozen lid, until the lid freezes enough to create a single firn profile.</p></li>
+<li><p><strong>v_lid</strong> (<em>bool</em>) – Flag to track whether a virtual lid is present. Set to False if a true lid is present.</p></li>
+<li><p><strong>virtual_lid_temperature</strong> (<em>float</em>) – Temperature of the virtual lid, if there is one. The virtual lid is so small that this can be a single number
+rather than a vertical profile. [K]</p></li>
+<li><p><strong>lid</strong> (<em>bool</em>) – Flag to track whether a frozen lid has formed.</p></li>
+<li><p><strong>ice_lens</strong> (<em>bool</em>) – Flag to track whether there is pore closure and the formation of a lens of solid ice. Necessary for
+saturation to occur and lakes to form.</p></li>
+<li><p><strong>ice_lens_depth</strong> (<em>int</em>) – Vertical layer (not physical depth) of the ice lens if there is one. Default 999, i.e. no lens present.</p></li>
+<li><p><strong>has_had_lid</strong> (<em>bool</em>) – Flag to determine whether the model has undergone lid development.
+Set True if lid depth exceeds 0.1.
+Resets to False if lid melts below 0.1 m depth.</p></li>
+<li><p><strong>lid_melt_count</strong> (<em>int</em>) – Track the number of times that the lid has undergone melting. Used as a tracker.</p></li>
+<li><p><strong>total_melt</strong> (<em>float</em>) – Total amount of melting that has occurred. Not used for any physics, but as a tracker.</p></li>
+<li><p><strong>rho_ice</strong> (<em>int</em>) – Density of ice. Constant. [kg m^-3]</p></li>
+<li><p><strong>rho_water</strong> (<em>int</em>) – Density of water. Constant. [kg m^-3]</p></li>
+<li><p><strong>L_ice</strong> (<em>int</em>) – Latent heat of fusion of ice, i.e. change in enthalpy due to state change. Constant. [J kg^-1]</p></li>
+<li><p><strong>pore_closure</strong> (<em>int</em>) – Density at which pores close and water can no longer percolate. Constant. [kg m^-3]</p></li>
+<li><p><strong>k_air</strong> (<em>float</em>) – Thermal conductivity of air. Constant. [W m^-1 K^-1]</p></li>
+<li><p><strong>cp_air</strong> (<em>int</em>) – Heat capacity of air. Constant. [J K^-1]</p></li>
+<li><p><strong>k_water</strong> (<em>float</em>) – Thermal conductivity of water. Constant. [W m^-1 K^-1]</p></li>
+<li><p><strong>cp_water</strong> (<em>int</em>) – Heat capacity of water. Constant. [J K^-1]</p></li>
+<li><p><strong>t_step</strong> (<em>int</em>) – Current hour. Almost certainly between 1 and 24.</p></li>
+<li><p><strong>iteration</strong> (<em>int</em>) – Current iteration (i.e. day). Updated at each timestep.</p></li>
+<li><p><strong>snow_added</strong> (<em>float</em>) – Track how much snow mass has been added to the model via snowfall, in arbitrary units. [a.u.]</p></li>
+<li><p><strong>log</strong> (<em>string</em>) – Logging information about the state of the model, to track which paths the model takes in the logic, and to
+inform the user of warnings.</p></li>
+<li><p><strong>reset_combine</strong> (<em>bool</em>) – Flag to track whether a frozen lid has completely frozen and been combined with the firn column
+to make one profile.</p></li>
+<li><p><strong>valid_cell</strong> (<em>bool</em>) – Flag that determines whether a cell is “valid” or not. If not, then we don’t care about the physics of that
+cell, and it is ignored accordingly.
+Default True, i.e. the cell is valid.
+For example, if a DEM has an ice shelf, with land either side, we are unlikely to care about that land, and
+the ice shelf physics would not apply there anyway, so we can safely ignore it.</p></li>
+<li><p><strong>lat</strong> (<em>float</em>) – Latitude of the cell in degrees. Taken from the input DEM.</p></li>
+<li><p><strong>lon</strong> (<em>float</em>) – Longitude of the cell in degrees. Taken from the input DEM.</p></li>
+<li><p><strong>size_dx</strong> (<em>float</em>) – Size of the grid cell in the x (along rows) direction [m]</p></li>
+<li><p><strong>size_dy</strong> (<em>float</em>) – Size of the grid cell in the y (along columns) direction [m]</p></li>
+<li><p><strong>**__init__**</strong></p></li>
+<li><p><strong>only</strong> (<em>Initialise our IceShelf class. For most variables</em><em>, </em><em>see class-level documentation. The parameters below are</em>)</p></li>
+<li><p><strong>attributes.</strong> (<em>those which differ between the initialiser and the class</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl>
+<dt>:ivar<span class="classifier">calculated by rho_init_emp.</span></dt><dd><blockquote>
+<div><p>Required to be an array even if setting to nan if using Numba as Numba expects an array.</p>
+</div></blockquote>
+<ul>
+<li><p><strong>Lfrac_in</strong> (<em>array_like, float, optional</em>) – Input liquid fraction. Can be set to np.array([np.nan]) (the default) to use the default profile as
+calculated by rho_init_emp.
+Required to be an array even if setting to nan if using Numba as Numba expects an array.</p></li>
+<li><p><strong>meltflag_in</strong> (<em>array_like, float, optional</em>) – Array of booleans determining whether meltwater is present at that vertical layer. As above, can be set
+to np.array([np.nan]) to use a default profile (all zeros).</p></li>
+<li><p><strong>saturation_in</strong> (<em>array_like, float, optional</em>) –</p>
+<dl class="simple">
+<dt>Array of booleans determining whether each vertical layer is saturated or not. As above, can be set</dt><dd><p>to np.array([np.nan]) to use a default profile (all zeros).</p>
+</dd>
+</dl>
+</li>
+<li><p><strong>lake_temperature_in</strong> (<em>array_like, float, optional</em>) – Vertical profile of lake temperature.
+As above, can be set to np.array([np.nan]) to use a default profile (all zeros), as lakes are not present
+by default (so it doesn’t matter).</p></li>
+<li><p><strong>lid_temperature_in</strong> (<em>array_like, float, optional</em>) – As above, can be set to np.array([np.nan]) to use a default profile (all zeros), as lids are not present
+by default (so it doesn’t matter).</p></li>
+<li><p><strong>valid_cell</strong> (<em>bool, optional</em>) – Flag that determines whether we actually run any of the physics or not for this cell.
+See documentation in the class docstring for details.</p></li>
+</ul>
+</dd>
+</dl>
+<p>:vartype : Parameters: * <strong>Sfrac_in</strong> (<em>array_like, float, optional</em>) – Input solid fraction. Can be set to np.array([np.nan]) (the default) to use the default profile as</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.L_ice">
+<span class="sig-name descname"><span class="pre">L_ice</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">334000</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.L_ice" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.column">
+<span class="sig-name descname"><span class="pre">column</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.column" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.cp_air">
+<span class="sig-name descname"><span class="pre">cp_air</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1004</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.cp_air" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.cp_water">
+<span class="sig-name descname"><span class="pre">cp_water</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4217</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.cp_water" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.day">
+<span class="sig-name descname"><span class="pre">day</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.day" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.exposed_water">
+<span class="sig-name descname"><span class="pre">exposed_water</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.exposed_water" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.exposed_water_refreeze_counter">
+<span class="sig-name descname"><span class="pre">exposed_water_refreeze_counter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.exposed_water_refreeze_counter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.firn_depth">
+<span class="sig-name descname"><span class="pre">firn_depth</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.firn_depth" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.firn_temperature">
+<span class="sig-name descname"><span class="pre">firn_temperature</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.firn_temperature" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.has_had_lid">
+<span class="sig-name descname"><span class="pre">has_had_lid</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.has_had_lid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.ice_lens">
+<span class="sig-name descname"><span class="pre">ice_lens</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.ice_lens" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.ice_lens_depth">
+<span class="sig-name descname"><span class="pre">ice_lens_depth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">999</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.ice_lens_depth" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.k_air">
+<span class="sig-name descname"><span class="pre">k_air</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.022</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.k_air" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.k_water">
+<span class="sig-name descname"><span class="pre">k_water</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5818</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.k_water" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.lake">
+<span class="sig-name descname"><span class="pre">lake</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.lake" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.lake_depth">
+<span class="sig-name descname"><span class="pre">lake_depth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.lake_depth" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.lat">
+<span class="sig-name descname"><span class="pre">lat</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.lat" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.lid">
+<span class="sig-name descname"><span class="pre">lid</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.lid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.lid_depth">
+<span class="sig-name descname"><span class="pre">lid_depth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.lid_depth" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.lid_melt_count">
+<span class="sig-name descname"><span class="pre">lid_melt_count</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.lid_melt_count" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.lid_sfc_melt">
+<span class="sig-name descname"><span class="pre">lid_sfc_melt</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.lid_sfc_melt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.log">
+<span class="sig-name descname"><span class="pre">log</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.log" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.lon">
+<span class="sig-name descname"><span class="pre">lon</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.lon" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.melt">
+<span class="sig-name descname"><span class="pre">melt</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.melt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.melt_hours">
+<span class="sig-name descname"><span class="pre">melt_hours</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.melt_hours" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.pore_closure">
+<span class="sig-name descname"><span class="pre">pore_closure</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">830</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.pore_closure" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.reset_combine">
+<span class="sig-name descname"><span class="pre">reset_combine</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.reset_combine" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.rho">
+<span class="sig-name descname"><span class="pre">rho</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.rho" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.rho_ice">
+<span class="sig-name descname"><span class="pre">rho_ice</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">917</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.rho_ice" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.rho_lid">
+<span class="sig-name descname"><span class="pre">rho_lid</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.rho_lid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.rho_water">
+<span class="sig-name descname"><span class="pre">rho_water</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.rho_water" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.row">
+<span class="sig-name descname"><span class="pre">row</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.row" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.size_dx">
+<span class="sig-name descname"><span class="pre">size_dx</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.size_dx" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.size_dy">
+<span class="sig-name descname"><span class="pre">size_dy</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.size_dy" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.snow_added">
+<span class="sig-name descname"><span class="pre">snow_added</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.snow_added" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.t_step">
+<span class="sig-name descname"><span class="pre">t_step</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.t_step" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.total_melt">
+<span class="sig-name descname"><span class="pre">total_melt</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.total_melt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.v_lid">
+<span class="sig-name descname"><span class="pre">v_lid</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.v_lid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.v_lid_depth">
+<span class="sig-name descname"><span class="pre">v_lid_depth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.v_lid_depth" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.valid_cell">
+<span class="sig-name descname"><span class="pre">valid_cell</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.valid_cell" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.vert_grid">
+<span class="sig-name descname"><span class="pre">vert_grid</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.vert_grid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.vert_grid_lake">
+<span class="sig-name descname"><span class="pre">vert_grid_lake</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.vert_grid_lake" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.vert_grid_lid">
+<span class="sig-name descname"><span class="pre">vert_grid_lid</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.vert_grid_lid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.vertical_profile">
+<span class="sig-name descname"><span class="pre">vertical_profile</span></span><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.vertical_profile" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.virtual_lid_temperature">
+<span class="sig-name descname"><span class="pre">virtual_lid_temperature</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">273.15</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.virtual_lid_temperature" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.monarchs.core.iceshelf_class.IceShelf.water_level">
+<span class="sig-name descname"><span class="pre">water_level</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.monarchs.core.iceshelf_class.IceShelf.water_level" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

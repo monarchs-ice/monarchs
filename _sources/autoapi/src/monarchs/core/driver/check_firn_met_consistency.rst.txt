@@ -1,0 +1,4 @@
+src.monarchs.core.driver.check_firn_met_consistency
+===================================================
+
+.. py:function:: src.monarchs.core.driver.check_firn_met_consistency(grid, met_data_grid)

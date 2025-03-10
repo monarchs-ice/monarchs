@@ -1,0 +1,7 @@
+src.monarchs.physics.percolation_functions.calc_solid_mass
+==========================================================
+
+.. py:function:: src.monarchs.physics.percolation_functions.calc_solid_mass(cell)
+
+   Calculate the mass of the solid part of the column.
+
