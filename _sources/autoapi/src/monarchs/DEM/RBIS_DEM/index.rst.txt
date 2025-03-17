@@ -1,0 +1,57 @@
+src.monarchs.DEM.RBIS_DEM
+=========================
+
+.. py:module:: src.monarchs.DEM.RBIS_DEM
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   src.monarchs.DEM.RBIS_DEM.DEM_grid
+   src.monarchs.DEM.RBIS_DEM.cbar
+   src.monarchs.DEM.RBIS_DEM.fig
+   src.monarchs.DEM.RBIS_DEM.font
+   src.monarchs.DEM.RBIS_DEM.heights
+   src.monarchs.DEM.RBIS_DEM.im
+   src.monarchs.DEM.RBIS_DEM.max_grid_col
+   src.monarchs.DEM.RBIS_DEM.max_grid_row
+   src.monarchs.DEM.RBIS_DEM.meta_dict
+   src.monarchs.DEM.RBIS_DEM.tiffname
+   src.monarchs.DEM.RBIS_DEM.water
+   src.monarchs.DEM.RBIS_DEM.water
+   src.monarchs.DEM.RBIS_DEM.water_level
+
+
+Module Contents
+---------------
+
+.. py:data:: DEM_grid
+
+.. py:data:: cbar
+
+.. py:data:: fig
+
+.. py:data:: font
+
+.. py:data:: heights
+
+.. py:data:: im
+
+.. py:data:: max_grid_col
+
+.. py:data:: max_grid_row
+
+.. py:data:: meta_dict
+
+.. py:data:: tiffname
+   :value: 'RBIS_GTDX_45m.tif'
+
+
+.. py:data:: water
+
+.. py:data:: water
+
+.. py:data:: water_level
+

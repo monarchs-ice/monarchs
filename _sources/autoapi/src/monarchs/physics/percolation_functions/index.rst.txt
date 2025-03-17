@@ -1,0 +1,36 @@
+src.monarchs.physics.percolation_functions
+==========================================
+
+.. py:module:: src.monarchs.physics.percolation_functions
+
+.. autoapi-nested-parse::
+
+   Module containing functions relating to the percolation of water through the firn column.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/physics/percolation_functions/calc_liquid_mass
+   /autoapi/src/monarchs/physics/percolation_functions/calc_refreezing
+   /autoapi/src/monarchs/physics/percolation_functions/calc_saturation
+   /autoapi/src/monarchs/physics/percolation_functions/calc_solid_mass
+   /autoapi/src/monarchs/physics/percolation_functions/capillary
+   /autoapi/src/monarchs/physics/percolation_functions/perc_time
+   /autoapi/src/monarchs/physics/percolation_functions/percolation
+
+.. autoapisummary::
+
+   src.monarchs.physics.percolation_functions.calc_liquid_mass
+   src.monarchs.physics.percolation_functions.calc_refreezing
+   src.monarchs.physics.percolation_functions.calc_saturation
+   src.monarchs.physics.percolation_functions.calc_solid_mass
+   src.monarchs.physics.percolation_functions.capillary
+   src.monarchs.physics.percolation_functions.perc_time
+   src.monarchs.physics.percolation_functions.percolation
+
+
