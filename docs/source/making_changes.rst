@@ -37,7 +37,7 @@ Any changes that require amendments to ``model_setup.py``
 should have suitable documentation added to ``docs/source/model_setup_reference.rst``.
 
 Advanced users
-==============
+------------------------------------
 Adding functions with Numba support
 ***********************************
 

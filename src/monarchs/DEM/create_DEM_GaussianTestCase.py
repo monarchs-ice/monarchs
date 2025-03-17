@@ -35,16 +35,12 @@ def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
         )
         return 1 - height
 
-    x = y = np.linspace(-1, 1, 50)
+    x = y = np.linspace(-1, 1, 10)
     x1, y1 = np.meshgrid(x, y)
 
     heights = Gaussian(x1, y1)
-    heights[6:9, 6:9] = 0.7
-    heights[41:44, 41:44] = 0.7
-    heights[5:10, 7:8] = 0.7
-    heights[7:8, 5:10] = 0.7
-    heights[40:45, 42:43] = 0.7
-    heights[42:43, 40:45] = 0.7
+    heights[1, 1] = 0.5
+    heights[8, 8] = 0.5
     # Get the scale factor from the number of points originally generated and the number of points requested
     scale = len(heights) / num_points
 
@@ -63,6 +59,9 @@ def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
 
     interpolated_heights = interpolate_DEM(heights, scale)
     # Scale of 2 is ok here, 4 looses the 2 smaller lakes (but they could be made deeper if needed?)
+
+    # Force DEM to be completely symmetric
+    interpolated_heights = (interpolated_heights + interpolated_heights[::-1,::-1]) / 2
 
     if diagnostic_plots:
         fig = plt.figure(figsize=(4, 2))

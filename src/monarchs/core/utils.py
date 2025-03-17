@@ -46,13 +46,13 @@ def get_2d_grid(grid, attr, index=False):
     # if no index specified, get surface values
     if not index:
         index = 0
-    var = [None] * len(grid[0])
-    for row in range(len(grid[0])):
-        var[row] = [None] * len(grid)
-        for col in range(len(grid)):
+    var = [None] * len(grid)
+    for row in range(len(grid)):
+        var[row] = [None] * len(grid[0])
+        for col in range(len(grid[0])):
             var[row][col] = getattr(
-                grid[col][row], attr
-            )  # need to reverse order of row and col to not transpose
+                grid[row][col], attr
+            )
 
     # get all values
     if index == "all":

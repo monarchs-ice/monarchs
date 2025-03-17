@@ -396,6 +396,7 @@ def main(model_setup, grid):
 
     # Main model loop here.
     for day in time_loop:
+
         dt = 3600  # In seconds timestep for each iteration of heat eqn solver
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")
@@ -450,6 +451,7 @@ def main(model_setup, grid):
                 outfile = open(model_setup.dump_filepath, 'wb')
                 pickle.dump(grid, outfile)
                 outfile.close()
+
         # Handle the lateral movement, but only if the toggle is set to True.
         if model_setup.lateral_movement_toggle:
             print("Moving water laterally...")

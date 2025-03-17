@@ -9,7 +9,8 @@ visually how it has changed over time.
 from netCDF4 import Dataset
 from matplotlib import pyplot as plt
 import numpy.ma as ma
-
+import matplotlib
+matplotlib.use('TkAgg')
 dumppath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_dump.nc'
 diagpath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_output.nc'
 
@@ -70,3 +71,5 @@ plt.imshow(diff, cmap='coolwarm', norm=TwoSlopeNorm(vmin=-3, vcenter=0, vmax=3))
 plt.colorbar()
 plt.title('Firn depth difference (m)')
 
+flowdata.close()
+t0data.close()

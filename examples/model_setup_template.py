@@ -15,11 +15,11 @@ Spatial parameters
 
     row_amount : int
         Number of rows (i.e. `y`-points) in your model grid, looking from top-down. 
-        MONARCHS indexes the model grid via `grid[col][row]`, i.e. the `y`-coordinate is the second index.
+        MONARCHS indexes the model grid via `grid[row][col]`, i.e. the `x`-coordinate is the second index.
 
     col_amount : int
         Number of columns (i.e. `x`-points) in your model grid, looking from top-down.
-        MONARCHS indexes the model grid via `grid[col][row]`, i.e. the `x`-coordinate is the first index.
+        MONARCHS indexes the model grid via `grid[row][col]`, i.e. the `y`-coordinate is the first index.
     
     lat_grid_size : float, or str
         Size of each grid cell in m. This is used to determine how much water can flow during the lateral
