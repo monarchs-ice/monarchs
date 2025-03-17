@@ -120,7 +120,7 @@ def loop_over_grid(
                     iceshelf.append(result)
             # COMM.Barrier()
         else:
-            with Pool(nodes=ncores) as p:
+            with Pool(nodes=ncores, maxtasksperchild=1) as p:
                 # we want to get out our IceShelf and our Logger grids, so get out an array res and index it
                 # to get these
                 res = p.map(

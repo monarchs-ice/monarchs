@@ -12,6 +12,7 @@ DEM/geotiff_test.py
 *.gif
 *.jpg
 *.tif
+*.gif
 *.dat
 *.nc
 *.pkl
@@ -24,3 +25,4 @@ validation/*.png
 validation/AntarcticLakes/
 src/model_setup.py
 examples/*/output/
+*.ipynb
