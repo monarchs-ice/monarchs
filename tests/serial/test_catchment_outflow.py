@@ -9,13 +9,13 @@ def test_catchment_outflow():
     lake_depths = np.array([[0.8, 10, 0.8], [0.8, 5, 0.8]]).T
     firn_depths = np.array([[20, 30, 20], [20, 25, 20]]).T
     grid = []
-    for i in range(len(lake_depths)):
+    for i in range(len(lake_depths.T)):
         _l = []
-        for j in range(2):
+        for j in range(len(lake_depths)):
             _l.append(
                 IceShelf(
-                    firn_depth=firn_depths[i, j],
-                    lake_depth=lake_depths[i, j],
+                    firn_depth=firn_depths[j, i],
+                    lake_depth=lake_depths[j, i],
                     vert_grid=40,
                     vertical_profile=np.linspace(0, 20, 40),
                     saturation=np.zeros(40),

@@ -18,23 +18,23 @@ def test_ice_lens():
         ]
     ).T
     grid = []
-    for i in range(len(lake_depths)):
+    for i in range(len(lake_depths.T)):
         _l = []
-        for j in range(2):
+        for j in range(len(lake_depths)):
             _l.append(
                 IceShelf(
-                    firn_depth=firn_depths[i, j],
-                    lake_depth=lake_depths[i, j],
+                    firn_depth=firn_depths[j, i],
+                    lake_depth=lake_depths[j, i],
                     vert_grid=40,
-                    vertical_profile=np.linspace(0, firn_depths[i, j], 40),
-                    saturation=saturation[:, i, j],
+                    vertical_profile=np.linspace(0, firn_depths[j, i], 40),
+                    saturation=saturation[:, j, i],
                     lake=False,
                     lid=False,
-                    ice_lens=ice_lens[i, j],
-                    ice_lens_depth=ice_lens_depths[i, j],
+                    ice_lens=ice_lens[j, i],
+                    ice_lens_depth=ice_lens_depths[j, i],
                     rho_water=1000,
                     rho=np.ones(40) * 500,
-                    Lfrac=np.ones(40) * Lfrac[i, j],
+                    Lfrac=np.ones(40) * Lfrac[j, i],
                     Sfrac=np.ones(40) * 0.5,
                     valid_cell=True,
                     firn_temperature=np.linspace(240, 273.15, 40)[::-1],
@@ -47,6 +47,10 @@ def test_ice_lens():
             )
 
         grid.append(_l)
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            grid[i][j].rho_ice = 917
+
 
     print(get_2d_grid(grid, "Lfrac"))
     move_water(
@@ -80,23 +84,23 @@ def test_ice_lens():
         ]
     ).T
     grid = []
-    for i in range(len(lake_depths)):
+    for i in range(len(lake_depths.T)):
         _l = []
-        for j in range(2):
+        for j in range(len(lake_depths)):
             _l.append(
                 IceShelf(
-                    firn_depth=firn_depths[i, j],
-                    lake_depth=lake_depths[i, j],
+                    firn_depth=firn_depths[j, i],
+                    lake_depth=lake_depths[j, i],
                     vert_grid=40,
-                    vertical_profile=np.linspace(0, firn_depths[i, j], 40),
-                    saturation=saturation[:, i, j],
+                    vertical_profile=np.linspace(0, firn_depths[j, i], 40),
+                    saturation=saturation[:, j, i],
                     lake=False,
                     lid=False,
-                    ice_lens=ice_lens[i, j],
-                    ice_lens_depth=ice_lens_depths[i, j],
+                    ice_lens=ice_lens[j, i],
+                    ice_lens_depth=ice_lens_depths[j, i],
                     rho_water=1000,
                     rho=np.ones(40) * 500,
-                    Lfrac=np.ones(40) * Lfrac[i, j],
+                    Lfrac=np.ones(40) * Lfrac[j, i],
                     Sfrac=np.ones(40) * 0.5,
                     valid_cell=True,
                     firn_temperature=np.linspace(240, 273.15, 40)[::-1],
@@ -109,6 +113,11 @@ def test_ice_lens():
             )
 
         grid.append(_l)
+
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            grid[i][j].rho_ice = 917
+
 
     print(get_2d_grid(grid, "Lfrac"))
     move_water(
