@@ -12,17 +12,18 @@ from monarchs.physics.timestep import timestep_loop
 #from monarchs.core.configuration import model_setup
 from monarchs.core.utils import get_2d_grid
 
+
 def loop_over_grid(
-    row_amount,
-    col_amount,
-    grid,
-    dt,
-    met_data,
-    t_steps_per_day,
-    toggle_dict,
-    parallel=False,
-    use_mpi=False,
-    ncores="all",
+        row_amount,
+        col_amount,
+        grid,
+        dt,
+        met_data,
+        t_steps_per_day,
+        toggle_dict,
+        parallel=False,
+        use_mpi=False,
+        ncores="all",
 ):
     """
     This function wraps timestep_loop, allowing for it to be
@@ -99,26 +100,41 @@ def loop_over_grid(
         dt = [dt] * len(flat_grid)
         t_steps_per_day = [t_steps_per_day] * len(flat_grid)
 
+        #"""
+        #Distributed-memory parallelism (potentially across nodes) using MPI.
+        #"""
         if use_mpi:
             from mpi4py import MPI
-            from mpi4py.futures import MPIPoolExecutor
+            from mpi4py.futures import MPIPoolExecutor, wait
 
             COMM = MPI.COMM_WORLD
             iceshelf = []
 
-            with MPIPoolExecutor(max_workers=ncores) as pool:
-                print(f"monarchs.core.loop_over_grid: ")
-                print(f"Running with MPI w/ {ncores} procs")
-                for result in pool.map(
-                        timestep_loop,
-                        flat_grid,
-                        dt,
-                        met_data_grid,
-                        t_steps_per_day,
-                        toggle_dict_grid,
-                ):
-                    iceshelf.append(result)
-            # COMM.Barrier()
+            with MPIPoolExecutor() as executor:
+                for i in range(len(flat_grid)):
+                    print('i = ', i)
+                    iceshelf.append(
+                        executor.submit(
+                            timestep_loop,
+                            flat_grid[i],
+                            dt[i],
+                            met_data_grid[i],
+                            t_steps_per_day[i],
+                            toggle_dict_grid[i],
+                        )
+                    )
+            wait(iceshelf)
+            iceshelf = [i.result() for i in iceshelf]
+            # Attempt 2 - using more typical MPI-like approach with scatter and gather
+            #
+            # if COMM.rank == 0:
+            #     COMM.scatter(flat_grid, root=0)
+            #     timestep_loop()
+
+
+        #"""
+        #Parallelism on a single node using multiprocessing.
+        #"""
         else:
             with Pool(nodes=ncores, maxtasksperchild=1) as p:
                 # we want to get out our IceShelf and our Logger grids, so get out an array res and index it
@@ -143,11 +159,11 @@ def loop_over_grid(
                 )
             flat_grid[i] = iceshelf[i]
         xnew = get_2d_grid(grid, "column")
-        assert(xnew == x0).all()
+        assert (xnew == x0).all()
         return np.reshape(
             flat_grid, np.shape(grid)
         )
-  # , np.reshape(flat_log_grid, np.shape(log_grid))
+    # , np.reshape(flat_log_grid, np.shape(log_grid))
 
     # If not parallel - just do timestep loop sequentially.
     else:
@@ -161,4 +177,4 @@ def loop_over_grid(
             )
 
         xnew = get_2d_grid(grid, "column")
-        assert(xnew == x0).all()
+        assert (xnew == x0).all()

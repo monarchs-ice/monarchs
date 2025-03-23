@@ -156,7 +156,7 @@ def turbulent_mixing(cell, SW_in, dt):
         # cell.lake_temperature[to_fix] = 273.15
 
 
-def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
+def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict):
     """
     Generate a lake, and track its evolution until we reach the point where it can evolve freely according to
     lake_development, when it goes about 10 cm deep.
@@ -286,7 +286,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     x = cell.firn_temperature
     args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
 
-    root, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True)
+    root, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True, solver_method=toggle_dict['solver'])
     if success:
         cell.firn_temperature = root
 
@@ -295,7 +295,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     new_mass = calc_mass_sum(cell)
     assert abs(original_mass - new_mass) < (1.5 * 10**-7)
 
-def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
+def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict):
     """
     Once a lake of at least 10 cm deep is present this function calculates
     its evolution through a Stefan problem calculation of the lake-ice boundary.
@@ -443,7 +443,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
 
-    root, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True)
+    root, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True, solver_method=toggle_dict['solver'])
     if success:
         cell.firn_temperature = root
 

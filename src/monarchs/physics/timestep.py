@@ -61,6 +61,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     lid_development_toggle = toggle_dict["lid_development_toggle"]
     # densification_toggle = toggle_dict['densification_toggle']
     ignore_errors = toggle_dict["ignore_errors"]
+    heateqn_solver = toggle_dict['solver']
     # if the cell is not "valid" (e.g. filtered out as land by our firn threshold), then we don't want to run any
     # of the physics here, so we just return and move onto the next cell
 
@@ -148,7 +149,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             x = cell.firn_temperature
 
             if firn_heat_toggle:
-                sol, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True)
+                sol, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True, solver_method=heateqn_solver)
                 if success:
                     cell.firn_temperature = sol
                 else:
@@ -181,7 +182,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
                 if lake_development_toggle:
                     lake_functions.lake_formation(
-                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
+                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
                     )
                 # if cell.lake is False:
                 # cell.log += 'Meltwater has not reached critical threshold to yet form a lake'
@@ -193,7 +194,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 # print('lake development', 'x = ', cell.column, 'y = ', cell.row)
                 if lake_development_toggle:
                     lake_functions.lake_development(
-                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
+                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
                     )
 
                 # If the temperature is below freezing at the top of the lake then a
@@ -214,7 +215,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     # Lake and lid both present
                     if lake_development_toggle:
                         lake_functions.lake_development(
-                            cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
+                            cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
                         )
                     lid_functions.lid_development(
                         cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind

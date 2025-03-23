@@ -254,6 +254,7 @@ def water_fraction(cell, m, timestep, direction):
         Fraction of the total water that is allowed to move. Either a single number if a lake is present,
         or a Numpy array of length cell.vert_grid if not. M is biggest height difference
     """
+    # TODO - A better approach for the water frac > 1 issue is to set a flag that allows the water to move *again*.
 
     # first calculate the distance the water has to move
     if direction in ["NW", "NE", "SW", "SE"]:
@@ -262,28 +263,26 @@ def water_fraction(cell, m, timestep, direction):
         cell_size = cell.size_dy
     elif direction in ["E", "W"]:
         cell_size = cell.size_dx
+    else:
+        raise ValueError('Direction not recognised')
     # TODO - should cell_size be divided by 2? Since water is moving from the centre of the cell. But if
     # we consider that it is moving from centre to centre, is probably fine
-
     Big_pi = -2.53 * 10 ** -10  # hydraulic permeability (m^2)
-    eta = 1.787 * 10 ** -3  # viscosity(Pa/s)
-    if cell.lake:
-        return 1  # if in a lake all water moves
+    eta = 1.787 * 10 ** -3  # viscosity(Pa s)
     cell.rho = cell.Sfrac * cell.rho_ice + cell.Lfrac * cell.rho_water
-    cell_density = cell.rho
 
-    u = Big_pi / eta * m / cell_size * cell_density * -9.8  # flow speed (m/s)
-    water_frac = u * timestep / cell_size
-
-    # This block ensures that u is not greater than 1, which would be unphysical.
-    # if lake, then we only are interested in rho_water so u is a float (not an array)
     if cell.lake:
-        water_frac = min(water_frac, 1)
-    else:  # otherwise we look at the density of a specific point in the firn so u is an array
+        water_frac = 1
+    else:
+        # For movement within the firn itself, we use Darcy's Law
+        cell_density = cell.rho
+        u = (Big_pi / eta) * (m / cell_size) * cell_density * -9.8  # flow speed (m/s)
+        water_frac = u * timestep / cell_size
+
+        # This block ensures that u is not greater than 1, which would be unphysical.
+        # if lake, then we only are interested in rho_water so u is a float (not an array)
         water_frac[np.where(water_frac > 1)] = 1  # All water can move in one timestep
 
-
-    # water_move = cell.water * water_frac
     return water_frac
 
 
@@ -476,17 +475,18 @@ def move_to_neighbours(
     # in water level between the central cell and the cells at each cardinal point
     for idx, neighbour in enumerate(all_neighbours.keys()):
         if neighbour in biggest_neighbours:
+            cell = grid[row][col]
 
+            if cell.lid:
+                return 0
 
             n_s_index = all_neighbours[neighbour][0]  # i.e. row index
             w_e_index = all_neighbours[neighbour][1]  # i.e. col index
-            cell = grid[row][col]
             temporary_cell = temp_grid[row][col]
             water_frac = water_fraction(
                 cell, biggest_height_difference, timestep, neighbour
             )
-            if cell.lid:
-                return 0
+
 
             # Before actually moving water, we first need to find out how much water can actually move.
             # This try/except block happens in all non-lid cases, and determines how much water can move from the

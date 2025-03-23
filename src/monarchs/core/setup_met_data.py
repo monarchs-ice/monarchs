@@ -16,6 +16,12 @@ def setup_era5(model_setup, lat_array=False, lon_array=False):
 
     TODO - docstring
     """
+    try:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+    except ImportError:
+        comm = None
+
 
     if model_setup.met_timestep == "hourly":
         index = 1
@@ -84,7 +90,7 @@ def setup_era5(model_setup, lat_array=False, lon_array=False):
         for var in selected_keys:
             ERA5_grid[var] = np.repeat(ERA5_grid[var], index, axis=0)  # along time axis
 
-    with Dataset(ERA5_grid_path, "w") as f:
+    with Dataset(ERA5_grid_path, "w", comm=comm) as f:
         f.createGroup("variables")
         f.createDimension("time", len(ERA5_grid["SW_surf"]))
         f.createDimension("column", model_setup.col_amount)
@@ -127,9 +133,14 @@ def prescribed_met_data(model_setup):
 
     met_data = model_setup.met_data
 
+    try:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+    except ImportError:
+        comm = None
 
     from monarchs.met_data.metdata_class import initialise_met_data_grid
-    with Dataset(model_setup.met_output_filepath, "w") as f:
+    with Dataset(model_setup.met_output_filepath, "w", comm=comm) as f:
         f.createGroup("variables")
         f.createDimension("time", model_setup.num_days * model_setup.t_steps_per_day)
         f.createDimension("column", model_setup.col_amount)

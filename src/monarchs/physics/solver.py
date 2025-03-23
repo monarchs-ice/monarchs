@@ -12,7 +12,7 @@ from scipy.optimize import root, fsolve, OptimizeResult
 from monarchs.physics import heateqn
 
 
-def firn_heateqn_solver(x, args, fixed_sfc=False):
+def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     """
     scipy.optimize.fsolve-compatible solver function to be used within the model.
     Solves physics.heateqn.
@@ -66,20 +66,21 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
         eqn = heateqn.heateqn
         args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
     try:
-        # soldict: OptimizeResult = root(eqn, x, args=args, method='df-sane',
-        #                                options={'line_search': 'cheng', 'maxfev': 1000,
-        #                                         'ftol': 1e-10})
-        soldict: OptimizeResult = root(eqn, x, args=args, method='hybr')
-        # if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or np.any(soldict.x < 220) or not soldict.success:
-        #     raise Exception('Bad spectral solver output')
+        if solver_method == 'hybr':
+            soldict: OptimizeResult = root(eqn, x, args=args, method='hybr')
+
+        elif solver_method == 'df-sane':
+            soldict: OptimizeResult = root(eqn, x, args=args, method='df-sane',
+                                           options={'line_search': 'cheng', 'maxfev': 1000,
+                                                    'ftol': 1e-10})
+
+            # error handling for experimental solver - if it fails, fall back to hybr
+            if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or np.any(soldict.x < 220) or not soldict.success:
+                raise Exception('Bad spectral solver output')
 
     except Exception as e:
-        # print(e)
-        # print(soldict.message)
-        # # fall back to hybr if df-sane fails
-        # print('Falling back to hybrd...')
-        # print('Input = ', x)
-        soldict = root(eqn, x_copy, args=args, method='hybr')
+        if solver_method != 'hybr':
+            soldict = root(eqn, x_copy, args=args, method='hybr')
 
     if np.isnan(soldict.x).any() or np.any(soldict.x > 320):
         print(soldict.x)

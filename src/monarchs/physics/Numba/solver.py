@@ -160,7 +160,7 @@ def args_array(
 
 
 @jit(nopython=True, fastmath=False)
-def firn_heateqn_solver(x, args, fixed_sfc=False):
+def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     """
     Numba-compatible solver function to be used within the model.
     Solves physics.Numba.heateqn.
@@ -178,6 +178,8 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
         See <firn_column> for info on the contents of this array.
     fixed_sfc : bool, optional
         Boolean flag to determine whether to use the fixed surface form of the heat equation.
+    solver_method: str, optional
+        Dummy argument for compatibility with the Scipy version of the solver.
 
     Returns
     -------

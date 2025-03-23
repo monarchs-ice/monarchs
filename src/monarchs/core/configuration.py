@@ -53,7 +53,7 @@ def parse_args():
         required=False,
     )
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
     model_setup_path = args.input_path
     return model_setup_path
 
@@ -131,6 +131,14 @@ def handle_incompatible_flags(model_setup):
                 f"dump_format is set to `'pickle'` but use_numba is `True`. This is not supported since Numba "
                 f'jitclasses are not picklable'
             )
+
+    valid_solvers = ['hybr', 'df-sane']
+    if hasattr(model_setup, 'solver') and model_setup.solver not in valid_solvers:
+        raise ValueError(
+            f"monarchs.core.configuration.handle_incompatible_flags(): "
+            f"solver must be one of {valid_solvers}, not {model_setup.solver}"
+        )
+
 
 def create_defaults_for_missing_flags(model_setup):
     """
@@ -257,6 +265,7 @@ def create_defaults_for_missing_flags(model_setup):
     vardict['dump_format'] = 'NETCDF4'
     vardict['input_crs'] = 3031
     vardict['cores'] = 'all'
+    vardict['solver'] = 'hybr'
 
     if hasattr(model_setup, 'met_input_filepath'):
         vardict['met_data_source'] = 'ERA5'

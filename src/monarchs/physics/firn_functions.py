@@ -75,7 +75,7 @@ def firn_column(
     percolation_toggle = toggle_dict["percolation_toggle"]
     # spinup = toggle_dict["spinup"]
     perc_time_toggle = toggle_dict["perc_time_toggle"]
-
+    heateqn_solver = toggle_dict["solver"]
     x = cell.firn_temperature  # x is initial guess, currently using
     x = np.clip(x, 0, 273.15)  # Force x to be less than 273.15 else the code will fail
     # heat equation solver
@@ -84,7 +84,8 @@ def firn_column(
     # 'The iteration is not making good progress' error
     args = [cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind]
 
-    root, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=False)
+    root, fvec, success, info = solver.firn_heateqn_solver(x, args, fixed_sfc=False,
+                                                            solver_method=heateqn_solver)
     # print('Root = ', root[:10])
     # print('Success = ', success)
     # print('Info = ', info)
@@ -125,7 +126,8 @@ def firn_column(
 
         dz = cell.firn_depth / cell.vert_grid
         args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
-        root, fvec, success_fixedsfc, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True)
+        root, fvec, success_fixedsfc, info = solver.firn_heateqn_solver(x, args, fixed_sfc=True,
+         solver_method=heateqn_solver)
 
         if success_fixedsfc:
             cell.firn_temperature = root
