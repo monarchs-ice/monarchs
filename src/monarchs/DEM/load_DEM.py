@@ -132,7 +132,6 @@ def export_DEM(
         from matplotlib.path import Path
         import xarray as xr
         corners = [bottom_left, bottom_right, top_right, top_left]
-
         lon_min, lon_max = min([corner[1] for corner in corners]), max([corner[1] for corner in corners])
         lat_min, lat_max = min([corner[0] for corner in corners]), max([corner[0] for corner in corners])
         subset_raster = projected_raster.rio.clip_box(minx=lon_min, miny=lat_min, maxx=lon_max, maxy=lat_max,

@@ -25,6 +25,10 @@ def ERA5_to_variables(ERA5_input):
     # Load in dimensions first
     var_dict = {}
     ERA5_data = netCDF4.Dataset(ERA5_input)
+    assert "latitude" in ERA5_data.variables.keys(), ('"latitude" not found in the input ERA5 netCDF.'
+                                                      'This indicates that the data is not in the correct format.')
+    assert "longitude" in ERA5_data.variables.keys(), ('"longitude" not found in the input ERA5 netCDF. '
+                                                       'This indicates that the data is not in the correct format.')
     var_dict["long"] = ERA5_data.variables["longitude"][:]
     var_dict["lat"] = ERA5_data.variables["latitude"][:]
     try:
@@ -38,15 +42,21 @@ def ERA5_to_variables(ERA5_input):
                 "or amend <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the key that is in "
                 "your data."
             )
+
+    assert "u10" in ERA5_data.variables.keys(), '"u10" (10m u-component of wind) not found in the input ERA5 netCDF.'
+    assert "v10" in ERA5_data.variables.keys(), '"v10" (10m v-component of wind) not found in the input ERA5 netCDF.'
     # get overall wind speed via addition in quadrature of x and y components
     var_dict["wind"] = np.sqrt(
         ERA5_data.variables["u10"][:] ** 2 + ERA5_data.variables["v10"][:] ** 2
     )
+
+    # Load in temperature and dew point temperature
+    assert "t2m" in ERA5_data.variables.keys(), '"t2m" (2m temperature) not found in the input ERA5 netCDF.'
+    assert "d2m" in ERA5_data.variables.keys(), '"d2m" (2m dew point temperature) not found in the input ERA5 netCDF.'
+
     var_dict["temperature"] = ERA5_data.variables["t2m"][:]  # [K]
-    try:
-        var_dict["dew_point_temperature"] = ERA5_data.variables["d2m"][:]  # [K]
-    except KeyError:
-        var_dict['dew_point_temperature'] = 0.95 * var_dict['temperature'][:]
+    var_dict["dew_point_temperature"] = ERA5_data.variables["d2m"][:]  # [K]
+
     # Load in either mean-sea-level pressure or surface pressure.
     try:
         var_dict["pressure"] = ERA5_data.variables["sp"][:] / 100  # [Pa] -> [hPa]
@@ -59,6 +69,7 @@ def ERA5_to_variables(ERA5_input):
                 "or amend <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the key that is in "
                 "your data."
             )
+    assert "sf" in ERA5_data.variables.keys(), '"sf" (snowfall) not found in the input ERA5 netCDF.'
     var_dict["snowfall"] = ERA5_data.variables["sf"][:]  # [m water equiv.]
 
     # Load in shortwave radiation - first try all-sky, then clear-sky if that doesn't work, else fail
@@ -107,10 +118,14 @@ def ERA5_to_variables(ERA5_input):
         var_dict["snow_albedo"] = ERA5_data.variables["asn"][:]
     except KeyError:
         var_dict["snow_albedo"] = 0.85 * np.ones(np.shape(ERA5_data.variables["t2m"]))
+        print('monarchs.met_data.import_ERA5: No snow albedo data found in the input netCDF. '
+              'Using default value of 0.85.')
     try:
         var_dict["snow_dens"] = ERA5_data.variables["rsn"][:]  # [kgm^-3]
     except KeyError:
         var_dict["snow_dens"] = 300 * np.ones(np.shape(ERA5_data.variables["t2m"]))
+        print('monarchs.met_data.import_ERA5: No snow density data found in the input netCDF. '
+              'Using default value of 300')
     ERA5_data.close()
     return var_dict
 
