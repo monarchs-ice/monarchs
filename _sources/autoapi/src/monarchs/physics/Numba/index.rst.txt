@@ -1,0 +1,17 @@
+src.monarchs.physics.Numba
+==========================
+
+.. py:module:: src.monarchs.physics.Numba
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/src/monarchs/physics/Numba/extract_args/index
+   /autoapi/src/monarchs/physics/Numba/heateqn_nb/index
+   /autoapi/src/monarchs/physics/Numba/solver/index
+
+

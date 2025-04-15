@@ -1,0 +1,40 @@
+src.monarchs.DEM.interpolation_test
+===================================
+
+.. py:module:: src.monarchs.DEM.interpolation_test
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   src.monarchs.DEM.interpolation_test.X
+   src.monarchs.DEM.interpolation_test.Y
+   src.monarchs.DEM.interpolation_test.Z
+   src.monarchs.DEM.interpolation_test.interp
+   src.monarchs.DEM.interpolation_test.rng
+   src.monarchs.DEM.interpolation_test.x
+   src.monarchs.DEM.interpolation_test.y
+   src.monarchs.DEM.interpolation_test.z
+
+
+Module Contents
+---------------
+
+.. py:data:: X
+
+.. py:data:: Y
+
+.. py:data:: Z
+
+.. py:data:: interp
+
+.. py:data:: rng
+
+.. py:data:: x
+
+.. py:data:: y
+
+.. py:data:: z
+

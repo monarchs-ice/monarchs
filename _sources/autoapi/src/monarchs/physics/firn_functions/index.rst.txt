@@ -1,0 +1,30 @@
+src.monarchs.physics.firn_functions
+===================================
+
+.. py:module:: src.monarchs.physics.firn_functions
+
+.. autoapi-nested-parse::
+
+   Module containing functions relating to the firn column. Some physics is contained in percolation.py.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/physics/firn_functions/calc_height_change
+   /autoapi/src/monarchs/physics/firn_functions/firn_column
+   /autoapi/src/monarchs/physics/firn_functions/interp_nb
+   /autoapi/src/monarchs/physics/firn_functions/regrid_after_melt
+
+.. autoapisummary::
+
+   src.monarchs.physics.firn_functions.calc_height_change
+   src.monarchs.physics.firn_functions.firn_column
+   src.monarchs.physics.firn_functions.interp_nb
+   src.monarchs.physics.firn_functions.regrid_after_melt
+
+

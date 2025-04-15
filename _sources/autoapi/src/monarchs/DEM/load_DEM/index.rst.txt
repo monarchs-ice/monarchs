@@ -1,0 +1,42 @@
+src.monarchs.DEM.load_DEM
+=========================
+
+.. py:module:: src.monarchs.DEM.load_DEM
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   src.monarchs.DEM.load_DEM.tiffname
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/DEM/load_DEM/bounding_box_diagnostic_plots
+   /autoapi/src/monarchs/DEM/load_DEM/export_DEM
+   /autoapi/src/monarchs/DEM/load_DEM/generate_diagnostic_plots
+   /autoapi/src/monarchs/DEM/load_DEM/get_xy_distance
+   /autoapi/src/monarchs/DEM/load_DEM/interpolate_DEM
+
+.. autoapisummary::
+
+   src.monarchs.DEM.load_DEM.bounding_box_diagnostic_plots
+   src.monarchs.DEM.load_DEM.export_DEM
+   src.monarchs.DEM.load_DEM.generate_diagnostic_plots
+   src.monarchs.DEM.load_DEM.get_xy_distance
+   src.monarchs.DEM.load_DEM.interpolate_DEM
+
+
+Module Contents
+---------------
+
+.. py:data:: tiffname
+   :value: 'DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif'
+
+

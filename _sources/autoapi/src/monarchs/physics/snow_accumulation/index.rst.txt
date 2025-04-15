@@ -1,0 +1,28 @@
+src.monarchs.physics.snow_accumulation
+======================================
+
+.. py:module:: src.monarchs.physics.snow_accumulation
+
+.. autoapi-nested-parse::
+
+   Created on Tue May  9 17:04:04 2023
+
+   @author: sglsb6
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/physics/snow_accumulation/densification
+   /autoapi/src/monarchs/physics/snow_accumulation/snowfall
+
+.. autoapisummary::
+
+   src.monarchs.physics.snow_accumulation.densification
+   src.monarchs.physics.snow_accumulation.snowfall
+
+

@@ -1,0 +1,23 @@
+src.monarchs.physics.heateqn.heateqn
+====================================
+
+.. py:function:: src.monarchs.physics.heateqn.heateqn(x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
+
+   Solve the heat equation for the firn column with surface energy balance driven surface temperature.
+   This is done via the hybrd root-finding algorithm.
+   See also /Numba/heateqn for the NumbaMinpack implementation of this.
+
+   :Parameters: * **x** (*array_like, float, dimension(cell.vert_grid)*) -- initial estimate of the firn column temperature [K]
+                * **cell** (*core.iceshelf_class.IceShelf*) -- IceShelf object containing the details for that vertical column
+                * **dt** (*int*) -- timestep duration [s]
+                * **dz** (*float*) -- size of the vertical grid
+                * **LW_in** (*float*) -- Incoming longwave radiation at the current timestep [W m^-2]
+                * **SW_in** (*float*) -- Incoming shortwave radiation at the current timestep [W m^-2]
+                * **T_air** (*float*) -- Air temperature [K]
+                * **p_air** (*float*) -- Surface pressure [Pa]
+                * **T_dp** (*float*) -- Dewpoint temperature [K]
+                * **wind** (*float*) -- Wind speed [m s^-1]
+
+   :returns: **output** -- roots of the function, used by scipy.optimize.fsolve to determine the new firn temperature
+   :rtype: array_like, float, dimension(cell.vert_grid)
+

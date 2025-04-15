@@ -1,0 +1,17 @@
+src.monarchs
+============
+
+.. py:module:: src.monarchs
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/src/monarchs/DEM/index
+   /autoapi/src/monarchs/core/index
+   /autoapi/src/monarchs/physics/index
+
+

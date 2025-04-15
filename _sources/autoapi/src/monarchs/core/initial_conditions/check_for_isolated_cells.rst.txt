@@ -1,0 +1,8 @@
+src.monarchs.core.initial_conditions.check_for_isolated_cells
+=============================================================
+
+.. py:function:: src.monarchs.core.initial_conditions.check_for_isolated_cells(valid_cells)
+
+   Ensure that cells aren't isolated - e.g. a cell in the middle of the land doesn't pointlessly
+   run any physics when it can't flow laterally.
+

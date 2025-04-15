@@ -1,0 +1,9 @@
+src.monarchs.physics.Numba.solver.sfc_energy_lid
+================================================
+
+.. py:function:: src.monarchs.physics.Numba.solver.sfc_energy_lid(x, output, args)
+
+   :Parameters: * **x**
+                * **output**
+                * **args**
+

@@ -1,0 +1,153 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Structure &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Structure</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/structure.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="structure">
+<h1>Structure<a class="headerlink" href="#structure" title="Link to this heading"></a></h1>
+<dl>
+<dt>The MONARCHS source code is split into the following folders:</dt><dd><dl class="simple">
+<dt><cite>core</cite> - Code containing the things that make the model tick. Things like definitions of the IceShelf class that</dt><dd><p>contains the data, data pipelines (particularly output and data flows within the model,
+and determining which parts of the physics need to be called at what time.</p>
+</dd>
+</dl>
+<p><cite>DEM</cite> - Code that controls the loading of any digital elevation model (DEM) used in MONARCHS.
+<cite>met_data</cite> - Code that handles loading in meteorological data, particularly netCDF format data from ERA5 reanalyses.
+<cite>physics</cite> - Code that handles the physics of the model. This includes the “single-column” physics</p>
+<blockquote>
+<div><p>(e.g. the heat equation, surface energy balance, lake and lid formation) and lateral movement
+of water between these single columns.</p>
+</div></blockquote>
+<p><cite>plots</cite> - Utilities and code to handle generation of plots using model output data.</p>
+<p>There are flowcharts located in <cite>docs/flowcharts</cite> which may help visualise which parts of the model are called where.
+These are:</p>
+<blockquote>
+<div><p><cite>monarchs_main.svg</cite> - The main flowchart of the model, showing things from a top-level perspective.
+<cite>firn_column.svg</cite> - Illustrates the evolution of the dry firn over time within the model.
+<cite>lake_development.svg</cite> - Shows how formation of a lake occurs on saturated firn, and the further</p>
+<blockquote>
+<div><p>development of a lake within the model.</p>
+</div></blockquote>
+<dl class="simple">
+<dt><cite>lid_development.svg</cite> - Shows how a lid forms on the surface of a lake, and how this evolves over time, including</dt><dd><p>the combination of the lid and firn column into a new firn column.</p>
+</dd>
+</dl>
+<p><cite>lateral_flow.svg</cite> - Shows the algorithms used to flow water laterally between firn columns in the model.</p>
+</div></blockquote>
+</dd>
+</dl>
+<section id="the-iceshelf-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">IceShelf</span></code> class<a class="headerlink" href="#the-iceshelf-class" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">IceShelf</span></code> class is the core of the MONARCHS model. It contains all of the data used to run one single column
+of MONARCHS. The model grid is effectively a 2D grid of these <code class="docutils literal notranslate"><span class="pre">IceShelf</span></code> objects. The code in <code class="docutils literal notranslate"><span class="pre">monarchs.physics</span></code>
+often refers to an object called <code class="docutils literal notranslate"><span class="pre">cell</span></code>, each of which is an <code class="docutils literal notranslate"><span class="pre">IceShelf</span></code> instance. All of the physics functions in
+<code class="docutils literal notranslate"><span class="pre">firn_functions</span></code>, <code class="docutils literal notranslate"><span class="pre">lake_functions</span></code> and <code class="docutils literal notranslate"><span class="pre">lid_functions</span></code> are set up in such a way that they are called on these
+cells in 1D.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
