@@ -11,8 +11,10 @@ from matplotlib import pyplot as plt
 import numpy.ma as ma
 import matplotlib
 matplotlib.use('TkAgg')
-dumppath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_dump.nc'
-diagpath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_output.nc'
+dumppath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc'
+diagpath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\model_output.nc'
+# dumppath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_dump.nc'
+# diagpath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_output.nc'
 
 flowdata = Dataset(dumppath)
 t0data = Dataset(diagpath)
@@ -50,7 +52,7 @@ def plot_variable(dset, variable_name, cmap='viridis', vmax=None):
     return variable
 
 lakedepth = plot_variable(flowdata, 'lake_depth')
-plot_variable(flowdata,'lake_depth', vmax=1)
+plot_variable(flowdata,'lake_depth', vmax=0.2)
 ice_lens = plot_variable(flowdata,'ice_lens')
 ice_lens_depth = plot_variable(flowdata,'ice_lens_depth', vmax=500)
 firndepth = plot_variable(flowdata,'firn_depth', vmax=150)
