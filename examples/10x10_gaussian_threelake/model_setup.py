@@ -88,12 +88,12 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "output/gaussian_threelake_example_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = "output/gaussian_threelake_example_output2.nc"  # Filename for model output, including file extension (.nc for netCDF).
 # output_grid_size = 400  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.
 # output_timestep = 1  # How often to save output, in days. Commented out for this example.
 dump_data = True
 dump_filepath = (
-    "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state
+    "output/gaussian_threelake_example_dump2.nc"  # Filename of our previously dumped state
 )
 reload_from_dump = False # Flag to determine whether to reload the state or not
 
@@ -103,11 +103,12 @@ Computing and numerical parameters
 use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
+use_mpi = True
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = 10  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
-
+cores = 20  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+solver = 'hybr'
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
 All of these default to True.

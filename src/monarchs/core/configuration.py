@@ -413,6 +413,7 @@ def jit_classes():
 
 if os.environ.get('MONARCHS_MPI', None) is not None:
     mpi = True
+    print('Setting MPI to True')
 else:
     mpi = False
 

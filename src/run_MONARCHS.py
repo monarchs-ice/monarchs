@@ -11,8 +11,6 @@ if __name__ == "__main__":
         use_mpi = False
         rank = 0
     if rank == 0:
-        print('MPI rank = ', rank)
-
         grid = monarchs()
     else:
         print('Rank {} not running monarchs'.format(rank))

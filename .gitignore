@@ -26,3 +26,4 @@ validation/AntarcticLakes/
 src/model_setup.py
 examples/*/output/
 *.ipynb
+*.zip
