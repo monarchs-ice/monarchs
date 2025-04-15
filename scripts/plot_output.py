@@ -1,5 +1,5 @@
 """
-Sample script to plot some basic images from the model output.
+Script to plot basic images from the model output.
 In this script, I load in both the model dump (from progress.nc), and the
 diagnostic output (model_output.nc). The dump file gives an indication of the current state of the model.
 The diagnostic file is only used here to plot the initial conditions of the firn column, so I can do a diff to see
@@ -11,8 +11,8 @@ from matplotlib import pyplot as plt
 import numpy.ma as ma
 import matplotlib
 matplotlib.use('TkAgg')
-dumppath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_dump.nc'
-diagpath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_output.nc'
+dumppath = '/media/dmwq2/2C40-69DF/progress.nc'
+diagpath = '/media/dmwq2/2C40-69DF/model_output.nc'
 
 flowdata = Dataset(dumppath)
 t0data = Dataset(diagpath)
@@ -50,7 +50,7 @@ def plot_variable(dset, variable_name, cmap='viridis', vmax=None):
     return variable
 
 lakedepth = plot_variable(flowdata, 'lake_depth')
-plot_variable(flowdata,'lake_depth', vmax=1)
+lakedepth_max1 = plot_variable(flowdata,'lake_depth', vmax=1)
 ice_lens = plot_variable(flowdata,'ice_lens')
 ice_lens_depth = plot_variable(flowdata,'ice_lens_depth', vmax=500)
 firndepth = plot_variable(flowdata,'firn_depth', vmax=150)
