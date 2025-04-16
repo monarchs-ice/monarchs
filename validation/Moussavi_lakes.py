@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from geotiff import GeoTiff
+import matplotlib
 
 # from monarchs.DEM.import_DEM import export_DEM_geotiff
 # from monarchs.core.utils import find_nearest
@@ -16,6 +17,7 @@ from geotiff import GeoTiff
 # CORNER_LL_LON_PRODUCT = 164.72008
 # CORNER_LR_LAT_PRODUCT = -68.37323
 # CORNER_LR_LON_PRODUCT = 159.61407
+matplotlib.use('TkAgg')
 
 moussavi_file_path = "LC08_L1GT_218111_20200101_20200113_01_T2_All_Masks.tif"
 model_output_filepath = ""
@@ -39,7 +41,15 @@ CORNER_LL_LON_PRODUCT = -76.32295
 CORNER_LR_LAT_PRODUCT = -73.76178
 CORNER_LR_LON_PRODUCT = -74.21682
 
+# TODO
 # Create grid of lat/lons of the Moussavi product
+# Get correct date for Moussavi
+# percent of surface lakes
+# percent of surface ice
+# percent of ice that's lakes (i.e. total-land-not sampled etc=ice)
+# lake depth mean, median
+# co-locate and then...
+# 1 minus other, RMSE?
 
 
 geo_tiff = GeoTiff(moussavi_file_path, crs_code=4326)  # Had to guess crs
@@ -51,16 +61,10 @@ mask_array = np.array(zarr_array)
 fig = plt.figure()
 plt.imshow(mask_array)
 plt.colorbar()
-plt.show()
+#plt.show()
 # plt.close()
 
-# TODO
-# percent of surface lakes
-# percent of surface ice
-# percent of ice that's lakes (i.e. total-land-not sampled etc=ice)
-# lake depth mean, median
-# co-locate and then...
-# 1 minus other, RMSE?
+
 
 # create function to sample a smaller bounding box (use read box exisiting function https://pypi.org/project/geotiff/)
 # create function to get histogram of lake depths for general comparison (can check against auto generated)
