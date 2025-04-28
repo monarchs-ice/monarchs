@@ -6,7 +6,7 @@ core.iceshelf_class), flattens this grid and then runs timestep_loop()
 in parallel (using either pathos.Pool or numba.prange, since the problem is
 embarassingly parallel), unless model_setup.parallel = False.
 """
-from multiprocessing import Pool
+from pathos.pools import ParallelPool as Pool
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
 from monarchs.core.utils import get_2d_grid
@@ -99,9 +99,9 @@ def loop_over_grid(row_amount, col_amount, grid, dt, met_data,
             wait(iceshelf)
             iceshelf = [i.result() for i in iceshelf]
         else:
-            with Pool(ncores, maxtasksperchild=1) as p:
-                res = p.starmap(timestep_loop, zip(flat_grid, dt, met_data_grid,
-                    t_steps_per_day, toggle_dict_grid))
+            with Pool(nodes=ncores, maxtasksperchild=1) as p:
+                res = p.map(timestep_loop, flat_grid, dt, met_data_grid,
+                    t_steps_per_day, toggle_dict_grid)
             iceshelf = np.array(res)
         for i in range(len(flat_grid)):
             if iceshelf[i] is None:
