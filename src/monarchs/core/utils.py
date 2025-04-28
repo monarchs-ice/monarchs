@@ -47,12 +47,21 @@ def get_2d_grid(grid, attr, index=False):
     if not index:
         index = 0
     var = [None] * len(grid)
-    for row in range(len(grid)):
-        var[row] = [None] * len(grid[0])
-        for col in range(len(grid[0])):
-            var[row][col] = getattr(
-                grid[row][col], attr
-            )
+    # If grid is a Numpy array, instead of using getattr, just use the attribute
+    # directly, since it is already a Numpy array.
+    # Otherwise, use getattr to get the attribute from the IceShelf object.
+    if not isinstance(grid, np.ndarray):
+        for row in range(len(grid)):
+            var[row] = [None] * len(grid[0])
+            for col in range(len(grid[0])):
+                var[row][col] = getattr(
+                    grid[row][col], attr
+                )
+    else:
+        for row in range(len(grid)):
+            var[row] = [None] * len(grid[0])
+            for col in range(len(grid[0])):
+                var[row][col] = grid[attr][row][col]
 
     # get all values
     if index == "all":
@@ -90,7 +99,8 @@ def calc_grid_mass(grid):
     for i in range(len(grid)):
         for j in range(len(grid[0])):
             cell = grid[i][j]
-            if cell.valid_cell:
+            breakpoint()
+            if cell['valid_cell']:
                 total_mass += calc_mass_sum(cell)
     return total_mass
 

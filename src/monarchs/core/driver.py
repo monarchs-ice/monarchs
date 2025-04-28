@@ -160,8 +160,7 @@ def get_num_cores(model_setup):
         if not model_setup.mpi:
             cores = pathos.helpers.cpu_count()
         else:
-            import os
-            cores = os.
+            cores = pathos.helpers.cpu_count()
         print(f"Using all cores - {pathos.helpers.cpu_count()} detected")
     elif not model_setup.parallel:
         cores = 1
@@ -212,7 +211,7 @@ def update_met_conditions(
         # initialise total mass calculation - check how much snow was added during the next iteration and add it
         for i in range(len(grid)):
             for j in range(len(grid[0])):
-                if grid[i][j].valid_cell:
+                if grid['valid_cell'][i,j]:
                     snow_array = (np.array(met_data.variables["snow_dens"][met_start_idx:met_end_idx, i,j]) *
                     np.array(met_data.variables["snowfall"][met_start_idx:met_end_idx, i, j]))
                     snow_added += np.sum(snow_array)

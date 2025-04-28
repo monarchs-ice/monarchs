@@ -6,7 +6,7 @@ interpolating it, and loading in/interpolating the digital elevation model (DEM)
 
 import numpy as np
 from monarchs.DEM.load_DEM import export_DEM
-from monarchs.core.iceshelf_class import IceShelf
+from monarchs.core.iceshelf_class import initialise_iceshelf, get_spec
 
 
 def initialise_firn_profile(model_setup, diagnostic_plots=False):
@@ -55,7 +55,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             valid_cells[np.where(firn_depth > model_setup.firn_max_height)] = False
 
             with np.printoptions(
-                threshold=np.inf
+                    threshold=np.inf
             ):  # context manager so we can see the whole array, not a subset
                 print(
                     f"monarchs.core.initial_conditions.initialise_firn_profile: "
@@ -63,7 +63,6 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                     f"since they exceed the firn height threshold:"
                 )
                 print("Valid cells = ", valid_cells)
-
 
     firn_depth_under_35_flag = False
     # Sort out cells below the mininum height
@@ -137,8 +136,6 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                                                         profile_temp, rho_temp)[::-1]
                         # need to reverse direction using [::-1] to revert back to depth coordinates
 
-
-
     # Sort out cells below the minimum height - these are solid ice rather than firn in this case
     # TODO - commented out for testing a different method
     # if hasattr(model_setup, 'firn_min_height'):
@@ -174,9 +171,9 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             )
     print("\n")  # newline to separate from other config steps
     if (
-        hasattr(model_setup, "DEM_path")
-        and hasattr(model_setup, "lat_bounds")
-        and model_setup.lat_bounds == "dem"
+            hasattr(model_setup, "DEM_path")
+            and hasattr(model_setup, "lat_bounds")
+            and model_setup.lat_bounds == "dem"
     ):
 
         return T, rho, firn_depth, valid_cells, lat_array, lon_array, dx, dy
@@ -213,7 +210,7 @@ def check_for_isolated_cells(valid_cells):
                         if i + adj[0] < 0 or j + adj[1] < 0:
                             neighbours[adj[0] + 1, adj[1] + 1] = -999
                         else:
-                            if not valid_cells[i+adj[0], j+adj[1]]:
+                            if not valid_cells[i + adj[0], j + adj[1]]:
                                 neighbours[adj[0] + 1, adj[1] + 1] = 0
 
                     except IndexError:
@@ -225,6 +222,7 @@ def check_for_isolated_cells(valid_cells):
                     valid_cells[i, j] = False
 
     return valid_cells
+
 
 def rho_init_emp(z, rho_sfc, z_t):
     """
@@ -250,49 +248,47 @@ def rho_init_emp(z, rho_sfc, z_t):
     return rho
 
 
-
 def create_model_grid(
-    row_amount,
-    col_amount,
-    firn_depth,
-    vert_grid,
-    vert_grid_lake,
-    vert_grid_lid,
-    rho,
-    firn_temperature,
-    Sfrac=np.array([np.nan]),
-    Lfrac=np.array([np.nan]),
-    meltflag=np.array([np.nan]),
-    saturation=np.array([np.nan]),
-    lake_depth=0.0,
-    lake_temperature=np.array([np.nan]),
-    lid_depth=0.0,
-    lid_temperature=np.array([np.nan]),
-    melt=False,
-    exposed_water=False,
-    lake=False,
-    v_lid=False,
-    lid=False,
-    water_level=0,
-    water=np.array([np.nan]),
-    ice_lens=False,
-    ice_lens_depth=999,
-    has_had_lid=False,
-    lid_sfc_melt=0.0,
-    lid_melt_count=0,
-    melt_hours=0,
-    exposed_water_refreeze_counter=0,
-    virtual_lid_temperature=273.15,
-    total_melt=0.0,
-    valid_cells=np.array([np.nan]),
-    use_numba=False,
-    lats=np.array([np.nan]),
-    lons=np.array([np.nan]),
-    size_dx=1000.0,
-    size_dy=1000.0
+        row_amount,
+        col_amount,
+        firn_depth,
+        vert_grid,
+        vert_grid_lake,
+        vert_grid_lid,
+        rho,
+        firn_temperature,
+        Sfrac=np.array([np.nan]),
+        Lfrac=np.array([np.nan]),
+        meltflag=np.array([np.nan]),
+        saturation=np.array([np.nan]),
+        lake_depth=0.0,
+        lake_temperature=np.array([np.nan]),
+        lid_depth=0.0,
+        lid_temperature=np.array([np.nan]),
+        melt=False,
+        exposed_water=False,
+        lake=False,
+        v_lid=False,
+        lid=False,
+        water_level=0,
+        water=np.array([np.nan]),
+        ice_lens=False,
+        ice_lens_depth=999,
+        has_had_lid=False,
+        lid_sfc_melt=0.0,
+        lid_melt_count=0,
+        melt_hours=0,
+        exposed_water_refreeze_counter=0,
+        virtual_lid_temperature=273.15,
+        total_melt=0.0,
+        valid_cells=np.array([np.nan]),
+        use_numba=False,
+        lats=np.array([np.nan]),
+        lons=np.array([np.nan]),
+        size_dx=1000.0,
+        size_dy=1000.0
 ):
     """
-    Create a grid of IceShelf objects based on a set of input parameters.
     Called in the runscript (run_MONARCHS.py)
     When changing optional arguments, ensure that any inputs are in the correct format, particularly if using Numba.
     e.g. if a variable is default np.array([np.nan]), ensure that the changed variable is array_like.
@@ -387,70 +383,53 @@ def create_model_grid(
         Size of the grid cell in the y direction [m]
 
     """
-    # Create a Numba typed list instead of a nested list. Each element of the
-    # typed list is also a typed list, consisting of an instance of the
-    # IceShelf class. This lets us use Numba's prange
-    if use_numba:
-        from numba.typed import List
-
-        grid = List()
-    else:
-        grid = []
-
-    if isinstance(size_dx, int) or isinstance(size_dy, int):
-        size_dx = np.ones((row_amount, col_amount)) * size_dx
-        size_dy = np.ones((row_amount, col_amount)) * size_dy
-    if isinstance(size_dx, float) or isinstance(size_dy, float):
-        size_dx = np.ones((row_amount, col_amount)) * size_dx
-        size_dy = np.ones((row_amount, col_amount)) * size_dy
-    for i in range(col_amount):
-        if use_numba:
-            _l = List()
-        else:
-            _l = []
-
-        for j in range(row_amount):
-            _l.append(
-                IceShelf(
-                    j,  # x
-                    i,  # y
-                    firn_depth[i, j],
-                    vert_grid,
-                    vert_grid_lake,
-                    vert_grid_lid,
-                    rho[i, j],
-                    firn_temperature[i, j],
-                    Sfrac,
-                    Lfrac,
-                    meltflag,
-                    saturation,
-                    lake_depth,
-                    lake_temperature,
-                    lid_depth,
-                    lid_temperature,
-                    melt,
-                    exposed_water,
-                    lake,
-                    v_lid,
-                    lid,
-                    water_level,
-                    water,
-                    ice_lens,
-                    ice_lens_depth,
-                    has_had_lid,
-                    lid_sfc_melt,
-                    lid_melt_count,
-                    melt_hours,
-                    exposed_water_refreeze_counter,
-                    virtual_lid_temperature,
-                    total_melt,
-                    valid_cell=valid_cells[i, j],
-                    lat=lats[i, j],
-                    lon=lons[i, j],
-                    size_dx=size_dx[i, j],
-                    size_dy=size_dy[i, j]
-                )
-            )
-        grid.append(_l)
+    x, y = np.meshgrid(
+        np.arange(0, row_amount, 1),
+        np.arange(0, col_amount, 1),
+        indexing="ij",
+    )
+    dtype = get_spec(row_amount,col_amount, vert_grid, vert_grid_lake, vert_grid_lid)
+    grid = initialise_iceshelf(row_amount,
+                               col_amount,
+                               vert_grid,
+                               vert_grid_lake,
+                               vert_grid_lid,
+                               dtype,
+                               x,
+                               y,
+                               firn_depth,
+                               rho,
+                               firn_temperature,
+                               Sfrac=np.array([np.nan]),
+                               Lfrac=np.array([np.nan]),
+                               meltflag=np.array([np.nan]),
+                               saturation=np.array([np.nan]),
+                               lake_depth=0.0,
+                               lake_temperature=np.array([np.nan]),
+                               lid_depth=0.0,
+                               lid_temperature=np.array([np.nan]),
+                               melt=False,
+                               exposed_water=False,
+                               lake=False,
+                               v_lid=False,
+                               lid=False,
+                               water_level=0,
+                               water=np.array([np.nan]),
+                               ice_lens=False,
+                               ice_lens_depth=999,
+                               has_had_lid=False,
+                               lid_sfc_melt=0.0,
+                               lid_melt_count=0,
+                               melt_hours=0,
+                               exposed_water_refreeze_counter=0,
+                               virtual_lid_temperature=273.15,
+                               total_melt=0.0,
+                               valid_cells=np.array([np.nan]),
+                               numba=False,
+                               lat=np.array([np.nan]),
+                               lon=np.array([np.nan]),
+                               size_dx=1000.0,
+                               size_dy=1000.0
+                               )
 
     return grid

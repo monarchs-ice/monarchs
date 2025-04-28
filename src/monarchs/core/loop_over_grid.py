@@ -6,7 +6,8 @@ core.iceshelf_class), flattens this grid and then runs timestep_loop()
 in parallel (using either pathos.Pool or numba.prange, since the problem is
 embarassingly parallel), unless model_setup.parallel = False.
 """
-from pathos.pools import ParallelPool as Pool
+#from pathos.pools import ParallelPool as Pool
+from multiprocessing import Pool
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
 #from monarchs.core.configuration import model_setup
@@ -136,6 +137,11 @@ def loop_over_grid(
         #Parallelism on a single node using multiprocessing.
         #"""
         else:
+            # First - we want to set up everything in shared memory. This is because MONARCHS makes heavy use of
+            # mutation in order to speed things up.
+            # from multiprocessing import shared_memory
+            # shm = shared_memory.SharedMemory(create=True, size=0)
+
             with Pool(nodes=ncores, maxtasksperchild=1) as p:
                 # we want to get out our IceShelf and our Logger grids, so get out an array res and index it
                 # to get these
