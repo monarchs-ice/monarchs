@@ -103,7 +103,7 @@ def handle_incompatible_flags(model_setup):
             raise ValueError(
                 f"monarchs.core.configuration.handle_incompatible_flags(): dump_format is set to `'pickle'` but use_numba is `True`. This is not supported since Numba jitclasses are not picklable"
                 )
-    valid_solvers = ['hybr', 'df-sane']
+    valid_solvers = ['hybr', 'df-sane', 'brentq', 'lm', 'trust-ncg', 'broyden1']
     if hasattr(model_setup, 'solver'
         ) and model_setup.solver not in valid_solvers:
         raise ValueError(

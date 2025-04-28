@@ -8,9 +8,10 @@ rather than NumbaMinpack.hybrd), see heateqn in physics/Numba.
 """
 import numpy as np
 from monarchs.physics.surface_fluxes import sfc_flux
+from numba import njit
 
-
-def heateqn(x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind):
+@njit
+def heateqn(x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k, kappa):
     """
     Solve the heat equation for the firn column with surface energy balance driven surface temperature.
     This is done via the hybrd root-finding algorithm.
@@ -18,6 +19,8 @@ def heateqn(x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     Parameters
     ----------
+    k
+    kappa
     x : array_like, float, dimension(cell.vert_grid)
         initial estimate of the firn column temperature [K]
     cell : core.iceshelf_class.IceShelf
@@ -44,42 +47,47 @@ def heateqn(x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind):
     output : array_like, float, dimension(cell.vert_grid)
         roots of the function, used by scipy.optimize.fsolve to determine the new firn temperature
     """
+
     T = cell['firn_temperature']
     Sfrac = cell['Sfrac']
     Lfrac = cell['Lfrac']
-    rho = Sfrac * 913 + Lfrac * 1000
-    k_ice = np.zeros(np.shape(T))
-    output = np.zeros(len(x))
-    k_ice[T < 273.15] = 1000 * (0.00224 + 5.975e-06 * (273.15 - T[T < 
-        273.15]) ** 1.156)
-    k_ice[T >= 273.15] = 2.24
-    k = Sfrac * k_ice + (1 - Sfrac - Lfrac) * cell['k_air'] + Lfrac * cell[
-        'k_water']
-    cp_ice = 7.16 * T + 138
-    cp = Sfrac * cp_ice + (1 - Sfrac - Lfrac) * cell['cp_air'] + Lfrac * cell[
-        'cp_water']
-    kappa = k / (cp * rho)
-    epsilon = 0.98
-    sigma = 5.670374 * 10 ** -8
-    Q = sfc_flux(cell['melt'], cell['exposed_water'], cell['lid'], cell[
-        'lake'], cell['lake_depth'], LW_in, SW_in, T_air, p_air, T_dp, wind,
-        x[0])
-    output[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
-    idx = np.arange(1, len(x) - 1)
-    output[idx] = T[idx] - x[idx] + dt * (kappa[idx] / dz ** 2) * (x[idx + 
-        1] - 2 * x[idx] + x[idx - 1])
-    output[-1] = T[len(x) - 1] - x[len(x) - 1] + dt * (kappa[len(x) - 1] / 
-        dz ** 2) * (-x[len(x) - 1] + x[len(x) - 2])
+
+    # Prepare the output array
+    output = np.zeros_like(x)
+
+    # First grid point (boundary condition)
+    Q = sfc_flux(cell['melt'], cell['exposed_water'], cell['lid'], cell['lake'], cell['lake_depth'],
+                 LW_in, SW_in, T_air, p_air, T_dp, wind, x[0])
+    output[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - 0.98 * 5.670374 * 10 ** -8 * x[0] ** 4)
+
+    # Central grid points (interior points)
+    output[1:-1] = T[1:-1] - x[1:-1] + dt * (kappa[1:-1] / dz ** 2) * (x[2:] - 2 * x[1:-1] + x[:-2])
+
+    # Last grid point (boundary condition)
+    output[-1] = T[-1] - x[-1] + dt * (kappa[-1] / dz ** 2) * (-x[-1] + x[-2])
+
     return output
 
+@njit
+def surface_temperature_residual(T_sfc, cell, LW_in, SW_in, T_air, p_air, T_dp, wind):
+    # Calculate Q for the given T_sfc
+    Q = sfc_flux(cell['melt'], cell['exposed_water'], cell['lid'], cell[
+        'lake'], cell['lake_depth'], LW_in, SW_in, T_air, p_air, T_dp, wind,
+        T_sfc)
 
-def heateqn_fixedsfc(x, cell, dt, dz, T_sfc):
+    # Surface temperature equation (residual)
+    # Assume you already have the correct form for this
+    residual = Q - 0.98 * 5.670374 * 10**-8 * T_sfc**4
+    return residual
+
+def heateqn_fixedsfc(x, cell, dt, dz, T_sfc, kappa):
     """
     Solve the heat equation for the firn column with surface temperature fixed (nominally to 273.15 K).
     See also /Numba/heateqn_fixedsfc for the NumbaMinpack implementation of this.
 
     Parameters
     ----------
+    kappa
     x : array_like, float, dimension(cell.vert_grid)
         initial estimate of the firn column temperature [K]
     cell : core.iceshelf_class.IceShelf
@@ -95,26 +103,14 @@ def heateqn_fixedsfc(x, cell, dt, dz, T_sfc):
     -------
     output : roots of the function, used by scipy.optimize.fsolve to determine the new firn temperature
     """
-    T = cell['firn_temperature']
-    Sfrac = cell['Sfrac']
-    Lfrac = cell['Lfrac']
+
     output = np.zeros(len(x))
-    k_ice = np.zeros(len(x))
-    k_ice[T < 273.15] = 1000 * (0.00224 + 5.975e-06 * (273.15 - T[T < 
-        273.15]) ** 1.156)
-    k_ice[T >= 273.15] = 2.24
-    k = Sfrac * k_ice + (1 - Sfrac - Lfrac) * cell['k_air'] + Lfrac * cell[
-        'k_water']
-    cp_ice = 7.16 * T + 138
-    cp = Sfrac * cp_ice + (1 - Sfrac - Lfrac) * cell['cp_air'] + Lfrac * cell[
-        'cp_water']
-    rho = Sfrac * 913 + Lfrac * 1000
-    kappa = k / (cp * rho)
+
     output[0] = x[0] - T_sfc
     idx = np.arange(1, len(x) - 1)
-    output[idx] = T[idx] - x[idx] + dt * (kappa[idx] / dz ** 2) * (x[idx + 
+    output[idx] = cell['firn_temperature'][idx] - x[idx] + dt * (kappa[idx] / dz ** 2) * (x[idx +
         1] - 2 * x[idx] + x[idx - 1])
-    output[-1] = T[len(x) - 1] - x[len(x) - 1] + dt * (kappa[len(x) - 1] / 
+    output[-1] = cell['firn_temperature'][len(x) - 1] - x[len(x) - 1] + dt * (kappa[len(x) - 1] /
         dz ** 2) * (-x[len(x) - 1] + x[len(x) - 2])
     return output
 

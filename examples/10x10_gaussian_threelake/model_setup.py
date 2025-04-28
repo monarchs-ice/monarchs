@@ -20,8 +20,8 @@ print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 10  # Number of rows in your model grid, looking from top-down.
-col_amount = 10  # Number of columns in your model grid, looking from top-down.
+row_amount = 1  # Number of rows in your model grid, looking from top-down.
+col_amount = 1  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -58,10 +58,14 @@ Met data parameters
 met_data = {}
 timesteps_warm = 800
 timesteps_cold = 1720
-met_data["LW_surf"] = np.append(800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold))  # Incoming longwave radiation. [W m^-2].
-met_data["SW_surf"] = np.append(800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold))  # Incoming shortwave (solar) radiation. [W m^-2].
-met_data["dew_point_temperature"] = np.append(265 * np.ones(timesteps_warm), 240 * np.ones(timesteps_cold))  # Dew-point temperature. [K].
-met_data["temperature"] = np.append(267 * np.ones(timesteps_warm), 250 * np.ones(timesteps_cold))  # Surface-layer air temperature. [K].
+met_data["LW_surf"] = np.append(800 * np.ones(timesteps_warm),
+                                100 * np.ones(timesteps_cold))  # Incoming longwave radiation. [W m^-2].
+met_data["SW_surf"] = np.append(800 * np.ones(timesteps_warm),
+                                100 * np.ones(timesteps_cold))  # Incoming shortwave (solar) radiation. [W m^-2].
+met_data["dew_point_temperature"] = np.append(265 * np.ones(timesteps_warm),
+                                              240 * np.ones(timesteps_cold))  # Dew-point temperature. [K].
+met_data["temperature"] = np.append(267 * np.ones(timesteps_warm),
+                                    250 * np.ones(timesteps_cold))  # Surface-layer air temperature. [K].
 
 met_data["pressure"] = 1000 * np.ones(num_days * t_steps_per_day)  # Surface-layer air pressure. [hPa].
 met_data["wind"] = 5 * np.ones(num_days * t_steps_per_day)  # Wind speed. [m s^-1].
@@ -69,7 +73,8 @@ met_data["snowfall"] = 0 * np.ones(num_days * t_steps_per_day)  # Snowfall rate.
 met_data["snow_dens"] = 300 * np.ones(num_days * t_steps_per_day)  # Snow density. [kg m^-3].
 # take these 1D met parameters and broadcast them to the grid we actually want
 for key in met_data.keys():
-    met_data[key] = np.broadcast_to(met_data[key][:, np.newaxis, np.newaxis], (len(met_data[key]), row_amount, col_amount))
+    met_data[key] = np.broadcast_to(met_data[key][:, np.newaxis, np.newaxis],
+                                    (len(met_data[key]), row_amount, col_amount))
 
 met_output_filepath = 'output/met_data_threelake.nc'
 """
@@ -95,13 +100,13 @@ dump_data = True
 dump_filepath = (
     "output/gaussian_threelake_example_dump2.nc"  # Filename of our previously dumped state
 )
-reload_from_dump = False # Flag to determine whether to reload the state or not
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters
 """
 use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
-parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
+parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
 
@@ -116,12 +121,15 @@ All of these default to True.
 catchment_outflow = False  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
-flow_into_land = False # As above, but for flowing into invalid cells in addition to the model edge boundaries.
+flow_into_land = False  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
 
 # Just for this specific case - assert that the DEM is symmetric
 import numpy.testing as npt
+
 npt.assert_array_equal(firn_depth, firn_depth[::-1, ::-1])
 
 if __name__ == '__main__':
     from monarchs.core.driver import monarchs
-    grid = monarchs()
+    import cProfile
+
+    cProfile.run('grid = monarchs()', 'output/profile_output_expt.prof', sort='time')

@@ -1,6 +1,7 @@
 import numpy as np
+from numba import njit
 
-
+@njit
 def sfc_flux(melt, exposed_water, lid, lake, lake_depth, LW_in, SW_in,
     T_air, p_air, T_dp, wind, xsurf):
     """
@@ -50,7 +51,7 @@ def sfc_flux(melt, exposed_water, lid, lake, lake_depth, LW_in, SW_in,
     Q = epsilon * LW_in + (1 - alpha) * SW_in + Flat + Fsens
     return Q
 
-
+@njit
 def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
     """
     Determine the effective surface albedo depending on the situation at the
@@ -94,7 +95,7 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
         alpha = 0.867
     return alpha
 
-
+@njit
 def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
     """
     Calculate the latent and sensible heat fluxes given the wind speed and

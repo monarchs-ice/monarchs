@@ -58,34 +58,41 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     T_dp = args[7]
     wind = args[8]
     x_copy = np.copy(x)
+    # precompute some values
+    rho = cell['Sfrac'] * 913 + cell['Lfrac'] * 1000
+    k_ice = np.zeros(np.shape(cell['firn_temperature']))
+    k_ice[cell['firn_temperature'] < 273.15] = 1000 * (0.00224 + 5.975e-06 *
+                                                       (273.15 - cell['firn_temperature'][cell['firn_temperature'] <
+                                                                                          273.15]) ** 1.156)
+    k_ice[cell['firn_temperature'] >= 273.15] = 2.24
+    k = cell['Sfrac'] * k_ice + (1 - cell['Sfrac'] - cell['Lfrac']) * cell['k_air'] + cell['Lfrac'] * cell[
+        'k_water']
+    cp_ice = 7.16 * cell['firn_temperature'] + 138
+    cp = cell['Sfrac'] * cp_ice + (1 - cell['Sfrac'] - cell['Lfrac']) * cell['cp_air'] + cell['Lfrac'] * cell[
+        'cp_water']
+    kappa = k / (cp * rho)
     if fixed_sfc:
         eqn = heateqn.heateqn_fixedsfc
-        args = cell, dt, dz, 273.15
+        args = cell, dt, dz, 273.15, kappa
     else:
+
         eqn = heateqn.heateqn
-        args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
+        args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k, kappa
 
-    assert solver_method in ['hybr', 'df-sane'], f"Invalid solver method: {solver_method}"
 
-    try:
-        if solver_method == 'hybr':
-            soldict: OptimizeResult = root(eqn, x, args=args, method='hybr')
-        elif solver_method == 'df-sane':
-            soldict: OptimizeResult = root(eqn, x, args=args, method=
-                'df-sane', options={'line_search': 'cheng', 'maxfev': 1000,
-                'ftol': 1e-10})
-            if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or np.any(
-                soldict.x < 220) or not soldict.success:
-                raise Exception('Bad spectral solver output')
+    soldict: OptimizeResult = root(eqn, x, args=args, method=solver_method,
+                                   options={'xtol': 1E-5})
 
-    except Exception as e:
-        if solver_method != 'hybr':
-            soldict = root(eqn, x_copy, args=args, method='hybr')
-        else:
-            raise e
-    if np.isnan(soldict.x).any() or np.any(soldict.x > 320):
-        print(soldict.x)
-        raise ValueError('Bad solver output after fallback to hybrd')
+    # New approach. Calculate the surface temperature using a root finding algorithm, then
+    # use a tridiagonal solver to propagate it into the rest of the firn.
+    # except Exception as e:
+    #     if solver_method != 'hybr':
+    #         soldict = root(eqn, x_copy, args=args, method='hybr')
+    #     else:
+    #         raise e
+    # if np.isnan(soldict.x).any() or np.any(soldict.x > 320):
+    #     print(soldict.x)
+    #     raise ValueError('Bad solver output after fallback to hybrd')
     sol = soldict.x
     ier = soldict.success
     mesg = soldict.message
@@ -132,7 +139,8 @@ def lake_development_eqn(x, args):
         lake_temperature[i] = args[3 + i]
     T_core = lake_temperature[int(vert_grid_lake / 2)]
     output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q + np.sign(T_core -
-        x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
+                                                                   x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (
+                         4 / 3)
     return output
 
 
@@ -160,7 +168,7 @@ def lake_formation_eqn(x, args):
     k = args[3]
     T1 = args[4]
     output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k * (-T1 + x[0]) / (
-        firn_depth / vert_grid)
+            firn_depth / vert_grid)
     return output
 
 
@@ -223,8 +231,9 @@ def sfc_energy_virtual_lid(x, args):
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[5 + i]
     output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_v_lid * (-
-        lake_temperature[-2] + x[0]) / (lake_depth / (vert_grid_lake / 2) +
-        v_lid_depth)
+                                                                      lake_temperature[-2] + x[0]) / (
+                         lake_depth / (vert_grid_lake / 2) +
+                         v_lid_depth)
     return output
 
 
@@ -247,7 +256,7 @@ def sfc_energy_lid(x, args):
     vert_grid_lid = args[3]
     sub_T = args[4]
     output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_lid * (-sub_T +
-        x[0]) / (lid_depth / vert_grid_lid)
+                                                                    x[0]) / (lid_depth / vert_grid_lid)
     return output
 
 
@@ -327,6 +336,6 @@ def lid_heateqn_solver(x, args):
     Sfrac_lid = args[-2]
     k_lid = args[-1]
     args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k_lid,
-        Sfrac_lid)
+            Sfrac_lid)
     root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
     return root, infodict, ier, mesg
