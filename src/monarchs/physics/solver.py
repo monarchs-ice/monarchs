@@ -6,7 +6,6 @@ using the relevant flag in ``model_setup.py``, but also in our test suite.
 This is in part a tradeoff between usability of the model, and code clarity. This approach was chosen to maximise
 usability, so that the different solvers can be generated according to the value of a single Boolean.
 """
-
 import numpy as np
 from scipy.optimize import root, fsolve, OptimizeResult
 from monarchs.physics import heateqn
@@ -61,27 +60,29 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     x_copy = np.copy(x)
     if fixed_sfc:
         eqn = heateqn.heateqn_fixedsfc
-        args = (cell, dt, dz, 273.15)
+        args = cell, dt, dz, 273.15
     else:
         eqn = heateqn.heateqn
-        args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind)
+        args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
+
+    assert solver_method in ['hybr', 'df-sane'], f"Invalid solver method: {solver_method}"
+
     try:
         if solver_method == 'hybr':
             soldict: OptimizeResult = root(eqn, x, args=args, method='hybr')
-
         elif solver_method == 'df-sane':
-            soldict: OptimizeResult = root(eqn, x, args=args, method='df-sane',
-                                           options={'line_search': 'cheng', 'maxfev': 1000,
-                                                    'ftol': 1e-10})
-
-            # error handling for experimental solver - if it fails, fall back to hybr
-            if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or np.any(soldict.x < 220) or not soldict.success:
+            soldict: OptimizeResult = root(eqn, x, args=args, method=
+                'df-sane', options={'line_search': 'cheng', 'maxfev': 1000,
+                'ftol': 1e-10})
+            if np.isnan(soldict.x).any() or np.any(soldict.x > 320) or np.any(
+                soldict.x < 220) or not soldict.success:
                 raise Exception('Bad spectral solver output')
 
     except Exception as e:
         if solver_method != 'hybr':
             soldict = root(eqn, x_copy, args=args, method='hybr')
-
+        else:
+            raise e
     if np.isnan(soldict.x).any() or np.any(soldict.x > 320):
         print(soldict.x)
         raise ValueError('Bad solver output after fallback to hybrd')
@@ -89,32 +90,19 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     ier = soldict.success
     mesg = soldict.message
     infodict = soldict.success
-
     if not fixed_sfc and (sol > 320).any():
         print('x0 = ', sol[:10])
-        raise ValueError("Surface temperature too high - heateqn")
-
+        raise ValueError('Surface temperature too high - heateqn')
     if fixed_sfc and (sol > 273.151).any():
         print('x0 = ', sol[:10])
-        raise ValueError("Surface temperature too high - heateqn_fixedsfc")
-
-    # Fix small numerical/rounding errors by forcing max temperature = 273.15
+        raise ValueError('Surface temperature too high - heateqn_fixedsfc')
     sol[np.where((sol > 273.15) & (sol < 273.1501))] = 273.15
-
-    if (np.isnan(sol)).any() and soldict.success:
+    if np.isnan(sol).any() and soldict.success:
         print('x0 = ', sol[:10])
         for key in soldict.keys():
             print(f'{key}: {soldict[key]}')
-        raise ValueError("NaN in root - heateqn")
-    # print(f'LW = {LW_in}, SW = {SW_in}, T_air = {T_air}, p_air = {p_air}, T_dp = {T_dp}')
-    # print('Root[0] = ', root[:10], 'for fixedsfc = ', fixed_sfc)
-
-    # we only return root in the model (hence why in driver.py we index the function by [0],
-    # but the other info is useful for testing so can be used if calling solver directly
-    # if soldict.success:
+        raise ValueError('NaN in root - heateqn')
     return sol, infodict, ier, mesg
-    # else:
-    #     return x, infodict, ier, mesg
 
 
 def lake_development_eqn(x, args):
@@ -136,22 +124,15 @@ def lake_development_eqn(x, args):
     output : float
         Estimate of the surface lake temperature [K].
     """
-
     J = args[0]
     Q = args[1]
     vert_grid_lake = args[2]
     lake_temperature = np.zeros(int(vert_grid_lake))
-    # have to use a loop as Numba doesn't like slicing like args[3:] with cfuncs
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[3 + i]
     T_core = lake_temperature[int(vert_grid_lake / 2)]
-
-    output = (
-            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
-            + Q
-            + (np.sign(T_core - x[0]) * 1000 * 4181 * J * (abs(T_core - x[0]) ** (4 / 3)))
-    )
-
+    output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q + np.sign(T_core -
+        x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
     return output
 
 
@@ -178,12 +159,8 @@ def lake_formation_eqn(x, args):
     Q = args[2]
     k = args[3]
     T1 = args[4]
-
-    output = (
-            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
-            + Q
-            - k * (-T1 + x[0]) / (firn_depth / vert_grid)
-    )
+    output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k * (-T1 + x[0]) / (
+        firn_depth / vert_grid)
     return output
 
 
@@ -219,12 +196,9 @@ def lake_solver(x, args, formation=False):
     """
     if formation:
         eqn = lake_formation_eqn
-
     else:
         eqn = lake_development_eqn
-
     root, ier, mesg, infodict = fsolve(eqn, x, args=args, full_output=True)
-
     return root, infodict, ier, mesg
 
 
@@ -246,17 +220,11 @@ def sfc_energy_virtual_lid(x, args):
     vert_grid_lake = args[3]
     v_lid_depth = args[4]
     lake_temperature = np.zeros(int(vert_grid_lake))
-    # hacky way to assign lake_temperature as the cfunc doesn't like slicing normally
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[5 + i]
-
-    output = (
-            -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
-            + Q
-            - k_v_lid
-            * (-lake_temperature[-2] + x[0])
-            / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
-    )
+    output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_v_lid * (-
+        lake_temperature[-2] + x[0]) / (lake_depth / (vert_grid_lake / 2) +
+        v_lid_depth)
     return output
 
 
@@ -278,12 +246,8 @@ def sfc_energy_lid(x, args):
     lid_depth = args[2]
     vert_grid_lid = args[3]
     sub_T = args[4]
-
-    output = (
-            -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
-            + Q
-            - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
-    )
+    output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_lid * (-sub_T +
+        x[0]) / (lid_depth / vert_grid_lid)
     return output
 
 
@@ -319,17 +283,9 @@ def lid_seb_solver(x, args, v_lid=False):
     """
     if v_lid:
         eqn = sfc_energy_virtual_lid
-
     else:
         eqn = sfc_energy_lid
-    # print('Args = ', args)
-    # print('Argshape = ', np.shape(args))
     root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
-    # try:
-    #     if len(root) == 1:
-    #         root = root[0]
-    # except TypeError:
-    #     pass
     return root, infodict, ier, mesg
 
 
@@ -370,18 +326,7 @@ def lid_heateqn_solver(x, args):
     wind = args[8]
     Sfrac_lid = args[-2]
     k_lid = args[-1]
-    args = (
-        cell,
-        dt,
-        dz,
-        LW_in,
-        SW_in,
-        T_air,
-        p_air,
-        T_dp,
-        wind,
-        k_lid,
-        Sfrac_lid,
-    )
+    args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k_lid,
+        Sfrac_lid)
     root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
     return root, infodict, ier, mesg

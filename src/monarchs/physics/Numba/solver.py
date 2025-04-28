@@ -6,35 +6,19 @@ using the relevant flag in ``model_setup.py``, but also in our test suite.
 This is in part a tradeoff between usability of the model, and code clarity. This approach was chosen to maximise
 usability, so that the different solvers can be generated according to the value of a single Boolean.
 """
-
 import numpy as np
 from NumbaMinpack import hybrd, minpack_sig
 from numba import cfunc, jit
-
 import monarchs.physics.Numba.heateqn_nb as hnb
-
 heqlid = hnb.heateqn_lid.address
 heq = hnb.heateqn.address
 heqfs = hnb.heateqn_fixedsfc.address
 
 
 @jit(nopython=True, fastmath=False)
-def args_array(
-    cell,
-    dt,
-    dz,
-    LW_in,
-    SW_in,
-    T_air,
-    p_air,
-    T_dp,
-    wind,
-    fixed_sfc=False,
-    Tsfc=273.15,
-    lid=False,
-    Sfrac_lid=np.array([np.nan]),
-    k_lid=np.nan,
-):
+def args_array(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
+    fixed_sfc=False, Tsfc=273.15, lid=False, Sfrac_lid=np.array([np.nan]),
+    k_lid=np.nan):
     """
     Convert the variables from an instance of the IceShelf class into the
     format required to run NumbaMinpack.hybrd, a root finder written in Fortran
@@ -89,73 +73,30 @@ def args_array(
 
     """
     if lid:
-        args = np.hstack(
-            (
-                np.array([cell.vert_grid_lid]),
-                cell.lid_temperature,
-                Sfrac_lid,
-                np.array([k_lid]),
-                np.array([cell.cp_air]),
-                np.array([cell.cp_water]),
-                np.array([dt]),
-                np.array([dz]),
-                np.array([cell.melt]),
-                np.array([cell.exposed_water]),
-                np.array([cell.lid]),
-                np.array([cell.lake]),
-                np.array([cell.lake_depth]),
-                np.array([LW_in]),
-                np.array([SW_in]),
-                np.array([T_air]),
-                np.array([p_air]),
-                np.array([T_dp]),
-                np.array([wind]),
-            )
-        )
-    # test = cell.firn_temperature
+        args = np.hstack((np.array([cell['vert_grid_lid']]), cell[
+            'lid_temperature'], Sfrac_lid, np.array([k_lid]), np.array([
+            cell['cp_air']]), np.array([cell['cp_water']]), np.array([dt]),
+            np.array([dz]), np.array([cell['melt']]), np.array([cell[
+            'exposed_water']]), np.array([cell['lid']]), np.array([cell[
+            'lake']]), np.array([cell['lake_depth']]), np.array([LW_in]),
+            np.array([SW_in]), np.array([T_air]), np.array([p_air]), np.
+            array([T_dp]), np.array([wind])))
     elif not fixed_sfc:
-        args = np.hstack(
-            (
-                np.array([cell.vert_grid]),
-                cell.firn_temperature,
-                cell.Sfrac,
-                cell.Lfrac,
-                np.array([cell.k_air]),
-                np.array([cell.k_water]),
-                np.array([cell.cp_air]),
-                np.array([cell.cp_water]),
-                np.array([dt]),
-                np.array([dz]),
-                np.array([cell.melt]),
-                np.array([cell.exposed_water]),
-                np.array([cell.lid]),
-                np.array([cell.lake]),
-                np.array([cell.lake_depth]),
-                np.array([LW_in]),
-                np.array([SW_in]),
-                np.array([T_air]),
-                np.array([p_air]),
-                np.array([T_dp]),
-                np.array([wind]),
-            )
-        )
-
+        args = np.hstack((np.array([cell['vert_grid']]), cell[
+            'firn_temperature'], cell['Sfrac'], cell['Lfrac'], np.array([
+            cell['k_air']]), np.array([cell['k_water']]), np.array([cell[
+            'cp_air']]), np.array([cell['cp_water']]), np.array([dt]), np.
+            array([dz]), np.array([cell['melt']]), np.array([cell[
+            'exposed_water']]), np.array([cell['lid']]), np.array([cell[
+            'lake']]), np.array([cell['lake_depth']]), np.array([LW_in]),
+            np.array([SW_in]), np.array([T_air]), np.array([p_air]), np.
+            array([T_dp]), np.array([wind])))
     else:
-        args = np.hstack(
-            (
-                np.array([cell.vert_grid]),
-                cell.firn_temperature,
-                cell.Sfrac,
-                cell.Lfrac,
-                np.array([cell.k_air]),
-                np.array([cell.k_water]),
-                np.array([cell.cp_air]),
-                np.array([cell.cp_water]),
-                np.array([dt]),
-                np.array([dz]),
-                np.array([Tsfc]),
-            )
-        )
+        args = np.hstack((np.array([cell['vert_grid']]), cell[
+            'firn_temperature'], cell['Sfrac'], cell['Lfrac'], np.array([
+            cell['k_air']]), np.array([cell['k_water']]), np.array([cell[
+            'cp_air']]), np.array([cell['cp_water']]), np.array([dt]), np.
+            array([dz]), np.array([Tsfc])))
     return args
 
 
@@ -208,7 +149,6 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         !!    ten iterations.
 
     """
-    # cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind = [arg for arg in args]
     cell = args[0]
     dt = args[1]
     dz = args[2]
@@ -218,43 +158,17 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     p_air = args[6]
     T_dp = args[7]
     wind = args[8]
-    args = args_array(
-        cell,
-        dt,
-        dz,
-        LW_in,
-        SW_in,
-        T_air,
-        p_air,
-        T_dp,
-        wind,
-        fixed_sfc=fixed_sfc,
-    )
+    args = args_array(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
+        fixed_sfc=fixed_sfc)
     if fixed_sfc:
         eqn = heqfs
     else:
         eqn = heq
-
     root, fvec, success, info = hybrd(eqn, x, args)
-
     if info == 4:
-        # infostring = (
-        #     "hybrd: iteration is not making good progress, as measured by the improvement "
-        #     "from the last five Jacobian evaluations.\n"
-        # )
-        # print(infostring)
-        # cell.log = cell.log + infostring
         pass
     if info == 5:
-        # infostring = (
-        #     "hybrd: iteration is not making good progress, as measured by the improvement from the "
-        #     "last ten Jacobian evaluations.\n"
-        # )
-        # print(infostring)
-        # cell.log = cell.log + infostring
         pass
-    # we only return root in the model (hence why in driver.py we index the function by [0],
-    # but the other info is useful for testing so can be used if calling solver directly
     return root, fvec, success, info
 
 
@@ -280,28 +194,15 @@ def lake_development_eqn(x, output, args):
     -------
     None.
     """
-
-    J = args[
-        0
-    ]  # float, turbulent heat flux factor, equal to 1.907 E-5. [m s^-1 K^-(1/3)]
-    Q = args[1]  # float, Surface energy flux [W m^-2]
-    vert_grid_lake = args[2]  # float, number of vertical levels in the lake profile
-    lake_temperature = np.zeros(
-        int(vert_grid_lake)
-    )  # array_like, float, dimension(vert_grid_lake)
-    # have to use a loop as Numba doesn't like slicing like args[3:] with cfuncs
+    J = args[0]
+    Q = args[1]
+    vert_grid_lake = args[2]
+    lake_temperature = np.zeros(int(vert_grid_lake))
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[3 + i]
-    # get core temperature via central point of lake
     T_core = lake_temperature[int(vert_grid_lake / 2)]
-
-    # set output[0] rather than just output else we will just return our initial guess.
-    # (i.e. solution does not converge and the code fails)
-    output[0] = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
-        + Q
-        + (np.sign(T_core - x[0]) * 1000 * 4181 * J * (abs(T_core - x[0]) ** (4 / 3)))
-    )
+    output[0] = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q + np.sign(
+        T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
 
 
 @jit(nopython=True, fastmath=False)
@@ -331,12 +232,8 @@ def lake_formation_eqn(x, output, args):
     Q = args[2]
     k = args[3]
     T1 = args[4]
-    # set output[0] rather than just output else we will just return our initial guess.
-    output[0] = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
-        + Q
-        - k * (-T1 + x[0]) / (firn_depth / vert_grid)
-    )
+    output[0] = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k * (-T1 + x[0]
+        ) / (firn_depth / vert_grid)
 
 
 dev_eqn_cfunc = cfunc(minpack_sig)(lake_development_eqn)
@@ -374,15 +271,11 @@ def lake_solver(x, args, formation=False):
     info : int
         Integer flag containing information on the status of the solution.
     """
-    # load in from the compiled function address in memory rather than the Python function object
     if formation:
         eqn = form_eqnaddress
-
     else:
         eqn = dev_eqnaddress
-
     root, fvec, success, info = hybrd(eqn, x, args)
-
     return root, fvec, success, info
 
 
@@ -394,19 +287,11 @@ def sfc_energy_virtual_lid(x, output, args):
     vert_grid_lake = args[3]
     v_lid_depth = args[4]
     lake_temperature = np.zeros(int(vert_grid_lake))
-    # hacky way to assign lake_temperature as the cfunc doesn't like slicing normally
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[5 + i]
-
-    # set output[0] rather than just output as solution doesn't converge otherwise
-    # for whatever reason.
-    output[0] = (
-        -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
-        + Q
-        - k_v_lid
-        * (-lake_temperature[2] + x[0])
-        / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
-    )
+    output[0] = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_v_lid * (-
+        lake_temperature[2] + x[0]) / (lake_depth / (vert_grid_lake / 2) +
+        v_lid_depth)
 
 
 @jit(nopython=True, fastmath=False)
@@ -423,18 +308,13 @@ def sfc_energy_lid(x, output, args):
     -------
 
     """
-
     Q = args[0]
     k_lid = args[1]
     lid_depth = args[2]
     vert_grid_lid = args[3]
     sub_T = args[4]
-
-    output[0] = (
-        -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
-        + Q
-        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
-    )
+    output[0] = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_lid * (-
+        sub_T + x[0]) / (lid_depth / vert_grid_lid)
 
 
 sfc_energy_virtual_lid = cfunc(minpack_sig)(sfc_energy_virtual_lid)
@@ -490,12 +370,9 @@ def lid_seb_solver(x, args, v_lid=False):
     """
     if v_lid:
         eqn = sfc_energy_vlid_address
-
     else:
         eqn = sfc_energy_lid_address
-
     root, fvec, success, info = hybrd(eqn, x, args)
-
     return root, fvec, success, info
 
 
@@ -551,26 +428,7 @@ def lid_heateqn_solver(x, args):
     wind = args[8]
     Sfrac_lid = args[-2]
     k_lid = args[-1]
-    args = args_array(
-        cell,
-        dt,
-        dz,
-        LW_in,
-        SW_in,
-        T_air,
-        p_air,
-        T_dp,
-        wind,
-        lid=True,
-        k_lid=k_lid,
-        Sfrac_lid=Sfrac_lid,
-    )
-    # print(f'Lid heat equation solver, loaded in args... col = {cell.column}, row = {cell.row}')
-    # for idx, arg in enumerate(args):
-    #     print(f'index = {idx}')
-    #     print(arg)
-    # print('Temp = ', cell.lid_temperature)
-    # print('args shape = ', np.shape(args))
+    args = args_array(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
+        lid=True, k_lid=k_lid, Sfrac_lid=Sfrac_lid)
     root, fvec, success, info = hybrd(eqn, x, args)
-
     return root, fvec, success, info

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Aug 28 15:08:04 2023
 
@@ -6,22 +5,9 @@ Created on Mon Aug 28 15:08:04 2023
 """
 
 
-
-def initialise_met_data_grid(
-    row_amount,
-    col_amount,
-    snowfall,
-    snow_dens,
-    temperature,
-    wind,
-    surf_pressure,
-    dewpoint_temperature,
-    LW_down,
-    SW_down,
-    latitude,
-    longitude,
-    use_numba=False
-):
+def initialise_met_data_grid(row_amount, col_amount, snowfall, snow_dens,
+    temperature, wind, surf_pressure, dewpoint_temperature, LW_down,
+    SW_down, latitude, longitude, use_numba=False):
     """
     Create a grid of MetData objects, each one associated with an IceShelf object.
     This is done using a Numba typed list if possible, to ensure compatibility.
@@ -57,41 +43,23 @@ def initialise_met_data_grid(
     grid : List, or numba.typed.List
         Model grid of IceShelf objects. This is the main data structure of MONARCHS.
     """
-    # Create a Numba typed list instead of a nested list. Each element of the
-    # typed list is also a typed list, consisting of an instance of the
-    # MetData class. This lets us use Numba's prange
     if use_numba:
         from numba.typed import List
         grid = List()
     else:
         grid = []
-
     for i in range(row_amount):
         if use_numba:
             _l = List()
         else:
             _l = []
         for j in range(col_amount):
-            _l.append(
-                MetData(
-                    snowfall[:, i, j],
-                    snow_dens[:, i, j],
-                    temperature[:, i, j],
-                    wind[:, i, j],
-                    surf_pressure[:, i, j],
-                    dewpoint_temperature[:, i, j],
-                    LW_down[:, i, j],
-                    SW_down[:, i, j],
-                    latitude[i, j],
-                    longitude[i, j],
-                )
-            )
-
+            _l.append(MetData(snowfall[:, i, j], snow_dens[:, i, j],
+                temperature[:, i, j], wind[:, i, j], surf_pressure[:, i, j],
+                dewpoint_temperature[:, i, j], LW_down[:, i, j], SW_down[:,
+                i, j], latitude[i, j], longitude[i, j]))
         grid.append(_l)
     return grid
-
-
-# Define spec for the MetData class - i.e. what variables and dtypes
 
 
 class MetData:
@@ -119,19 +87,9 @@ class MetData:
         downwelling shortwave radiation as a function of time [W m^-2]
     """
 
-    def __init__(
-        self,
-        snowfall,
-        snow_dens,
-        temperature,
-        wind,
-        surf_pressure,
-        dew_point_temperature,
-        LW_down,
-        SW_down,
-        latitude,
-        longitude
-    ):
+    def __init__(self, snowfall, snow_dens, temperature, wind,
+        surf_pressure, dew_point_temperature, LW_down, SW_down, latitude,
+        longitude):
         self.snowfall = snowfall
         self.temperature = temperature
         self.wind = wind
@@ -143,20 +101,12 @@ class MetData:
         self.lat = latitude
         self.lon = longitude
 
+
 def get_spec():
     from numba import float64
-    spec = [
-        ("snowfall", float64[:]),
-        ("snow_dens", float64[:]),
-        ("temperature", float64[:]),
-        ("wind", float64[:]),
-        ("surf_pressure", float64[:]),
-        ("dew_point_temperature", float64[:]),
-        ("LW_down", float64[:]),
-        ("SW_down", float64[:]),
-        ("lat", float64),
-        ("lon", float64),
-    ]
+    spec = [('snowfall', float64[:]), ('snow_dens', float64[:]), (
+        'temperature', float64[:]), ('wind', float64[:]), ('surf_pressure',
+        float64[:]), ('dew_point_temperature', float64[:]), ('LW_down',
+        float64[:]), ('SW_down', float64[:]), ('lat', float64), ('lon',
+        float64)]
     return spec
-
-

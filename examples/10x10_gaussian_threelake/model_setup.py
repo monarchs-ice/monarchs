@@ -103,7 +103,7 @@ Computing and numerical parameters
 use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
-use_mpi = True
+use_mpi = False
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).

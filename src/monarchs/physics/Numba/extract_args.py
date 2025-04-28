@@ -61,13 +61,7 @@ def extract_args(args):
      Wind speed. [m s^-1].
 
     """
-
-    # -1 doesnt work so use 0 and convert to int as we use it for indexing
     vert_grid = np.int32(args[0])
-
-    # initialise vectors and write into them - Numba doesn't like it if
-    # we assign them directly for some reason, but this has no impact on
-    # performance
     T = np.zeros(vert_grid)
     for i in range(vert_grid):
         T[i] = args[i + 1]
@@ -76,10 +70,7 @@ def extract_args(args):
         Sfrac[i] = args[vert_grid + i + 1]
     Lfrac = np.zeros(vert_grid)
     for i in range(vert_grid):
-        Lfrac[i] = args[(vert_grid * 2) + i + 1]
-
-    # find index corresponding to where our vertically-resolved variables
-    # are all read in - the following are all length-1
+        Lfrac[i] = args[vert_grid * 2 + i + 1]
     arrind = 3 * vert_grid + 1
     k_air = args[arrind]
     k_water = args[arrind + 1]
@@ -87,10 +78,6 @@ def extract_args(args):
     cp_water = args[arrind + 3]
     dt = args[arrind + 4]
     dz = args[arrind + 5]
-
-    # we had to convert these to floats for the purposes of
-    # reading them in as args needed a unified datatype - now recast them
-    # to the original dtypes.
     melt = bool(args[arrind + 6])
     exposed_water = bool(args[arrind + 7])
     lid = bool(args[arrind + 8])
@@ -102,29 +89,9 @@ def extract_args(args):
     p_air = args[arrind + 14]
     T_dp = args[arrind + 15]
     wind = args[arrind + 16]
-
-    return (
-        T,
-        Sfrac,
-        Lfrac,
-        k_air,
-        k_water,
-        cp_air,
-        cp_water,
-        dt,
-        dz,
-        melt,
-        exposed_water,
-        lid,
-        lake,
-        lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
-        p_air,
-        T_dp,
-        wind,
-    )
+    return (T, Sfrac, Lfrac, k_air, k_water, cp_air, cp_water, dt, dz, melt,
+        exposed_water, lid, lake, lake_depth, LW_in, SW_in, T_air, p_air,
+        T_dp, wind)
 
 
 def extract_args_fixedsfc(args):
@@ -168,9 +135,7 @@ def extract_args_fixedsfc(args):
         Surface temperature [K]
 
     """
-
     vert_grid = int(args[0])
-
     T = np.zeros(vert_grid)
     for i in range(vert_grid):
         T[i] = args[i + 1]
@@ -179,8 +144,7 @@ def extract_args_fixedsfc(args):
         Sfrac[i] = args[vert_grid + i + 1]
     Lfrac = np.zeros(vert_grid)
     for i in range(vert_grid):
-        Lfrac[i] = args[(vert_grid * 2) + i + 1]
-
+        Lfrac[i] = args[vert_grid * 2 + i + 1]
     arrind = 3 * vert_grid + 1
     k_air = args[arrind]
     k_water = args[arrind + 1]
@@ -189,7 +153,6 @@ def extract_args_fixedsfc(args):
     dt = args[arrind + 4]
     dz = args[arrind + 5]
     Tsfc = args[arrind + 6]
-
     return T, Sfrac, Lfrac, k_air, k_water, cp_air, cp_water, dt, dz, Tsfc
 
 
@@ -250,32 +213,19 @@ def extract_args_lid(args):
         Wind speed. [m s^-1].
 
     """
-
-    # -1 doesnt work so use 0 and convert to int as we use it for indexing
     vert_grid = np.int32(args[0])
-
-    # initialise vectors and write into them - Numba doesn't like it if
-    # we assign them directly for some reason, but this has no impact on
-    # performance
     T = np.zeros(vert_grid)
     for i in range(vert_grid):
         T[i] = args[i + 1]
     Sfrac = np.zeros(vert_grid)
     for i in range(vert_grid):
         Sfrac[i] = args[vert_grid + i + 1]
-
-    # find index corresponding to where our vertically-resolved variables
-    # are all read in - the following are all length-1
     arrind = 2 * vert_grid + 1
     k_lid = args[arrind]
     cp_air = args[arrind + 1]
     cp_water = args[arrind + 2]
     dt = args[arrind + 3]
     dz = args[arrind + 4]
-
-    # we had to convert these to floats for the purposes of
-    # reading them in as args needed a unified datatype - now recast them
-    # to the original dtypes.
     melt = bool(args[arrind + 5])
     exposed_water = bool(args[arrind + 6])
     lid = bool(args[arrind + 7])
@@ -287,29 +237,11 @@ def extract_args_lid(args):
     p_air = args[arrind + 13]
     T_dp = args[arrind + 14]
     wind = args[arrind + 15]
-
-    return (
-        T,
-        Sfrac,
-        k_lid,
-        cp_air,
-        cp_water,
-        dt,
-        dz,
-        melt,
-        exposed_water,
-        lid,
-        lake,
-        lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
-        p_air,
-        T_dp,
-        wind,
-    )
+    return (T, Sfrac, k_lid, cp_air, cp_water, dt, dz, melt, exposed_water,
+        lid, lake, lake_depth, LW_in, SW_in, T_air, p_air, T_dp, wind)
 
 
 extract_args = jit(extract_args, nopython=True, fastmath=False)
-extract_args_fixedsfc = jit(extract_args_fixedsfc, nopython=True, fastmath=False)
+extract_args_fixedsfc = jit(extract_args_fixedsfc, nopython=True, fastmath=
+    False)
 extract_args_lid = jit(extract_args_lid, nopython=True, fastmath=False)

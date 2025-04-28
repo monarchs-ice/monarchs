@@ -6,26 +6,14 @@ core.iceshelf_class), flattens this grid and then runs timestep_loop()
 in parallel (using either pathos.Pool or numba.prange, since the problem is
 embarassingly parallel), unless model_setup.parallel = False.
 """
-#from pathos.pools import ParallelPool as Pool
 from multiprocessing import Pool
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
-#from monarchs.core.configuration import model_setup
 from monarchs.core.utils import get_2d_grid
 
 
-def loop_over_grid(
-        row_amount,
-        col_amount,
-        grid,
-        dt,
-        met_data,
-        t_steps_per_day,
-        toggle_dict,
-        parallel=False,
-        use_mpi=False,
-        ncores="all",
-):
+def loop_over_grid(row_amount, col_amount, grid, dt, met_data,
+    t_steps_per_day, toggle_dict, parallel=False, use_mpi=False, ncores='all'):
     """
     This function wraps timestep_loop, allowing for it to be
     run in parallel over an arbitrarily sized grid.
@@ -85,102 +73,49 @@ def loop_over_grid(
         if one parallel process fails and returns None, then ValueError is returned to ensure the code
         stops rather than continuing fruitlessly.
     """
-
     flat_grid = []
     met_data_grid = []
-    # need to make our dict of toggles a grid, else it will just pass individual elements of the dict to each process
     toggle_dict_grid = []
-    x0 = get_2d_grid(grid, "column")
+    x0 = get_2d_grid(grid, 'column')
     for i in range(col_amount):
         for j in range(row_amount):
             flat_grid.append(grid[i][j])
             met_data_grid.append(met_data[i][j])
             toggle_dict_grid.append(toggle_dict)
-
     if parallel:
         dt = [dt] * len(flat_grid)
         t_steps_per_day = [t_steps_per_day] * len(flat_grid)
-
-        #"""
-        #Distributed-memory parallelism (potentially across nodes) using MPI.
-        #"""
         if use_mpi:
             from mpi4py import MPI
             from mpi4py.futures import MPIPoolExecutor, wait
-
             COMM = MPI.COMM_WORLD
             iceshelf = []
-
             with MPIPoolExecutor() as executor:
                 for i in range(len(flat_grid)):
                     print('i = ', i)
-                    iceshelf.append(
-                        executor.submit(
-                            timestep_loop,
-                            flat_grid[i],
-                            dt[i],
-                            met_data_grid[i],
-                            t_steps_per_day[i],
-                            toggle_dict_grid[i],
-                        )
-                    )
+                    iceshelf.append(executor.submit(timestep_loop,
+                        flat_grid[i], dt[i], met_data_grid[i],
+                        t_steps_per_day[i], toggle_dict_grid[i]))
             wait(iceshelf)
             iceshelf = [i.result() for i in iceshelf]
-            # Attempt 2 - using more typical MPI-like approach with scatter and gather
-            #
-            # if COMM.rank == 0:
-            #     COMM.scatter(flat_grid, root=0)
-            #     timestep_loop()
-
-
-        #"""
-        #Parallelism on a single node using multiprocessing.
-        #"""
         else:
-            # First - we want to set up everything in shared memory. This is because MONARCHS makes heavy use of
-            # mutation in order to speed things up.
-            # from multiprocessing import shared_memory
-            # shm = shared_memory.SharedMemory(create=True, size=0)
-
-            with Pool(nodes=ncores, maxtasksperchild=1) as p:
-                # we want to get out our IceShelf and our Logger grids, so get out an array res and index it
-                # to get these
-                res = p.map(
-                    timestep_loop,
-                    flat_grid,
-                    dt,
-                    met_data_grid,
-                    t_steps_per_day,
-                    toggle_dict_grid,
-                )  # , flat_log_grid)
+            with Pool(ncores, maxtasksperchild=1) as p:
+                res = p.starmap(timestep_loop, zip(flat_grid, dt, met_data_grid,
+                    t_steps_per_day, toggle_dict_grid))
             iceshelf = np.array(res)
-
-        # print('resT = ', res[0].T)
-        # print('resFD = ', res[-1].firn_depth)
         for i in range(len(flat_grid)):
             if iceshelf[i] is None:
                 raise ValueError(
                     """Timestep_loop returned None for at least one grid cell. 
  Check the logs to diagnose potential errors, or run without parallel = True."""
-                )
+                    )
             flat_grid[i] = iceshelf[i]
-        xnew = get_2d_grid(grid, "column")
+        xnew = get_2d_grid(grid, 'column')
         assert (xnew == x0).all()
-        return np.reshape(
-            flat_grid, np.shape(grid)
-        )
-    # , np.reshape(flat_log_grid, np.shape(log_grid))
-
-    # If not parallel - just do timestep loop sequentially.
+        return np.reshape(flat_grid, np.shape(grid))
     else:
         for i in range(row_amount * col_amount):
-            timestep_loop(
-                flat_grid[i],
-                dt,
-                met_data_grid[i],
-                t_steps_per_day,
-                toggle_dict,  # , flat_log_grid[i]
-            )
-
-        xnew = get_2d_grid(grid, "column")
+            timestep_loop(flat_grid[i], dt, met_data_grid[i],
+                t_steps_per_day, toggle_dict)
+        xnew = get_2d_grid(grid, 'column')
         assert (xnew == x0).all()

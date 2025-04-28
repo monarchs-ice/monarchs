@@ -1,20 +1,8 @@
 import numpy as np
-# import warnings
-# warnings.filterwarnings("error")
-def sfc_flux(
-    melt,
-    exposed_water,
-    lid,
-    lake,
-    lake_depth,
-    LW_in,
-    SW_in,
-    T_air,
-    p_air,
-    T_dp,
-    wind,
-    xsurf,
-):
+
+
+def sfc_flux(melt, exposed_water, lid, lake, lake_depth, LW_in, SW_in,
+    T_air, p_air, T_dp, wind, xsurf):
     """
     Calculate the surface heat flux from the input shortwave and longwave fluxes
     and latent/sensible heat fluxes.
@@ -56,16 +44,10 @@ def sfc_flux(
         Surface energy flux. [W m^-2].
 
     """
-
-    # Positive going into ice shelf
     alpha = sfc_albedo(melt, exposed_water, lid, lake, lake_depth)
-
     Flat, Fsens = bulk_fluxes(wind, T_air, xsurf, p_air, T_dp)
-
-    epsilon = 0.98  # emissivity
-    Q = (epsilon * LW_in) + ((1 - alpha) * SW_in) + Flat + Fsens
-    # print('Q= ',Q, ' albedo=', alpha, ' F_sens=', Fsens, ' Flat=', Flat, 'F_lw=', LW_in, 'Fsw=', SW_in)
-
+    epsilon = 0.98
+    Q = epsilon * LW_in + (1 - alpha) * SW_in + Flat + Fsens
     return Q
 
 
@@ -96,26 +78,20 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
         Effective surface albedo for shortwave radiation.
 
     """
-    # Calculate surface albedo
     if melt:
         if exposed_water:
             if lid:
-                alpha = 0.413  # ice lid albedo
+                alpha = 0.413
             elif lake:
                 h = lake_depth
-                alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
-                    -539 + 20000 * np.exp(3.6 * h)
-                )
-                # lake albedo
+                alpha = (9702 + 1000 * np.exp(3.6 * h)) / (-539 + 20000 *
+                    np.exp(3.6 * h))
             else:
-                alpha = 0.6  # saturated firn albedo
-                # raise Exception('Lake and lid False, exposed_water = True, alpha undefined')
-                # sys.exit(1)
+                alpha = 0.6
         else:
-            alpha = 0.6  # wet snow albedo
+            alpha = 0.6
     else:
-        alpha = 0.8670  # dry snow albedo
-
+        alpha = 0.867
     return alpha
 
 
@@ -149,42 +125,30 @@ def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
 
     =======
     """
-    g = 9.8  # Gravity
+    g = 9.8
     b = 20
-    dz = 10  # Height windspeed is measured at
-    CT0 = 1.3 * 10 ** (-3)
+    dz = 10
+    CT0 = 1.3 * 10 ** -3
     c = 1961 * b * CT0
-    R_dry = 287.0597  # J kg−1 K−1 From section 12 of documentation in docstring
-    R_sat = 461.5250  # J kg−1 K−1
-    a1 = 611.21  # Pa
-    T_0 = 273.16  # K
-    a3 = 17.502  # This and a4 set to over water values as dewpoint temp being used (following ERA-5 documentation)
-    a4 = 32.19  # K
-    # Calculate the saturation vapour pressure at the dewpoint temperature (i.e. the vapour pressure at the real temp)
+    R_dry = 287.0597
+    R_sat = 461.525
+    a1 = 611.21
+    T_0 = 273.16
+    a3 = 17.502
+    a4 = 32.19
     e_sat = a1 * np.exp(a3 * (T_dp - T_0) / (T_dp - a4))
-    # Alternative form for testing - Clausius-Clapeyron over ice
-    # e_sat = a1 * np.exp(22.587 * (T_dp - T_0) / (T_dp + 0.7))
-    s_hum = ((R_dry / R_sat) * e_sat) / (
-        p_air - (e_sat * (1 - (R_dry / R_sat)))
-    )  # this is in kg/kg I think?
-
-    if wind == 0:  # Richardson number
+    s_hum = R_dry / R_sat * e_sat / (p_air - e_sat * (1 - R_dry / R_sat))
+    if wind == 0:
         Ri = 0
     else:
-        Ri = (g * (T_air - T_sfc) * dz) / (T_air * wind**2)
+        Ri = g * (T_air - T_sfc) * dz / (T_air * wind ** 2)
     if Ri < 0:
-        CT = CT0 * (1 - ((2 * b * Ri) / (1 + c * abs(Ri) ** 0.5)))
+        CT = CT0 * (1 - 2 * b * Ri / (1 + c * abs(Ri) ** 0.5))
     else:
-        CT = CT0 * (1 + b * Ri) ** (-2)
-    L = 2.501 * 10**6
-    # try:
-    p_v = 2.53 * 10**8 * np.exp(-5420 / T_sfc)
-    q_0 = (0.622 * p_v) / (p_air - 0.378 * p_v)
+        CT = CT0 * (1 + b * Ri) ** -2
+    L = 2.501 * 10 ** 6
+    p_v = 2.53 * 10 ** 8 * np.exp(-5420 / T_sfc)
+    q_0 = 0.622 * p_v / (p_air - 0.378 * p_v)
     Fsens = 1.275 * 1005 * CT * wind * (T_air - T_sfc)
-    Flat = 1.275 * L * CT * wind * ((s_hum / 1000) - q_0)
-    # except RuntimeWarning:
-    #     breakpoint()
-    # print('ri=',Ri,'CT=',CT,'p_v=',p_v,'s_hum=',s_hum)
+    Flat = 1.275 * L * CT * wind * (s_hum / 1000 - q_0)
     return Flat, Fsens
-
-
