@@ -71,45 +71,50 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     cp = cell['Sfrac'] * cp_ice + (1 - cell['Sfrac'] - cell['Lfrac']) * cell['cp_air'] + cell['Lfrac'] * cell[
         'cp_water']
     kappa = k / (cp * rho)
-    if fixed_sfc:
-        eqn = heateqn.heateqn_fixedsfc
-        args = cell, dt, dz, 273.15, kappa
+
+    def find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind):
+        # Initial guess for T_sfc (can be close to the expected value)
+        initial_guess = 273.15  # Example initial guess (e.g., melting point)
+
+        # Use root-finding to solve for surface temperature
+        result = root(heateqn.surface_temperature_residual, initial_guess, args=(cell, LW_in, SW_in, T_air, p_air, T_dp, wind))
+
+
+        if not result.success:
+            raise ValueError("Root-finding for surface temperature failed.")
+
+        soldict = result  # Surface temperature solution
+        return soldict
+
+    if not fixed_sfc:
+        soldict = find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind)
+
+        sol = soldict.x
+        ier = soldict.success
+        mesg = soldict.message
+        infodict = soldict.success
+
+        if not fixed_sfc and (sol > 320):
+            print('x0 = ', sol[:10])
+            raise ValueError('Surface temperature too high - heateqn')
+        if fixed_sfc and (sol > 273.151):
+            print('x0 = ', sol[:10])
+            raise ValueError('Surface temperature too high - heateqn_fixedsfc')
+        if np.isnan(sol) and soldict.success:
+            print('x0 = ', sol)
+            for key in soldict.keys():
+                print(f'{key}: {soldict[key]}')
+            raise ValueError('NaN in root - heateqn')
     else:
-
-        eqn = heateqn.heateqn
-        args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k, kappa
-
-
-    soldict: OptimizeResult = root(eqn, x, args=args, method=solver_method,
-                                   options={'xtol': 1E-5})
-
-    # New approach. Calculate the surface temperature using a root finding algorithm, then
-    # use a tridiagonal solver to propagate it into the rest of the firn.
-    # except Exception as e:
-    #     if solver_method != 'hybr':
-    #         soldict = root(eqn, x_copy, args=args, method='hybr')
-    #     else:
-    #         raise e
-    # if np.isnan(soldict.x).any() or np.any(soldict.x > 320):
-    #     print(soldict.x)
-    #     raise ValueError('Bad solver output after fallback to hybrd')
-    sol = soldict.x
-    ier = soldict.success
-    mesg = soldict.message
-    infodict = soldict.success
-    if not fixed_sfc and (sol > 320).any():
-        print('x0 = ', sol[:10])
-        raise ValueError('Surface temperature too high - heateqn')
-    if fixed_sfc and (sol > 273.151).any():
-        print('x0 = ', sol[:10])
-        raise ValueError('Surface temperature too high - heateqn_fixedsfc')
-    sol[np.where((sol > 273.15) & (sol < 273.1501))] = 273.15
-    if np.isnan(sol).any() and soldict.success:
-        print('x0 = ', sol[:10])
-        for key in soldict.keys():
-            print(f'{key}: {soldict[key]}')
-        raise ValueError('NaN in root - heateqn')
-    return sol, infodict, ier, mesg
+        sol = 273.15
+        infodict = {}
+        ier = 1
+        mesg = 'Fixed surface temperature'
+    #print('Surface temperature = ', sol)
+    # Now use tridiagonal solver to solve the heat equation once we have the surface temp
+    T = heateqn.propagate_temperature(cell, dt, dz, kappa, sol)
+    #print('Temperature profile = ', T[:10])
+    return T, infodict, ier, mesg
 
 
 def lake_development_eqn(x, args):

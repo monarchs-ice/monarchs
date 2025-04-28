@@ -9,76 +9,61 @@ rather than NumbaMinpack.hybrd), see heateqn in physics/Numba.
 import numpy as np
 from monarchs.physics.surface_fluxes import sfc_flux
 from numba import njit
+from scipy.linalg import solve_banded
 
-@njit
-def heateqn(x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k, kappa):
-    """
-    Solve the heat equation for the firn column with surface energy balance driven surface temperature.
-    This is done via the hybrd root-finding algorithm.
-    See also /Numba/heateqn for the NumbaMinpack implementation of this.
 
-    Parameters
-    ----------
-    k
-    kappa
-    x : array_like, float, dimension(cell.vert_grid)
-        initial estimate of the firn column temperature [K]
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object containing the details for that vertical column
-    dt : int
-        timestep duration [s]
-    dz : float
-        size of the vertical grid
-    LW_in : float
-        Incoming longwave radiation at the current timestep [W m^-2]
-    SW_in : float
-        Incoming shortwave radiation at the current timestep [W m^-2]
-    T_air : float
-        Air temperature [K]
-    p_air : float
-        Surface pressure [Pa]
-    T_dp : float
-        Dewpoint temperature [K]
-    wind : float
-        Wind speed [m s^-1]
+def propagate_temperature(cell, dt, dz, kappa, T_sfc):
+    n = len(cell['firn_temperature'])
 
-    Returns
-    -------
-    output : array_like, float, dimension(cell.vert_grid)
-        roots of the function, used by scipy.optimize.fsolve to determine the new firn temperature
-    """
+    # Setup diagonals
+    A = np.zeros(n)  # Sub-diagonal (lower diag)
+    B = np.zeros(n)  # Main diagonal
+    C = np.zeros(n)  # Super-diagonal (upper diag)
+    D = np.zeros(n)  # RHS vector
 
-    T = cell['firn_temperature']
-    Sfrac = cell['Sfrac']
-    Lfrac = cell['Lfrac']
+    # Surface boundary condition (Dirichlet)
+    B[0] = 1.0
+    D[0] = T_sfc  # Enforced surface temperature
 
-    # Prepare the output array
-    output = np.zeros_like(x)
+    # Interior points
+    factor = dt / dz ** 2
 
-    # First grid point (boundary condition)
-    Q = sfc_flux(cell['melt'], cell['exposed_water'], cell['lid'], cell['lake'], cell['lake_depth'],
-                 LW_in, SW_in, T_air, p_air, T_dp, wind, x[0])
-    output[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - 0.98 * 5.670374 * 10 ** -8 * x[0] ** 4)
+    for i in range(1, n - 1):
+        A[i] = -factor * kappa[i]
+        B[i] = 1 + 2 * factor * kappa[i]
+        C[i] = -factor * kappa[i]
+        D[i] = cell['firn_temperature'][i]
 
-    # Central grid points (interior points)
-    output[1:-1] = T[1:-1] - x[1:-1] + dt * (kappa[1:-1] / dz ** 2) * (x[2:] - 2 * x[1:-1] + x[:-2])
+    # Bottom boundary (e.g., Neumann or simple derivative condition)
+    B[-1] = 1.0
+    D[-1] = cell['firn_temperature'][-1]  # Or modify based on your real boundary condition
 
-    # Last grid point (boundary condition)
-    output[-1] = T[-1] - x[-1] + dt * (kappa[-1] / dz ** 2) * (-x[-1] + x[-2])
+    # Assemble into banded form
+    ab = np.zeros((3, n))
+    ab[0, 1:] = C[:-1]  # Super-diagonal (shifted right by 1)
+    ab[1, :] = B  # Main diagonal
+    ab[2, :-1] = A[1:]  # Sub-diagonal (shifted left by 1)
 
-    return output
+    # Solve the system
+    temperature_profile = solve_banded((1, 1), ab, D)
 
-@njit
+    return temperature_profile
+
 def surface_temperature_residual(T_sfc, cell, LW_in, SW_in, T_air, p_air, T_dp, wind):
     # Calculate Q for the given T_sfc
     Q = sfc_flux(cell['melt'], cell['exposed_water'], cell['lid'], cell[
         'lake'], cell['lake_depth'], LW_in, SW_in, T_air, p_air, T_dp, wind,
-        T_sfc)
+                 T_sfc)
 
     # Surface temperature equation (residual)
     # Assume you already have the correct form for this
-    residual = Q - 0.98 * 5.670374 * 10**-8 * T_sfc**4
+    residual = Q - 0.98 * 5.670374 * 10 ** -8 * T_sfc ** 4
     return residual
+
+
+# Solve for surface temperature (T_sfc)
+
+
 
 def heateqn_fixedsfc(x, cell, dt, dz, T_sfc, kappa):
     """
