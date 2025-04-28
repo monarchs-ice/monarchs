@@ -96,7 +96,7 @@ def apply_lake_mask(mask_array):
     return mask_array
 
 # Load in model data
-model_data_path = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\model_output.nc'
+model_data_path = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_140425\model_output.nc'
 model_data = Dataset(model_data_path)
 x_model, y_model = get_bbox_from_model_data(model_data)
 
@@ -230,9 +230,9 @@ ax.gridlines(draw_labels=True)
 cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', label='Value')
 
 
-np.save('lake_depth_moussavi.npy', pooled_data/1000)
-np.save('x_moussavi_pooled.npy', pooled_xn)
-np.save('y_moussavi_pooled.npy', pooled_yn)
+np.save('lake_depth_moussavi_subset.npy', pooled_data/1000)
+np.save('x_moussavi_pooled_subset.npy', pooled_xn)
+np.save('y_moussavi_pooled_subset.npy', pooled_yn)
 
 
 

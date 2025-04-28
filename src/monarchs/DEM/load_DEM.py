@@ -215,22 +215,38 @@ def get_xy_distance(latitudes, longitudes):
         lon_grid, lat_grid = np.meshgrid(longitudes, latitudes)
     else:
         lon_grid, lat_grid = longitudes, latitudes
-    # Compute dy (North-South size of each grid cell in metres)
-    lat1_dy = lat_grid[:, :-1]  # Take all but last row
-    lat2_dy = lat_grid[:, 1:]  # Take all but first row
-    dy_metres = geod.inv(lon_grid[:, :-1], lat1_dy, lon_grid[:, :-1], lat2_dy)[-1]
 
     # Compute dx (East-West size of each grid cell in metres)
-    lon1_dx = lon_grid[:-1, :]  # Take all but last column
-    lon2_dx = lon_grid[1:, :]  # Take all but first column
-    dx_metres = geod.inv(lon1_dx, lat_grid[:-1, :], lon2_dx, lat_grid[:-1, :])[-1]
+    _, _, dx_metres = geod.inv(lon_grid[:, :-1], lat_grid[:, :-1],
+                               lon_grid[:, 1:], lat_grid[:, 1:])
 
-    # Convert dx/dy to full-sized arrays by padding (so they match raster size)
-    dy_metres = np.pad(dy_metres, ((0, 0), (0, 1)), mode='edge')  # Pad last row
-    dx_metres = np.pad(dx_metres, ((0, 1), (0, 0)), mode='edge')  # Pad last column
+    # Compute dy (North-South size of each grid cell in metres)
+    _, _, dy_metres = geod.inv(lon_grid[:-1, :], lat_grid[:-1, :],
+                               lon_grid[1:, :], lat_grid[1:, :])
+
+
+    # Initialize full width and height arrays
+    widths = np.zeros_like(lon_grid)
+    heights = np.zeros_like(lat_grid)
+
+    # Widths:
+
+    widths[:, 1:-1] = 0.5 * (dx_metres[:, :-1] + dx_metres[:, 1:])
+    widths[:, 0] = dx_metres[:, 0]
+    widths[:, -1] = dx_metres[:, -1]
+
+    heights[1:-1, :] = 0.5 * (dy_metres[:-1, :] + dy_metres[1:, :])
+    heights[0, :] = dy_metres[0, :]
+    heights[-1, :] = dy_metres[-1, :]
+
+    print("Widths shape:", widths.shape)
+    print("Heights shape:", heights.shape)
+
+    print("Example width at (0,0):", widths[0, 0], "meters")
+    print("Example height at (0,0):", heights[0, 0], "meters")
 
     print("Grid cell sizes computed for all points!")
-    return dx_metres, dy_metres
+    return widths, heights
 
 def bounding_box_diagnostic_plots(input_raster, subset_raster, lon_array, lat_array, lon_subset, lat_subset):
     """

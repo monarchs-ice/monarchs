@@ -133,10 +133,11 @@ def make_lake_plot(lake_plot, thresh):
     ax.gridlines(draw_labels=True)
     ax.set_title(f'Lake present (model), depth threshold = {thresh} m')
 
+lake_plot = lake_thresh(0.1)
+make_lake_plot(lake_plot, 0.1)
 lake_plot = lake_thresh(0.5)
 make_lake_plot(lake_plot, 0.5)
-lake_plot = lake_thresh(1)
-make_lake_plot(lake_plot, 1)
+
 lake_plot = lake_thresh(0.2)
 make_lake_plot(lake_plot, 0.2)
 
@@ -157,7 +158,7 @@ lakedepth[~valid_cells] = np.nan
 moussavi_lake_depth[~valid_cells] = np.nan
 
 
-def plot_on_map(x, y, mask_array, labelstr='Moussavi', vmax=False, norm=False, cmap='viridis'):
+def plot_on_map(x, y, mask_array, labelstr='Moussavi', vmax=False, norm=False, cmap='Blues'):
     fig, ax = plt.subplots(figsize=(10, 8), subplot_kw={
         'projection': ccrs.SouthPolarStereo()
     })
@@ -187,8 +188,17 @@ def plot_on_map(x, y, mask_array, labelstr='Moussavi', vmax=False, norm=False, c
 
 from matplotlib.colors import CenteredNorm
 # Plot up Moussavi lake data
-plot_on_map(x, y, moussavi_lake_depth, vmax=np.nanmax(lakedepth))
-plot_on_map(x, y, lakedepth, labelstr='MONARCHS')
+# Count how many pixels have a lake of depth > 0.1 m
+lake_count = np.count_nonzero(lakedepth > 0.1)
+print(f'MONARCHS lake count (depth > 0.1 m): {lake_count}')
+# Count how many pixels have a lake of depth > 0.1 m - in Moussavi data
+moussavi_lake_count = np.count_nonzero(moussavi_lake_depth > 0.1)
+print(f'Moussavi lake count (depth > 0.1 m): {moussavi_lake_count}')
+
+plot_on_map(x, y, moussavi_lake_depth, vmax=np.nanmax(lakedepth), labelstr=f"Moussavi,"
+                        f" coverage = {moussavi_lake_count / len(np.ravel(lakedepth)) * 100:.2f} % ({moussavi_lake_count} / {len(np.ravel(lakedepth))})")
+plot_on_map(x, y, lakedepth, labelstr=f"MONARCHS, "
+                        f"coverage = {lake_count / len(np.ravel(lakedepth)) * 100:.2f} % ({lake_count} / {len(np.ravel(lakedepth))})")
 plot_on_map(x, y, lakedepth - moussavi_lake_depth, labelstr='model - observation', norm=CenteredNorm(),
             cmap='coolwarm')
 
@@ -208,6 +218,8 @@ plt.legend()
 plt.xlabel('Lake depth (m)')
 plt.ylabel('Count')
 plt.grid()
+
+
 # fig, ax = plt.subplots(figsize=(10, 8), subplot_kw={
 #     'projection': ccrs.SouthPolarStereo()
 # })
