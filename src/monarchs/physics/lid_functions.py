@@ -304,15 +304,8 @@ def interpolate_profiles(cell, new_depth_grid, old_depth_grid):
 
 def combine_lid_firn(cell):
     """
-    When a lid completely freezes the underlying lake from above, we no longer have a meaningful difference between
-    the frozen lid and the firn column underneath. This function triggers when the lake depth hits zero, or if
-    the lake is completely frozen but the lake depth hasn't updated (i.e. temperature goes below 273.15 everywhere).
-    The profiles of the lake and the lid are combined, with some assumptions about the solid fraction of the
-    frozen lid, and some of the boolean flags e.g. saturation being set False. The firn depth is updated to be
-    equal to the sum of the firn and lid depth, and everything is interpolated to the new vertical profile, with
-    cell.vert_grid points.
-
-    Called in timestep_loop.
+    Combines the lid and firn profiles into a single column when the lake is completely frozen.
+    This avoids overwriting fixed-length arrays by creating new arrays for the combined profiles.
 
     Parameters
     ----------
@@ -326,34 +319,36 @@ def combine_lid_firn(cell):
     original_mass = calc_mass_sum(cell)
     print(
         f"Combining lid and firn to create one profile..., column = {cell['column']}, row = {cell['row']}"
-        )
-    Lfrac_lid = np.zeros(cell['vert_grid_lid'])
-    Sfrac_lid = np.ones(cell['vert_grid_lid'])
-    old_sfrac = cell['Sfrac'] + 0
-    old_lfrac = cell['Lfrac'] + 0
-    cell['Lfrac'] = np.append(Lfrac_lid, cell['Lfrac'])
-    cell['rho'] = np.append(cell['rho_lid'], cell['rho'])
-    cell['firn_temperature'] = np.append(cell['lid_temperature'], cell[
-        'firn_temperature'])
-    cell['Sfrac'] = np.append(Sfrac_lid, cell['Sfrac'])
-    cell['lid_depth'] += cell['lake_depth'] * (cell['rho_water'] / cell[
-        'rho_ice'])
-    saturated_lid = np.ones(cell['vert_grid_lid'])
-    cell['saturation'] = np.append(saturated_lid, cell['saturation'])
-    lid_meltflag = np.zeros(cell['vert_grid_lid'])
-    cell['meltflag'] = np.append(lid_meltflag, cell['meltflag'])
-    dz_lid = cell['lid_depth'] / cell['vert_grid_lid']
-    dz_firn = cell['firn_depth'] / cell['vert_grid']
-    old_depth_grid = np.append(np.linspace(0, cell['lid_depth'], cell[
-        'vert_grid_lid']), np.linspace(cell['lid_depth'], cell['firn_depth'
-        ] + cell['lid_depth'], cell['vert_grid']))
-    new_depth_grid = np.linspace(old_depth_grid[0], cell['firn_depth'] +
-        cell['lid_depth'], cell['vert_grid'])
-    interpolate_profiles(cell, new_depth_grid, old_depth_grid)
+    )
+
+    # Create new arrays for the combined profiles
+    new_vert_grid = cell['vert_grid']
+    new_depth_grid = np.linspace(0, cell['firn_depth'] + cell['lid_depth'], new_vert_grid)
+
+    # Interpolate lid and firn properties to the new depth grid
+    old_depth_grid = np.append(
+        np.linspace(0, cell['lid_depth'], cell['vert_grid_lid']),
+        np.linspace(cell['lid_depth'], cell['firn_depth'] + cell['lid_depth'], cell['vert_grid'])
+    )
+
+    new_firn_temperature = np.interp(new_depth_grid, old_depth_grid, np.append(cell['lid_temperature'], cell['firn_temperature']))
+    new_rho = np.interp(new_depth_grid, old_depth_grid, np.append(cell['rho_lid'], cell['rho']))
+    new_Lfrac = np.interp(new_depth_grid, old_depth_grid, np.append(np.zeros(cell['vert_grid_lid']), cell['Lfrac']))
+    new_Sfrac = np.interp(new_depth_grid, old_depth_grid, np.append(np.ones(cell['vert_grid_lid']), cell['Sfrac']))
+    new_saturation = np.round(np.interp(new_depth_grid, old_depth_grid, np.append(np.ones(cell['vert_grid_lid']), cell['saturation'])))
+    new_meltflag = np.round(np.interp(new_depth_grid, old_depth_grid, np.append(np.zeros(cell['vert_grid_lid']), cell['meltflag'])))
+
+    # Update cell properties with the new combined profiles
+    cell['firn_temperature'] = new_firn_temperature
+    cell['rho'] = new_rho
+    cell['Lfrac'] = new_Lfrac
+    cell['Sfrac'] = np.clip(new_Sfrac, 0, 1)
+    cell['saturation'] = new_saturation
+    cell['meltflag'] = new_meltflag
     cell['firn_depth'] += cell['lid_depth']
-    cell['vertical_profile'] = np.linspace(0, cell['firn_depth'], cell[
-        'vert_grid'])
-    cell['Sfrac'] = np.clip(cell['Sfrac'], 0, 1)
+    cell['vertical_profile'] = new_depth_grid
+
+    # Reset lid-related properties
     cell['lid_depth'] = 0
     cell['v_lid'] = False
     cell['lid'] = False
@@ -367,10 +362,11 @@ def combine_lid_firn(cell):
     cell['water'][0] = 0
     cell['melt'] = False
     cell['reset_combine'] = True
-    cell['saturation'] = np.zeros(cell['vert_grid'])
     cell['virtual_lid_temperature'] = 273.15
     cell['lid_temperature'] = np.ones(cell['vert_grid_lid']) * 273.15
     cell['lake_temperature'] = np.ones(cell['vert_grid_lake']) * 273.15
+
+    # Validate mass conservation
     new_mass = calc_mass_sum(cell)
     try:
         assert abs(new_mass - original_mass) < original_mass / 1000

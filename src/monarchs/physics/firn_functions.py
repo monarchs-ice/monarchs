@@ -68,7 +68,6 @@ def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
     args = [cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind]
     root, fvec, success, info = solver.firn_heateqn_solver(x, args,
                                                            fixed_sfc=False, solver_method=heateqn_solver)
-    print('Surface temp = ', root[0])
 
 
     if root[0] > 273.15:
@@ -80,7 +79,6 @@ def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
         if prescribed_height_change is not False:
             height_change = 0.05
         if np.isnan(height_change):
-            print('Root = ', root[0])
             raise ValueError('Height change is NaN')
 
         dz = cell['firn_depth'] / cell['vert_grid']
@@ -91,8 +89,6 @@ def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
 
         if success_fixedsfc:
             cell['firn_temperature'] = root
-        print('T = ', cell['firn_temperature'][:])
-        print('height change = ', height_change)
         regrid_after_melt(cell, height_change)
 
     elif success:
@@ -148,7 +144,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     T_hold = np.zeros(np.shape(cell['firn_temperature']))
 
     if np.isnan(cell['firn_temperature']).any():
-        print(cell['firn_temperature'])
         raise ValueError('NaN in firn temperature before regridding')
 
     for i in range(len(cell['Sfrac']) - 1):

@@ -96,7 +96,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     T_air, p_air, T_dp, wind, toggle_dict)
 
         elif cell['exposed_water'] and cell['saturation'][0]:
-            print('Exposed water and surface saturation')
             args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
             x = cell['firn_temperature']
 
@@ -105,7 +104,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     args, fixed_sfc=True, solver_method=heateqn_solver)
                 if success:
                     cell['firn_temperature'] = sol
-                    print(cell['firn_temperature'])
                 else:
                     print(
                         'Warning - solver failed to converge - lake development'
@@ -127,22 +125,22 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             if cell['lake_depth'] == 0:
                 cell['exposed_water'] = False
 
-            if cell['lake'] is False:
+            if not cell['lake']:
                 if lake_development_toggle:
                     lake_functions.lake_formation(cell, dt, LW_in, SW_in,
                         T_air, p_air, T_dp, wind, toggle_dict)
 
-            elif cell['lake'] is True and cell['lid'] is False:
+            elif cell['lake'] and not cell['lid']:
                 if lake_development_toggle:
                     lake_functions.lake_development(cell, dt, LW_in, SW_in,
                         T_air, p_air, T_dp, wind, toggle_dict)
 
-                if cell['v_lid'] is True:
+                if cell['v_lid']:
                     if lid_development_toggle:
                         lid_functions.virtual_lid(cell, dt, LW_in, SW_in,
                             T_air, p_air, T_dp, wind)
 
-            elif cell['lake'] is True and cell['lid'] is True:
+            elif cell['lake'] and cell['lid']:
                 if lid_development_toggle:
                     cell['v_lid'] = False
                     if lake_development_toggle:
@@ -153,7 +151,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
                 if cell['lake_depth'] <= 0 or np.any(cell[
                     'lake_temperature'][cell['lake_temperature'] > 273.15]
-                    ) is False:
+                    ) == False:
                     lid_functions.combine_lid_firn(cell)
 
         if not ignore_errors:
@@ -166,5 +164,5 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
     cell['day'] += 1
 
-    if parallel and not use_numba:
-        return cell
+    # if parallel and not use_numba:
+    #     return cell

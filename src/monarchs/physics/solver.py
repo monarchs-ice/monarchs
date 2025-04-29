@@ -65,7 +65,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         mesg = 'Fixed surface temperature'
 
     else:
-        N = 200
+        N = 10
         soldict = heateqn.find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
                                                    dz, dt, solver_method=solver_method, N=N)
 
@@ -86,7 +86,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         # use it as the top boundary condition to the tridiagonal solver,
         # then concatenate the two
         T_tri = heateqn.propagate_temperature(cell, dz, dt, sol[-1], N=10)
-        T = np.concatenate((sol[:-1], T_tri))
+        T = np.concatenate((sol[:], T_tri))
 
     # print(f'Temperature profile {fs} = ', T[:10])
     return T, infodict, ier, mesg
