@@ -77,7 +77,8 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         initial_guess = 273.15  # Example initial guess (e.g., melting point)
 
         # Use root-finding to solve for surface temperature
-        result = root(heateqn.surface_temperature_residual, initial_guess, args=(cell, LW_in, SW_in, T_air, p_air, T_dp, wind))
+        result = root(heateqn.surface_temperature_residual, initial_guess, args=(cell, LW_in, SW_in, T_air, p_air, T_dp, wind),
+                      method=solver_method, options={'maxiter': 1000})
 
 
         if not result.success:
