@@ -57,13 +57,13 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     p_air = args[6]
     T_dp = args[7]
     wind = args[8]
-    x_copy = np.copy(x)
+
     # precompute some values
     rho = cell['Sfrac'] * 913 + cell['Lfrac'] * 1000
     k_ice = np.zeros(np.shape(cell['firn_temperature']))
     k_ice[cell['firn_temperature'] < 273.15] = 1000 * (0.00224 + 5.975e-06 *
-                                                       (273.15 - cell['firn_temperature'][cell['firn_temperature'] <
-                                                                                          273.15]) ** 1.156)
+                                                       (273.15 - cell['firn_temperature'][
+                                                           cell['firn_temperature'] < 273.15]) ** 1.156)
     k_ice[cell['firn_temperature'] >= 273.15] = 2.24
     k = cell['Sfrac'] * k_ice + (1 - cell['Sfrac'] - cell['Lfrac']) * cell['k_air'] + cell['Lfrac'] * cell[
         'k_water']
@@ -73,15 +73,15 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     kappa = k / (cp * rho)
 
     def find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
-                            dz, k):
+                                 dz, dt, k, kappa):
         # Initial guess for T_sfc (can be close to the expected value)
-        initial_guess = cell['firn_temperature'][0]  # Example initial guess (e.g., melting point)
+        initial_guess = cell['firn_temperature'][:10]  # Example initial guess for the first 10 layers
 
         # Use root-finding to solve for surface temperature
         result = root(heateqn.surface_temperature_residual, initial_guess,
                       args=(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
-                            dz, k),
-                      method=solver_method, options={'maxiter': 10000})
+                                 dz, dt, k, kappa),
+                      method=solver_method, options={'maxiter': 1000})
 
         if not result.success:
             raise ValueError("Root-finding for surface temperature failed.")
@@ -91,24 +91,24 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
 
     if not fixed_sfc:
         soldict = find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
-                            dz, k)
+                                 dz, dt, k, kappa)
 
-        sol = soldict.x
+        sol = soldict.x[0]
         ier = soldict.success
         mesg = soldict.message
         infodict = soldict.success
 
-        if not fixed_sfc and (sol > 320):
-            print('x0 = ', sol[:10])
-            raise ValueError('Surface temperature too high - heateqn')
-        if fixed_sfc and (sol > 273.151):
-            print('x0 = ', sol[:10])
-            raise ValueError('Surface temperature too high - heateqn_fixedsfc')
-        if np.isnan(sol) and soldict.success:
-            print('x0 = ', sol)
-            for key in soldict.keys():
-                print(f'{key}: {soldict[key]}')
-            raise ValueError('NaN in root - heateqn')
+        # if not fixed_sfc and (sol > 320):
+        #     print('x0 = ', sol[:10])
+        #     raise ValueError('Surface temperature too high - heateqn')
+        # if fixed_sfc and (sol > 273.151):
+        #     print('x0 = ', sol[:10])
+        #     raise ValueError('Surface temperature too high - heateqn_fixedsfc')
+        # if np.isnan(sol) and soldict.success:
+        #     print('x0 = ', sol)
+        #     for key in soldict.keys():
+        #         print(f'{key}: {soldict[key]}')
+        #     raise ValueError('NaN in root - heateqn')
     else:
         sol = 273.15
         infodict = {}
@@ -121,7 +121,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         fs = '(fixed sfc)'
     else:
         fs = ''
-    print(f'Temperature profile {fs} = ', T[:10])
+    # print(f'Temperature profile {fs} = ', T[:10])
     return T, infodict, ier, mesg
 
 

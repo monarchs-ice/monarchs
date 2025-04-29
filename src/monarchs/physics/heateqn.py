@@ -50,18 +50,32 @@ def propagate_temperature(cell, dt, dz, kappa, T_sfc):
     return temperature_profile
 
 
-def surface_temperature_residual(T_sfc, cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
-                                 dz, k, epsilon=0.98, sigma=5.670373 * 10 ** -8):
+def surface_temperature_residual(x, cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
+                                 dz, dt, k, kappa, epsilon=0.98, sigma=5.670374 * 10 ** -8):
     # Calculate Q for the given T_sfc
+
     Q = sfc_flux(cell['melt'], cell['exposed_water'], cell['lid'], cell[
         'lake'], cell['lake_depth'], LW_in, SW_in, T_air, p_air, T_dp, wind,
-                 np.array([T_sfc]))
-
+                 x[0])
+    residual = np.zeros_like(x)
     # Surface temperature equation (residual)
-    # Assume you already have the correct form for this
-    residual = k[0] * ((T_sfc - cell['firn_temperature'][1]) / dz) - (Q - epsilon * sigma * T_sfc ** 4)
+    residual[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
 
-    # print(f"Residual for T_sfc = {T_sfc}: {residual}")
+    # Calculate the temperature profile for the first 10 layers
+
+    idx = np.arange(1, len(x) - 1)
+
+    residual[idx] = (
+        cell['firn_temperature'][idx]
+        - x[idx]
+        + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+    )
+    residual[-1] = (
+        cell['firn_temperature'][10 - 1]
+        - x[len(x) - 1]
+        + dt * (kappa[len(x) - 1] / dz**2) * (-x[len(x) - 1] + x[len(x) - 2])
+    )
+    # print(f"Residual for T_sfc = {x}: {residual}")
     return np.array(residual).flatten()
 
 
