@@ -9,7 +9,7 @@ from monarchs.core.utils import calc_mass_sum
 
 
 def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
-    toggle_dict, prescribed_height_change=False):
+                toggle_dict, prescribed_height_change=False):
     """
     Perform the various processes applied to the firn each timestep where we don't have exposed water at the surface.
 
@@ -67,13 +67,13 @@ def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
     x = np.clip(x, 0, 273.15)
     args = [cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind]
     root, fvec, success, info = solver.firn_heateqn_solver(x, args,
-        fixed_sfc=False, solver_method=heateqn_solver)
+                                                           fixed_sfc=False, solver_method=heateqn_solver)
 
     if root[0] > 273.15:
         cell['meltflag'][0] = 1
         cell['melt'] = True
         height_change = calc_height_change(cell, dt, LW_in, SW_in, T_air,
-            p_air, T_dp, wind, root[0])
+                                           p_air, T_dp, wind, root[0])
 
         if prescribed_height_change is not False:
             height_change = 0.05
@@ -84,11 +84,12 @@ def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
         dz = cell['firn_depth'] / cell['vert_grid']
         args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
         root, fvec, success_fixedsfc, info = solver.firn_heateqn_solver(x,
-            args, fixed_sfc=True, solver_method=heateqn_solver)
+                                                                        args, fixed_sfc=True,
+                                                                        solver_method=heateqn_solver)
 
         if success_fixedsfc:
             cell['firn_temperature'] = root
-        print('T = ', cell['firn_temperature'])
+        print('T = ', cell['firn_temperature'][:20])
         print('height change = ', height_change)
         regrid_after_melt(cell, height_change)
 
@@ -149,56 +150,65 @@ def regrid_after_melt(cell, height_change, lake=False):
     for i in range(len(cell['Sfrac']) - 1):
         if height_change > (i + 1) * dz_old:
             print('Whole layer melted - column = ', cell['column'],
-                'row = ', cell['row'], 'layer = ', i)
+                  'row = ', cell['row'], 'layer = ', i)
             print('height change = ', height_change, 'dz_old = ', dz_old)
             meltwater += cell['Lfrac'][i] * dz_old
             weight_1 = 0
         else:
-            weight_1 = cell['firn_depth'] - i * dz_new - (old_firn_depth - 
-                (i + 1) * dz_old)
+            weight_1 = cell['firn_depth'] - i * dz_new - (old_firn_depth -
+                                                          (i + 1) * dz_old)
         weight_2 = old_firn_depth - (i + 1) * dz_old - (cell['firn_depth'] -
-            (i + 1) * dz_new)
+                                                        (i + 1) * dz_new)
+
         if weight_1 < 0:
             if weight_1 > -1e-09:
                 weight_1 = 0
             else:
                 raise ValueError(
                     'Regridding weight 1 is negative and exceeds tolerance')
+
         if weight_2 < 0:
             if weight_2 > -1e-09:
                 weight_2 = 0
             else:
                 raise ValueError(
                     'Regridding weight 2 is negative and exceeds tolerance')
+
         lfrac_hold[i] = (cell['Lfrac'][i] * weight_1 + cell['Lfrac'][i + 1] *
-            weight_2) / (weight_1 + weight_2)
+                         weight_2) / (weight_1 + weight_2)
         sfrac_hold[i] = (cell['Sfrac'][i] * weight_1 + cell['Sfrac'][i + 1] *
-            weight_2) / (weight_1 + weight_2)
+                         weight_2) / (weight_1 + weight_2)
+
         T_hold[i] = (cell['firn_temperature'][i] * weight_1 + cell[
             'firn_temperature'][i + 1] * weight_2) / (weight_1 + weight_2)
+
     lfrac_hold[-1] = cell['Lfrac'][-1]
     sfrac_hold[-1] = cell['Sfrac'][-1]
     T_hold[-1] = cell['firn_temperature'][-1]
     cell['Sfrac'] = sfrac_hold
     cell['Lfrac'] = lfrac_hold
     cell['firn_temperature'] = T_hold
+
     if np.isnan(T_hold).any():
         print(T_hold)
         print(cell['firn_temperature'])
         print(cell['column'])
         print(cell['row'])
         raise ValueError('NaN in firn temperature after regridding')
+
     cell['Lfrac'][0] += meltwater
     if lake:
         if cell['Lfrac'][0] + cell['Sfrac'][0] > 1:
             excess_water = cell['Lfrac'][0] + cell['Sfrac'][0] - 1
             cell['lake_depth'] += excess_water * (cell['firn_depth'] / cell
-                ['vert_grid'])
+            ['vert_grid'])
             cell['Lfrac'][0] = 1 - cell['Sfrac'][0]
         assert abs(calc_mass_sum(cell) - original_mass) < 1.5 * 10 ** -7
+
     if np.isnan(cell['firn_temperature']).any():
         print(cell['firn_temperature'])
         raise ValueError('NaN in firn temperature after regridding')
+
     if np.any(cell['Sfrac'] > 1.00000000001):
         where = np.where(cell['Sfrac'] > 1)
         print(where[0])
@@ -209,13 +219,15 @@ def regrid_after_melt(cell, height_change, lake=False):
         print('dz old = ', dz_old)
         print('firn depth = ', cell['firn_depth'])
         raise ValueError('Sfrac > 1 in firn regridding')
+
     cell['vertical_profile'] = np.linspace(0, cell['firn_depth'], cell[
         'vert_grid'])
+
     assert abs(calc_mass_sum(cell) - original_mass) < 1.5 * 10 ** -7
 
 
 def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp,
-    wind, surf_T):
+                       wind, surf_T):
     """
     Determine the amount of firn height change that arises due to melting.
 
@@ -250,25 +262,26 @@ def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp,
     dz = cell['firn_depth'] / cell['vert_grid']
     L_fus = 334000
     if cell['firn_temperature'][0] > 273.15 and cell['firn_temperature'][0
-        ] < 273.151:
+    ] < 273.151:
         cell['firn_temperature'][0] = 273.15
     if cell['firn_temperature'][1] > 273.15 and cell['firn_temperature'][1
-        ] < 273.151:
+    ] < 273.151:
         cell['firn_temperature'][1] = 273.15
     k_sfc = 1000 * 2.24 * 10 ** -3 + 5.975 * 10 ** -6 * (273.15 - (cell[
-        'firn_temperature'][0] + cell['firn_temperature'][1]) / 2) ** 1.156
+                                                                       'firn_temperature'][0] +
+                                                                   cell['firn_temperature'][1]) / 2) ** 1.156
     Q = sfc_flux(cell['melt'], cell['exposed_water'], cell['lid'], cell[
         'lake'], cell['lake_depth'], LW_in, SW_in, T_air, p_air, T_dp, wind,
-        surf_T)
+                 surf_T)
     dHdt = timestep * (Q - epsilon * sigma * cell['firn_temperature'][0] **
-        4 - k_sfc * ((cell['firn_temperature'][0] - cell['firn_temperature'
-        ][1]) / dz)) / (cell['rho_ice'] * (cell['Sfrac'][0] * L_fus))
+                       4 - k_sfc * ((cell['firn_temperature'][0] - cell['firn_temperature'
+            ][1]) / dz)) / (cell['rho_ice'] * (cell['Sfrac'][0] * L_fus))
     if 0 > dHdt > -0.01:
         dHdt = 0
     elif dHdt < -0.01:
         raise ValueError(
             'Height change during melt is negative, and outside the bounds of a numerical error'
-            )
+        )
     elif np.isnan(dHdt):
         pass
         print('...')

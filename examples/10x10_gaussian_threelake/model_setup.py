@@ -33,7 +33,7 @@ vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 """
 Timestepping parameters
 """
-num_days = 10  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 105  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
