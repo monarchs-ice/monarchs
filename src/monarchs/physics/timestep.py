@@ -72,6 +72,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             cell["lake"] = False
         if cell["lid_depth"] == 0:
             cell["lid"] = False
+        if cell["v_lid_depth"] == 0:
             cell["v_lid"] = False
         dz = cell["firn_depth"] / cell["vert_grid"]
         if snowfall_toggle:
@@ -154,7 +155,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
             elif cell["lake"] and cell["lid"]:
                 if lid_development_toggle:
-                    cell["v_lid"] = False
+                    cell["v_lid"] = False  # turn virtual lid off if full lid present
                     if lake_development_toggle:
                         lake_functions.lake_development(
                             cell,

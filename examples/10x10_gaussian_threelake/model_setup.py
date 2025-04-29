@@ -141,4 +141,13 @@ npt.assert_array_equal(firn_depth, firn_depth[::-1, ::-1])
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
+    from monarchs.core.utils import get_2d_grid
     grid = monarchs()
+    from matplotlib import pyplot as plt
+
+    plt.figure()
+    plt.imshow(get_2d_grid(grid, 'water_level'))
+    plt.title('water_level')
+    plt.figure()
+    plt.imshow(get_2d_grid(grid, 'lake_depth'))
+    plt.title('Lake depth')

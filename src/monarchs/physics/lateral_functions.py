@@ -564,6 +564,7 @@ def move_water(
     """
     total_water = 0
     catchment_out_water = 0
+    from monarchs.core.utils import get_2d_grid
 
     for row in range(0, max_grid_row):
         for col in range(0, max_grid_col):
@@ -645,6 +646,7 @@ def move_water(
                         calc_saturation(cell, k, end=True)
             update_water_level(cell)
 
+    print('Water level at end of timestep: ', get_2d_grid(grid, 'water_level'))
     print("\nLateral water movement diagnostics:")
     print("Starting water total = ", total_water)
     print("Finishing water total = ", new_water)
