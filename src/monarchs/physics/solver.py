@@ -72,14 +72,16 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         'cp_water']
     kappa = k / (cp * rho)
 
-    def find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind):
+    def find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
+                            dz, k):
         # Initial guess for T_sfc (can be close to the expected value)
         initial_guess = 273.15  # Example initial guess (e.g., melting point)
 
         # Use root-finding to solve for surface temperature
-        result = root(heateqn.surface_temperature_residual, initial_guess, args=(cell, LW_in, SW_in, T_air, p_air, T_dp, wind),
-                      method=solver_method, options={'maxiter': 1000})
-
+        result = root(heateqn.surface_temperature_residual, initial_guess,
+                      args=(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
+                            dz, k),
+                      method=solver_method, options={'maxiter': 10000})
 
         if not result.success:
             raise ValueError("Root-finding for surface temperature failed.")
@@ -88,7 +90,8 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         return soldict
 
     if not fixed_sfc:
-        soldict = find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind)
+        soldict = find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
+                            dz, k)
 
         sol = soldict.x
         ier = soldict.success
@@ -146,7 +149,7 @@ def lake_development_eqn(x, args):
     T_core = lake_temperature[int(vert_grid_lake / 2)]
     output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q + np.sign(T_core -
                                                                    x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (
-                         4 / 3)
+                     4 / 3)
     return output
 
 
@@ -238,8 +241,8 @@ def sfc_energy_virtual_lid(x, args):
         lake_temperature[i] = args[5 + i]
     output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_v_lid * (-
                                                                       lake_temperature[-2] + x[0]) / (
-                         lake_depth / (vert_grid_lake / 2) +
-                         v_lid_depth)
+                     lake_depth / (vert_grid_lake / 2) +
+                     v_lid_depth)
     return output
 
 
