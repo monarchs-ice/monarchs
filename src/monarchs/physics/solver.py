@@ -58,42 +58,21 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     T_dp = args[7]
     wind = args[8]
 
-    # precompute some values
-    rho = cell['Sfrac'] * 913 + cell['Lfrac'] * 1000
-    k_ice = np.zeros(np.shape(cell['firn_temperature']))
-    k_ice[cell['firn_temperature'] < 273.15] = 1000 * (0.00224 + 5.975e-06 *
-                                                       (273.15 - cell['firn_temperature'][
-                                                           cell['firn_temperature'] < 273.15]) ** 1.156)
-    k_ice[cell['firn_temperature'] >= 273.15] = 2.24
-    k = cell['Sfrac'] * k_ice + (1 - cell['Sfrac'] - cell['Lfrac']) * cell['k_air'] + cell['Lfrac'] * cell[
-        'k_water']
-    cp_ice = 7.16 * cell['firn_temperature'] + 138
-    cp = cell['Sfrac'] * cp_ice + (1 - cell['Sfrac'] - cell['Lfrac']) * cell['cp_air'] + cell['Lfrac'] * cell[
-        'cp_water']
-    kappa = k / (cp * rho)
 
-    def find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
-                                 dz, dt, k, kappa):
-        # Initial guess for T_sfc (can be close to the expected value)
-        initial_guess = cell['firn_temperature'][:]  # Example initial guess for the first 10 layers
 
-        # Use root-finding to solve for surface temperature
-        result = root(heateqn.surface_temperature_residual, initial_guess,
-                      args=(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
-                                 dz, dt, k, kappa),
-                      method=solver_method, options={'maxiter': 1000})
 
-        if not result.success:
-            raise ValueError("Root-finding for surface temperature failed.")
+    if fixed_sfc:
+        sol = 273.15
+        infodict = {}
+        ier = 1
+        mesg = 'Fixed surface temperature'
 
-        soldict = result  # Surface temperature solution
-        return soldict
+    else:
+        N = 100
+        soldict = heateqn.find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
+                                                   dz, dt, solver_method=solver_method, N=N)
 
-    if not fixed_sfc:
-        soldict = find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
-                                 dz, dt, k, kappa)
-
-        sol = soldict.x[0]
+        sol = soldict.x
         ier = soldict.success
         mesg = soldict.message
         infodict = soldict.success
@@ -109,21 +88,20 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         #     for key in soldict.keys():
         #         print(f'{key}: {soldict[key]}')
         #     raise ValueError('NaN in root - heateqn')
-    else:
-        sol = 273.15
-        infodict = {}
-        ier = 1
-        mesg = 'Fixed surface temperature'
     #print('Surface temperature = ', sol)
     # Now use tridiagonal solver to solve the heat equation once we have the surface temp
 
     if fixed_sfc:
         fs = '(fixed sfc)'
-
+        T = heateqn.propagate_temperature(cell, dz, dt, sol, N=1)
+        T = np.concatenate((np.array([sol]), T))
     else:
         fs = ''
-        T = sol
-    T = heateqn.propagate_temperature(cell, dt, dz, kappa, sol)
+        # Take our root-finding algorithm output (from first N layers),
+        # use it as the top boundary condition to the tridiagonal solver,
+        # then concatenate the two
+        T_tri = heateqn.propagate_temperature(cell, dz, dt, sol[-1], N=10)
+        T = np.concatenate((sol[:-1], T_tri))
 
     # print(f'Temperature profile {fs} = ', T[:10])
     return T, infodict, ier, mesg

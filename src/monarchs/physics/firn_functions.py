@@ -88,7 +88,8 @@ def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
 
         if success_fixedsfc:
             cell['firn_temperature'] = root
-
+        print('T = ', cell['firn_temperature'])
+        print('height change = ', height_change)
         regrid_after_melt(cell, height_change)
 
     elif success:
