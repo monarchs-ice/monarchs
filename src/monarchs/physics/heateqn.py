@@ -102,45 +102,49 @@ def find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
     return soldict
 
 def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
+    T_old = cell['firn_temperature']
     k, kappa = get_k_and_kappa(cell)
-    total_len = len(cell['firn_temperature'])
-    n = total_len - N  # number of layers to solve, below top N layers
+    total_len = len(T_old)
+    n = total_len - N  # Number of layers below the nonlinear region
 
-    # Setup diagonals
-    A = np.zeros(n)
-    B = np.zeros(n)
-    C = np.zeros(n)
-    D = np.zeros(n)
+    # Initialize diagonals and RHS
+    A = np.zeros(n)  # Sub-diagonal (lower)
+    B = np.zeros(n)  # Main diagonal
+    C = np.zeros(n)  # Super-diagonal (upper)
+    D = np.zeros(n)  # RHS vector
 
-    factor = dt / dz ** 2
+    factor = dt / dz**2
 
-    # First row: apply top boundary condition as Dirichlet on ghost cell
-    B[0] = 1 + 2 * factor * kappa[N]
-    C[0] = -factor * kappa[N]
-    D[0] = cell['firn_temperature'][N] + factor * kappa[N] * T_bc_top
+    # First row: connect to top nonlinear region
+    i = 0
+    alpha = factor * kappa[N + i]
+    B[i] = 1 + 2 * alpha
+    C[i] = -alpha
+    D[i] = T_old[N + i] + alpha * T_bc_top
 
-    # Interior nodes
+    # Interior rows
     for i in range(1, n - 1):
-        A[i] = -factor * kappa[N + i]
-        B[i] = 1 + 2 * factor * kappa[N + i]
-        C[i] = -factor * kappa[N + i]
-        D[i] = cell['firn_temperature'][N + i]
+        alpha = factor * kappa[N + i]
+        A[i] = -alpha
+        B[i] = 1 + 2 * alpha
+        C[i] = -alpha
+        D[i] = T_old[N + i]
 
-    # Bottom boundary (Dirichlet)
-    B[-1] = 1.0
-    D[-1] = cell['firn_temperature'][-1]
-    C[-1] = 0.0
-    A[-1] = 0.0
+    # Last row: Neumann BC using backward difference
+    i = n - 1
+    alpha = factor * kappa[N + i]
+    A[i] = -alpha
+    B[i] = 1 + alpha
+    D[i] = T_old[N + i]
 
-    # Assemble into banded form
+    # Assemble banded matrix
     ab = np.zeros((3, n))
-    ab[0, 1:] = C[:-1]      # Super-diagonal
-    ab[1, :] = B            # Main diagonal
-    ab[2, :-1] = A[1:]      # Sub-diagonal
+    ab[0, 1:] = C[:-1]
+    ab[1, :] = B
+    ab[2, :-1] = A[1:]
 
     T_new = solve_banded((1, 1), ab, D)
     return T_new
-
 # Solve for surface temperature (T_sfc)
 
 

@@ -105,6 +105,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     args, fixed_sfc=True, solver_method=heateqn_solver)
                 if success:
                     cell['firn_temperature'] = sol
+                    print(cell['firn_temperature'])
                 else:
                     print(
                         'Warning - solver failed to converge - lake development'

@@ -65,7 +65,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         mesg = 'Fixed surface temperature'
 
     else:
-        N = 10
+        N = 200
         soldict = heateqn.find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
                                                    dz, dt, solver_method=solver_method, N=N)
 
