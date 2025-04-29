@@ -132,6 +132,7 @@ catchment_outflow = False  # Determines if water on the edge of the catchment ar
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
 flow_into_land = False  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
+lateral_movement_toggle = False
 
 # Just for this specific case - assert that the DEM is symmetric
 import numpy.testing as npt
@@ -146,6 +147,10 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
 
     plt.figure()
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            if grid[i][j]['lid']:
+                grid[i][j]['water_level'] = 0
     plt.imshow(get_2d_grid(grid, 'water_level'))
     plt.title('water_level')
     plt.figure()
