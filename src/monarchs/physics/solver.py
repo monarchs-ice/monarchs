@@ -75,7 +75,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     def find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
                             dz, k):
         # Initial guess for T_sfc (can be close to the expected value)
-        initial_guess = 273.15  # Example initial guess (e.g., melting point)
+        initial_guess = cell['firn_temperature'][0]  # Example initial guess (e.g., melting point)
 
         # Use root-finding to solve for surface temperature
         result = root(heateqn.surface_temperature_residual, initial_guess,
