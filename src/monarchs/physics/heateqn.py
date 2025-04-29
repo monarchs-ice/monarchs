@@ -60,7 +60,8 @@ def surface_temperature_residual(T_sfc, cell, LW_in, SW_in, T_air, p_air, T_dp, 
     # Surface temperature equation (residual)
     # Assume you already have the correct form for this
     residual = k[0] * ((T_sfc - cell['firn_temperature'][1]) / dz) - (Q - epsilon * sigma * T_sfc ** 4)
-    print(f"Residual for T_sfc = {T_sfc}: {residual}")
+
+    # print(f"Residual for T_sfc = {T_sfc}: {residual}")
     return np.array(residual).flatten()
 
 

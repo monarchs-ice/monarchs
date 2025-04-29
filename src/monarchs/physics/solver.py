@@ -117,7 +117,11 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     #print('Surface temperature = ', sol)
     # Now use tridiagonal solver to solve the heat equation once we have the surface temp
     T = heateqn.propagate_temperature(cell, dt, dz, kappa, sol)
-    #print('Temperature profile = ', T[:10])
+    if fixed_sfc:
+        fs = '(fixed sfc)'
+    else:
+        fs = ''
+    print(f'Temperature profile {fs} = ', T[:10])
     return T, infodict, ier, mesg
 
 
