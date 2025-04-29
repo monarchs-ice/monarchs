@@ -29,7 +29,7 @@ Spatial parameters
 """
 col_amount = 50  # Number of columns in your model grid, looking from top-down.
 row_amount = 50  # Number of rows in your model grid, looking from top-down.
-lat_grid_size = 'dem'  # size of each lateral grid cell in m - can either be a number or 'dem' to calculate
+lat_grid_size = "dem"  # size of each lateral grid cell in m - can either be a number or 'dem' to calculate
 # x and y grid sizes from the DEM itself.
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -37,7 +37,7 @@ vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 # Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
 # Set to a number if you want to manually specify a bounding box.
-lat_bounds = 'dem'
+lat_bounds = "dem"
 latmax = np.nan  # Maximum latitude to use in our DEM and met data files.
 latmin = np.nan  # Minimum latitude to use in our DEM and met data files.
 longmax = np.nan  # Maximum longitude to use in our DEM and met data files.
@@ -49,9 +49,7 @@ bbox_top_right = [
 bbox_bottom_left = [
     (-66.289, -64.68)
 ]  # bounding box bottom left coordinates, [(lat, long)]
-bbox_top_left = [
-    (-66.04, -63.42)
-]  # bounding box top left coordinates, [(lat, long)]
+bbox_top_left = [(-66.04, -63.42)]  # bounding box top left coordinates, [(lat, long)]
 bbox_bottom_right = [
     (-66.778, -64.099)
 ]  # bounding box bottom right coordinates, [(lat, long)]
@@ -103,7 +101,7 @@ DEM/initial firn profile
         
 """
 
-DEM_path = 'DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
+DEM_path = "DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
 # DEM_path = "DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
 
 # firn_depth - by default overridden by the presence of a valid DEM
@@ -260,7 +258,7 @@ dump_filepath = (
     "../MONARCHS_runs/progress_df.nc"  # Filename of our previously dumped state
 )
 reload_from_dump = False  # Flag to determine whether to reload the state or not
-dump_format = 'NETCDF4' # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
+dump_format = "NETCDF4"  # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
 """
 Computing and numerical parameters
 """
@@ -307,7 +305,7 @@ heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 met_dem_diagnostic_plots = False
 radiation_forcing_factor = 1
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
     monarchs()

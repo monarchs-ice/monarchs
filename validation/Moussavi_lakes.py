@@ -21,7 +21,7 @@ from rasterio.transform import xy
 
 # set up some variables
 proj = ccrs.PlateCarree()
-matplotlib.use('TkAgg')
+matplotlib.use("TkAgg")
 
 crs_cartopy = ccrs.SouthPolarStereo()
 proj_string = crs_cartopy.proj4_init  # or crs_cartopy.proj4_params
@@ -32,8 +32,8 @@ crs_cartopy_proj = CRS.from_proj4(proj_string)
 
 
 def get_bbox_from_model_data(modeldata):
-    lons = modeldata.variables['lon'][:]
-    lats = modeldata.variables['lat'][:]
+    lons = modeldata.variables["lon"][:]
+    lats = modeldata.variables["lat"][:]
     crs_cartopy = ccrs.SouthPolarStereo()
     proj_string = crs_cartopy.proj4_init  # or crs_cartopy.proj4_params
     print(proj_string)
@@ -46,25 +46,24 @@ def get_bbox_from_model_data(modeldata):
 
 
 # print(f'Box boundary = {input_raster.tif_bBox_converted}')
-def plot_on_map(x, y, mask_array, label=''):
-    fig, ax = plt.subplots(figsize=(10, 8), subplot_kw={
-        'projection': ccrs.SouthPolarStereo()
-    })
+def plot_on_map(x, y, mask_array, label=""):
+    fig, ax = plt.subplots(
+        figsize=(10, 8), subplot_kw={"projection": ccrs.SouthPolarStereo()}
+    )
 
     # Plot the data using pcolormesh
-    mesh = ax.pcolormesh(x, y, mask_array, cmap='Blues', shading='auto',
-                         transform=None)
+    mesh = ax.pcolormesh(x, y, mask_array, cmap="Blues", shading="auto", transform=None)
 
     # Add map features
     ax.coastlines()
-    ax.add_feature(cfeature.BORDERS, linestyle=':')
-    ax.add_feature(cfeature.LAND, edgecolor='black', facecolor='lightgray')
+    ax.add_feature(cfeature.BORDERS, linestyle=":")
+    ax.add_feature(cfeature.LAND, edgecolor="black", facecolor="lightgray")
     ax.add_feature(cfeature.OCEAN)
     ax.gridlines(draw_labels=True)
 
     # Colorbar and title
-    plt.colorbar(mesh, ax=ax, orientation='vertical', label='Lake depth (m)')
-    ax.set_title(f'Lake present (size = {np.shape(mask_array)})' + label)
+    plt.colorbar(mesh, ax=ax, orientation="vertical", label="Lake depth (m)")
+    ax.set_title(f"Lake present (size = {np.shape(mask_array)})" + label)
 
 
 def max_pooling_to_shape(data, output_shape):
@@ -82,7 +81,7 @@ def max_pooling_to_shape(data, output_shape):
 
     for i in range(new_H):
         for j in range(new_W):
-            block = data[row_bins[i]:row_bins[i+1], col_bins[j]:col_bins[j+1]]
+            block = data[row_bins[i] : row_bins[i + 1], col_bins[j] : col_bins[j + 1]]
             pooled[i, j] = block.max()  # or use np.any(block) if binary
 
     return pooled
@@ -95,29 +94,28 @@ def apply_lake_mask(mask_array):
     mask_array[mask_array == -1] = 0
     return mask_array
 
+
 # Load in model data
-model_data_path = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_140425\model_output.nc'
+model_data_path = (
+    r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_140425\model_output.nc"
+)
 model_data = Dataset(model_data_path)
 x_model, y_model = get_bbox_from_model_data(model_data)
 
 xmin, ymin = np.min(x_model), np.min(y_model)
 xmax, ymax = np.max(x_model), np.max(y_model)
 bbox = box(xmin, ymin, xmax, ymax)
-gdf = gpd.GeoDataFrame({'geometry': [bbox]}, crs=crs_cartopy_proj.to_wkt())
+gdf = gpd.GeoDataFrame({"geometry": [bbox]}, crs=crs_cartopy_proj.to_wkt())
 
 model_data.close()
 
 # Load in Moussavi data
-#moussavi_file_path = "LC08_L1GT_218111_20200101_20200113_01_T2_All_Masks.tif"
-moussavi_file_path = (
-    r"C:\Users\jdels\Documents\Work\GVI\GVI\216-111\LC08_L1GT_216111_20171228_20180103_01_T2\LC08_L1GT_216111_20171228_20180103_01_T2_All_Masks.tif"
-)
-moussavi_file_path_depth = (
-    r"C:\Users\jdels\Documents\Work\GVI\GVI\216-111\LC08_L1GT_216111_20171228_20180103_01_T2\LC08_L1GT_216111_20171228_20180103_01_T2_Average_Red_And_Panchromatic_Depth.tif"
-)
-#moussavi_file_path = (
+# moussavi_file_path = "LC08_L1GT_218111_20200101_20200113_01_T2_All_Masks.tif"
+moussavi_file_path = r"C:\Users\jdels\Documents\Work\GVI\GVI\216-111\LC08_L1GT_216111_20171228_20180103_01_T2\LC08_L1GT_216111_20171228_20180103_01_T2_All_Masks.tif"
+moussavi_file_path_depth = r"C:\Users\jdels\Documents\Work\GVI\GVI\216-111\LC08_L1GT_216111_20171228_20180103_01_T2\LC08_L1GT_216111_20171228_20180103_01_T2_Average_Red_And_Panchromatic_Depth.tif"
+# moussavi_file_path = (
 #    r"C:\Users\jdels\Documents\Work\GVI\GVI\216-111\LC08_L1GT_216111_20190217_20190222_01_T2\LC08_L1GT_216111_20190217_20190222_01_T2_All_Masks.tif"
-#)
+# )
 # with rioxarray.open_rasterio(moussavi_file_path) as moussavi_riox:
 #     xn, yn = moussavi_riox.x.values, moussavi_riox.y.values
 #     data = apply_lake_mask(moussavi_riox.squeeze().values)
@@ -177,65 +175,65 @@ moussavi_file_path_depth = (
 with rioxarray.open_rasterio(moussavi_file_path_depth) as moussavi_riox:
     xn, yn = moussavi_riox.x.values, moussavi_riox.y.values
     data = apply_lake_mask(moussavi_riox.squeeze().values)
-    plot_on_map(xn, yn, data, label='no masking')
+    plot_on_map(xn, yn, data, label="no masking")
 
     da_proj = moussavi_riox.rio.reproject(crs_cartopy_proj)
     clipped = da_proj.rio.clip_box(minx=xmin, miny=ymin, maxx=xmax, maxy=ymax)
     xn, yn = clipped.x.values, clipped.y.values
     data = clipped.squeeze().values
 
-    fig, ax = plt.subplots(figsize=(10, 8), subplot_kw={'projection': ccrs.SouthPolarStereo()})
+    fig, ax = plt.subplots(
+        figsize=(10, 8), subplot_kw={"projection": ccrs.SouthPolarStereo()}
+    )
 
     # Plot the data (using the correct CRS for interpretation)
-    clipped.plot(ax=ax, transform=ccrs.SouthPolarStereo(), cmap='Blues', robust=True)
+    clipped.plot(ax=ax, transform=ccrs.SouthPolarStereo(), cmap="Blues", robust=True)
 
     # Add coastlines and features
     ax.coastlines()
-    ax.add_feature(cfeature.BORDERS, linestyle=':')
-    ax.add_feature(cfeature.LAND, edgecolor='black', facecolor='lightgray')
+    ax.add_feature(cfeature.BORDERS, linestyle=":")
+    ax.add_feature(cfeature.LAND, edgecolor="black", facecolor="lightgray")
     ax.add_feature(cfeature.OCEAN)
 
-    plot_on_map(xn, yn, data, label='Moussavi data - cropped')
+    plot_on_map(xn, yn, data, label="Moussavi data - cropped")
 
     # Perform max pooling
     pooled_data = max_pooling_to_shape(data, (100, 100))
     # Interpolate lat/long to this 100 x 100 grid
     pooled_xn = np.linspace(xn.min(), xn.max(), 100)
     pooled_yn = np.linspace(yn.min(), yn.max(), 100)[::-1]
-    plot_on_map(pooled_xn, pooled_yn, pooled_data/1000, label='Moussavi lake depth')
+    plot_on_map(pooled_xn, pooled_yn, pooled_data / 1000, label="Moussavi lake depth")
 
     plt.figure()
     plt.imshow(pooled_data)
-    plt.title('Pooled Moussavi data')
+    plt.title("Pooled Moussavi data")
     plt.figure()
     plt.imshow(data)
-    plt.title('Cropped Moussavi data')
+    plt.title("Cropped Moussavi data")
 
 # Plot up original data - in PlateCarree
-fig, ax = plt.subplots(figsize=(10, 8), subplot_kw={
-    'projection': ccrs.SouthPolarStereo()
-})
+fig, ax = plt.subplots(
+    figsize=(10, 8), subplot_kw={"projection": ccrs.SouthPolarStereo()}
+)
 da_proj = moussavi_riox.rio.reproject(4326)
 xn, yn = da_proj.x.values, da_proj.y.values
 # Plot the data using pcolormesh
-mesh = ax.pcolormesh(xn, yn, da_proj.squeeze().values, cmap='Set1',
-                     transform=ccrs.PlateCarree())
+mesh = ax.pcolormesh(
+    xn, yn, da_proj.squeeze().values, cmap="Set1", transform=ccrs.PlateCarree()
+)
 # Add map features
 ax.coastlines()
-ax.add_feature(cfeature.BORDERS, linestyle=':')
-ax.add_feature(cfeature.LAND, edgecolor='black', facecolor='lightgray')
+ax.add_feature(cfeature.BORDERS, linestyle=":")
+ax.add_feature(cfeature.LAND, edgecolor="black", facecolor="lightgray")
 ax.add_feature(cfeature.OCEAN)
 ax.gridlines(draw_labels=True)
 # Colorbar and title
-cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', label='Value')
+cbar = plt.colorbar(mesh, ax=ax, orientation="vertical", label="Value")
 
 
-np.save('lake_depth_moussavi_subset.npy', pooled_data/1000)
-np.save('x_moussavi_pooled_subset.npy', pooled_xn)
-np.save('y_moussavi_pooled_subset.npy', pooled_yn)
-
-
-
+np.save("lake_depth_moussavi_subset.npy", pooled_data / 1000)
+np.save("x_moussavi_pooled_subset.npy", pooled_xn)
+np.save("y_moussavi_pooled_subset.npy", pooled_yn)
 
 
 # # Reproject this subset to a 100x100 grid.

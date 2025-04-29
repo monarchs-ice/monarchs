@@ -6,12 +6,13 @@ using the relevant flag in ``model_setup.py``, but also in our test suite.
 This is in part a tradeoff between usability of the model, and code clarity. This approach was chosen to maximise
 usability, so that the different solvers can be generated according to the value of a single Boolean.
 """
+
 import numpy as np
 from scipy.optimize import root, fsolve, OptimizeResult
 from monarchs.physics import heateqn
 
 
-def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
+def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     """
     scipy.optimize.fsolve-compatible solver function to be used within the model.
     Solves physics.heateqn.
@@ -62,12 +63,23 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         sol = 273.15
         infodict = {}
         ier = 1
-        mesg = 'Fixed surface temperature'
+        mesg = "Fixed surface temperature"
 
     else:
-        N = 10
-        soldict = heateqn.find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
-                                                   dz, dt, solver_method=solver_method, N=N)
+        N = 5
+        soldict = heateqn.find_surface_temperature(
+            cell,
+            LW_in,
+            SW_in,
+            T_air,
+            p_air,
+            T_dp,
+            wind,
+            dz,
+            dt,
+            solver_method=solver_method,
+            N=N,
+        )
 
         sol = soldict.x
         ier = soldict.success
@@ -77,15 +89,15 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     # Now use tridiagonal solver to solve the heat equation once we have the surface temp
 
     if fixed_sfc:
-        fs = '(fixed sfc)'
+        fs = "(fixed sfc)"
         T = heateqn.propagate_temperature(cell, dz, dt, sol, N=1)
         T = np.concatenate((np.array([sol]), T))
     else:
-        fs = ''
+        fs = ""
         # Take our root-finding algorithm output (from first N layers),
         # use it as the top boundary condition to the tridiagonal solver,
         # then concatenate the two
-        T_tri = heateqn.propagate_temperature(cell, dz, dt, sol[-1], N=10)
+        T_tri = heateqn.propagate_temperature(cell, dz, dt, sol[-1], N=N)
         T = np.concatenate((sol[:], T_tri))
 
     # print(f'Temperature profile {fs} = ', T[:10])
@@ -118,9 +130,11 @@ def lake_development_eqn(x, args):
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[3 + i]
     T_core = lake_temperature[int(vert_grid_lake / 2)]
-    output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q + np.sign(T_core -
-                                                                   x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (
-                     4 / 3)
+    output = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
+    )
     return output
 
 
@@ -147,8 +161,11 @@ def lake_formation_eqn(x, args):
     Q = args[2]
     k = args[3]
     T1 = args[4]
-    output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k * (-T1 + x[0]) / (
-            firn_depth / vert_grid)
+    output = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        - k * (-T1 + x[0]) / (firn_depth / vert_grid)
+    )
     return output
 
 
@@ -210,10 +227,13 @@ def sfc_energy_virtual_lid(x, args):
     lake_temperature = np.zeros(int(vert_grid_lake))
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[5 + i]
-    output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_v_lid * (-
-                                                                      lake_temperature[-2] + x[0]) / (
-                     lake_depth / (vert_grid_lake / 2) +
-                     v_lid_depth)
+    output = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        - k_v_lid
+        * (-lake_temperature[-2] + x[0])
+        / (lake_depth / (vert_grid_lake / 2) + v_lid_depth)
+    )
     return output
 
 
@@ -235,8 +255,11 @@ def sfc_energy_lid(x, args):
     lid_depth = args[2]
     vert_grid_lid = args[3]
     sub_T = args[4]
-    output = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_lid * (-sub_T +
-                                                                    x[0]) / (lid_depth / vert_grid_lid)
+    output = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+    )
     return output
 
 
@@ -315,7 +338,6 @@ def lid_heateqn_solver(x, args):
     wind = args[8]
     Sfrac_lid = args[-2]
     k_lid = args[-1]
-    args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k_lid,
-            Sfrac_lid)
+    args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k_lid, Sfrac_lid)
     root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
     return root, infodict, ier, mesg

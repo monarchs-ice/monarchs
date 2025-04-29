@@ -18,6 +18,7 @@ def do_not_jit(function):
     @wraps(function)
     def wrapper(*args, **kwargs):
         return function(*args, **kwargs)
+
     return wrapper
 
 
@@ -58,7 +59,7 @@ def get_2d_grid(grid, attr, index=False):
             var[row] = [None] * len(grid[0])
             for col in range(len(grid[0])):
                 var[row][col] = grid[attr][row][col]
-    if index == 'all':
+    if index == "all":
         return np.array(var)
     else:
         try:
@@ -91,7 +92,7 @@ def calc_grid_mass(grid):
     for i in range(len(grid)):
         for j in range(len(grid[0])):
             cell = grid[i][j]
-            if cell['valid_cell']:
+            if cell["valid_cell"]:
                 total_mass += calc_mass_sum(cell)
     return total_mass
 
@@ -117,47 +118,57 @@ def check_correct(cell):
         If any of the conditions are met, raise ValueError as the model has reached an unphysical state.
         See the code body for details.
     """
-    if cell['lake_depth'] < 0:
-        print(f'monarchs.core.utils.check_correct: ')
-        print('Lake depth = ', cell['lake_depth'])
-        raise ValueError('Lake depth must not be negative \n')
-    if cell['firn_depth'] < 0:
-        print('Error: column = ', cell['column'], ', row = ', cell['row'],
-            ', firn_depth = ', cell['firn_depth'], '\n')
-        raise ValueError(
-            f'monarchs.core.utils.check_correct: All firn has melted.')
-    if np.any(cell['Sfrac'][cell['Sfrac'] < -0.01]) or np.any(cell['Sfrac']
-        [cell['Sfrac'] > 1.01]):
+    if cell["lake_depth"] < 0:
+        print(f"monarchs.core.utils.check_correct: ")
+        print("Lake depth = ", cell["lake_depth"])
+        raise ValueError("Lake depth must not be negative \n")
+    if cell["firn_depth"] < 0:
+        print(
+            "Error: column = ",
+            cell["column"],
+            ", row = ",
+            cell["row"],
+            ", firn_depth = ",
+            cell["firn_depth"],
+            "\n",
+        )
+        raise ValueError(f"monarchs.core.utils.check_correct: All firn has melted.")
+    if np.any(cell["Sfrac"][cell["Sfrac"] < -0.01]) or np.any(
+        cell["Sfrac"][cell["Sfrac"] > 1.01]
+    ):
         print(
             f"""{np.max(cell['Sfrac'])} at level {np.where((cell['Sfrac'] > 1) | (cell['Sfrac'] < 0))}, x = {cell['column']}, y = {cell['row']}
 """
-            )
-        print('Minimum Sfrac = ', np.min(cell['Sfrac']))
+        )
+        print("Minimum Sfrac = ", np.min(cell["Sfrac"]))
         raise ValueError(
             f"""monarchs.core.utils.check_correct: Solid fraction must be between 0 and 1 
 """
-            )
-    if np.any(cell['Lfrac'][cell['Lfrac'] < -0.01]) or np.any(cell['Lfrac']
-        [cell['Lfrac'] > 1.01]):
-        print(np.max(cell['Lfrac']))
-        print(np.min(cell['Lfrac']))
-        print(np.where(cell['Lfrac'] < -0.01))
-        print(cell['Lfrac'])
+        )
+    if np.any(cell["Lfrac"][cell["Lfrac"] < -0.01]) or np.any(
+        cell["Lfrac"][cell["Lfrac"] > 1.01]
+    ):
+        print(np.max(cell["Lfrac"]))
+        print(np.min(cell["Lfrac"]))
+        print(np.where(cell["Lfrac"] < -0.01))
+        print(cell["Lfrac"])
         raise ValueError(
-            f'monarchs.core.utils.check_correct: Lfrac error - either above 1 or below 0'
-            )
-    total = cell['Lfrac'] + cell['Sfrac']
+            f"monarchs.core.utils.check_correct: Lfrac error - either above 1 or below 0"
+        )
+    total = cell["Lfrac"] + cell["Sfrac"]
     if np.any(total > 1.01):
-        print(f'monarchs.core.utils.check_correct: ')
-        print(f'{np.max(total)} at level {np.where(total > 1)} \n')
-        print('Sfrac :', cell['Sfrac'][np.where(total > 1)])
-        print('Lfrac :', cell['Lfrac'][np.where(total > 1)])
-        print('Sfrac + Lfrac:', cell['Lfrac'][np.where(total > 1)] + cell[
-            'Sfrac'][np.where(total > 1)])
+        print(f"monarchs.core.utils.check_correct: ")
+        print(f"{np.max(total)} at level {np.where(total > 1)} \n")
+        print("Sfrac :", cell["Sfrac"][np.where(total > 1)])
+        print("Lfrac :", cell["Lfrac"][np.where(total > 1)])
+        print(
+            "Sfrac + Lfrac:",
+            cell["Lfrac"][np.where(total > 1)] + cell["Sfrac"][np.where(total > 1)],
+        )
         raise ValueError(
             f"""monarchs.core.utils.check_correct: Sum of liquid and solid fraction must be less than 1 
 """
-            )
+        )
 
 
 def calc_mass_sum(cell):
@@ -178,11 +189,17 @@ def calc_mass_sum(cell):
     total_mass : float
         Amount of mass in the system, in arbitrary units.
     """
-    total_mass = np.sum(cell['Sfrac'] * cell['rho_ice'] * (cell[
-        'firn_depth'] / cell['vert_grid'])) + np.sum(cell['Lfrac'] * cell[
-        'rho_water'] * (cell['firn_depth'] / cell['vert_grid'])) + cell[
-        'lake_depth'] * cell['rho_water'] + cell['lid_depth'] * cell['rho_ice'
-        ] + cell['v_lid_depth'] * cell['rho_ice']
+    total_mass = (
+        np.sum(
+            cell["Sfrac"] * cell["rho_ice"] * (cell["firn_depth"] / cell["vert_grid"])
+        )
+        + np.sum(
+            cell["Lfrac"] * cell["rho_water"] * (cell["firn_depth"] / cell["vert_grid"])
+        )
+        + cell["lake_depth"] * cell["rho_water"]
+        + cell["lid_depth"] * cell["rho_ice"]
+        + cell["v_lid_depth"] * cell["rho_ice"]
+    )
     return total_mass
 
 
@@ -206,9 +223,10 @@ def add_random_water(grid, max_grid_row, max_grid_col):
     rand_water = np.random.rand(max_grid_row, max_grid_col) / 10
     for j in range(max_grid_col):
         for i in range(max_grid_row):
-            grid['water'][i][j][0] = grid['water'][i][j][0] + rand_water[i][j]
-            grid['water_level'][i][j] = grid['water'][i][j][0] + grid[
-                'firn_depth'][i][j]
+            grid["water"][i][j][0] = grid["water"][i][j][0] + rand_water[i][j]
+            grid["water_level"][i][j] = (
+                grid["water"][i][j][0] + grid["firn_depth"][i][j]
+            )
 
 
 def add_edge_water(grid, max_grid_row, max_grid_col):
@@ -232,11 +250,12 @@ def add_edge_water(grid, max_grid_row, max_grid_col):
     for i in range(max_grid_col):
         for j in range(max_grid_row):
             if i < 4 or max_grid_row - i < 4:
-                grid['water'][i][j][0] += edge_water
+                grid["water"][i][j][0] += edge_water
             if j < 4 or max_grid_col - j < 4:
-                grid['water'][i][j][0] += edge_water
-            grid['water_level'][i][j] = grid['lake_depth'][i][j] + grid[
-                'firn_depth'][i][j]
+                grid["water"][i][j][0] += edge_water
+            grid["water_level"][i][j] = (
+                grid["lake_depth"][i][j] + grid["firn_depth"][i][j]
+            )
 
 
 def check_energy_conservation(grid):
@@ -244,15 +263,18 @@ def check_energy_conservation(grid):
     for i in range(len(grid)):
         for j in range(len(grid[0])):
             cell = grid[i][j]
-            if cell['valid_cell']:
-                cp_ice = 1000 * (7.16 * 10 ** -3 * cell['firn_temperature'] +
-                    0.138)
-                cp = cell['cp_water'] * cell['Lfrac'] + 1004 * (1 - cell[
-                    'Sfrac'] - cell['Lfrac']) + cp_ice * cell['Sfrac']
-                cell['rho'] = cell['Sfrac'] * cell['rho_ice'] + cell['Lfrac'
-                    ] * cell['rho_water']
-                energy += cell['rho'] * cell['firn_temperature'] * cp
-    print('Total energy = ', np.sum(energy))
+            if cell["valid_cell"]:
+                cp_ice = 1000 * (7.16 * 10**-3 * cell["firn_temperature"] + 0.138)
+                cp = (
+                    cell["cp_water"] * cell["Lfrac"]
+                    + 1004 * (1 - cell["Sfrac"] - cell["Lfrac"])
+                    + cp_ice * cell["Sfrac"]
+                )
+                cell["rho"] = (
+                    cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+                )
+                energy += cell["rho"] * cell["firn_temperature"] * cp
+    print("Total energy = ", np.sum(energy))
 
 
 def spinup(cell, x, args):

@@ -5,17 +5,19 @@ from monarchs.physics.lateral_functions import move_water
 
 path = "C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem/progress.pkl"
 import numpy.testing as npt
+
+
 # Set up a dummy IceShelf instance, create a grid of these, then write out our dumpfile into this.
-class IceShelf():
+class IceShelf:
     pass
 
 
 row_amount = 100
 col_amount = 100
 
-file_fmt = 'pickle'
+file_fmt = "pickle"
 
-if file_fmt == 'netcdf':
+if file_fmt == "netcdf":
     grid = []
     for i in range(col_amount):
         _l = []
@@ -28,14 +30,19 @@ if file_fmt == 'netcdf':
 else:
     import pickle
 
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         test = pickle.load(f)
 # #
-move_water(test, row_amount, col_amount, 1000, 3600*12,
-                catchment_outflow=True,
-                flow_into_land=True,
-                lateral_movement_percolation_toggle=True)
-
+move_water(
+    test,
+    row_amount,
+    col_amount,
+    1000,
+    3600 * 12,
+    catchment_outflow=True,
+    flow_into_land=True,
+    lateral_movement_percolation_toggle=True,
+)
 
 
 # for i in range(col_amount):

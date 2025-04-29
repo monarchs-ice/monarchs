@@ -4,8 +4,18 @@ from numba.typed import List
 from monarchs.physics.timestep import timestep_loop
 
 
-def loop_over_grid_numba(row_amount, col_amount, grid, dt, met_data,
-    t_steps_per_day, toggle_dict, parallel=False, use_mpi=False, ncores='all'):
+def loop_over_grid_numba(
+    row_amount,
+    col_amount,
+    grid,
+    dt,
+    met_data,
+    t_steps_per_day,
+    toggle_dict,
+    parallel=False,
+    use_mpi=False,
+    ncores="all",
+):
     """
     This function wraps timestep_loop, allowing for it to be
     run in parallel over an arbitrarily sized grid. The grid
@@ -59,5 +69,4 @@ def loop_over_grid_numba(row_amount, col_amount, grid, dt, met_data,
             flat_grid.append(grid[i][j])
             met_data_grid.append(met_data[i][j])
     for i in prange(row_amount * col_amount):
-        timestep_loop(flat_grid[i], dt, met_data_grid[i], t_steps_per_day,
-            toggle_dict)
+        timestep_loop(flat_grid[i], dt, met_data_grid[i], t_steps_per_day, toggle_dict)

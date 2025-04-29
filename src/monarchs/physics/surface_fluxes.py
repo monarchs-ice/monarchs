@@ -2,8 +2,20 @@ import numpy as np
 from numba import njit
 
 
-def sfc_flux(melt, exposed_water, lid, lake, lake_depth, LW_in, SW_in,
-    T_air, p_air, T_dp, wind, xsurf):
+def sfc_flux(
+    melt,
+    exposed_water,
+    lid,
+    lake,
+    lake_depth,
+    LW_in,
+    SW_in,
+    T_air,
+    p_air,
+    T_dp,
+    wind,
+    xsurf,
+):
     """
     Calculate the surface heat flux from the input shortwave and longwave fluxes
     and latent/sensible heat fluxes.
@@ -85,8 +97,9 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
                 alpha = 0.413
             elif lake:
                 h = lake_depth
-                alpha = (9702 + 1000 * np.exp(3.6 * h)) / (-539 + 20000 *
-                    np.exp(3.6 * h))
+                alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
+                    -539 + 20000 * np.exp(3.6 * h)
+                )
             else:
                 alpha = 0.6
         else:
@@ -129,7 +142,7 @@ def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
     g = 9.8
     b = 20
     dz = 10
-    CT0 = 1.3 * 10 ** -3
+    CT0 = 1.3 * 10**-3
     c = 1961 * b * CT0
     R_dry = 287.0597
     R_sat = 461.525
@@ -142,13 +155,13 @@ def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
     if wind == 0:
         Ri = 0
     else:
-        Ri = g * (T_air - T_sfc) * dz / (T_air * wind ** 2)
+        Ri = g * (T_air - T_sfc) * dz / (T_air * wind**2)
     if Ri < 0:
         CT = CT0 * (1 - 2 * b * Ri / (1 + c * abs(Ri) ** 0.5))
     else:
         CT = CT0 * (1 + b * Ri) ** -2
-    L = 2.501 * 10 ** 6
-    p_v = 2.53 * 10 ** 8 * np.exp(-5420 / T_sfc)
+    L = 2.501 * 10**6
+    p_v = 2.53 * 10**8 * np.exp(-5420 / T_sfc)
     q_0 = 0.622 * p_v / (p_air - 0.378 * p_v)
     Fsens = 1.275 * 1005 * CT * wind * (T_air - T_sfc)
     Flat = 1.275 * L * CT * wind * (s_hum / 1000 - q_0)

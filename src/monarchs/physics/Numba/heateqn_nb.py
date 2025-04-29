@@ -8,10 +8,15 @@ These are kept separate as there is significantly more complexity required to ge
 inputs in the correct format for this version, and the requirement to not return anything
 (whereas scipy.optimize.fsolve requires a return value)
 """
+
 import numpy as np
 from numba import cfunc
 from NumbaMinpack import minpack_sig
-from monarchs.physics.Numba.extract_args import extract_args, extract_args_fixedsfc, extract_args_lid
+from monarchs.physics.Numba.extract_args import (
+    extract_args,
+    extract_args_fixedsfc,
+    extract_args_lid,
+)
 from monarchs.physics.surface_fluxes import sfc_flux
 
 
@@ -44,9 +49,28 @@ def heateqn(x, output, args):
 
     """
     vert_grid = np.int32(args[0])
-    (T, Sfrac, Lfrac, k_air, k_water, cp_air, cp_water, dt, dz, melt,
-        exposed_water, lid, lake, lake_depth, LW_in, SW_in, T_air, p_air,
-        T_dp, wind) = extract_args(args)
+    (
+        T,
+        Sfrac,
+        Lfrac,
+        k_air,
+        k_water,
+        cp_air,
+        cp_water,
+        dt,
+        dz,
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+    ) = extract_args(args)
     k_ice = np.zeros(np.shape(T))
     for i in np.arange(len(T)):
         if T[i] < 273.15:
@@ -59,15 +83,33 @@ def heateqn(x, output, args):
     rho = Sfrac * 913 + Lfrac * 1000
     kappa = k / (cp * rho)
     epsilon = 0.98
-    sigma = 5.670374 * 10 ** -8
-    Q = sfc_flux(melt, exposed_water, lid, lake, lake_depth, LW_in, SW_in,
-        T_air, p_air, T_dp, wind, x[0])
+    sigma = 5.670374 * 10**-8
+    Q = sfc_flux(
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+        x[0],
+    )
     output[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
     for idx in np.arange(1, vert_grid - 1):
-        output[idx] = T[idx] - x[idx] + dt * (kappa[idx] / dz ** 2) * (x[
-            idx + 1] - 2 * x[idx] + x[idx - 1])
-    output[vert_grid - 1] = T[vert_grid - 1] - x[vert_grid - 1] + dt * (kappa
-        [vert_grid - 1] / dz ** 2) * (-x[vert_grid - 1] + x[vert_grid - 2])
+        output[idx] = (
+            T[idx]
+            - x[idx]
+            + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+        )
+    output[vert_grid - 1] = (
+        T[vert_grid - 1]
+        - x[vert_grid - 1]
+        + dt * (kappa[vert_grid - 1] / dz**2) * (-x[vert_grid - 1] + x[vert_grid - 2])
+    )
 
 
 def heateqn_fixedsfc(x, output, args):
@@ -101,7 +143,8 @@ def heateqn_fixedsfc(x, output, args):
     """
     vert_grid = np.int32(args[0])
     T, Sfrac, Lfrac, k_air, k_water, cp_air, cp_water, dt, dz, T_sfc = (
-        extract_args_fixedsfc(args))
+        extract_args_fixedsfc(args)
+    )
     k_ice = np.zeros(np.shape(T))
     for i in range(len(T)):
         if T[i] < 273.15:
@@ -115,10 +158,16 @@ def heateqn_fixedsfc(x, output, args):
     kappa = k / (cp * rho)
     output[0] = x[0] - T_sfc
     for idx in np.arange(1, vert_grid - 1):
-        output[idx] = T[idx] - x[idx] + dt * (kappa[idx] / dz ** 2) * (x[
-            idx + 1] - 2 * x[idx] + x[idx - 1])
-    output[vert_grid - 1] = T[vert_grid - 1] - x[vert_grid - 1] + dt * (kappa
-        [vert_grid - 1] / dz ** 2) * (-x[vert_grid - 1] + x[vert_grid - 2])
+        output[idx] = (
+            T[idx]
+            - x[idx]
+            + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+        )
+    output[vert_grid - 1] = (
+        T[vert_grid - 1]
+        - x[vert_grid - 1]
+        + dt * (kappa[vert_grid - 1] / dz**2) * (-x[vert_grid - 1] + x[vert_grid - 2])
+    )
 
 
 def heateqn_lid(x, output, args):
@@ -148,21 +197,53 @@ def heateqn_lid(x, output, args):
 
     """
     vert_grid_lid = np.int32(args[0])
-    (lid_temperature, Sfrac_lid, k_lid, cp_air, cp_water, dt, dz, melt,
-        exposed_water, lid, lake, lake_depth, LW_in, SW_in, T_air, p_air,
-        T_dp, wind) = extract_args_lid(args)
+    (
+        lid_temperature,
+        Sfrac_lid,
+        k_lid,
+        cp_air,
+        cp_water,
+        dt,
+        dz,
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+    ) = extract_args_lid(args)
     cp_ice = 1000 * (0.00716 * lid_temperature + 0.138)
     cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cp_air
     rho = 913
     kappa = k_lid / (cp * rho)
     epsilon = 0.98
-    sigma = 5.670373 * 10 ** -8
-    Q = sfc_flux(melt, exposed_water, lid, lake, lake_depth, LW_in, SW_in,
-        T_air, p_air, T_dp, wind, x[0])
+    sigma = 5.670373 * 10**-8
+    Q = sfc_flux(
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+        x[0],
+    )
     output[0] = k_lid * (x[0] - x[1]) / dz - (Q - epsilon * sigma * x[0] ** 4)
     for idx in np.arange(1, vert_grid_lid - 1):
-        output[idx] = lid_temperature[idx] - x[idx] + dt * (kappa[idx] / dz **
-            2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+        output[idx] = (
+            lid_temperature[idx]
+            - x[idx]
+            + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+        )
     output[-1] = x[vert_grid_lid - 1] - 273.15
 
 

@@ -6,19 +6,34 @@ using the relevant flag in ``model_setup.py``, but also in our test suite.
 This is in part a tradeoff between usability of the model, and code clarity. This approach was chosen to maximise
 usability, so that the different solvers can be generated according to the value of a single Boolean.
 """
+
 import numpy as np
 from NumbaMinpack import hybrd, minpack_sig
 from numba import cfunc, jit
 import monarchs.physics.Numba.heateqn_nb as hnb
+
 heqlid = hnb.heateqn_lid.address
 heq = hnb.heateqn.address
 heqfs = hnb.heateqn_fixedsfc.address
 
 
 @jit(nopython=True, fastmath=False)
-def args_array(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
-    fixed_sfc=False, Tsfc=273.15, lid=False, Sfrac_lid=np.array([np.nan]),
-    k_lid=np.nan):
+def args_array(
+    cell,
+    dt,
+    dz,
+    LW_in,
+    SW_in,
+    T_air,
+    p_air,
+    T_dp,
+    wind,
+    fixed_sfc=False,
+    Tsfc=273.15,
+    lid=False,
+    Sfrac_lid=np.array([np.nan]),
+    k_lid=np.nan,
+):
     """
     Convert the variables from an instance of the IceShelf class into the
     format required to run NumbaMinpack.hybrd, a root finder written in Fortran
@@ -73,35 +88,76 @@ def args_array(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
 
     """
     if lid:
-        args = np.hstack((np.array([cell['vert_grid_lid']]), cell[
-            'lid_temperature'], Sfrac_lid, np.array([k_lid]), np.array([
-            cell['cp_air']]), np.array([cell['cp_water']]), np.array([dt]),
-            np.array([dz]), np.array([cell['melt']]), np.array([cell[
-            'exposed_water']]), np.array([cell['lid']]), np.array([cell[
-            'lake']]), np.array([cell['lake_depth']]), np.array([LW_in]),
-            np.array([SW_in]), np.array([T_air]), np.array([p_air]), np.
-            array([T_dp]), np.array([wind])))
+        args = np.hstack(
+            (
+                np.array([cell["vert_grid_lid"]]),
+                cell["lid_temperature"],
+                Sfrac_lid,
+                np.array([k_lid]),
+                np.array([cell["cp_air"]]),
+                np.array([cell["cp_water"]]),
+                np.array([dt]),
+                np.array([dz]),
+                np.array([cell["melt"]]),
+                np.array([cell["exposed_water"]]),
+                np.array([cell["lid"]]),
+                np.array([cell["lake"]]),
+                np.array([cell["lake_depth"]]),
+                np.array([LW_in]),
+                np.array([SW_in]),
+                np.array([T_air]),
+                np.array([p_air]),
+                np.array([T_dp]),
+                np.array([wind]),
+            )
+        )
     elif not fixed_sfc:
-        args = np.hstack((np.array([cell['vert_grid']]), cell[
-            'firn_temperature'], cell['Sfrac'], cell['Lfrac'], np.array([
-            cell['k_air']]), np.array([cell['k_water']]), np.array([cell[
-            'cp_air']]), np.array([cell['cp_water']]), np.array([dt]), np.
-            array([dz]), np.array([cell['melt']]), np.array([cell[
-            'exposed_water']]), np.array([cell['lid']]), np.array([cell[
-            'lake']]), np.array([cell['lake_depth']]), np.array([LW_in]),
-            np.array([SW_in]), np.array([T_air]), np.array([p_air]), np.
-            array([T_dp]), np.array([wind])))
+        args = np.hstack(
+            (
+                np.array([cell["vert_grid"]]),
+                cell["firn_temperature"],
+                cell["Sfrac"],
+                cell["Lfrac"],
+                np.array([cell["k_air"]]),
+                np.array([cell["k_water"]]),
+                np.array([cell["cp_air"]]),
+                np.array([cell["cp_water"]]),
+                np.array([dt]),
+                np.array([dz]),
+                np.array([cell["melt"]]),
+                np.array([cell["exposed_water"]]),
+                np.array([cell["lid"]]),
+                np.array([cell["lake"]]),
+                np.array([cell["lake_depth"]]),
+                np.array([LW_in]),
+                np.array([SW_in]),
+                np.array([T_air]),
+                np.array([p_air]),
+                np.array([T_dp]),
+                np.array([wind]),
+            )
+        )
     else:
-        args = np.hstack((np.array([cell['vert_grid']]), cell[
-            'firn_temperature'], cell['Sfrac'], cell['Lfrac'], np.array([
-            cell['k_air']]), np.array([cell['k_water']]), np.array([cell[
-            'cp_air']]), np.array([cell['cp_water']]), np.array([dt]), np.
-            array([dz]), np.array([Tsfc])))
+        args = np.hstack(
+            (
+                np.array([cell["vert_grid"]]),
+                cell["firn_temperature"],
+                cell["Sfrac"],
+                cell["Lfrac"],
+                np.array([cell["k_air"]]),
+                np.array([cell["k_water"]]),
+                np.array([cell["cp_air"]]),
+                np.array([cell["cp_water"]]),
+                np.array([dt]),
+                np.array([dz]),
+                np.array([Tsfc]),
+            )
+        )
     return args
 
 
 @jit(nopython=True, fastmath=False)
-def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
+def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     """
     Numba-compatible solver function to be used within the model.
     Solves physics.Numba.heateqn.
@@ -158,8 +214,9 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     p_air = args[6]
     T_dp = args[7]
     wind = args[8]
-    args = args_array(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
-        fixed_sfc=fixed_sfc)
+    args = args_array(
+        cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, fixed_sfc=fixed_sfc
+    )
     if fixed_sfc:
         eqn = heqfs
     else:
@@ -201,8 +258,11 @@ def lake_development_eqn(x, output, args):
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[3 + i]
     T_core = lake_temperature[int(vert_grid_lake / 2)]
-    output[0] = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q + np.sign(
-        T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
+    output[0] = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
+    )
 
 
 @jit(nopython=True, fastmath=False)
@@ -232,8 +292,11 @@ def lake_formation_eqn(x, output, args):
     Q = args[2]
     k = args[3]
     T1 = args[4]
-    output[0] = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k * (-T1 + x[0]
-        ) / (firn_depth / vert_grid)
+    output[0] = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        - k * (-T1 + x[0]) / (firn_depth / vert_grid)
+    )
 
 
 dev_eqn_cfunc = cfunc(minpack_sig)(lake_development_eqn)
@@ -289,9 +352,13 @@ def sfc_energy_virtual_lid(x, output, args):
     lake_temperature = np.zeros(int(vert_grid_lake))
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[5 + i]
-    output[0] = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_v_lid * (-
-        lake_temperature[2] + x[0]) / (lake_depth / (vert_grid_lake / 2) +
-        v_lid_depth)
+    output[0] = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        - k_v_lid
+        * (-lake_temperature[2] + x[0])
+        / (lake_depth / (vert_grid_lake / 2) + v_lid_depth)
+    )
 
 
 @jit(nopython=True, fastmath=False)
@@ -313,8 +380,11 @@ def sfc_energy_lid(x, output, args):
     lid_depth = args[2]
     vert_grid_lid = args[3]
     sub_T = args[4]
-    output[0] = -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4 + Q - k_lid * (-
-        sub_T + x[0]) / (lid_depth / vert_grid_lid)
+    output[0] = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+    )
 
 
 sfc_energy_virtual_lid = cfunc(minpack_sig)(sfc_energy_virtual_lid)
@@ -428,7 +498,19 @@ def lid_heateqn_solver(x, args):
     wind = args[8]
     Sfrac_lid = args[-2]
     k_lid = args[-1]
-    args = args_array(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
-        lid=True, k_lid=k_lid, Sfrac_lid=Sfrac_lid)
+    args = args_array(
+        cell,
+        dt,
+        dz,
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+        lid=True,
+        k_lid=k_lid,
+        Sfrac_lid=Sfrac_lid,
+    )
     root, fvec, success, info = hybrd(eqn, x, args)
     return root, fvec, success, info

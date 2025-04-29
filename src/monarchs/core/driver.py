@@ -11,6 +11,7 @@ main then calls the lateral movement functions, and handles saving the data,
 both in terms of the model state (also known as a "dump"), and the
 variables that the user wants to track over time.
 """
+
 import os
 import time
 import numpy as np
@@ -23,18 +24,21 @@ from monarchs.core.loop_over_grid import loop_over_grid
 from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct
 from monarchs.met_data.metdata_class import initialise_met_data_grid
 from monarchs.physics import lateral_functions
+
 model_setup = configuration.model_setup
-if hasattr(model_setup, 'use_numba') and model_setup.use_numba:
+if hasattr(model_setup, "use_numba") and model_setup.use_numba:
     from numba import jit
     from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
     from numba import set_num_threads
-    if model_setup.cores in ['all', False]:
+
+    if model_setup.cores in ["all", False]:
         cores = pathos.helpers.cpu_count()
     else:
         cores = model_setup.cores
     set_num_threads(int(cores))
-    loop_over_grid = jit(loop_over_grid_numba, parallel=model_setup.
-        parallel, nopython=True)
+    loop_over_grid = jit(
+        loop_over_grid_numba, parallel=model_setup.parallel, nopython=True
+    )
 
 
 def setup_toggle_dict(model_setup):
@@ -55,24 +59,24 @@ def setup_toggle_dict(model_setup):
     """
     if model_setup.use_numba:
         import numba
+
         toggle_dict = numba.typed.Dict()
     else:
         toggle_dict = {}
-    toggle_dict['parallel'] = model_setup.parallel
-    toggle_dict['use_numba'] = model_setup.use_numba
-    toggle_dict['snowfall_toggle'] = model_setup.snowfall_toggle
-    toggle_dict['firn_column_toggle'] = model_setup.firn_column_toggle
-    toggle_dict['firn_heat_toggle'] = model_setup.firn_heat_toggle
-    toggle_dict['lake_development_toggle'
-        ] = model_setup.lake_development_toggle
-    toggle_dict['lid_development_toggle'] = model_setup.lid_development_toggle
-    toggle_dict['percolation_toggle'] = model_setup.percolation_toggle
-    toggle_dict['spinup'] = model_setup.spinup
-    toggle_dict['perc_time_toggle'] = model_setup.perc_time_toggle
-    toggle_dict['densification_toggle'] = model_setup.densification_toggle
-    toggle_dict['ignore_errors'] = model_setup.ignore_errors
-    toggle_dict['use_mpi'] = model_setup.use_mpi
-    toggle_dict['solver'] = model_setup.solver
+    toggle_dict["parallel"] = model_setup.parallel
+    toggle_dict["use_numba"] = model_setup.use_numba
+    toggle_dict["snowfall_toggle"] = model_setup.snowfall_toggle
+    toggle_dict["firn_column_toggle"] = model_setup.firn_column_toggle
+    toggle_dict["firn_heat_toggle"] = model_setup.firn_heat_toggle
+    toggle_dict["lake_development_toggle"] = model_setup.lake_development_toggle
+    toggle_dict["lid_development_toggle"] = model_setup.lid_development_toggle
+    toggle_dict["percolation_toggle"] = model_setup.percolation_toggle
+    toggle_dict["spinup"] = model_setup.spinup
+    toggle_dict["perc_time_toggle"] = model_setup.perc_time_toggle
+    toggle_dict["densification_toggle"] = model_setup.densification_toggle
+    toggle_dict["ignore_errors"] = model_setup.ignore_errors
+    toggle_dict["use_mpi"] = model_setup.use_mpi
+    toggle_dict["solver"] = model_setup.solver
     return toggle_dict
 
 
@@ -92,32 +96,34 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
     -------
 
     """
-    if hasattr(model_setup, 'dump_filepath'):
+    if hasattr(model_setup, "dump_filepath"):
         reload_name = model_setup.dump_filepath
     else:
-        reload_name = ''
+        reload_name = ""
     import warnings
+
     if model_setup.reload_from_dump:
-        print('Reloading state from dump...')
+        print("Reloading state from dump...")
         if not os.path.exists(reload_name):
             first_iteration = 0
             warnings.warn(
-                f'Reload/dump filepath {reload_name} does not exist - instead starting model from scratch. If you believe you do have a dump file, check that it is specified correctly in model_setup.py.'
-                )
+                f"Reload/dump filepath {reload_name} does not exist - instead starting model from scratch. If you believe you do have a dump file, check that it is specified correctly in model_setup.py."
+            )
             reload_dump_success = False
         else:
-            grid, met_start_idx, met_end_idx, first_iteration = (
-                reload_from_dump(reload_name, grid))
+            grid, met_start_idx, met_end_idx, first_iteration = reload_from_dump(
+                reload_name, grid
+            )
             print(
-                f'Loading model state from dump file {reload_name} - first iteration = '
-                , first_iteration)
+                f"Loading model state from dump file {reload_name} - first iteration = ",
+                first_iteration,
+            )
             reload_dump_success = True
     else:
         first_iteration = 0
         reload_dump_success = False
         grid = grid
-    return (grid, met_start_idx, met_end_idx, first_iteration,
-        reload_dump_success)
+    return (grid, met_start_idx, met_end_idx, first_iteration, reload_dump_success)
 
 
 def get_num_cores(model_setup):
@@ -131,12 +137,12 @@ def get_num_cores(model_setup):
     -------
 
     """
-    if model_setup.cores in ['all', False] and model_setup.parallel:
+    if model_setup.cores in ["all", False] and model_setup.parallel:
         if not model_setup.mpi:
             cores = pathos.helpers.cpu_count()
         else:
             cores = pathos.helpers.cpu_count()
-        print(f'Using all cores - {pathos.helpers.cpu_count()} detected')
+        print(f"Using all cores - {pathos.helpers.cpu_count()} detected")
     elif not model_setup.parallel:
         cores = 1
     else:
@@ -144,8 +150,9 @@ def get_num_cores(model_setup):
     return cores
 
 
-def update_met_conditions(model_setup, grid, met_start_idx, met_end_idx,
-    start=False, snow_added=0):
+def update_met_conditions(
+    model_setup, grid, met_start_idx, met_end_idx, start=False, snow_added=0
+):
     """
 
     Parameters
@@ -160,58 +167,72 @@ def update_met_conditions(model_setup, grid, met_start_idx, met_end_idx,
 
     """
     with Dataset(model_setup.met_output_filepath) as met_data:
-        met_data_len = len(met_data.variables['temperature'])
+        met_data_len = len(met_data.variables["temperature"])
         if start:
             met_start_idx = met_start_idx % met_data_len
-        met_data_grid = initialise_met_data_grid(model_setup.row_amount,
-            model_setup.col_amount, met_data.variables['snowfall'][
-            met_start_idx:met_end_idx].data, met_data.variables['snow_dens'
-            ][met_start_idx:met_end_idx].data, met_data.variables[
-            'temperature'][met_start_idx:met_end_idx].data, met_data.
-            variables['wind'][met_start_idx:met_end_idx].data, met_data.
-            variables['pressure'][met_start_idx:met_end_idx].data, met_data
-            .variables['dew_point_temperature'][met_start_idx:met_end_idx].
-            data, met_data.variables['LW_surf'][met_start_idx:met_end_idx].
-            data, met_data.variables['SW_surf'][met_start_idx:met_end_idx].
-            data, met_data.variables['cell_latitude'][:].data, met_data.
-            variables['cell_longitude'][:].data, model_setup.use_numba)
+        met_data_grid = initialise_met_data_grid(
+            model_setup.row_amount,
+            model_setup.col_amount,
+            met_data.variables["snowfall"][met_start_idx:met_end_idx].data,
+            met_data.variables["snow_dens"][met_start_idx:met_end_idx].data,
+            met_data.variables["temperature"][met_start_idx:met_end_idx].data,
+            met_data.variables["wind"][met_start_idx:met_end_idx].data,
+            met_data.variables["pressure"][met_start_idx:met_end_idx].data,
+            met_data.variables["dew_point_temperature"][met_start_idx:met_end_idx].data,
+            met_data.variables["LW_surf"][met_start_idx:met_end_idx].data,
+            met_data.variables["SW_surf"][met_start_idx:met_end_idx].data,
+            met_data.variables["cell_latitude"][:].data,
+            met_data.variables["cell_longitude"][:].data,
+            model_setup.use_numba,
+        )
         for i in range(len(grid)):
             for j in range(len(grid[0])):
-                if grid['valid_cell'][i, j]:
-                    snow_array = np.array(met_data.variables['snow_dens'][
-                        met_start_idx:met_end_idx, i, j]) * np.array(met_data
-                        .variables['snowfall'][met_start_idx:met_end_idx, i, j]
-                        )
+                if grid["valid_cell"][i, j]:
+                    snow_array = np.array(
+                        met_data.variables["snow_dens"][met_start_idx:met_end_idx, i, j]
+                    ) * np.array(
+                        met_data.variables["snowfall"][met_start_idx:met_end_idx, i, j]
+                    )
                     snow_added += np.sum(snow_array)
         for key in met_data.variables.keys():
-            if key != 'cell_latitude' and key != 'cell_longitude':
+            if key != "cell_latitude" and key != "cell_longitude":
                 if met_end_idx > len(met_data[key]):
                     raise IndexError(
-                        'monarchs.core.driver.main: met_end_idx > days * hours, i.e. your grid of meteorological data is too small for the number of timesteps you wish to run'
-                        )
+                        "monarchs.core.driver.main: met_end_idx > days * hours, i.e. your grid of meteorological data is too small for the number of timesteps you wish to run"
+                    )
     return met_data_grid, met_data_len, snow_added
 
 
 def check_firn_met_consistency(grid, met_data_grid):
     from matplotlib import pyplot as plt
     from cartopy import crs as ccrs
+
     projection = ccrs.PlateCarree()
     fig1 = plt.figure()
     ax1 = fig1.add_subplot(211, projection=projection)
-    ax1.set_title('Original vs regridded met data')
+    ax1.set_title("Original vs regridded met data")
     ax1.coastlines()
     ax1.gridlines(draw_labels=True)
-    ax1.contourf(get_2d_grid(grid, 'lon'), get_2d_grid(grid, 'lat'),
-        get_2d_grid(grid, 'firn_depth'), transform=projection)
+    ax1.contourf(
+        get_2d_grid(grid, "lon"),
+        get_2d_grid(grid, "lat"),
+        get_2d_grid(grid, "firn_depth"),
+        transform=projection,
+    )
     ax2 = fig1.add_subplot(212, projection=projection)
     ax2.coastlines()
     ax2.gridlines(draw_labels=True)
-    ax2.contourf(get_2d_grid(grid, 'lon'), get_2d_grid(grid, 'lat'),
-        get_2d_grid(met_data_grid, 'temperature'), transform=projection)
+    ax2.contourf(
+        get_2d_grid(grid, "lon"),
+        get_2d_grid(grid, "lat"),
+        get_2d_grid(met_data_grid, "temperature"),
+        transform=projection,
+    )
 
 
-def print_model_end_of_timestep_messages(grid, day, total_mass_start,
-    snow_added, catchment_outflow, tic):
+def print_model_end_of_timestep_messages(
+    grid, day, total_mass_start, snow_added, catchment_outflow, tic
+):
     """
     Messages to print out at the end of each model timestep (day).
 
@@ -229,26 +250,29 @@ def print_model_end_of_timestep_messages(grid, day, total_mass_start,
 
     """
     toc = time.perf_counter()
-    print('\n*******************************************\n')
-    print('End of timestep diagnostics:')
-    print(f'Total mass at end of iteration {day + 1} = ', calc_grid_mass(grid))
+    print("\n*******************************************\n")
+    print("End of timestep diagnostics:")
+    print(f"Total mass at end of iteration {day + 1} = ", calc_grid_mass(grid))
     if model_setup.snowfall_toggle and model_setup.catchment_outflow:
-        print('Original mass accounting for catchment outflow and snowfall = ',
-            total_mass_start + snow_added - catchment_outflow)
+        print(
+            "Original mass accounting for catchment outflow and snowfall = ",
+            total_mass_start + snow_added - catchment_outflow,
+        )
     elif model_setup.snowfall_toggle and not model_setup.catchment_outflow:
-        print('Total snow added = ', snow_added)
-        print('Original mass accounting for snowfall = ', total_mass_start +
-            snow_added)
+        print("Total snow added = ", snow_added)
+        print("Original mass accounting for snowfall = ", total_mass_start + snow_added)
     elif model_setup.catchment_outflow:
-        print(f'Model has lost {catchment_outflow} units of water')
-        print('Original mass accounting for catchment outflow = ', 
-            total_mass_start - catchment_outflow)
+        print(f"Model has lost {catchment_outflow} units of water")
+        print(
+            "Original mass accounting for catchment outflow = ",
+            total_mass_start - catchment_outflow,
+        )
     else:
-        print('Original mass = ', total_mass_start)
-    print(f'Time at end of day {day + 1} is {toc - tic:0.4f} seconds')
-    print('Firn depth = ', get_2d_grid(grid, 'firn_depth'))
-    print('Lake depth = ', get_2d_grid(grid, 'lake_depth'))
-    print('Lid depth = ', get_2d_grid(grid, 'lid_depth'))
+        print("Original mass = ", total_mass_start)
+    print(f"Time at end of day {day + 1} is {toc - tic:0.4f} seconds")
+    print("Firn depth = ", get_2d_grid(grid, "firn_depth"))
+    print("Lake depth = ", get_2d_grid(grid, "lake_depth"))
+    print("Lid depth = ", get_2d_grid(grid, "lid_depth"))
 
 
 def main(model_setup, grid):
@@ -298,27 +322,37 @@ def main(model_setup, grid):
     met_start_idx = 0
     met_end_idx = model_setup.t_steps_per_day
     output_counter = 0
-    if hasattr(model_setup, 'output_grid_size'):
+    if hasattr(model_setup, "output_grid_size"):
         output_grid_size = model_setup.output_grid_size
         if not output_grid_size:
-            output_grid_size = grid['vert_grid'][0][0]
+            output_grid_size = grid["vert_grid"][0][0]
     else:
-        output_grid_size = grid['vert_grid'][0][0]
-    (grid, met_start_idx, met_end_idx, first_iteration, reload_dump_success
-        ) = (check_for_reload_from_dump(model_setup, grid, met_start_idx,
-        met_end_idx))
-    print('firn depth = ', get_2d_grid(grid, 'firn_depth'))
-    print('valid_cell = ', get_2d_grid(grid, 'valid_cell'))
+        output_grid_size = grid["vert_grid"][0][0]
+    (grid, met_start_idx, met_end_idx, first_iteration, reload_dump_success) = (
+        check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx)
+    )
+    print("firn depth = ", get_2d_grid(grid, "firn_depth"))
+    print("valid_cell = ", get_2d_grid(grid, "valid_cell"))
     if model_setup.save_output and not reload_dump_success:
-        setup_output(model_setup.output_filepath, grid, vars_to_save=
-            model_setup.vars_to_save, vert_grid_size=output_grid_size)
+        setup_output(
+            model_setup.output_filepath,
+            grid,
+            vars_to_save=model_setup.vars_to_save,
+            vert_grid_size=output_grid_size,
+        )
     if reload_dump_success:
         start = True
     else:
         start = False
     snow_added = 0
-    met_data_grid, met_data_len, snow_added = update_met_conditions(model_setup
-        , grid, met_start_idx, met_end_idx, start=start, snow_added=snow_added)
+    met_data_grid, met_data_len, snow_added = update_met_conditions(
+        model_setup,
+        grid,
+        met_start_idx,
+        met_end_idx,
+        start=start,
+        snow_added=snow_added,
+    )
     toggle_dict = setup_toggle_dict(model_setup)
     cores = get_num_cores(model_setup)
     total_mass_start = calc_grid_mass(grid)
@@ -326,96 +360,131 @@ def main(model_setup, grid):
     time_loop = range(first_iteration, model_setup.num_days)
     for day in time_loop:
         dt = 3600
-        print('\n*******************************************\n')
-        print(f'Start of model day {day + 1}\n')
+        print("\n*******************************************\n")
+        print(f"Start of model day {day + 1}\n")
         if model_setup.single_column_toggle:
             if model_setup.parallel and not model_setup.use_numba:
-                grid = loop_over_grid(model_setup.row_amount, model_setup.
-                    col_amount, grid, dt, met_data_grid, model_setup.
-                    t_steps_per_day, toggle_dict, parallel=model_setup.
-                    parallel, use_mpi=model_setup.use_mpi, ncores=cores)
+                grid = loop_over_grid(
+                    model_setup.row_amount,
+                    model_setup.col_amount,
+                    grid,
+                    dt,
+                    met_data_grid,
+                    model_setup.t_steps_per_day,
+                    toggle_dict,
+                    parallel=model_setup.parallel,
+                    use_mpi=model_setup.use_mpi,
+                    ncores=cores,
+                )
             else:
-                loop_over_grid(model_setup.row_amount, model_setup.
-                    col_amount, grid, dt, met_data_grid, model_setup.
-                    t_steps_per_day, toggle_dict, parallel=model_setup.
-                    parallel, use_mpi=model_setup.use_mpi, ncores=cores)
-        print('Single-column physics finished')
+                loop_over_grid(
+                    model_setup.row_amount,
+                    model_setup.col_amount,
+                    grid,
+                    dt,
+                    met_data_grid,
+                    model_setup.t_steps_per_day,
+                    toggle_dict,
+                    parallel=model_setup.parallel,
+                    use_mpi=model_setup.use_mpi,
+                    ncores=cores,
+                )
+        print("Single-column physics finished")
         if model_setup.dump_data_pre_lateral_movement:
-            if model_setup.dump_format == 'NETCDF4':
-                dump_state(model_setup.dump_filepath, grid, met_start_idx,
-                    met_end_idx)
-            elif model_setup.dump_format == 'pickle':
+            if model_setup.dump_format == "NETCDF4":
+                dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
+            elif model_setup.dump_format == "pickle":
                 import pickle
-                outfile = open(model_setup.dump_filepath, 'wb')
+
+                outfile = open(model_setup.dump_filepath, "wb")
                 pickle.dump(grid, outfile)
                 outfile.close()
         if model_setup.lateral_movement_toggle:
-            print('Moving water laterally...')
+            print("Moving water laterally...")
             grid, current_iteration_outwater = lateral_functions.move_water(
-                grid, model_setup.row_amount, model_setup.col_amount,
-                model_setup.lateral_timestep, catchment_outflow=model_setup
-                .catchment_outflow, flow_into_land=model_setup.
-                flow_into_land, lateral_movement_percolation_toggle=
-                model_setup.lateral_movement_percolation_toggle)
+                grid,
+                model_setup.row_amount,
+                model_setup.col_amount,
+                model_setup.lateral_timestep,
+                catchment_outflow=model_setup.catchment_outflow,
+                flow_into_land=model_setup.flow_into_land,
+                lateral_movement_percolation_toggle=model_setup.lateral_movement_percolation_toggle,
+            )
             if model_setup.catchment_outflow:
                 catchment_outflow += current_iteration_outwater
         for i in range(len(grid)):
             for j in range(len(grid[0])):
                 check_correct(grid[i][j])
-        print_model_end_of_timestep_messages(grid, day, total_mass_start,
-            snow_added, catchment_outflow, tic)
+        print_model_end_of_timestep_messages(
+            grid, day, total_mass_start, snow_added, catchment_outflow, tic
+        )
         met_start_idx = (day + 1) * model_setup.t_steps_per_day % met_data_len
         met_end_idx = (day + 2) * model_setup.t_steps_per_day % met_data_len
         if met_start_idx > met_end_idx:
             met_end_idx = met_data_len
         met_data_grid, met_data_len, snow_added = update_met_conditions(
-            model_setup, grid, met_start_idx, met_end_idx, snow_added=
-            snow_added)
+            model_setup, grid, met_start_idx, met_end_idx, snow_added=snow_added
+        )
         if model_setup.dump_data:
-            print(f'Dumping model state to {model_setup.dump_filepath}...')
-            if model_setup.dump_format == 'NETCDF4':
-                dump_state(model_setup.dump_filepath, grid, met_start_idx,
-                    met_end_idx)
-            elif model_setup.dump_format == 'pickle':
+            print(f"Dumping model state to {model_setup.dump_filepath}...")
+            if model_setup.dump_format == "NETCDF4":
+                dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
+            elif model_setup.dump_format == "pickle":
                 import pickle
-                outfile = open(model_setup.dump_filepath, 'wb')
+
+                outfile = open(model_setup.dump_filepath, "wb")
                 pickle.dump(grid, outfile)
                 outfile.close()
         if model_setup.save_output and day % model_setup.output_timestep == 0:
             output_counter += 1
-            update_model_output(model_setup.output_filepath, grid,
-                output_counter, vars_to_save=model_setup.vars_to_save,
-                vert_grid_size=output_grid_size)
-    print('\n*******************************************\n')
-    print('MONARCHS has finished running successfully!')
-    print('Total time taken = ', time.perf_counter() - tic)
+            update_model_output(
+                model_setup.output_filepath,
+                grid,
+                output_counter,
+                vars_to_save=model_setup.vars_to_save,
+                vert_grid_size=output_grid_size,
+            )
+    print("\n*******************************************\n")
+    print("MONARCHS has finished running successfully!")
+    print("Total time taken = ", time.perf_counter() - tic)
     return grid
 
 
 def initialise(model_setup):
-    if hasattr(model_setup, 'lat_bounds') and model_setup.lat_bounds.lower(
-        ) == 'dem':
-        (T_firn, rho, firn_depth, valid_cells, lat_array, lon_array, dx, dy
-            ) = (initial_conditions.initialise_firn_profile(model_setup,
-            diagnostic_plots=model_setup.dem_diagnostic_plots))
+    if hasattr(model_setup, "lat_bounds") and model_setup.lat_bounds.lower() == "dem":
+        (T_firn, rho, firn_depth, valid_cells, lat_array, lon_array, dx, dy) = (
+            initial_conditions.initialise_firn_profile(
+                model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
+            )
+        )
     else:
-        T_firn, rho, firn_depth, valid_cells, dx, dy = (initial_conditions.
-            initialise_firn_profile(model_setup, diagnostic_plots=
-            model_setup.dem_diagnostic_plots))
-        lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)
-            ) * np.nan
-        lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)
-            ) * np.nan
-    if model_setup.met_data_source == 'ERA5':
+        T_firn, rho, firn_depth, valid_cells, dx, dy = (
+            initial_conditions.initialise_firn_profile(
+                model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
+            )
+        )
+        lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
+        lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
+    if model_setup.met_data_source == "ERA5":
         setup_met_data.setup_era5(model_setup, lat_array, lon_array)
-    elif model_setup.met_data_source == 'user_defined':
+    elif model_setup.met_data_source == "user_defined":
         setup_met_data.prescribed_met_data(model_setup)
-    grid = initial_conditions.create_model_grid(model_setup.row_amount,
-        model_setup.col_amount, firn_depth, model_setup.
-        vertical_points_firn, model_setup.vertical_points_lake, model_setup
-        .vertical_points_lid, rho, T_firn, use_numba=model_setup.use_numba,
-        valid_cells=valid_cells, lats=lat_array, lons=lon_array, size_dx=dx,
-        size_dy=dy)
+    grid = initial_conditions.create_model_grid(
+        model_setup.row_amount,
+        model_setup.col_amount,
+        firn_depth,
+        model_setup.vertical_points_firn,
+        model_setup.vertical_points_lake,
+        model_setup.vertical_points_lid,
+        rho,
+        T_firn,
+        use_numba=model_setup.use_numba,
+        valid_cells=valid_cells,
+        lats=lat_array,
+        lons=lon_array,
+        size_dx=dx,
+        size_dy=dy,
+    )
     return grid
 
 

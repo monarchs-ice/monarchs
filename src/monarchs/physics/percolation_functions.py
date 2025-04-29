@@ -1,23 +1,25 @@
 """
 Module containing functions relating to the percolation of water through the firn column.
 """
+
 import numpy as np
 
 
 def calc_solid_mass(cell):
     """Calculate the mass of the solid part of the column."""
-    return np.sum(cell['Sfrac'] * cell['rho_ice'] * (cell['firn_depth'] /
-        cell['vert_grid']))
+    return np.sum(
+        cell["Sfrac"] * cell["rho_ice"] * (cell["firn_depth"] / cell["vert_grid"])
+    )
 
 
 def calc_liquid_mass(cell):
     """Calculate the mass of the liquid part of the column."""
-    return np.sum(cell['Lfrac'] * cell['rho_water'] * (cell['firn_depth'] /
-        cell['vert_grid']))
+    return np.sum(
+        cell["Lfrac"] * cell["rho_water"] * (cell["firn_depth"] / cell["vert_grid"])
+    )
 
 
-def percolation(cell, timestep, lateral_refreeze_flag=False,
-    perc_time_toggle=True):
+def percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=True):
     """
     Main function to handle percolation of water within the firn column.
     This percolation is performed from the bottom up, i.e. we iterate from the end of the
@@ -49,43 +51,44 @@ def percolation(cell, timestep, lateral_refreeze_flag=False,
     -------
     None (amends Cell inplace)
     """
-    for point in range(0, len(cell['firn_temperature'])):
-        v_lev = len(cell['firn_temperature']) - (point + 1)
-        if cell['meltflag'][v_lev] and cell['Lfrac'][v_lev] != 0:
+    for point in range(0, len(cell["firn_temperature"])):
+        v_lev = len(cell["firn_temperature"]) - (point + 1)
+        if cell["meltflag"][v_lev] and cell["Lfrac"][v_lev] != 0:
             time_remaining = timestep
             while time_remaining > 0:
                 if not lateral_refreeze_flag:
                     calc_refreezing(cell, v_lev)
-                if cell['Sfrac'][v_lev] * cell['rho_ice'] > cell['pore_closure'
-                    ]:
-                    cell['ice_lens'] = True
-                    cell['saturation'][v_lev] = True
-                    if v_lev < cell['ice_lens_depth']:
-                        cell['ice_lens_depth'] = v_lev
+                if cell["Sfrac"][v_lev] * cell["rho_ice"] > cell["pore_closure"]:
+                    cell["ice_lens"] = True
+                    cell["saturation"][v_lev] = True
+                    if v_lev < cell["ice_lens_depth"]:
+                        cell["ice_lens_depth"] = v_lev
                     calc_saturation(cell, v_lev)
                     time_remaining = 0
-                elif cell['saturation'][v_lev] == 1 or cell['ice_lens_depth'
-                    ] == v_lev:
+                elif cell["saturation"][v_lev] == 1 or cell["ice_lens_depth"] == v_lev:
                     calc_saturation(cell, v_lev)
                     time_remaining = 0
-                elif cell['Lfrac'][v_lev] > 0:
+                elif cell["Lfrac"][v_lev] > 0:
                     if perc_time_toggle:
                         p_time = perc_time(cell, v_lev)
                     else:
                         p_time = 0
                     time_remaining = time_remaining - p_time
                     if time_remaining > 0:
-                        cell['meltflag'][v_lev] = 0
+                        cell["meltflag"][v_lev] = 0
                         capillary_remain = capillary(cell, v_lev)
-                        if capillary_remain < cell['Lfrac'][v_lev]:
-                            if v_lev == cell['vert_grid'] - 2:
+                        if capillary_remain < cell["Lfrac"][v_lev]:
+                            if v_lev == cell["vert_grid"] - 2:
                                 time_remaining = 0
-                            cell['Lfrac'][v_lev + 1] = cell['Lfrac'][v_lev + 1
-                                ] + cell['Lfrac'][v_lev] - capillary_remain
-                            cell['Lfrac'][v_lev] = capillary_remain
-                            cell['meltflag'][v_lev] = 0
+                            cell["Lfrac"][v_lev + 1] = (
+                                cell["Lfrac"][v_lev + 1]
+                                + cell["Lfrac"][v_lev]
+                                - capillary_remain
+                            )
+                            cell["Lfrac"][v_lev] = capillary_remain
+                            cell["meltflag"][v_lev] = 0
                             v_lev += 1
-                            cell['meltflag'][v_lev] = 1
+                            cell["meltflag"][v_lev] = 1
                         else:
                             for i in np.arange(v_lev + 1)[::-1]:
                                 calc_saturation(cell, i, end=True)
@@ -95,7 +98,7 @@ def percolation(cell, timestep, lateral_refreeze_flag=False,
                         for i in np.arange(v_lev + 1)[::-1]:
                             calc_saturation(cell, i, end=True)
                 else:
-                    cell['meltflag'][v_lev] = 0
+                    cell["meltflag"][v_lev] = 0
                     time_remaining = 0
                     for i in np.arange(v_lev + 1)[::-1]:
                         calc_saturation(cell, i, end=True)
@@ -125,48 +128,61 @@ def calc_refreezing(cell, v_lev):
         state.
 
     """
-    T_change_max = 273.15 - cell['firn_temperature'][v_lev]
-    cp = 7.16 * cell['firn_temperature'][v_lev] + 138
+    T_change_max = 273.15 - cell["firn_temperature"][v_lev]
+    cp = 7.16 * cell["firn_temperature"][v_lev] + 138
     excess_water = 0
-    T_change_all = cell['Lfrac'][v_lev] * cell['L_ice'] * cell['rho_water'] / (
-        cell['rho_ice'] * cp * cell['Sfrac'][v_lev])
-    Vol_Rfrz_Max = (1 - cell['Sfrac'][v_lev]) * (cell['firn_depth'] / cell[
-        'vert_grid']) / (cell['rho_water'] / cell['rho_ice'])
-    if Vol_Rfrz_Max < cell['Lfrac'][v_lev] * (cell['firn_depth'] / cell[
-        'vert_grid']):
-        excess_water = cell['Lfrac'][v_lev] * (cell['firn_depth'] / cell[
-            'vert_grid']) - Vol_Rfrz_Max
-        cell['Lfrac'][v_lev] = Vol_Rfrz_Max / (cell['firn_depth'] / cell[
-            'vert_grid'])
+    T_change_all = (
+        cell["Lfrac"][v_lev]
+        * cell["L_ice"]
+        * cell["rho_water"]
+        / (cell["rho_ice"] * cp * cell["Sfrac"][v_lev])
+    )
+    Vol_Rfrz_Max = (
+        (1 - cell["Sfrac"][v_lev])
+        * (cell["firn_depth"] / cell["vert_grid"])
+        / (cell["rho_water"] / cell["rho_ice"])
+    )
+    if Vol_Rfrz_Max < cell["Lfrac"][v_lev] * (cell["firn_depth"] / cell["vert_grid"]):
+        excess_water = (
+            cell["Lfrac"][v_lev] * (cell["firn_depth"] / cell["vert_grid"])
+            - Vol_Rfrz_Max
+        )
+        cell["Lfrac"][v_lev] = Vol_Rfrz_Max / (cell["firn_depth"] / cell["vert_grid"])
     if T_change_all >= T_change_max:
-        Vol_Change = cell['rho_ice'] * cp * cell['Sfrac'][v_lev
-            ] * T_change_max * (cell['firn_depth'] / cell['vert_grid']) / (cell
-            ['L_ice'] * cell['rho_water'])
+        Vol_Change = (
+            cell["rho_ice"]
+            * cp
+            * cell["Sfrac"][v_lev]
+            * T_change_max
+            * (cell["firn_depth"] / cell["vert_grid"])
+            / (cell["L_ice"] * cell["rho_water"])
+        )
         if Vol_Change > Vol_Rfrz_Max:
             Vol_Change = Vol_Rfrz_Max
-        cell['firn_temperature'][v_lev] = 273.15
-        if cell['Lfrac'][v_lev] - Vol_Change < 0:
-            Vol_Change = cell['Lfrac'][v_lev] * (cell['firn_depth'] / cell[
-                'vert_grid'])
-            cell['Lfrac'][v_lev] = 0
+        cell["firn_temperature"][v_lev] = 273.15
+        if cell["Lfrac"][v_lev] - Vol_Change < 0:
+            Vol_Change = cell["Lfrac"][v_lev] * (cell["firn_depth"] / cell["vert_grid"])
+            cell["Lfrac"][v_lev] = 0
         else:
-            cell['Lfrac'][v_lev] = cell['Lfrac'][v_lev] - Vol_Change / (cell
-                ['firn_depth'] / cell['vert_grid'])
-        if cell['Lfrac'][v_lev] < 0:
-            raise ValueError('Lfrac < 0 in saturation Sfrac > 1 calculation')
-        cell['Sfrac'][v_lev] = cell['Sfrac'][v_lev] + Vol_Change * (cell[
-            'rho_water'] / cell['rho_ice']) / (cell['firn_depth'] / cell[
-            'vert_grid'])
+            cell["Lfrac"][v_lev] = cell["Lfrac"][v_lev] - Vol_Change / (
+                cell["firn_depth"] / cell["vert_grid"]
+            )
+        if cell["Lfrac"][v_lev] < 0:
+            raise ValueError("Lfrac < 0 in saturation Sfrac > 1 calculation")
+        cell["Sfrac"][v_lev] = cell["Sfrac"][v_lev] + Vol_Change * (
+            cell["rho_water"] / cell["rho_ice"]
+        ) / (cell["firn_depth"] / cell["vert_grid"])
     else:
-        cell['Sfrac'][v_lev] = cell['Sfrac'][v_lev] + cell['Lfrac'][v_lev] * (
-            cell['rho_water'] / cell['rho_ice'])
-        cell['firn_temperature'][v_lev] = cell['firn_temperature'][v_lev
-            ] + T_change_all
-        cell['Lfrac'][v_lev] = 0
-    if cell['Lfrac'][v_lev] < 0:
-        raise ValueError('Lfrac < 0 in saturation Sfrac > 1 calculation')
-    cell['Lfrac'][v_lev] = cell['Lfrac'][v_lev] + excess_water / (cell[
-        'firn_depth'] / cell['vert_grid'])
+        cell["Sfrac"][v_lev] = cell["Sfrac"][v_lev] + cell["Lfrac"][v_lev] * (
+            cell["rho_water"] / cell["rho_ice"]
+        )
+        cell["firn_temperature"][v_lev] = cell["firn_temperature"][v_lev] + T_change_all
+        cell["Lfrac"][v_lev] = 0
+    if cell["Lfrac"][v_lev] < 0:
+        raise ValueError("Lfrac < 0 in saturation Sfrac > 1 calculation")
+    cell["Lfrac"][v_lev] = cell["Lfrac"][v_lev] + excess_water / (
+        cell["firn_depth"] / cell["vert_grid"]
+    )
 
 
 def calc_saturation(cell, v_lev_in, end=False):
@@ -206,44 +222,45 @@ def calc_saturation(cell, v_lev_in, end=False):
         If lake depth goes negative, model is in an unphysical state so we throw an error.
     """
     v_lev = int(v_lev_in)
-    Lfrac_max = 1 - cell['Sfrac'][v_lev]
+    Lfrac_max = 1 - cell["Sfrac"][v_lev]
     if Lfrac_max < 0:
         Lfrac_max = 0
-    if cell['Lfrac'][v_lev] > Lfrac_max:
-        excess_water = cell['Lfrac'][v_lev] - Lfrac_max
-        cell['Lfrac'][v_lev] = Lfrac_max
+    if cell["Lfrac"][v_lev] > Lfrac_max:
+        excess_water = cell["Lfrac"][v_lev] - Lfrac_max
+        cell["Lfrac"][v_lev] = Lfrac_max
         if not end:
-            cell['saturation'][v_lev] = 1
+            cell["saturation"][v_lev] = 1
         elif end:
-            cell['meltflag'][v_lev] = 1
+            cell["meltflag"][v_lev] = 1
         if excess_water > 0:
             while v_lev > 0:
-                cell['Lfrac'][v_lev] = cell['Lfrac'][v_lev] + excess_water
-                Lfrac_max = 1 - cell['Sfrac'][v_lev]
-                if cell['Lfrac'][v_lev] > Lfrac_max:
-                    excess_water = cell['Lfrac'][v_lev] - Lfrac_max
-                    cell['Lfrac'][v_lev] = Lfrac_max
+                cell["Lfrac"][v_lev] = cell["Lfrac"][v_lev] + excess_water
+                Lfrac_max = 1 - cell["Sfrac"][v_lev]
+                if cell["Lfrac"][v_lev] > Lfrac_max:
+                    excess_water = cell["Lfrac"][v_lev] - Lfrac_max
+                    cell["Lfrac"][v_lev] = Lfrac_max
                     if not end:
-                        cell['saturation'][v_lev] = 1
+                        cell["saturation"][v_lev] = 1
                     else:
-                        cell['meltflag'][v_lev] = 1
+                        cell["meltflag"][v_lev] = 1
                     v_lev = v_lev - 1
                 else:
                     break
             if v_lev <= 0:
-                cell['Lfrac'][0] = cell['Lfrac'][0] + excess_water
-                Lfrac_max = 1 - cell['Sfrac'][0]
-                if cell['Lfrac'][0] > Lfrac_max:
-                    cell['exposed_water'] = True
-                    cell['saturation'][0] = True
-                    excess_water = cell['Lfrac'][0] - Lfrac_max
-                    cell['Lfrac'][0] = Lfrac_max
-                    cell['lake_depth'] += excess_water * (cell['firn_depth'
-                        ] / cell['vert_grid'])
-                    if cell['lake'] and cell['lake_depth'] < 0:
-                        raise ValueError('Lake depth is negative - problem...')
-    elif cell['Lfrac'][v_lev] < Lfrac_max:
-        cell['saturation'][v_lev] = 0
+                cell["Lfrac"][0] = cell["Lfrac"][0] + excess_water
+                Lfrac_max = 1 - cell["Sfrac"][0]
+                if cell["Lfrac"][0] > Lfrac_max:
+                    cell["exposed_water"] = True
+                    cell["saturation"][0] = True
+                    excess_water = cell["Lfrac"][0] - Lfrac_max
+                    cell["Lfrac"][0] = Lfrac_max
+                    cell["lake_depth"] += excess_water * (
+                        cell["firn_depth"] / cell["vert_grid"]
+                    )
+                    if cell["lake"] and cell["lake_depth"] < 0:
+                        raise ValueError("Lake depth is negative - problem...")
+    elif cell["Lfrac"][v_lev] < Lfrac_max:
+        cell["saturation"][v_lev] = 0
 
 
 def perc_time(cell, v_lev):
@@ -267,17 +284,18 @@ def perc_time(cell, v_lev):
     perc_time : float
         Amount of time that the water has left to percolate down the firn column. [s]
     """
-    if cell['Lfrac'][v_lev] < 1e-10:
+    if cell["Lfrac"][v_lev] < 1e-10:
         p_time = 0
         return p_time
     delta = 0.001
-    rho_s_star = cell['Sfrac'][v_lev] * cell['rho_ice'] / cell['rho_water']
-    perm_s = 0.077 * delta ** 2 * np.exp(-7.8 * rho_s_star)
+    rho_s_star = cell["Sfrac"][v_lev] * cell["rho_ice"] / cell["rho_water"]
+    perm_s = 0.077 * delta**2 * np.exp(-7.8 * rho_s_star)
     eta = 0.001787
-    delta_p = cell['rho_water'] / (cell['firn_depth'] / cell['vert_grid'] /
-        cell['Lfrac'][v_lev])
+    delta_p = cell["rho_water"] / (
+        cell["firn_depth"] / cell["vert_grid"] / cell["Lfrac"][v_lev]
+    )
     u = -perm_s / eta * delta_p
-    p_time = -(cell['firn_depth'] / cell['vert_grid']) / u
+    p_time = -(cell["firn_depth"] / cell["vert_grid"]) / u
     return p_time
 
 
@@ -298,5 +316,5 @@ def capillary(cell, v_lev):
     capillary_remain : float
         Amount of water (in units of liquid fraction) that is left in the cell.
     """
-    capillary_remain = 0.05 * (1 - cell['Sfrac'][v_lev])
+    capillary_remain = 0.05 * (1 - cell["Sfrac"][v_lev])
     return capillary_remain

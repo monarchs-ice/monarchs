@@ -28,9 +28,13 @@ def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
     def Gaussian(x, y):
         mu_x = mu_y = 0
         sigma = 0.3
-        height = 1 / (2 * np.pi * sigma ** 2) * np.exp(-((x - mu_x) ** 2 + 
-            (y - mu_y) ** 2) / (2 * sigma ** 2))
+        height = (
+            1
+            / (2 * np.pi * sigma**2)
+            * np.exp(-((x - mu_x) ** 2 + (y - mu_y) ** 2) / (2 * sigma**2))
+        )
         return 1 - height
+
     x = y = np.linspace(-1, 1, 10)
     x1, y1 = np.meshgrid(x, y)
     heights = Gaussian(x1, y1)
@@ -42,27 +46,28 @@ def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
         """Interpolate the DEM from the original Gaussian to the scale that we want"""
         x = np.linspace(0, 1, len(heights))
         y = np.linspace(0, 1, len(np.transpose(heights)))
-        interp = RegularGridInterpolator((x, y), heights, bounds_error=
-            False, fill_value=None)
+        interp = RegularGridInterpolator(
+            (x, y), heights, bounds_error=False, fill_value=None
+        )
         xx = np.linspace(0, 1, int(len(heights) / scale))
         yy = np.linspace(0, 1, int(len(np.transpose(heights)) / scale))
-        X, Y = np.meshgrid(xx, yy, indexing='ij')
+        X, Y = np.meshgrid(xx, yy, indexing="ij")
         return interp((X, Y))
+
     interpolated_heights = interpolate_DEM(heights, scale)
-    interpolated_heights = (interpolated_heights + interpolated_heights[::-
-        1, ::-1]) / 2
+    interpolated_heights = (interpolated_heights + interpolated_heights[::-1, ::-1]) / 2
     if diagnostic_plots:
         fig = plt.figure(figsize=(4, 2))
         plt.imshow(interpolated_heights, vmin=0, vmax=1)
-        plt.set_cmap('Reds')
+        plt.set_cmap("Reds")
         cbar = plt.colorbar()
-        cbar.set_label('Height (m)')
-        plt.title('Initial Height Gaussian & Two Lakes')
+        cbar.set_label("Height (m)")
+        plt.title("Initial Height Gaussian & Two Lakes")
         plt.show()
     return np.clip(interpolated_heights, 0, 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     Run the script to generate a test case DEM and plot it up.
     """

@@ -43,78 +43,102 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     None (amends cell inplace)
     """
     original_mass = calc_mass_sum(cell)
-    x = np.array([cell['virtual_lid_temperature']])
-    Q = sfc_flux(cell['melt'], cell['exposed_water'], cell['lid'], cell[
-        'lake'], cell['lake_depth'], LW_in, SW_in, T_air, p_air, T_dp, wind,
-        x[0])
-    k_v_lid = 1000 * (2.24 * 10 ** -3 + 5.975 * 10 ** -6 * (273.15 - cell[
-        'virtual_lid_temperature']) ** 1.156)
-    args = np.array([Q, k_v_lid, cell['lake_depth'], cell['vert_grid_lake'],
-        cell['v_lid_depth']])
-    args = np.append(args, cell['lake_temperature'])
-    cell['virtual_lid_temperature'] = solver.lid_seb_solver(x, args, v_lid=True
-        )[0][0]
-    kdTdz = (-cell['lake_temperature'][1] + cell['virtual_lid_temperature']
-        ) * abs(cell['k_water']) / (cell['lake_depth'] / (cell[
-        'vert_grid_lake'] / 2) + cell['v_lid_depth'])
-    new_boundary_change = -kdTdz / (cell['L_ice'] * cell['rho_ice']) * dt
-    if cell['virtual_lid_temperature'] < 273.15:
+    x = np.array([cell["virtual_lid_temperature"]])
+    Q = sfc_flux(
+        cell["melt"],
+        cell["exposed_water"],
+        cell["lid"],
+        cell["lake"],
+        cell["lake_depth"],
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+        x[0],
+    )
+    k_v_lid = 1000 * (
+        2.24 * 10**-3
+        + 5.975 * 10**-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
+    )
+    args = np.array(
+        [Q, k_v_lid, cell["lake_depth"], cell["vert_grid_lake"], cell["v_lid_depth"]]
+    )
+    args = np.append(args, cell["lake_temperature"])
+    cell["virtual_lid_temperature"] = solver.lid_seb_solver(x, args, v_lid=True)[0][0]
+    kdTdz = (
+        (-cell["lake_temperature"][1] + cell["virtual_lid_temperature"])
+        * abs(cell["k_water"])
+        / (cell["lake_depth"] / (cell["vert_grid_lake"] / 2) + cell["v_lid_depth"])
+    )
+    new_boundary_change = -kdTdz / (cell["L_ice"] * cell["rho_ice"]) * dt
+    if cell["virtual_lid_temperature"] < 273.15:
         if new_boundary_change > 0:
-            if new_boundary_change < cell['lake_depth']:
-                old_depth_grid = np.linspace(0, cell['lake_depth'], cell[
-                    'vert_grid_lake'])
-                cell['lake_depth'] -= new_boundary_change * (cell['rho_ice'
-                    ] / cell['rho_water'])
-                new_depth_grid = np.linspace(0, cell['lake_depth'], cell[
-                    'vert_grid_lake'])
-                cell['lake_temperature'] = np.interp(new_depth_grid,
-                    old_depth_grid, cell['lake_temperature'])
-                cell['v_lid_depth'] += new_boundary_change
+            if new_boundary_change < cell["lake_depth"]:
+                old_depth_grid = np.linspace(
+                    0, cell["lake_depth"], cell["vert_grid_lake"]
+                )
+                cell["lake_depth"] -= new_boundary_change * (
+                    cell["rho_ice"] / cell["rho_water"]
+                )
+                new_depth_grid = np.linspace(
+                    0, cell["lake_depth"], cell["vert_grid_lake"]
+                )
+                cell["lake_temperature"] = np.interp(
+                    new_depth_grid, old_depth_grid, cell["lake_temperature"]
+                )
+                cell["v_lid_depth"] += new_boundary_change
             else:
-                cell['v_lid_depth'] += cell['lake_depth'] * (cell[
-                    'rho_water'] / cell['rho_ice'])
-                orig_lake_depth = cell['lake_depth'] + 0
-                cell['lake_depth'] = 0
-                cell['lake'] = False
+                cell["v_lid_depth"] += cell["lake_depth"] * (
+                    cell["rho_water"] / cell["rho_ice"]
+                )
+                orig_lake_depth = cell["lake_depth"] + 0
+                cell["lake_depth"] = 0
+                cell["lake"] = False
     else:
-        cell['virtual_lid_temperature'] = 273.15
-        k_im_lid = 1000 * (1.017 * 10 ** -4 + 1.695 * 10 ** -6 * cell[
-            'virtual_lid_temperature'])
-        kdTdz = (cell['virtual_lid_temperature'] - 273.15) * abs(k_im_lid) / (
-            cell['lake_depth'] / (cell['vert_grid_lake'] / 2 + cell[
-            'v_lid_depth']))
-        new_boundary_change = (Q - kdTdz) / (cell['L_ice'] * cell['rho_ice']
-            ) * dt
+        cell["virtual_lid_temperature"] = 273.15
+        k_im_lid = 1000 * (
+            1.017 * 10**-4 + 1.695 * 10**-6 * cell["virtual_lid_temperature"]
+        )
+        kdTdz = (
+            (cell["virtual_lid_temperature"] - 273.15)
+            * abs(k_im_lid)
+            / (cell["lake_depth"] / (cell["vert_grid_lake"] / 2 + cell["v_lid_depth"]))
+        )
+        new_boundary_change = (Q - kdTdz) / (cell["L_ice"] * cell["rho_ice"]) * dt
         if new_boundary_change > 0:
-            if new_boundary_change > cell['v_lid_depth']:
-                cell['lake_depth'] += cell['v_lid_depth'] * cell['rho_ice'
-                    ] / cell['rho_water']
-                cell['v_lid_depth'] = 0
-                cell['total_melt'] = cell['total_melt'] + cell['v_lid_depth']
+            if new_boundary_change > cell["v_lid_depth"]:
+                cell["lake_depth"] += (
+                    cell["v_lid_depth"] * cell["rho_ice"] / cell["rho_water"]
+                )
+                cell["v_lid_depth"] = 0
+                cell["total_melt"] = cell["total_melt"] + cell["v_lid_depth"]
             else:
-                cell['lake_depth'] = cell['lake_depth'
-                    ] + new_boundary_change * cell['rho_ice'] / cell[
-                    'rho_water']
-                cell['v_lid_depth'] = cell['v_lid_depth'] - new_boundary_change
-                cell['total_melt'] = cell['total_melt'] + new_boundary_change
-        if cell['v_lid_depth'] <= 0:
-            cell['v_lid'] = True
-            cell['v_lid_depth'] = 0
-    if cell['v_lid_depth'] > 0.1 or cell['lake_depth'] == 0:
-        cell['lid'] = True
-        cell['v_lid'] = False
-        cell['lid_depth'] = cell['v_lid_depth']
-        cell['v_lid_depth'] = 0
-    if cell['v_lid_depth'] <= 0 and cell['lid_depth'] <= 0:
-        cell['lid'] = False
-        cell['v_lid'] = False
+                cell["lake_depth"] = (
+                    cell["lake_depth"]
+                    + new_boundary_change * cell["rho_ice"] / cell["rho_water"]
+                )
+                cell["v_lid_depth"] = cell["v_lid_depth"] - new_boundary_change
+                cell["total_melt"] = cell["total_melt"] + new_boundary_change
+        if cell["v_lid_depth"] <= 0:
+            cell["v_lid"] = True
+            cell["v_lid_depth"] = 0
+    if cell["v_lid_depth"] > 0.1 or cell["lake_depth"] == 0:
+        cell["lid"] = True
+        cell["v_lid"] = False
+        cell["lid_depth"] = cell["v_lid_depth"]
+        cell["v_lid_depth"] = 0
+    if cell["v_lid_depth"] <= 0 and cell["lid_depth"] <= 0:
+        cell["lid"] = False
+        cell["v_lid"] = False
     new_mass = calc_mass_sum(cell)
     try:
-        assert abs(new_mass - original_mass) < 1.5 * 10 ** -7
+        assert abs(new_mass - original_mass) < 1.5 * 10**-7
     except Exception:
-        print('Original mass = ', original_mass)
-        print('New mass = ', new_mass)
-        print('Difference = ', abs(new_mass - original_mass))
+        print("Original mass = ", original_mass)
+        print("New mass = ", new_mass)
+        print("Difference = ", abs(new_mass - original_mass))
         raise Exception
 
 
@@ -138,16 +162,17 @@ def calc_surface_melt(cell, dt, Q):
     None (amends cell inplace)
     """
     original_mass = calc_mass_sum(cell)
-    cell['lid_melt_count'] += 1
-    k_lid = 1000 * (1.017 * 10 ** -4 + 1.695 * 10 ** -6 * cell[
-        'lid_temperature'][0])
-    kdTdz = (cell['lid_temperature'][0] - 273.15) * abs(k_lid) / (cell[
-        'lid_depth'] / (cell['vert_grid_lid'] / 2) + cell['lid_sfc_melt'])
-    cell['lid_sfc_melt'] += (Q - kdTdz) / (cell['L_ice'] * cell['rho_ice']
-        ) * dt
-    cell['lid_temperature'][0] = 273.15
+    cell["lid_melt_count"] += 1
+    k_lid = 1000 * (1.017 * 10**-4 + 1.695 * 10**-6 * cell["lid_temperature"][0])
+    kdTdz = (
+        (cell["lid_temperature"][0] - 273.15)
+        * abs(k_lid)
+        / (cell["lid_depth"] / (cell["vert_grid_lid"] / 2) + cell["lid_sfc_melt"])
+    )
+    cell["lid_sfc_melt"] += (Q - kdTdz) / (cell["L_ice"] * cell["rho_ice"]) * dt
+    cell["lid_temperature"][0] = 273.15
     new_mass = calc_mass_sum(cell)
-    assert abs(new_mass - original_mass) < 1.5 * 10 ** -7
+    assert abs(new_mass - original_mass) < 1.5 * 10**-7
 
 
 def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
@@ -184,83 +209,107 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     None (amends cell inplace)
     """
     original_mass = calc_mass_sum(cell)
-    x = cell['lid_temperature']
-    Q = sfc_flux(cell['melt'], cell['exposed_water'], cell['lid'], cell[
-        'lake'], cell['lake_depth'], LW_in, SW_in, T_air, p_air, T_dp, wind,
-        x[0])
-    if not cell['has_had_lid']:
-        cell['has_had_lid'] = True
-        if cell['lid_temperature'][-2] == 0:
+    x = cell["lid_temperature"]
+    Q = sfc_flux(
+        cell["melt"],
+        cell["exposed_water"],
+        cell["lid"],
+        cell["lake"],
+        cell["lake_depth"],
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+        x[0],
+    )
+    if not cell["has_had_lid"]:
+        cell["has_had_lid"] = True
+        if cell["lid_temperature"][-2] == 0:
             calc_surface_melt(cell, dt, Q)
-            cell['lid_melt_count'] -= 1
+            cell["lid_melt_count"] -= 1
         else:
-            k_lid = 1000 * (2.24 * 10 ** -3 + 5.975 * 10 ** -6 * (273.15 -
-                cell['lid_temperature'][0]) ** 1.156)
-            x = np.array([cell['lid_temperature'][0]])
-            args = np.array([Q, k_lid, cell['lid_depth'], cell[
-                'vert_grid_lid'], 273.15])
-            cell['lid_temperature'][0] = solver.lid_seb_solver(x, args)[0][0]
-        cell['lid_temperature'] = np.linspace(cell['lid_temperature'][0], 
-            273.15, cell['vert_grid_lid'])
-    cp_ice = np.zeros(cell['vert_grid_lid'])
-    k_ice = np.zeros(cell['vert_grid_lid'])
-    for i in np.arange(0, cell['vert_grid_lid']):
-        if cell['lid_temperature'][i] > 273.15:
+            k_lid = 1000 * (
+                2.24 * 10**-3
+                + 5.975 * 10**-6 * (273.15 - cell["lid_temperature"][0]) ** 1.156
+            )
+            x = np.array([cell["lid_temperature"][0]])
+            args = np.array(
+                [Q, k_lid, cell["lid_depth"], cell["vert_grid_lid"], 273.15]
+            )
+            cell["lid_temperature"][0] = solver.lid_seb_solver(x, args)[0][0]
+        cell["lid_temperature"] = np.linspace(
+            cell["lid_temperature"][0], 273.15, cell["vert_grid_lid"]
+        )
+    cp_ice = np.zeros(cell["vert_grid_lid"])
+    k_ice = np.zeros(cell["vert_grid_lid"])
+    for i in np.arange(0, cell["vert_grid_lid"]):
+        if cell["lid_temperature"][i] > 273.15:
             cp_ice[i] = 4186.8
-            k_ice[i] = 1000 * (1.017 * 10 ** -4 + 1.695 * 10 ** -6 * cell[
-                'lid_temperature'][i])
+            k_ice[i] = 1000 * (
+                1.017 * 10**-4 + 1.695 * 10**-6 * cell["lid_temperature"][i]
+            )
         else:
-            cp_ice[i] = 1000 * (7.16 * 10 ** -3 * cell['lid_temperature'][i
-                ] + 0.138)
-            k_ice[i] = k_ice[i] = 1000 * (2.24 * 10 ** -3 + 5.975 * 10 ** -
-                6 * (273.15 - cell['lid_temperature'][i]) ** 1.156)
-    Sfrac_lid = cell['rho_lid'] / cell['rho_ice']
-    k_lid = Sfrac_lid[0] * k_ice[0] + (1 - Sfrac_lid[0]) * cell['k_air']
-    if cell['lake_depth'] < 0:
-        cell['lake_depth'] = 0
-    if cell['lid_temperature'][0] < 273.15:
-        k_lid = 1000 * (2.24 * 10 ** -3 + 5.975 * 10 ** -6 * (273.15 - cell
-            ['lid_temperature'][0]) ** 1.156)
+            cp_ice[i] = 1000 * (7.16 * 10**-3 * cell["lid_temperature"][i] + 0.138)
+            k_ice[i] = k_ice[i] = 1000 * (
+                2.24 * 10**-3
+                + 5.975 * 10**-6 * (273.15 - cell["lid_temperature"][i]) ** 1.156
+            )
+    Sfrac_lid = cell["rho_lid"] / cell["rho_ice"]
+    k_lid = Sfrac_lid[0] * k_ice[0] + (1 - Sfrac_lid[0]) * cell["k_air"]
+    if cell["lake_depth"] < 0:
+        cell["lake_depth"] = 0
+    if cell["lid_temperature"][0] < 273.15:
+        k_lid = 1000 * (
+            2.24 * 10**-3
+            + 5.975 * 10**-6 * (273.15 - cell["lid_temperature"][0]) ** 1.156
+        )
     else:
         calc_surface_melt(cell, dt, Q)
-    for i in range(len(cell['lid_temperature'])):
-        if cell['lid_temperature'][i] > 273.15:
-            cell['lid_temperature'][i] = 273.15
-    args = np.array([Q, k_lid, cell['lid_depth'], cell['vert_grid_lid'],
-        cell['lid_temperature'][0]])
+    for i in range(len(cell["lid_temperature"])):
+        if cell["lid_temperature"][i] > 273.15:
+            cell["lid_temperature"][i] = 273.15
+    args = np.array(
+        [Q, k_lid, cell["lid_depth"], cell["vert_grid_lid"], cell["lid_temperature"][0]]
+    )
     x = np.array([float(T_air)])
-    cell['lid_temperature'][0] = solver.lid_seb_solver(x, args)[0][0]
-    if cell['lid_temperature'][0] > 273.15:
+    cell["lid_temperature"][0] = solver.lid_seb_solver(x, args)[0][0]
+    if cell["lid_temperature"][0] > 273.15:
         calc_surface_melt(cell, dt, Q)
-    cell['lid_temperature'] = np.clip(cell['lid_temperature'], 0, 273.15)
-    kdTdz = (-cell['lake_temperature'][2] + cell['lid_temperature'][-2]) * abs(
-        cell['k_water']) / (cell['lake_depth'] / cell['vert_grid_lake'] + 
-        cell['lid_depth'] / cell['vert_grid_lid'])
-    new_boundary_change = -kdTdz / (cell['L_ice'] * cell['rho_ice']) * dt
+    cell["lid_temperature"] = np.clip(cell["lid_temperature"], 0, 273.15)
+    kdTdz = (
+        (-cell["lake_temperature"][2] + cell["lid_temperature"][-2])
+        * abs(cell["k_water"])
+        / (
+            cell["lake_depth"] / cell["vert_grid_lake"]
+            + cell["lid_depth"] / cell["vert_grid_lid"]
+        )
+    )
+    new_boundary_change = -kdTdz / (cell["L_ice"] * cell["rho_ice"]) * dt
     if abs(new_boundary_change) > 0:
-        if cell['lake_depth'] - new_boundary_change < 0:
-            new_boundary_change = cell['lake_depth'] * (cell['rho_water'] /
-                cell['rho_ice'])
-        cell['lake_depth'] -= new_boundary_change * cell['rho_ice'] / cell[
-            'rho_water']
-        cell['lid_depth'] += new_boundary_change
+        if cell["lake_depth"] - new_boundary_change < 0:
+            new_boundary_change = cell["lake_depth"] * (
+                cell["rho_water"] / cell["rho_ice"]
+            )
+        cell["lake_depth"] -= new_boundary_change * cell["rho_ice"] / cell["rho_water"]
+        cell["lid_depth"] += new_boundary_change
     new_mass = calc_mass_sum(cell)
-    assert abs(new_mass - original_mass) < 1.5 * 10 ** -7
-    x = cell['lid_temperature']
-    dz = cell['lid_depth'] / cell['vert_grid_lid']
-    args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, Sfrac_lid,
-        k_lid)
-    cell['lid_temperature'][-1] = 273.15
-    cell['lid_temperature'] = solver.lid_heateqn_solver(x, args)[0]
-    cell['lid_temperature'] = np.clip(cell['lid_temperature'], 0, 273.15)
-    if cell['lid_depth'] < 0.1:
-        cell['v_lid_depth'] = cell['lid_depth']
-        cell['lid_depth'] = 0
-        cell['lid'] = False
-        cell['has_had_lid'] = False
-        cell['v_lid'] = True
+    assert abs(new_mass - original_mass) < 1.5 * 10**-7
+    x = cell["lid_temperature"]
+    dz = cell["lid_depth"] / cell["vert_grid_lid"]
+    args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, Sfrac_lid, k_lid)
+    cell["lid_temperature"][-1] = 273.15
+    cell["lid_temperature"] = solver.lid_heateqn_solver(x, args)[0]
+    cell["lid_temperature"] = np.clip(cell["lid_temperature"], 0, 273.15)
+    if cell["lid_depth"] < 0.1:
+        cell["v_lid_depth"] = cell["lid_depth"]
+        cell["lid_depth"] = 0
+        cell["lid"] = False
+        cell["has_had_lid"] = False
+        cell["v_lid"] = True
     new_mass = calc_mass_sum(cell)
-    assert abs(new_mass - original_mass) < 1.5 * 10 ** -7
+    assert abs(new_mass - original_mass) < 1.5 * 10**-7
 
 
 def interpolate_profiles(cell, new_depth_grid, old_depth_grid):
@@ -287,19 +336,22 @@ def interpolate_profiles(cell, new_depth_grid, old_depth_grid):
     -------
     None (amends cell inplace)
     """
-    cell['firn_temperature'] = np.interp(new_depth_grid, old_depth_grid,
-        cell['firn_temperature'])
-    cell['rho'] = np.interp(new_depth_grid, old_depth_grid, cell['rho'])
-    cell['Lfrac'] = np.interp(new_depth_grid, old_depth_grid, cell['Lfrac'])
-    cell['Sfrac'] = np.interp(new_depth_grid, old_depth_grid, cell['Sfrac'])
-    new_saturation = np.zeros(cell['vert_grid'])
-    np.round(np.interp(new_depth_grid, old_depth_grid, cell['saturation']),
-        0, new_saturation)
-    cell['saturation'] = new_saturation
-    new_meltflag = np.zeros(cell['vert_grid'])
-    np.round(np.interp(new_depth_grid, old_depth_grid, cell['meltflag']), 0,
-        new_meltflag)
-    cell['meltflag'] = new_meltflag
+    cell["firn_temperature"] = np.interp(
+        new_depth_grid, old_depth_grid, cell["firn_temperature"]
+    )
+    cell["rho"] = np.interp(new_depth_grid, old_depth_grid, cell["rho"])
+    cell["Lfrac"] = np.interp(new_depth_grid, old_depth_grid, cell["Lfrac"])
+    cell["Sfrac"] = np.interp(new_depth_grid, old_depth_grid, cell["Sfrac"])
+    new_saturation = np.zeros(cell["vert_grid"])
+    np.round(
+        np.interp(new_depth_grid, old_depth_grid, cell["saturation"]), 0, new_saturation
+    )
+    cell["saturation"] = new_saturation
+    new_meltflag = np.zeros(cell["vert_grid"])
+    np.round(
+        np.interp(new_depth_grid, old_depth_grid, cell["meltflag"]), 0, new_meltflag
+    )
+    cell["meltflag"] = new_meltflag
 
 
 def combine_lid_firn(cell):
@@ -322,54 +374,84 @@ def combine_lid_firn(cell):
     )
 
     # Create new arrays for the combined profiles
-    new_vert_grid = cell['vert_grid']
-    new_depth_grid = np.linspace(0, cell['firn_depth'] + cell['lid_depth'], new_vert_grid)
+    new_vert_grid = cell["vert_grid"]
+    new_depth_grid = np.linspace(
+        0, cell["firn_depth"] + cell["lid_depth"], new_vert_grid
+    )
 
     # Interpolate lid and firn properties to the new depth grid
     old_depth_grid = np.append(
-        np.linspace(0, cell['lid_depth'], cell['vert_grid_lid']),
-        np.linspace(cell['lid_depth'], cell['firn_depth'] + cell['lid_depth'], cell['vert_grid'])
+        np.linspace(0, cell["lid_depth"], cell["vert_grid_lid"]),
+        np.linspace(
+            cell["lid_depth"], cell["firn_depth"] + cell["lid_depth"], cell["vert_grid"]
+        ),
     )
 
-    new_firn_temperature = np.interp(new_depth_grid, old_depth_grid, np.append(cell['lid_temperature'], cell['firn_temperature']))
-    new_rho = np.interp(new_depth_grid, old_depth_grid, np.append(cell['rho_lid'], cell['rho']))
-    new_Lfrac = np.interp(new_depth_grid, old_depth_grid, np.append(np.zeros(cell['vert_grid_lid']), cell['Lfrac']))
-    new_Sfrac = np.interp(new_depth_grid, old_depth_grid, np.append(np.ones(cell['vert_grid_lid']), cell['Sfrac']))
-    new_saturation = np.round(np.interp(new_depth_grid, old_depth_grid, np.append(np.ones(cell['vert_grid_lid']), cell['saturation'])))
-    new_meltflag = np.round(np.interp(new_depth_grid, old_depth_grid, np.append(np.zeros(cell['vert_grid_lid']), cell['meltflag'])))
+    new_firn_temperature = np.interp(
+        new_depth_grid,
+        old_depth_grid,
+        np.append(cell["lid_temperature"], cell["firn_temperature"]),
+    )
+    new_rho = np.interp(
+        new_depth_grid, old_depth_grid, np.append(cell["rho_lid"], cell["rho"])
+    )
+    new_Lfrac = np.interp(
+        new_depth_grid,
+        old_depth_grid,
+        np.append(np.zeros(cell["vert_grid_lid"]), cell["Lfrac"]),
+    )
+    new_Sfrac = np.interp(
+        new_depth_grid,
+        old_depth_grid,
+        np.append(np.ones(cell["vert_grid_lid"]), cell["Sfrac"]),
+    )
+    new_saturation = np.round(
+        np.interp(
+            new_depth_grid,
+            old_depth_grid,
+            np.append(np.ones(cell["vert_grid_lid"]), cell["saturation"]),
+        )
+    )
+    new_meltflag = np.round(
+        np.interp(
+            new_depth_grid,
+            old_depth_grid,
+            np.append(np.zeros(cell["vert_grid_lid"]), cell["meltflag"]),
+        )
+    )
 
     # Update cell properties with the new combined profiles
-    cell['firn_temperature'] = new_firn_temperature
-    cell['rho'] = new_rho
-    cell['Lfrac'] = new_Lfrac
-    cell['Sfrac'] = np.clip(new_Sfrac, 0, 1)
-    cell['saturation'] = new_saturation
-    cell['meltflag'] = new_meltflag
-    cell['firn_depth'] += cell['lid_depth']
-    cell['vertical_profile'] = new_depth_grid
+    cell["firn_temperature"] = new_firn_temperature
+    cell["rho"] = new_rho
+    cell["Lfrac"] = new_Lfrac
+    cell["Sfrac"] = np.clip(new_Sfrac, 0, 1)
+    cell["saturation"] = new_saturation
+    cell["meltflag"] = new_meltflag
+    cell["firn_depth"] += cell["lid_depth"]
+    cell["vertical_profile"] = new_depth_grid
 
     # Reset lid-related properties
-    cell['lid_depth'] = 0
-    cell['v_lid'] = False
-    cell['lid'] = False
-    cell['lake'] = False
-    cell['lake_depth'] = 0.0
-    cell['ice_lens'] = False
-    cell['ice_lens_depth'] = 999
-    cell['exposed_water'] = False
-    cell['v_lid_depth'] = 0
-    cell['has_had_lid'] = False
-    cell['water'][0] = 0
-    cell['melt'] = False
-    cell['reset_combine'] = True
-    cell['virtual_lid_temperature'] = 273.15
-    cell['lid_temperature'] = np.ones(cell['vert_grid_lid']) * 273.15
-    cell['lake_temperature'] = np.ones(cell['vert_grid_lake']) * 273.15
+    cell["lid_depth"] = 0
+    cell["v_lid"] = False
+    cell["lid"] = False
+    cell["lake"] = False
+    cell["lake_depth"] = 0.0
+    cell["ice_lens"] = False
+    cell["ice_lens_depth"] = 999
+    cell["exposed_water"] = False
+    cell["v_lid_depth"] = 0
+    cell["has_had_lid"] = False
+    cell["water"][0] = 0
+    cell["melt"] = False
+    cell["reset_combine"] = True
+    cell["virtual_lid_temperature"] = 273.15
+    cell["lid_temperature"] = np.ones(cell["vert_grid_lid"]) * 273.15
+    cell["lake_temperature"] = np.ones(cell["vert_grid_lake"]) * 273.15
 
     # Validate mass conservation
     new_mass = calc_mass_sum(cell)
     try:
         assert abs(new_mass - original_mass) < original_mass / 1000
     except Exception:
-        print(f'new mass = {new_mass}, original mass = {original_mass}')
+        print(f"new mass = {new_mass}, original mass = {original_mass}")
         raise Exception

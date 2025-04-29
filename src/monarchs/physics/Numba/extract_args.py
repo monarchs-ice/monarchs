@@ -89,9 +89,28 @@ def extract_args(args):
     p_air = args[arrind + 14]
     T_dp = args[arrind + 15]
     wind = args[arrind + 16]
-    return (T, Sfrac, Lfrac, k_air, k_water, cp_air, cp_water, dt, dz, melt,
-        exposed_water, lid, lake, lake_depth, LW_in, SW_in, T_air, p_air,
-        T_dp, wind)
+    return (
+        T,
+        Sfrac,
+        Lfrac,
+        k_air,
+        k_water,
+        cp_air,
+        cp_water,
+        dt,
+        dz,
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+    )
 
 
 def extract_args_fixedsfc(args):
@@ -237,11 +256,28 @@ def extract_args_lid(args):
     p_air = args[arrind + 13]
     T_dp = args[arrind + 14]
     wind = args[arrind + 15]
-    return (T, Sfrac, k_lid, cp_air, cp_water, dt, dz, melt, exposed_water,
-        lid, lake, lake_depth, LW_in, SW_in, T_air, p_air, T_dp, wind)
+    return (
+        T,
+        Sfrac,
+        k_lid,
+        cp_air,
+        cp_water,
+        dt,
+        dz,
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+    )
 
 
 extract_args = jit(extract_args, nopython=True, fastmath=False)
-extract_args_fixedsfc = jit(extract_args_fixedsfc, nopython=True, fastmath=
-    False)
+extract_args_fixedsfc = jit(extract_args_fixedsfc, nopython=True, fastmath=False)
 extract_args_lid = jit(extract_args_lid, nopython=True, fastmath=False)

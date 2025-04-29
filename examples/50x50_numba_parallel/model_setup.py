@@ -25,14 +25,14 @@ Spatial parameters
 """
 row_amount = 50  # Number of rows in your model grid, looking from top-down.
 col_amount = 50  # Number of columns in your model grid, looking from top-down.
-lat_grid_size = 'dem'
+lat_grid_size = "dem"
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 # Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
 # Set to a number if you want to manually specify a bounding box.
-lat_bounds = 'dem'
+lat_bounds = "dem"
 latmax = np.nan  # Maximum latitude to use in our DEM and met data files.
 latmin = np.nan  # Minimum latitude to use in our DEM and met data files.
 longmax = np.nan  # Maximum longitude to use in our DEM and met data files.
@@ -51,7 +51,7 @@ lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of late
 """
 DEM/firn profile parameters
 """
-DEM_path = '../../DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
+DEM_path = "../../DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
 # firn_depth - by default overridden by the presence of a valid DEM
 # firn_depth = np.ones((row_amount, col_amount)) * 35
 firn_max_height = 100
@@ -104,7 +104,7 @@ use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
     monarchs()

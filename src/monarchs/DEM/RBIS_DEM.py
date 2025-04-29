@@ -1,8 +1,9 @@
-tiffname = 'RBIS_GTDX_45m.tif'
+tiffname = "RBIS_GTDX_45m.tif"
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 from PIL.TiffTags import TAGS
+
 im = Image.open(tiffname)
 DEM_grid = np.array(im)
 meta_dict = {TAGS[key]: im.tag[key] for key in im.tag_v2}
@@ -14,15 +15,15 @@ plt.clf()
 print(DEM_grid.shape)
 heights = DEM_grid[1080:2080, 760:1760]
 water_level = 0 * heights
-font = {'family': 'normal', 'weight': 'bold', 'size': 18}
-plt.rc('font', **font)
+font = {"family": "normal", "weight": "bold", "size": 18}
+plt.rc("font", **font)
 fig = plt.figure(figsize=(4, 2))
 plt.imshow(heights, vmin=0, vmax=100)
-plt.set_cmap('Reds')
+plt.set_cmap("Reds")
 cbar = plt.colorbar()
-cbar.set_label('Height (m)')
-plt.title('Initial Height')
-plt.savefig('RBISInit_height.jpg')
+cbar.set_label("Height (m)")
+plt.title("Initial Height")
+plt.savefig("RBISInit_height.jpg")
 plt.show()
 max_grid_row = len(heights)
 max_grid_col = len(heights[0])

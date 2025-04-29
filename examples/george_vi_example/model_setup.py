@@ -15,13 +15,13 @@ Spatial parameters
 row_amount = 20  # Number of rows in your model grid, looking from top-down.
 col_amount = 20  # Number of columns in your model grid, looking from top-down.
 # lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate via 'dem'
-lat_grid_size = 'dem'
+lat_grid_size = "dem"
 vertical_points_firn = 500  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 # Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
-lat_bounds = 'dem'
+lat_bounds = "dem"
 # bbox_top_right = [
 #     -71.7, -67.78
 # ]  # bounding box top right coordinates, [(lat, long)]
@@ -79,8 +79,8 @@ DEM/initial firn profile
             from running physics on these cells.
 
 """
-data_dir = '../..'
-DEM_path = f'{data_dir}/DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif'
+data_dir = "../.."
+DEM_path = f"{data_dir}/DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
 
 # firn_depth - by default overridden by the presence of a valid DEM
 firn_max_height = 100
@@ -230,11 +230,9 @@ Dumping and reloading parameters
         state from file at the path determined by <reload_filepath>.
 """
 dump_data = True
-dump_filepath = (
-    "output/george_vi_dump.nc"  # Filename of our previously dumped state
-)
+dump_filepath = "output/george_vi_dump.nc"  # Filename of our previously dumped state
 reload_from_dump = False  # Flag to determine whether to reload the state or not
-dump_format = 'NETCDF4'
+dump_format = "NETCDF4"
 
 """
 Computing and numerical parameters
@@ -284,7 +282,7 @@ met_dem_diagnostic_plots = False
 dem_diagnostic_plots = False
 radiation_forcing_factor = 1
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
     monarchs()

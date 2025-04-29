@@ -58,25 +58,37 @@ Met data parameters
 met_data = {}
 timesteps_warm = 800
 timesteps_cold = 1720
-met_data["LW_surf"] = np.append(800 * np.ones(timesteps_warm),
-                                100 * np.ones(timesteps_cold))  # Incoming longwave radiation. [W m^-2].
-met_data["SW_surf"] = np.append(800 * np.ones(timesteps_warm),
-                                100 * np.ones(timesteps_cold))  # Incoming shortwave (solar) radiation. [W m^-2].
-met_data["dew_point_temperature"] = np.append(265 * np.ones(timesteps_warm),
-                                              240 * np.ones(timesteps_cold))  # Dew-point temperature. [K].
-met_data["temperature"] = np.append(267 * np.ones(timesteps_warm),
-                                    250 * np.ones(timesteps_cold))  # Surface-layer air temperature. [K].
+met_data["LW_surf"] = np.append(
+    800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold)
+)  # Incoming longwave radiation. [W m^-2].
+met_data["SW_surf"] = np.append(
+    800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold)
+)  # Incoming shortwave (solar) radiation. [W m^-2].
+met_data["dew_point_temperature"] = np.append(
+    265 * np.ones(timesteps_warm), 240 * np.ones(timesteps_cold)
+)  # Dew-point temperature. [K].
+met_data["temperature"] = np.append(
+    267 * np.ones(timesteps_warm), 250 * np.ones(timesteps_cold)
+)  # Surface-layer air temperature. [K].
 
-met_data["pressure"] = 1000 * np.ones(num_days * t_steps_per_day)  # Surface-layer air pressure. [hPa].
+met_data["pressure"] = 1000 * np.ones(
+    num_days * t_steps_per_day
+)  # Surface-layer air pressure. [hPa].
 met_data["wind"] = 5 * np.ones(num_days * t_steps_per_day)  # Wind speed. [m s^-1].
-met_data["snowfall"] = 0 * np.ones(num_days * t_steps_per_day)  # Snowfall rate. [m s^-1].
-met_data["snow_dens"] = 300 * np.ones(num_days * t_steps_per_day)  # Snow density. [kg m^-3].
+met_data["snowfall"] = 0 * np.ones(
+    num_days * t_steps_per_day
+)  # Snowfall rate. [m s^-1].
+met_data["snow_dens"] = 300 * np.ones(
+    num_days * t_steps_per_day
+)  # Snow density. [kg m^-3].
 # take these 1D met parameters and broadcast them to the grid we actually want
 for key in met_data.keys():
-    met_data[key] = np.broadcast_to(met_data[key][:, np.newaxis, np.newaxis],
-                                    (len(met_data[key]), row_amount, col_amount))
+    met_data[key] = np.broadcast_to(
+        met_data[key][:, np.newaxis, np.newaxis],
+        (len(met_data[key]), row_amount, col_amount),
+    )
 
-met_output_filepath = 'output/met_data_threelake.nc'
+met_output_filepath = "output/met_data_threelake.nc"
 """
 Output parameters
 """
@@ -97,9 +109,7 @@ output_filepath = "output/gaussian_threelake_example_output.nc"  # Filename for 
 # output_grid_size = 400  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.
 # output_timestep = 1  # How often to save output, in days. Commented out for this example.
 dump_data = True
-dump_filepath = (
-    "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state
-)
+dump_filepath = "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state
 reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 """
@@ -113,7 +123,7 @@ use_mpi = False
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
 cores = 20  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
-solver = 'hybr'
+solver = "hybr"
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
 All of these default to True.
@@ -128,7 +138,7 @@ import numpy.testing as npt
 
 npt.assert_array_equal(firn_depth, firn_depth[::-1, ::-1])
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
     grid = monarchs()

@@ -32,15 +32,14 @@ def test_catchment_outflow():
                     col=i,
                     row=j,
                     meltflag=np.zeros(40),
-                    size_dx = 2000,
-                    size_dy = 2000,
+                    size_dx=2000,
+                    size_dy=2000,
                 )
-
             )
 
         grid.append(_l)
     print(get_2d_grid(grid, "lake_depth"))
-    move_water(grid, 3, 2,  3600, catchment_outflow=False)
+    move_water(grid, 3, 2, 3600, catchment_outflow=False)
     print(get_2d_grid(grid, "lake_depth"))
     move_water(grid, 3, 2, 3600, catchment_outflow=True)
     print(get_2d_grid(grid, "lake_depth"))

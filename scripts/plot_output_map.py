@@ -10,7 +10,7 @@ import numpy.ma as ma
 import cartopy.crs as ccrs
 import cartopy
 
-path = 'C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem/progress.nc'
+path = "C:/Users/jdels/Documents/Work/MONARCHS_runs/ARCHER2_flow_into_land/38m_dem/progress.nc"
 data = Dataset(path)
 
 # # contour plots
