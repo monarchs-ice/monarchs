@@ -68,33 +68,42 @@ def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
     args = [cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind]
     root, fvec, success, info = solver.firn_heateqn_solver(x, args,
         fixed_sfc=False, solver_method=heateqn_solver)
+
     if root[0] > 273.15:
         cell['meltflag'][0] = 1
         cell['melt'] = True
         height_change = calc_height_change(cell, dt, LW_in, SW_in, T_air,
             p_air, T_dp, wind, root[0])
+
         if prescribed_height_change is not False:
             height_change = 0.05
         if np.isnan(height_change):
             print('Root = ', root[0])
             raise ValueError('Height change is NaN')
+
         dz = cell['firn_depth'] / cell['vert_grid']
         args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
         root, fvec, success_fixedsfc, info = solver.firn_heateqn_solver(x,
             args, fixed_sfc=True, solver_method=heateqn_solver)
+
         if success_fixedsfc:
             cell['firn_temperature'] = root
+
         regrid_after_melt(cell, height_change)
+
     elif success:
         cell['firn_temperature'] = root
         cell['melt'] = False
     else:
         pass
+
     if percolation_toggle:
         percolation(cell, dt, perc_time_toggle=perc_time_toggle)
+
     cell['rho'] = cell['Sfrac'] * cell['rho_ice'] + cell['Lfrac'] * cell[
         'rho_water']
     new_mass = calc_mass_sum(cell)
+
     assert abs(original_mass - new_mass) < 1.5 * 10 ** -7
 
 

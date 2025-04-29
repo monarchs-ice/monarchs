@@ -75,7 +75,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     def find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
                                  dz, dt, k, kappa):
         # Initial guess for T_sfc (can be close to the expected value)
-        initial_guess = cell['firn_temperature'][:10]  # Example initial guess for the first 10 layers
+        initial_guess = cell['firn_temperature'][:]  # Example initial guess for the first 10 layers
 
         # Use root-finding to solve for surface temperature
         result = root(heateqn.surface_temperature_residual, initial_guess,
@@ -116,11 +116,15 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         mesg = 'Fixed surface temperature'
     #print('Surface temperature = ', sol)
     # Now use tridiagonal solver to solve the heat equation once we have the surface temp
-    T = heateqn.propagate_temperature(cell, dt, dz, kappa, sol)
+
     if fixed_sfc:
         fs = '(fixed sfc)'
+
     else:
         fs = ''
+        T = sol
+    T = heateqn.propagate_temperature(cell, dt, dz, kappa, sol)
+
     # print(f'Temperature profile {fs} = ', T[:10])
     return T, infodict, ier, mesg
 

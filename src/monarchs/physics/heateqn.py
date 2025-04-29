@@ -71,7 +71,7 @@ def surface_temperature_residual(x, cell, LW_in, SW_in, T_air, p_air, T_dp, wind
         + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
     )
     residual[-1] = (
-        cell['firn_temperature'][10 - 1]
+        cell['firn_temperature'][len(x) - 1]
         - x[len(x) - 1]
         + dt * (kappa[len(x) - 1] / dz**2) * (-x[len(x) - 1] + x[len(x) - 2])
     )
