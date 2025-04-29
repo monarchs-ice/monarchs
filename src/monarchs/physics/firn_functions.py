@@ -68,6 +68,8 @@ def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
     args = [cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind]
     root, fvec, success, info = solver.firn_heateqn_solver(x, args,
                                                            fixed_sfc=False, solver_method=heateqn_solver)
+    print('Surface temp = ', root[0])
+
 
     if root[0] > 273.15:
         cell['meltflag'][0] = 1
@@ -89,7 +91,7 @@ def firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind,
 
         if success_fixedsfc:
             cell['firn_temperature'] = root
-        print('T = ', cell['firn_temperature'][:20])
+        print('T = ', cell['firn_temperature'][:])
         print('height change = ', height_change)
         regrid_after_melt(cell, height_change)
 
@@ -144,9 +146,11 @@ def regrid_after_melt(cell, height_change, lake=False):
     sfrac_hold = np.zeros(np.shape(cell['Sfrac']))
     lfrac_hold = np.zeros(np.shape(cell['Lfrac']))
     T_hold = np.zeros(np.shape(cell['firn_temperature']))
+
     if np.isnan(cell['firn_temperature']).any():
         print(cell['firn_temperature'])
         raise ValueError('NaN in firn temperature before regridding')
+
     for i in range(len(cell['Sfrac']) - 1):
         if height_change > (i + 1) * dz_old:
             print('Whole layer melted - column = ', cell['column'],

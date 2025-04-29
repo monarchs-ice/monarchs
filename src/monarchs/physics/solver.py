@@ -58,9 +58,6 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
     T_dp = args[7]
     wind = args[8]
 
-
-
-
     if fixed_sfc:
         sol = 273.15
         infodict = {}
@@ -68,7 +65,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         mesg = 'Fixed surface temperature'
 
     else:
-        N = 100
+        N = 10
         soldict = heateqn.find_surface_temperature(cell, LW_in, SW_in, T_air, p_air, T_dp, wind,
                                                    dz, dt, solver_method=solver_method, N=N)
 
@@ -77,18 +74,6 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method='hybr'):
         mesg = soldict.message
         infodict = soldict.success
 
-        # if not fixed_sfc and (sol > 320):
-        #     print('x0 = ', sol[:10])
-        #     raise ValueError('Surface temperature too high - heateqn')
-        # if fixed_sfc and (sol > 273.151):
-        #     print('x0 = ', sol[:10])
-        #     raise ValueError('Surface temperature too high - heateqn_fixedsfc')
-        # if np.isnan(sol) and soldict.success:
-        #     print('x0 = ', sol)
-        #     for key in soldict.keys():
-        #         print(f'{key}: {soldict[key]}')
-        #     raise ValueError('NaN in root - heateqn')
-    #print('Surface temperature = ', sol)
     # Now use tridiagonal solver to solve the heat equation once we have the surface temp
 
     if fixed_sfc:
