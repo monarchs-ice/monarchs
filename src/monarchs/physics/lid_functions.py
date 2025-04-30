@@ -436,8 +436,8 @@ def combine_lid_firn(cell):
     cell["lid"] = False
     cell["lake"] = False
     cell["lake_depth"] = 0.0
-    cell["ice_lens"] = False
-    cell["ice_lens_depth"] = 999
+    cell["ice_lens"] = True
+    cell["ice_lens_depth"] = 0
     cell["exposed_water"] = False
     cell["v_lid_depth"] = 0
     cell["has_had_lid"] = False

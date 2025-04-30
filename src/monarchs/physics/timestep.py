@@ -100,7 +100,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
                 )
 
-        elif cell["exposed_water"] and cell["saturation"][0]:
+        elif cell["exposed_water"]:
             args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
             x = cell["firn_temperature"]
 

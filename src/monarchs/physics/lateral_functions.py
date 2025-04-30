@@ -39,12 +39,17 @@ def update_water_level(cell):
         else:
             cell["water_level"] = 0
         cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
+
     elif cell["lake"] and not cell["lid"]:
         cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
         cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
+
+
     elif cell["lake_depth"] > 0.1 and not cell["lid"]:
         cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
         cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
+        cell["water"][0] += cell.lake_depth
+
     elif cell["lid"]:
         cell["water_level"] = 999
         cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
