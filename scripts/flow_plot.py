@@ -7,15 +7,15 @@ def flow_plot(grid, netcdf=False, index=0, fig=False, ax=False):
 
     # NW, N, NE, E, SE, S, SW, W
     directions = np.array([
-        (-1,  1),  # NW
-        ( 0,  1),  # N
-        ( 1,  1),  # NE
-        ( 1,  0),  # E
-        ( 1, -1),  # SE
-        ( 0, -1),  # S
-        (-1, -1),  # SW
-        (-1,  0)   # W
-    ])
+        (-1, -1),  # NW
+        (0, -1),  # N
+        (1, -1),  # NE
+        (1, 0),  # E
+        (1, 1),  # SE
+        (0, 1),  # S
+        (-1, 1),  # SW
+        (-1, 0)  # W
+    ])  # mirrored from MONARCHS as dx, dy is the way they are accessed later, whereas MONARCHS works on [row, col]
     if not netcdf:
         data = get_2d_grid(grid, 'water_direction', index='all')
         height = len(grid)
@@ -41,7 +41,7 @@ def flow_plot(grid, netcdf=False, index=0, fig=False, ax=False):
     plt.ylim(-1, height)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.grid(True)
-    plt.title("Flow Field")
+    plt.title("Flow direction")
     plt.xlabel("X")
     plt.ylabel("Y")
     plt.xticks(range(width))

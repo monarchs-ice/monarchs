@@ -126,6 +126,7 @@ spinup = False  # Try and force the firn column heat equation to converge at the
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
 cores = 20  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 solver = "hybr"
+
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
 All of these default to True.
@@ -145,8 +146,25 @@ if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
     from monarchs.core.utils import get_2d_grid
+    profile = False
+    if profile:
+        import cProfile
 
-    grid = monarchs()
+        def run_target():
+            grid = monarchs()
+            return grid
+
+        result_container = {}
+        cProfile.runctx(
+            "result_container['grid'] = run_target()",
+            globals(),
+            locals(),
+            filename="profile_output.prof"
+        )
+        grid = result_container['grid']
+    else:
+        grid = monarchs()
+
     from matplotlib import pyplot as plt
 
     plt.figure()
@@ -154,6 +172,7 @@ if __name__ == "__main__":
         for j in range(len(grid[0])):
             if grid[i][j]['lid']:
                 grid[i][j]['water_level'] = 0
+
     plt.imshow(get_2d_grid(grid, 'water_level'))
     plt.title('water_level')
     plt.figure()
@@ -171,8 +190,7 @@ if __name__ == "__main__":
 
     a = Dataset(output_filepath)
 
-    idx = 30
-
+    idx = 45
 
     def make_fd_plot(a, idx=0):
         fig, ax = plt.subplots()
@@ -185,4 +203,4 @@ if __name__ == "__main__":
         flow_plot(a, netcdf=True, index=idx, fig=fig, ax=ax)
 
 
-    make_both(a)
+    make_both(a, idx=30)

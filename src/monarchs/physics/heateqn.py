@@ -9,7 +9,6 @@ rather than NumbaMinpack.hybrd), see heateqn in physics/Numba.
 
 import numpy as np
 from monarchs.physics.surface_fluxes import sfc_flux
-from numba import njit
 from scipy.linalg import solve_banded
 from scipy.optimize import root
 
@@ -92,7 +91,7 @@ def surface_temperature_residual(
         + dt * (kappa[len(x) - 1] / dz**2) * (-x[len(x) - 1] + x[len(x) - 2])
     )
     # print(f"Residual for T_sfc = {x}: {residual}")
-    return np.array(residual)
+    return residual
 
 
 def find_surface_temperature(

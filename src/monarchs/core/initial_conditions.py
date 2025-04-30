@@ -318,7 +318,7 @@ def create_model_grid(
         Size of the grid cell in the y direction [m]
 
     """
-    x, y = np.meshgrid(
+    y, x = np.meshgrid(
         np.arange(0, row_amount, 1), np.arange(0, col_amount, 1), indexing="ij"
     )
     dtype = get_spec(row_amount, col_amount, vert_grid, vert_grid_lake, vert_grid_lid)

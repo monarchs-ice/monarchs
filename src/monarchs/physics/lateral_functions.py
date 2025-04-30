@@ -408,7 +408,7 @@ def move_to_neighbours(
                     or col + w_e_index >= len(grid[0])
                 ):
                     raise IndexError
-                neighbour_cell = grid[row + n_s_index][col + w_e_index]
+                neighbour_cell = np.copy(grid[row + n_s_index][col + w_e_index])
                 temporary_neighbour = temp_grid[row + n_s_index][col + w_e_index]
                 if not neighbour_cell["valid_cell"] and not flow_into_land:
                     continue

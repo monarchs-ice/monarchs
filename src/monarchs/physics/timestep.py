@@ -58,7 +58,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     lake_development_toggle = toggle_dict["lake_development_toggle"]
     lid_development_toggle = toggle_dict["lid_development_toggle"]
     ignore_errors = toggle_dict["ignore_errors"]
-    heateqn_solver = toggle_dict["solver"]
+
     if not cell["valid_cell"]:
         if parallel and not use_numba:
             return cell
@@ -106,7 +106,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
             if firn_heat_toggle:
                 sol, fvec, success, info = solver.firn_heateqn_solver(
-                    x, args, fixed_sfc=True, solver_method=heateqn_solver
+                    x, args, fixed_sfc=True, solver_method='hybr'
                 )
                 if success:
                     cell["firn_temperature"] = sol
@@ -191,6 +191,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         cell["t_step"] += 1
 
     cell["day"] += 1
+
 
     # if parallel and not use_numba:
     #     return cell

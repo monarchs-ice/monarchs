@@ -74,7 +74,7 @@ def firn_column(
     original_mass = calc_mass_sum(cell)
     percolation_toggle = toggle_dict["percolation_toggle"]
     perc_time_toggle = toggle_dict["perc_time_toggle"]
-    heateqn_solver = toggle_dict["solver"]
+    heateqn_solver = 'hybr'
     x = cell["firn_temperature"]
     x = np.clip(x, 0, 273.15)
     args = [cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind]

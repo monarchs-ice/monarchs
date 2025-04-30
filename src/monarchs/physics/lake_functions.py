@@ -195,7 +195,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
     x = cell["firn_temperature"]
     args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
     root, fvec, success, info = solver.firn_heateqn_solver(
-        x, args, fixed_sfc=True, solver_method=toggle_dict["solver"]
+        x, args, fixed_sfc=True, solver_method='hybr'
     )
     if success:
         cell["firn_temperature"] = root
@@ -317,7 +317,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_di
     dz = cell["firn_depth"] / cell["vert_grid"]
     args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
     root, fvec, success, info = solver.firn_heateqn_solver(
-        x, args, fixed_sfc=True, solver_method=toggle_dict["solver"]
+        x, args, fixed_sfc=True, solver_method='hybr'
     )
     if success:
         cell["firn_temperature"] = root

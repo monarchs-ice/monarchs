@@ -61,9 +61,12 @@ def loop_over_grid_numba(
         nthreads = ncores
     else:
         nthreads = numba.config.NUMBA_DEFAULT_NUM_THREADS
+
     numba.set_num_threads(nthreads)
+
     flat_grid = List()
     met_data_grid = List()
+
     for i in range(row_amount):
         for j in range(col_amount):
             flat_grid.append(grid[i][j])

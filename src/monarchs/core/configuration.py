@@ -272,7 +272,7 @@ class ModelSetup:
 def jit_modules():
     """
     If using Numba, then we need to apply the `numba.jit` decorator to several functions
-    in `physics` and `core`, and ensure that MONARCHS loads in the Numba-compatible solvers.
+    in `physics` and `core'.
     This function handles this process, by loading in the modules and using `setattr`
     to overwrite the initial implementation with the Numba-compatible
     versions, either by applying the `jit` decorator, or in the case where the source code
@@ -298,7 +298,7 @@ def jit_modules():
     from monarchs.physics import surface_fluxes
     from monarchs.physics import lake_functions
     from monarchs.physics import firn_functions
-    from monarchs.physics import timestep
+    #from monarchs.physics import heateqn
     from monarchs.core import utils
 
     module_list = [
@@ -309,35 +309,35 @@ def jit_modules():
         lid_functions,
         percolation_functions,
         snow_accumulation,
-        timestep,
+        #heateqn
     ]
+
+    # Set up a list of modules to not apply njit to.
+    # If a piece of code is refusing to compile, and you can't get it to debug, add it to here.
+    ignore_list = ['firn_column', 'lid_development', 'lid_formation', 'lake_development', 'lake_formation',
+                   'propagate_temperature', 'find_surface_temperature', 'root', 'solve_banded',
+                   'do_not_jit', 'wraps', 'njit']
+
     for module in module_list:
         functions_list = getmembers(module, isfunction)
         for name, function in functions_list:
+            if name in ignore_list:
+                continue
             if hasattr(function, "__wrapped__") or name.startswith("__"):
                 continue
             print(f"Applying Numba jit decorator to {module.__name__}.{name}")
             jitted_function = jit(function, nopython=True, fastmath=fastmath)
             setattr(module, name, jitted_function)
-    from monarchs.physics import solver
-    from monarchs.physics.Numba import solver as numba_solver
 
-    jit_functions_list = getmembers(numba_solver)
-    for name, jitfunc in jit_functions_list:
-        if not name.startswith("__"):
-            print(
-                f"Setting {solver.__name__}.{name} to the equivalent Numba-compatible version"
-            )
-            setattr(solver, name, jitfunc)
+
+
 
 
 def jit_classes():
     from numba.experimental import jitclass
-    from monarchs.core import iceshelf_class
     from monarchs.met_data import metdata_class
 
-    iceshelf_spec = iceshelf_class.get_spec()
-    iceshelf_class.IceShelf = jitclass(iceshelf_class.IceShelf, iceshelf_spec)
+
     metdata_spec = metdata_class.get_spec()
     metdata_class.MetData = jitclass(metdata_class.MetData, metdata_spec)
 

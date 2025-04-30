@@ -26,19 +26,7 @@ from monarchs.met_data.metdata_class import initialise_met_data_grid
 from monarchs.physics import lateral_functions
 
 model_setup = configuration.model_setup
-if hasattr(model_setup, "use_numba") and model_setup.use_numba:
-    from numba import jit
-    from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
-    from numba import set_num_threads
 
-    if model_setup.cores in ["all", False]:
-        cores = pathos.helpers.cpu_count()
-    else:
-        cores = model_setup.cores
-    set_num_threads(int(cores))
-    loop_over_grid = jit(
-        loop_over_grid_numba, parallel=model_setup.parallel, nopython=True
-    )
 
 
 def setup_toggle_dict(model_setup):
@@ -76,7 +64,6 @@ def setup_toggle_dict(model_setup):
     toggle_dict["densification_toggle"] = model_setup.densification_toggle
     toggle_dict["ignore_errors"] = model_setup.ignore_errors
     toggle_dict["use_mpi"] = model_setup.use_mpi
-    toggle_dict["solver"] = model_setup.solver
     return toggle_dict
 
 

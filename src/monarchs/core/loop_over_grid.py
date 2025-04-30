@@ -94,6 +94,7 @@ def loop_over_grid(
             met_data_grid.append(met_data[i][j])
             toggle_dict_grid.append(toggle_dict)
 
+
     if parallel:
         dt = [dt] * len(flat_grid)
         t_steps_per_day = [t_steps_per_day] * len(flat_grid)
@@ -187,3 +188,4 @@ def loop_over_grid(
             )
         xnew = get_2d_grid(grid, "column")
         assert (xnew == x0).all()
+        grid[:] = flat_grid.reshape(grid.shape)
