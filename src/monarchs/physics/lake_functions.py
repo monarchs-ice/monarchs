@@ -254,7 +254,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_di
         )
 
         cell["lake_temperature"][0] = sfc_energy_lake(J, Q, cell)
-        if cell["lake_temperature"][0] <= 273.15:
+        if cell["lake_temperature"][0] < 273.15:
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15
             cell["v_lid"] = True
