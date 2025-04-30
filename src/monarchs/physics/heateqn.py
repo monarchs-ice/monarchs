@@ -1,9 +1,4 @@
 """
-Functions used to solve the heat equation using NumbaMinpack's hybrd function.
-This gives significant performance boosts over scipy's fsolve(hybrd = True).
-
-For the equivalent functions for use with Numba (and therefore using fsolve
-rather than NumbaMinpack.hybrd), see heateqn in physics/Numba.
 
 """
 

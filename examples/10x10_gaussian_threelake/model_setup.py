@@ -16,7 +16,6 @@ import os
 import numpy as np
 from monarchs.DEM import create_DEM_GaussianTestCase as cgt
 
-print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
@@ -117,8 +116,8 @@ reload_from_dump = False  # Flag to determine whether to reload the state or not
 """
 Computing and numerical parameters
 """
-use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
-parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
+use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
+parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
 
@@ -143,6 +142,8 @@ import numpy.testing as npt
 npt.assert_array_equal(firn_depth, firn_depth[::-1, ::-1])
 
 if __name__ == "__main__":
+    print(f"Loading runscript from {os.getcwd()}/model_setup.py")
+
     from monarchs.core.driver import monarchs
 
     from monarchs.core.utils import get_2d_grid
@@ -204,3 +205,4 @@ if __name__ == "__main__":
 
 
     make_both(a, idx=30)
+    a.close()

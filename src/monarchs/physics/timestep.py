@@ -60,10 +60,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     ignore_errors = toggle_dict["ignore_errors"]
 
     if not cell["valid_cell"]:
-        if parallel and not use_numba:
-            return cell
-        else:
-            return
+        return cell
+
     if np.isnan(cell["firn_temperature"]).any():
         raise ValueError("NaN in firn temperature")
     cell["t_step"] = 1
@@ -79,15 +77,16 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             cell["rho"] = (
                 cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
             )
+
             snow_accumulation.snowfall(
-                cell, met_data.snowfall[t_step], met_data.snow_dens[t_step], 260
+                cell, met_data['snowfall'][t_step], met_data['snow_dens'][t_step], 260
             )
-        SW_in = met_data.SW_down[t_step]
-        LW_in = met_data.LW_down[t_step]
-        wind = met_data.wind[t_step]
-        T_dp = met_data.dew_point_temperature[t_step]
-        T_air = met_data.temperature[t_step]
-        p_air = met_data.surf_pressure[t_step]
+        SW_in = met_data['SW_down'][t_step]
+        LW_in = met_data['LW_down'][t_step]
+        wind = met_data['wind'][t_step]
+        T_dp = met_data['dew_point_temperature'][t_step]
+        T_air = met_data['temperature'][t_step]
+        p_air = met_data['surf_pressure'][t_step]
 
         """
         # Two main paths - either no exposed water, in which case the dry firn evolves, or we have exposed water,

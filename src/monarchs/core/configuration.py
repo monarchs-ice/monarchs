@@ -2,7 +2,8 @@ import argparse
 import warnings
 import os
 import numpy as np
-
+import psutil
+import functools
 
 def parse_args():
     """
@@ -269,6 +270,39 @@ class ModelSetup:
             setattr(self, var_name, var_value)
 
 
+#
+# def apply_memory_tracker():
+#     from inspect import getmembers, isfunction
+#
+#     from monarchs.physics import percolation_functions, snow_accumulation
+#     from monarchs.physics import lid_functions
+#     from monarchs.physics import surface_fluxes
+#     from monarchs.physics import lake_functions
+#     from monarchs.physics import firn_functions
+#     from monarchs.physics import heateqn
+#     from monarchs.core import utils
+#     from monarchs.physics import timestep
+#     from monarchs.core import loop_over_grid
+#     from monarchs.core import driver
+#     module_list = [
+#         surface_fluxes,
+#         utils,
+#         firn_functions,
+#         lake_functions,
+#         lid_functions,
+#         percolation_functions,
+#         snow_accumulation,
+#         #heateqn,
+#         timestep,
+#         loop_over_grid,
+#         driver
+#     ]
+#     for module in module_list:
+#         functions_list = getmembers(module, isfunction)
+#         for name, function in functions_list:
+#             print(f"Applying memory tracker decorator to {module.__name__}.{name}")
+#             jitted_function = memory_tracker(function)
+
 def jit_modules():
     """
     If using Numba, then we need to apply the `numba.jit` decorator to several functions
@@ -293,30 +327,29 @@ def jit_modules():
     from inspect import getmembers, isfunction
 
     fastmath = False
-    from monarchs.physics import percolation_functions, snow_accumulation
+    from monarchs.physics import percolation_functions
     from monarchs.physics import lid_functions
     from monarchs.physics import surface_fluxes
     from monarchs.physics import lake_functions
     from monarchs.physics import firn_functions
-    #from monarchs.physics import heateqn
-    from monarchs.core import utils
 
     module_list = [
         surface_fluxes,
-        utils,
         firn_functions,
         lake_functions,
         lid_functions,
         percolation_functions,
-        snow_accumulation,
-        #heateqn
+
     ]
 
     # Set up a list of modules to not apply njit to.
     # If a piece of code is refusing to compile, and you can't get it to debug, add it to here.
-    ignore_list = ['firn_column', 'lid_development', 'lid_formation', 'lake_development', 'lake_formation',
-                   'propagate_temperature', 'find_surface_temperature', 'root', 'solve_banded',
-                   'do_not_jit', 'wraps', 'njit']
+    ignore_list = ['firn_column', # firn_functions
+                   'propagate_temperature', 'find_surface_temperature', # heateqn
+                   'lake_formation', 'lake_development', 'sfc_energy_lake_formation', 'sfc_energy_lake', # lake_functions
+                    'lid_formation', 'lid_development', 'combine_lid_firn', 'virtual_lid', # lid_functions
+                   'root', 'solve_banded',  # scipy builtins (imported in heateqn)
+                  ]  # other builtins/decorators
 
     for module in module_list:
         functions_list = getmembers(module, isfunction)
@@ -327,20 +360,8 @@ def jit_modules():
                 continue
             print(f"Applying Numba jit decorator to {module.__name__}.{name}")
             jitted_function = jit(function, nopython=True, fastmath=fastmath)
+
             setattr(module, name, jitted_function)
-
-
-
-
-
-def jit_classes():
-    from numba.experimental import jitclass
-    from monarchs.met_data import metdata_class
-
-
-    metdata_spec = metdata_class.get_spec()
-    metdata_class.MetData = jitclass(metdata_class.MetData, metdata_spec)
-
 
 if os.environ.get("MONARCHS_MPI", None) is not None:
     mpi = True
@@ -355,6 +376,6 @@ if mpi:
 else:
     model_setup_path = parse_args()
 model_setup = ModelSetup(model_setup_path)
+
 if hasattr(model_setup, "use_numba") and model_setup.use_numba:
     jit_modules()
-    jit_classes()

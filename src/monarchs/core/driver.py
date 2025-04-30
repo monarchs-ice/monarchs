@@ -22,7 +22,7 @@ from monarchs.core.dump_model_state import dump_state, reload_from_dump
 from monarchs.core.model_output import setup_output, update_model_output
 from monarchs.core.loop_over_grid import loop_over_grid
 from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct
-from monarchs.met_data.metdata_class import initialise_met_data_grid
+from monarchs.met_data.metdata_class import initialise_met_data, get_spec
 from monarchs.physics import lateral_functions
 
 model_setup = configuration.model_setup
@@ -45,12 +45,9 @@ def setup_toggle_dict(model_setup):
     -------
 
     """
-    if model_setup.use_numba:
-        import numba
 
-        toggle_dict = numba.typed.Dict()
-    else:
-        toggle_dict = {}
+    toggle_dict = {}
+
     toggle_dict["parallel"] = model_setup.parallel
     toggle_dict["use_numba"] = model_setup.use_numba
     toggle_dict["snowfall_toggle"] = model_setup.snowfall_toggle
@@ -157,9 +154,9 @@ def update_met_conditions(
         met_data_len = len(met_data.variables["temperature"])
         if start:
             met_start_idx = met_start_idx % met_data_len
-        met_data_grid = initialise_met_data_grid(
-            model_setup.row_amount,
-            model_setup.col_amount,
+
+        met_data_dtype = get_spec(t_steps_per_day=model_setup.t_steps_per_day)
+        met_data_grid = initialise_met_data(
             met_data.variables["snowfall"][met_start_idx:met_end_idx].data,
             met_data.variables["snow_dens"][met_start_idx:met_end_idx].data,
             met_data.variables["temperature"][met_start_idx:met_end_idx].data,
@@ -170,8 +167,12 @@ def update_met_conditions(
             met_data.variables["SW_surf"][met_start_idx:met_end_idx].data,
             met_data.variables["cell_latitude"][:].data,
             met_data.variables["cell_longitude"][:].data,
-            model_setup.use_numba,
+            model_setup.row_amount,
+            model_setup.col_amount,
+            met_data_dtype,
+            model_setup.t_steps_per_day
         )
+
         for i in range(len(grid)):
             for j in range(len(grid[0])):
                 if grid["valid_cell"][i, j]:
@@ -351,32 +352,19 @@ def main(model_setup, grid):
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")
         if model_setup.single_column_toggle:
-            if model_setup.parallel and not model_setup.use_numba:
-                grid = loop_over_grid(
-                    model_setup.row_amount,
-                    model_setup.col_amount,
-                    grid,
-                    dt,
-                    met_data_grid,
-                    model_setup.t_steps_per_day,
-                    toggle_dict,
-                    parallel=model_setup.parallel,
-                    use_mpi=model_setup.use_mpi,
-                    ncores=cores,
-                )
-            else:
-                loop_over_grid(
-                    model_setup.row_amount,
-                    model_setup.col_amount,
-                    grid,
-                    dt,
-                    met_data_grid,
-                    model_setup.t_steps_per_day,
-                    toggle_dict,
-                    parallel=model_setup.parallel,
-                    use_mpi=model_setup.use_mpi,
-                    ncores=cores,
-                )
+            grid = loop_over_grid(
+                model_setup.row_amount,
+                model_setup.col_amount,
+                grid,
+                dt,
+                met_data_grid,
+                model_setup.t_steps_per_day,
+                toggle_dict,
+                parallel=model_setup.parallel,
+                use_mpi=model_setup.use_mpi,
+                ncores=cores,
+            )
+
         print("Single-column physics finished")
         if model_setup.dump_data_pre_lateral_movement:
             if model_setup.dump_format == "NETCDF4":

@@ -300,3 +300,30 @@ def spinup(cell, x, args):
         If solution does not converge, then rather than attempting to continue it raises an error. The user should
         re-consider their initial conditions in this case.
     """
+
+import psutil
+import functools
+import os
+
+
+def memory_tracker(label=""):
+    """
+    Decorator to measure memory usage before and after a function call.
+    Prints the difference in MB.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            process = psutil.Process(os.getpid())
+            mem_before = process.memory_info().rss / 1e6  # in MB
+            print(f"[{label}] Memory before: {mem_before:.2f} MB")
+
+            result = func(*args, **kwargs)
+
+            mem_after = process.memory_info().rss / 1e6
+            print(f"[{label}] Memory after:  {mem_after:.2f} MB")
+            print(f"[{label}] Memory delta:  {mem_after - mem_before:.2f} MB")
+            return result
+        return wrapper
+    return decorator

@@ -386,7 +386,6 @@ def move_to_neighbours(
         "W": [0, -1],
     }
     cell = grid[row][col]
-    print(f'Moving water from cell {row}, {col}')
     cell['water_direction'][:] = 0  # clear water direction
     for idx, neighbour in enumerate(all_neighbours.keys()):
         if neighbour in biggest_neighbours:

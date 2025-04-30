@@ -35,9 +35,6 @@ classifiers = [
 
 [project.optional-dependencies]
 
-numba = [
-    'NumbaMinpack',
-]
 mpi = [
     'mpi4py',
 ]

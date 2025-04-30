@@ -7,11 +7,33 @@ in parallel (using either pathos.Pool or numba.prange, since the problem is
 embarassingly parallel), unless model_setup.parallel = False.
 """
 
-from multiprocessing import shared_memory
-from pathos.multiprocessing import ProcessingPool as Pool
+from multiprocessing import shared_memory, Pool
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
 from monarchs.core.utils import get_2d_grid
+
+
+def timestep_worker(args):
+    (
+        i,
+        shm_name,
+        shape,
+        dtype_descr,
+        dt,
+        met_data,
+        t_steps_per_day,
+        toggle_dict,
+    ) = args
+
+    # Reconstruct dtype and connect to shared memory
+    dtype = np.dtype(dtype_descr)
+    shm = shared_memory.SharedMemory(name=shm_name)
+    grid_view = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
+
+    # Access the cell directly and modify in-place
+    timestep_loop(grid_view[i], dt, met_data, t_steps_per_day, toggle_dict)
+
+    shm.close()
 
 
 def loop_over_grid(
@@ -86,106 +108,59 @@ def loop_over_grid(
         stops rather than continuing fruitlessly.
     """
     flat_grid = grid.flatten()
-    met_data_grid = []
+
+    met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass the 24 timesteps
     toggle_dict_grid = []
     x0 = get_2d_grid(grid, "column")
     for i in range(col_amount):
         for j in range(row_amount):
-            met_data_grid.append(met_data[i][j])
             toggle_dict_grid.append(toggle_dict)
 
 
     if parallel:
         dt = [dt] * len(flat_grid)
         t_steps_per_day = [t_steps_per_day] * len(flat_grid)
-        flat_grid = grid.flatten()
 
-        if use_mpi:
-            from mpi4py import MPI
-            from mpi4py.futures import MPIPoolExecutor, wait
+        shm = shared_memory.SharedMemory(create=True, size=flat_grid.nbytes)
+        shared_array = np.ndarray(
+            flat_grid.shape, dtype=flat_grid.dtype, buffer=shm.buf
+        )
+        np.copyto(shared_array, flat_grid)
 
-            COMM = MPI.COMM_WORLD
-            iceshelf = []
-            with MPIPoolExecutor() as executor:
-                for i in range(len(flat_grid)):
-                    print("i = ", i)
-                    iceshelf.append(
-                        executor.submit(
-                            timestep_loop,
-                            flat_grid[i],
-                            dt[i],
-                            met_data_grid[i],
-                            t_steps_per_day[i],
-                            toggle_dict_grid[i],
-                        )
-                    )
-            wait(iceshelf)
-            iceshelf = [i.result() for i in iceshelf]
-
-        else:
-            shm = shared_memory.SharedMemory(create=True, size=flat_grid.nbytes)
-            shared_array = np.ndarray(
-                flat_grid.shape, dtype=flat_grid.dtype, buffer=shm.buf
+        arg_list = [
+            (
+                i,
+                shm.name,
+                shared_array.shape,
+                shared_array.dtype.descr,
+                dt[i],
+                met_data_grid[:, i],
+                t_steps_per_day[i],
+                toggle_dict_grid[i],
             )
-            np.copyto(shared_array, flat_grid)
+            for i in range(np.shape(flat_grid)[0])
+        ]
+        with Pool(ncores) as pool:
+            pool.map(timestep_worker, arg_list)
 
-            def timestep_worker(args):
-                (
-                    i,
-                    shm_name,
-                    shape,
-                    dtype_descr,
-                    dt,
-                    met_data,
-                    t_steps_per_day,
-                    toggle_dict,
-                ) = args
-                import numpy as np
-                from multiprocessing import shared_memory
+        np.copyto(flat_grid, shared_array)
+        grid[:] = flat_grid.reshape(grid.shape)
 
-                # Reconstruct dtype and connect to shared memory
-                dtype = np.dtype(dtype_descr)
-                shm = shared_memory.SharedMemory(name=shm_name)
-                grid_view = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
-
-                # Access the cell directly and modify in-place
-                cell = grid_view[i]
-                timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict)
-
-                shm.close()
-
-            arg_list = [
-                (
-                    i,
-                    shm.name,
-                    shared_array.shape,
-                    shared_array.dtype.descr,
-                    dt[i],
-                    met_data_grid[i],
-                    t_steps_per_day[i],
-                    toggle_dict_grid[i],
-                )
-                for i in range(np.shape(flat_grid)[0])
-            ]
-            with Pool(nodes=ncores) as pool:
-                pool.map(timestep_worker, arg_list)
-
-            np.copyto(flat_grid, shared_array)
-            grid[:] = flat_grid.reshape(grid.shape)
-
-            shm.close()
-            shm.unlink()
+        shm.close()
+        shm.unlink()
 
         xnew = get_2d_grid(grid, "column")
+
         assert (xnew == x0).all()
-        return np.reshape(flat_grid, np.shape(grid))
+        return grid
 
     # Sequential version - with inplace modification
     else:
         for i in range(row_amount * col_amount):
             timestep_loop(
-                flat_grid[i], dt, met_data_grid[i], t_steps_per_day, toggle_dict
+                flat_grid[i], dt, met_data_grid[:, i], t_steps_per_day, toggle_dict
             )
         xnew = get_2d_grid(grid, "column")
         assert (xnew == x0).all()
         grid[:] = flat_grid.reshape(grid.shape)
+        return grid

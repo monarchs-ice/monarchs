@@ -115,7 +115,6 @@ def prescribed_met_data(model_setup):
         comm = MPI.COMM_WORLD
     except ImportError:
         comm = None
-    from monarchs.met_data.metdata_class import initialise_met_data_grid
 
     with Dataset(model_setup.met_output_filepath, "w", comm=comm) as f:
         f.createGroup("variables")

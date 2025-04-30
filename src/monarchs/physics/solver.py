@@ -18,9 +18,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     Solves physics.heateqn.
     This loads in the relevant arguments from the cell, packages them
     into an array form via args_array, and passes them into the hybrd solver.
-    While this format is not necessary to use scipy.optimize.fsolve, it is done in this way to
-    ensure that we can switch between the NumbaMinpack and scipy versions of hybrd with a single
-    toggle (model_setup.use_numba).
+
 
     Called in <firn_column>.
 
