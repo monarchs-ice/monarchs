@@ -107,7 +107,7 @@ vars_to_save = (
     "water_level",
     "water_direction"
 )
-output_filepath = "output/gaussian_threelake_example_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = "output/gaussian_threelake_example_output_new.nc"  # Filename for model output, including file extension (.nc for netCDF).
 # output_grid_size = 400  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.
 # output_timestep = 1  # How often to save output, in days. Commented out for this example.
 dump_data = True
@@ -145,6 +145,7 @@ if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
     from monarchs.core.utils import get_2d_grid
+
     grid = monarchs()
     from matplotlib import pyplot as plt
 
@@ -158,3 +159,30 @@ if __name__ == "__main__":
     plt.figure()
     plt.imshow(get_2d_grid(grid, 'lake_depth'))
     plt.title('Lake depth')
+
+    import sys
+
+    sys.path.append('../../scripts')
+    import flow_plot as fp
+
+    flow_plot = fp.flow_plot
+
+    from netCDF4 import Dataset
+
+    a = Dataset(output_filepath)
+
+    idx = 30
+
+
+    def make_fd_plot(a, idx=0):
+        fig, ax = plt.subplots()
+        ax.imshow(a.variables['water_level'][idx])
+        return fig, ax
+
+
+    def make_both(a, idx=0):
+        fig, ax = make_fd_plot(a, idx=idx)
+        flow_plot(a, netcdf=True, index=idx, fig=fig, ax=ax)
+
+
+    make_both(a)
