@@ -47,6 +47,7 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
         data.createDimension("vert_grid", size=grid["vert_grid"][0][0])
         data.createDimension("vert_grid_lid", size=grid["vert_grid_lid"][0][0])
         data.createDimension("vert_grid_lake", size=grid["vert_grid_lake"][0][0])
+        data.createDimension("direction", size=8)
         data.createDimension("x", size=len(grid))
         data.createDimension("y", size=len(grid[0]))
         # keys = dir(grid[0][0])
@@ -66,6 +67,10 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
                     elif "lid" in key:
                         var_write = data.createVariable(
                             key, dtype, ("x", "y", "vert_grid_lid")
+                        )
+                    elif key == "water_direction":
+                        var_write = data.createVariable(
+                            key, dtype, ("x", "y", "direction")
                         )
                     else:
                         var_write = data.createVariable(

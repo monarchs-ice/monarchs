@@ -30,6 +30,7 @@ def setup_output(
         data.createDimension("vert_grid", size=vert_grid_size)
         data.createDimension("vert_grid_lid", size=grid["vert_grid_lid"][0][0])
         data.createDimension("vert_grid_lake", size=grid["vert_grid_lake"][0][0])
+        data.createDimension("direction", size=8)
         for key in vars_loop:
             var = get_2d_grid(grid, key, index="all")
             if var.dtype == "bool":
@@ -39,8 +40,14 @@ def setup_output(
             if key in dims:
                 var_write = data.createVariable(key, dtype, ("x", "y"))
                 var_write[:] = var
+
             elif len(np.shape(var)) > 2 and np.shape(var)[-1] > 1:
-                if "lake" in key and "lake_depth" not in key and key not in dims:
+                print(key)
+                if "water_direction" in key:
+                    var_write = data.createVariable(
+                        key, dtype, ("time", "x", "y", "direction")
+                    )
+                elif "lake" in key and "lake_depth" not in key and key not in dims:
                     var_write = data.createVariable(
                         key, dtype, ("time", "x", "y", "vert_grid_lake")
                     )
@@ -128,4 +135,5 @@ def update_model_output(
                                 var[i][j],
                             )
                     var = new_var
+
             var_write[index] = var

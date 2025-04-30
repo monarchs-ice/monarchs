@@ -104,6 +104,8 @@ vars_to_save = (
     "lid",
     "v_lid",
     "ice_lens_depth",
+    "water_level",
+    "water_direction"
 )
 output_filepath = "output/gaussian_threelake_example_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
 # output_grid_size = 400  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.

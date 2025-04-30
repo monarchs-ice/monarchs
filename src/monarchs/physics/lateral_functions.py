@@ -385,9 +385,13 @@ def move_to_neighbours(
         "SW": [1, -1],
         "W": [0, -1],
     }
+    cell = grid[row][col]
+    print(f'Moving water from cell {row}, {col}')
+    cell['water_direction'][:] = 0  # clear water direction
     for idx, neighbour in enumerate(all_neighbours.keys()):
         if neighbour in biggest_neighbours:
-            cell = grid[row][col]
+
+            cell['water_direction'][idx] = 1
             if cell["lid"]:
                 return 0
             n_s_index = all_neighbours[neighbour][0]
@@ -596,6 +600,7 @@ def move_water(
     for row in range(max_grid_row):
         for col in range(max_grid_col):
             cell = grid[row][col]
+            cell['water_direction'][:] = 0  # clear water direction
 
             if cell["valid_cell"] and (
                 cell["ice_lens"]
