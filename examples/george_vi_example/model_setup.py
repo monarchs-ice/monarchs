@@ -12,8 +12,8 @@ print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 20  # Number of rows in your model grid, looking from top-down.
-col_amount = 20  # Number of columns in your model grid, looking from top-down.
+row_amount = 100  # Number of rows in your model grid, looking from top-down.
+col_amount = 100  # Number of columns in your model grid, looking from top-down.
 # lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate via 'dem'
 lat_grid_size = "dem"
 vertical_points_firn = 500  # Number of vertical grid cells
@@ -211,7 +211,7 @@ vars_to_save = (
 )
 output_filepath = "output/george_VI_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
 output_grid_size = 200  # Size of interpolated output
-output_timestep = 30
+output_timestep = 1
 """
 Dumping and reloading parameters
 
@@ -237,8 +237,8 @@ dump_format = "NETCDF4"
 """
 Computing and numerical parameters
 """
-use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
-parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you mayTru
+use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
+parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you mayTru
 # wish to run serial if doing single-column calculations.
 use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a non-cluster machine set this False
 # Note that this is not yet compatible with Numba. The code will fail if you attempt to run with both
@@ -285,4 +285,46 @@ radiation_forcing_factor = 1
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
-    monarchs()
+    grid = monarchs()
+
+
+    from matplotlib import pyplot as plt
+    from monarchs.core.utils import get_2d_grid
+    plt.figure()
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            if grid[i][j]['lid']:
+                grid[i][j]['water_level'] = 0
+
+    plt.imshow(get_2d_grid(grid, 'water_level'))
+    plt.title('water_level')
+    plt.figure()
+    plt.imshow(get_2d_grid(grid, 'lake_depth'))
+    plt.title('Lake depth')
+
+    import sys
+
+    sys.path.append('../../scripts')
+    import flow_plot as fp
+
+    flow_plot = fp.flow_plot
+
+    from netCDF4 import Dataset
+
+    a = Dataset(output_filepath)
+
+    idx = 45
+
+    def make_fd_plot(a, idx=0):
+        fig, ax = plt.subplots()
+        ax.imshow(a.variables['water_level'][idx])
+        return fig, ax
+
+
+    def make_both(a, idx=0):
+        fig, ax = make_fd_plot(a, idx=idx)
+        flow_plot(a, netcdf=True, index=idx, fig=fig, ax=ax)
+
+
+    make_both(a, idx=30)
+    a.close()
