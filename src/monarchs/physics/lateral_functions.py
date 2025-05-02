@@ -653,7 +653,8 @@ def move_water(
                     percolation(cell, 3600, lateral_refreeze_flag=True)
                     for k in range(cell["vert_grid"])[::-1]:
                         calc_saturation(cell, k, end=True)
-            update_water_level(cell)
+            # update_water_level(cell)  # commented out as only affects lateral functions and can be updated at
+            # start of next lateral timestep
 
     print('Water level at end of timestep: ', get_2d_grid(grid, 'water_level'))
     print("\nLateral water movement diagnostics:")

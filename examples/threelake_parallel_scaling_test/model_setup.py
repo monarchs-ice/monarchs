@@ -32,7 +32,7 @@ vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 """
 Timestepping parameters
 """
-num_days = 105  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 10  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
@@ -55,8 +55,8 @@ min_height_handler = "extend"
 Met data parameters
 """
 met_data = {}
-timesteps_warm = 800
-timesteps_cold = 1720
+timesteps_warm = 24 * 10
+timesteps_cold = 0
 met_data["LW_surf"] = np.append(
     800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold)
 )  # Incoming longwave radiation. [W m^-2].
@@ -123,7 +123,7 @@ use_mpi = False
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = 20  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+cores = 16  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 solver = "hybr"
 
 """

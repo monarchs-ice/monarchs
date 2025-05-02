@@ -122,7 +122,7 @@ def get_num_cores(model_setup):
 
     """
     if model_setup.cores in ["all", False] and model_setup.parallel:
-        if not model_setup.mpi:
+        if not model_setup.use_mpi:
             cores = pathos.helpers.cpu_count()
         else:
             cores = pathos.helpers.cpu_count()

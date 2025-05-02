@@ -320,7 +320,7 @@ if __name__ == "__main__":
 
     def make_fd_plot(a, idx=0):
         fig, ax = plt.subplots()
-        ax.imshow(a.variables['water_level'][idx])
+        ax.imshow(a.variables['water_level'][idx], vmax=100, animated=True)
         return fig, ax
 
 
