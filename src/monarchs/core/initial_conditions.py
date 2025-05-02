@@ -64,10 +64,14 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                 firn_depth += model_setup.firn_min_height - firn_depth.min()
         elif model_setup.min_height_handler == "normalise":
             firn_depth_under_35_flag = True
+
     valid_cells_old = valid_cells
     valid_cells = check_for_isolated_cells(valid_cells)
+
     if not np.array_equal(valid_cells_old, valid_cells):
         print("Removed some isolated cells - new grid = ", valid_cells)
+
+
     firn_columns = np.transpose(
         np.linspace(0, firn_depth, int(model_setup.vertical_points_firn))
     )
@@ -182,7 +186,6 @@ def rho_init_emp(z, rho_sfc, z_t):
     rho = 917 - (917 - rho_sfc) * np.exp(-(1.9 / z_t) * z)
     return rho
 
-
 def create_model_grid(
     row_amount,
     col_amount,
@@ -224,145 +227,53 @@ def create_model_grid(
     size_dy=1000.0,
 ):
     """
-    Called in the runscript (run_MONARCHS.py)
-    When changing optional arguments, ensure that any inputs are in the correct format, particularly if using Numba.
-    e.g. if a variable is default np.array([np.nan]), ensure that the changed variable is array_like.
-
-    Parameters
-    ----------
-    row_amount : int
-        Number of rows in the model grid.
-    col_amount: int
-        Number of columns in the model grid.
-    firn_depth : float
-        Height of the firn column [m]
-    lake_depth : float
-        Height of the surface lake, 0 if not present [m]
-    lid_depth : float
-        Height of the frozen lid on top of the surface lake, 0 if not present [m]
-    vert_grid : int
-        Number of vertical grid points in the firn column.
-    vert_grid_lake : int
-        Number of vertical grid points in the lake. int
-    vert_grid_lid : int
-        Number of vertical grid points in the frozen lid. int
-    rho : array_like, float, dimension(vert_grid),
-        Firn density profile. Mostly used for convenience as all calculations use Sfrac and Lfrac. [kg m^-3]
-    firn_temperature : array_like, float, dimension(vert_grid),
-        Temperature profile of t
-    Sfrac : array_like, float, dimension(vert_grid), optional
-        Solid fraction of the firn.
-    Lfrac : array_like, float, dimension(vert_grid), optional
-        Liquid fraction of the firn.
-    meltflag : array_like, bool, dimension(vert_grid), optional
-        Boolean flag to determine if there is melt at a given vertical point
-    saturation : array_like, bool, dimension(vert_grid), optional
-        Boolean flag to determine whether a vertical layer is saturated.
-    lake_temperature : array_like, float, dimension(vert_grid_lake), optional
-        Temperature of the lake as a function of vertical level [K]
-    lid_temperature : array_like, float, dimension(vert_grid_lake), optional
-        Temperature of the lid as a function of vertical level [K]
-    water_level : float, optional
-        Water level of the cell. Can be either at the height of the lake, infinite (in the case of a lid), or
-        at the height of the highest vertical level with saturated firn.
-    water : array_like, float, dimension(vert_grid), optional
-        Water content of each grid cell. Used only in lateral_functions.move_water, where it is necessary to combine
-        water from the lake and from the firn (which is determined by Lfrac).
-    melt_hours : int, optional
-        Tracks the number of hours of melt that have occurred. Currently only tracks melting of the firn due to
-        the temperature of the lake above it.
-    exposed_water_refreeze_counter : int, optional
-        Tracks the number of times that exposed water at the surface freezes due to surface conditions.
-    lid_sfc_melt : float, optional
-        Tracks the amount of meltwater resulting from melting of the frozen lid. Used to
-    melt : bool, optional
-        Flag to determine whether the model is in a melting state or not. This affects the surface albedo for the
-        surface flux calculation, used variously but mostly in the surface energy balance for the lake and lid, and for
-        the calculation of the heat equation.
-    exposed_water : bool, optional
-        Flag to track whether there is exposed water due to surface melting.
-    lake : bool, optional
-        Flag to track whether the model is in a state that includes a lake or not. Is True even if there is a
-        frozen lid, until the lid freezes enough to create a single firn profile.
-    v_lid : bool, optional
-        Flag to track whether a virtual lid is present. Set to False if a true lid is present.
-    virtual_lid_temperature : float, optional
-        Temperature of the virtual lid, if there is one. The virtual lid is so small that this can be a single number
-        rather than a vertical profile. [K]
-    lid : bool, optional
-        Flag to track whether a frozen lid has formed.
-    ice_lens: bool, optional
-        Flag to track whether there is pore closure and the formation of a lens of solid ice. Necessary for
-        saturation to occur and lakes to form.
-    ice_lens_depth : int, optional
-        Vertical layer (not physical depth) of the ice lens if there is one. Default 999, i.e. no lens present.
-    has_had_lid : bool, optional
-        Flag to determine whether the model has undergone lid development.
-        Set True if lid depth exceeds 0.1.
-        Resets to False if lid melts below 0.1 m depth.
-    lid_melt_count : int, optional
-        Track the number of times that the lid has undergone melting. Used as a tracker.
-    total_melt : float, optional
-        Total amount of melting that has occurred. Not used for any physics, but as a tracker.
-    valid_cells : array_like, bool
-        Mask to filter out invalid (e.g. land) cells, so that we don't waste time running any physics on them.
-    use_numba : bool, optional
-        Flag to determine whether to use Numba typed lists or not. Default False.
-    lat : float, optional
-        Input latitude.
-    lon : float, optional
-        Input longitude.
-    size_dx : float, optional
-        Size of the grid cell in the x direction [m]
-    size_dy : float, optional
-        Size of the grid cell in the y direction [m]
-
+    Creates the model grid by initializing the ice shelf with the provided parameters.
     """
     y, x = np.meshgrid(
         np.arange(0, row_amount, 1), np.arange(0, col_amount, 1), indexing="ij"
     )
     dtype = get_spec(vert_grid, vert_grid_lake, vert_grid_lid)
     grid = initialise_iceshelf(
-        row_amount,
-        col_amount,
-        vert_grid,
-        vert_grid_lake,
-        vert_grid_lid,
-        dtype,
-        x,
-        y,
-        firn_depth,
-        rho,
-        firn_temperature,
-        Sfrac=np.array([np.nan]),
-        Lfrac=np.array([np.nan]),
-        meltflag=np.array([np.nan]),
-        saturation=np.array([np.nan]),
-        lake_depth=0.0,
-        lake_temperature=np.array([np.nan]),
-        lid_depth=0.0,
-        lid_temperature=np.array([np.nan]),
-        melt=False,
-        exposed_water=False,
-        lake=False,
-        v_lid=False,
-        lid=False,
-        water_level=0,
-        water=np.array([np.nan]),
-        ice_lens=False,
-        ice_lens_depth=999,
-        has_had_lid=False,
-        lid_sfc_melt=0.0,
-        lid_melt_count=0,
-        melt_hours=0,
-        exposed_water_refreeze_counter=0,
-        virtual_lid_temperature=273.15,
-        total_melt=0.0,
-        valid_cells=np.array([np.nan]),
-        numba=False,
-        lat=np.array([np.nan]),
-        lon=np.array([np.nan]),
-        size_dx=1000.0,
-        size_dy=1000.0,
+        row_amount=row_amount,
+        col_amount=col_amount,
+        vert_grid=vert_grid,
+        vert_grid_lake=vert_grid_lake,
+        vert_grid_lid=vert_grid_lid,
+        dtype=dtype,
+        x=x,
+        y=y,
+        firn_depth=firn_depth,
+        rho=rho,
+        firn_temperature=firn_temperature,
+        Sfrac=Sfrac,
+        Lfrac=Lfrac,
+        meltflag=meltflag,
+        saturation=saturation,
+        lake_depth=lake_depth,
+        lake_temperature=lake_temperature,
+        lid_depth=lid_depth,
+        lid_temperature=lid_temperature,
+        melt=melt,
+        exposed_water=exposed_water,
+        lake=lake,
+        v_lid=v_lid,
+        lid=lid,
+        water_level=water_level,
+        water=water,
+        ice_lens=ice_lens,
+        ice_lens_depth=ice_lens_depth,
+        has_had_lid=has_had_lid,
+        lid_sfc_melt=lid_sfc_melt,
+        lid_melt_count=lid_melt_count,
+        melt_hours=melt_hours,
+        exposed_water_refreeze_counter=exposed_water_refreeze_counter,
+        virtual_lid_temperature=virtual_lid_temperature,
+        total_melt=total_melt,
+        valid_cells=valid_cells,
+        numba=use_numba,
+        lat=lats,
+        lon=lons,
+        size_dx=size_dx,
+        size_dy=size_dy,
     )
     return grid

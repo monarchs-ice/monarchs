@@ -139,7 +139,8 @@ def find_surface_temperature(
     )
 
     if not result.success:
-        raise ValueError("Root-finding for surface temperature failed.")
+        print(f"Root-finding for surface temperature failed - "
+              f"returning original guess. row = {cell['row']}, col = {cell['column']}")
 
     soldict = result  # Surface temperature solution
     return soldict

@@ -38,7 +38,7 @@ input_crs = 3031  # Coordinate reference system of the input data
 """
 Timestepping parameters
 """
-num_days = 100  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 250  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
@@ -208,10 +208,12 @@ vars_to_save = (
     "lid",
     "v_lid",
     "ice_lens_depth",
+    "water_level",
+    "water_direction"
 )
 output_filepath = "output/george_VI_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
-output_grid_size = 200  # Size of interpolated output
-output_timestep = 1
+output_grid_size = 40  # Size of interpolated output
+output_timestep = 2
 """
 Dumping and reloading parameters
 
