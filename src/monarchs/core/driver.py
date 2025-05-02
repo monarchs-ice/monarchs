@@ -465,6 +465,7 @@ def initialise(model_setup):
 
 
 def monarchs():
+
     model_setup = configuration.model_setup
     configuration.create_output_folders(model_setup)
     configuration.handle_incompatible_flags(model_setup)

@@ -291,6 +291,7 @@ if __name__ == "__main__":
 
 
     from matplotlib import pyplot as plt
+
     from monarchs.core.utils import get_2d_grid
     plt.figure()
     for i in range(len(grid)):

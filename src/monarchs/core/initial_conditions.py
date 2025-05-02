@@ -71,7 +71,6 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     if not np.array_equal(valid_cells_old, valid_cells):
         print("Removed some isolated cells - new grid = ", valid_cells)
 
-
     firn_columns = np.transpose(
         np.linspace(0, firn_depth, int(model_setup.vertical_points_firn))
     )
@@ -120,9 +119,9 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             )
     print("\n")
     if (
-        hasattr(model_setup, "DEM_path")
-        and hasattr(model_setup, "lat_bounds")
-        and model_setup.lat_bounds == "dem"
+            hasattr(model_setup, "DEM_path")
+            and hasattr(model_setup, "lat_bounds")
+            and model_setup.lat_bounds == "dem"
     ):
         return T, rho, firn_depth, valid_cells, lat_array, lon_array, dx, dy
     else:
@@ -186,45 +185,46 @@ def rho_init_emp(z, rho_sfc, z_t):
     rho = 917 - (917 - rho_sfc) * np.exp(-(1.9 / z_t) * z)
     return rho
 
+
 def create_model_grid(
-    row_amount,
-    col_amount,
-    firn_depth,
-    vert_grid,
-    vert_grid_lake,
-    vert_grid_lid,
-    rho,
-    firn_temperature,
-    Sfrac=np.array([np.nan]),
-    Lfrac=np.array([np.nan]),
-    meltflag=np.array([np.nan]),
-    saturation=np.array([np.nan]),
-    lake_depth=0.0,
-    lake_temperature=np.array([np.nan]),
-    lid_depth=0.0,
-    lid_temperature=np.array([np.nan]),
-    melt=False,
-    exposed_water=False,
-    lake=False,
-    v_lid=False,
-    lid=False,
-    water_level=0,
-    water=np.array([np.nan]),
-    ice_lens=False,
-    ice_lens_depth=999,
-    has_had_lid=False,
-    lid_sfc_melt=0.0,
-    lid_melt_count=0,
-    melt_hours=0,
-    exposed_water_refreeze_counter=0,
-    virtual_lid_temperature=273.15,
-    total_melt=0.0,
-    valid_cells=np.array([np.nan]),
-    use_numba=False,
-    lats=np.array([np.nan]),
-    lons=np.array([np.nan]),
-    size_dx=1000.0,
-    size_dy=1000.0,
+        row_amount,
+        col_amount,
+        firn_depth,
+        vert_grid,
+        vert_grid_lake,
+        vert_grid_lid,
+        rho,
+        firn_temperature,
+        Sfrac=np.array([np.nan]),
+        Lfrac=np.array([np.nan]),
+        meltflag=np.array([np.nan]),
+        saturation=np.array([np.nan]),
+        lake_depth=0.0,
+        lake_temperature=np.array([np.nan]),
+        lid_depth=0.0,
+        lid_temperature=np.array([np.nan]),
+        melt=False,
+        exposed_water=False,
+        lake=False,
+        v_lid=False,
+        lid=False,
+        water_level=0,
+        water=np.array([np.nan]),
+        ice_lens=False,
+        ice_lens_depth=999,
+        has_had_lid=False,
+        lid_sfc_melt=0.0,
+        lid_melt_count=0,
+        melt_hours=0,
+        exposed_water_refreeze_counter=0,
+        virtual_lid_temperature=273.15,
+        total_melt=0.0,
+        valid_cells=np.array([np.nan]),
+        use_numba=False,
+        lats=np.array([np.nan]),
+        lons=np.array([np.nan]),
+        size_dx=1000.0,
+        size_dy=1000.0,
 ):
     """
     Creates the model grid by initializing the ice shelf with the provided parameters.
@@ -234,17 +234,17 @@ def create_model_grid(
     )
     dtype = get_spec(vert_grid, vert_grid_lake, vert_grid_lid)
     grid = initialise_iceshelf(
-        row_amount=row_amount,
-        col_amount=col_amount,
-        vert_grid=vert_grid,
-        vert_grid_lake=vert_grid_lake,
-        vert_grid_lid=vert_grid_lid,
-        dtype=dtype,
-        x=x,
-        y=y,
-        firn_depth=firn_depth,
-        rho=rho,
-        firn_temperature=firn_temperature,
+        row_amount,
+        col_amount,
+        vert_grid,
+        vert_grid_lake,
+        vert_grid_lid,
+        dtype,
+        x,
+        y,
+        firn_depth,
+        rho,
+        firn_temperature,
         Sfrac=Sfrac,
         Lfrac=Lfrac,
         meltflag=meltflag,
