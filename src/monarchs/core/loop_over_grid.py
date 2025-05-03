@@ -7,11 +7,12 @@ in parallel (using either pathos.Pool or numba.prange, since the problem is
 embarassingly parallel), unless model_setup.parallel = False.
 """
 
-from multiprocessing import shared_memory, Pool
+from multiprocessing import shared_memory, Manager
+from concurrent.futures import ProcessPoolExecutor as Pool
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
 from monarchs.core.utils import get_2d_grid
-
+import time
 
 def timestep_worker(args):
     (
@@ -20,7 +21,9 @@ def timestep_worker(args):
         shape,
         dtype_descr,
         dt,
-        met_data,
+        shm_met_name,
+        met_data_shape,
+        met_data_dtype_descr,
         t_steps_per_day,
         toggle_dict,
     ) = args
@@ -30,9 +33,16 @@ def timestep_worker(args):
     shm = shared_memory.SharedMemory(name=shm_name)
     grid_view = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
 
-    # Access the cell directly and modify in-place
-    timestep_loop(grid_view[i], dt, met_data, t_steps_per_day, toggle_dict)
+    shm_met = shared_memory.SharedMemory(name=shm_met_name)
+    met_data_dtype = np.dtype(met_data_dtype_descr)
+    met_data_view = np.ndarray(met_data_shape, dtype=met_data_dtype, buffer=shm_met.buf)
 
+    # print(f'Process sees: grid_view[{i}] = {grid_view[i]}')
+    # start = time.perf_counter()
+    # Access the cell directly and modify in-place
+    result = timestep_loop(grid_view[i], dt, met_data_view[i], t_steps_per_day, toggle_dict)
+    grid_view[i] = result
+    # print(f"Parallel time: {time.perf_counter() - start:.2f}s")
     shm.close()
 
 
@@ -112,10 +122,9 @@ def loop_over_grid(
     met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass the 24 timesteps
     toggle_dict_grid = []
     x0 = get_2d_grid(grid, "column")
-    for i in range(col_amount):
-        for j in range(row_amount):
-            toggle_dict_grid.append(toggle_dict)
 
+    manager = Manager()
+    shared_toggle_dict = manager.dict(toggle_dict)
 
     if parallel:
         dt = [dt] * len(flat_grid)
@@ -127,6 +136,14 @@ def loop_over_grid(
         )
         np.copyto(shared_array, flat_grid)
 
+        # Reshape met data to (row * col, t_steps_per_day)
+        met_data_grid = np.moveaxis(met_data_grid, 0, -1)
+        shm_met = shared_memory.SharedMemory(create=True, size=met_data_grid.nbytes)
+        met_data_shared = np.ndarray(
+            met_data_grid.shape, dtype=met_data_grid.dtype, buffer=shm_met.buf
+        )
+        np.copyto(met_data_shared, met_data_grid)
+
         arg_list = [
             (
                 i,
@@ -134,14 +151,16 @@ def loop_over_grid(
                 shared_array.shape,
                 shared_array.dtype.descr,
                 dt[i],
-                met_data_grid[:, i],
+                shm_met.name,
+                met_data_shared.shape,
+                met_data_shared.dtype.descr,
                 t_steps_per_day[i],
-                toggle_dict_grid[i],
+                shared_toggle_dict,
             )
             for i in range(np.shape(flat_grid)[0])
         ]
         with Pool(ncores) as pool:
-            pool.map(timestep_worker, arg_list)
+            pool.map(timestep_worker, arg_list, chunksize=1)
 
         np.copyto(flat_grid, shared_array)
         grid[:] = flat_grid.reshape(grid.shape)

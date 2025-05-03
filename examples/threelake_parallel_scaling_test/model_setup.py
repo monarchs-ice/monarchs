@@ -19,8 +19,8 @@ from monarchs.DEM import create_DEM_GaussianTestCase as cgt
 """
 Spatial parameters
 """
-row_amount = 10  # Number of rows in your model grid, looking from top-down.
-col_amount = 10  # Number of columns in your model grid, looking from top-down.
+row_amount = 50  # Number of rows in your model grid, looking from top-down.
+col_amount = 50  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -123,7 +123,7 @@ use_mpi = False
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = 16  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+cores = 10  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 solver = "hybr"
 
 """
@@ -166,43 +166,43 @@ if __name__ == "__main__":
     else:
         grid = monarchs()
 
-    from matplotlib import pyplot as plt
-
-    plt.figure()
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            if grid[i][j]['lid']:
-                grid[i][j]['water_level'] = 0
-
-    plt.imshow(get_2d_grid(grid, 'water_level'))
-    plt.title('water_level')
-    plt.figure()
-    plt.imshow(get_2d_grid(grid, 'lake_depth'))
-    plt.title('Lake depth')
-
-    import sys
-
-    sys.path.append('../../scripts')
-    import flow_plot as fp
-
-    flow_plot = fp.flow_plot
-
-    from netCDF4 import Dataset
-
-    a = Dataset(output_filepath)
-
-    idx = 45
-
-    def make_fd_plot(a, idx=0):
-        fig, ax = plt.subplots()
-        ax.imshow(a.variables['water_level'][idx])
-        return fig, ax
-
-
-    def make_both(a, idx=0):
-        fig, ax = make_fd_plot(a, idx=idx)
-        flow_plot(a, netcdf=True, index=idx, fig=fig, ax=ax)
-
-
-    make_both(a, idx=30)
-    a.close()
+    # from matplotlib import pyplot as plt
+    #
+    # plt.figure()
+    # for i in range(len(grid)):
+    #     for j in range(len(grid[0])):
+    #         if grid[i][j]['lid']:
+    #             grid[i][j]['water_level'] = 0
+    #
+    # plt.imshow(get_2d_grid(grid, 'water_level'))
+    # plt.title('water_level')
+    # plt.figure()
+    # plt.imshow(get_2d_grid(grid, 'lake_depth'))
+    # plt.title('Lake depth')
+    #
+    # import sys
+    #
+    # sys.path.append('../../scripts')
+    # import flow_plot as fp
+    #
+    # flow_plot = fp.flow_plot
+    #
+    # from netCDF4 import Dataset
+    #
+    # a = Dataset(output_filepath)
+    #
+    # idx = 45
+    #
+    # def make_fd_plot(a, idx=0):
+    #     fig, ax = plt.subplots()
+    #     ax.imshow(a.variables['water_level'][idx])
+    #     return fig, ax
+    #
+    #
+    # def make_both(a, idx=0):
+    #     fig, ax = make_fd_plot(a, idx=idx)
+    #     flow_plot(a, netcdf=True, index=idx, fig=fig, ax=ax)
+    #
+    #
+    # make_both(a, idx=30)
+    # a.close()

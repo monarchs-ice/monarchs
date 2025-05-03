@@ -270,38 +270,6 @@ class ModelSetup:
             setattr(self, var_name, var_value)
 
 
-#
-# def apply_memory_tracker():
-#     from inspect import getmembers, isfunction
-#
-#     from monarchs.physics import percolation_functions, snow_accumulation
-#     from monarchs.physics import lid_functions
-#     from monarchs.physics import surface_fluxes
-#     from monarchs.physics import lake_functions
-#     from monarchs.physics import firn_functions
-#     from monarchs.physics import heateqn
-#     from monarchs.core import utils
-#     from monarchs.physics import timestep
-#     from monarchs.core import loop_over_grid
-#     from monarchs.core import driver
-#     module_list = [
-#         surface_fluxes,
-#         utils,
-#         firn_functions,
-#         lake_functions,
-#         lid_functions,
-#         percolation_functions,
-#         snow_accumulation,
-#         #heateqn,
-#         timestep,
-#         loop_over_grid,
-#         driver
-#     ]
-#     for module in module_list:
-#         functions_list = getmembers(module, isfunction)
-#         for name, function in functions_list:
-#             print(f"Applying memory tracker decorator to {module.__name__}.{name}")
-#             jitted_function = memory_tracker(function)
 
 def jit_modules():
     """

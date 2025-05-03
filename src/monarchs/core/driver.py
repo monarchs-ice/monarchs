@@ -346,6 +346,7 @@ def main(model_setup, grid):
     total_mass_start = calc_grid_mass(grid)
     catchment_outflow = 0
     time_loop = range(first_iteration, model_setup.num_days)
+    start = time.perf_counter()
     for day in time_loop:
 
         dt = 3600
@@ -366,6 +367,8 @@ def main(model_setup, grid):
             )
 
         print("Single-column physics finished")
+        print(f"Parallel time: {time.perf_counter() - start:.2f}s")
+        start = time.perf_counter()
         if model_setup.dump_data_pre_lateral_movement:
             if model_setup.dump_format == "NETCDF4":
                 dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
@@ -420,6 +423,8 @@ def main(model_setup, grid):
                 vars_to_save=model_setup.vars_to_save,
                 vert_grid_size=output_grid_size,
             )
+        print(f"Serial time: {time.perf_counter() - start:.2f}s")
+
     print("\n*******************************************\n")
     print("MONARCHS has finished running successfully!")
     print("Total time taken = ", time.perf_counter() - tic)
