@@ -90,14 +90,14 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "output/1d_testcase_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = "output/1d_testcase_outputnew.nc"  # Filename for model output, including file extension (.nc for netCDF).
 output_grid_size = 400  # Size of interpolated output
 
 """
 Dumping and reloading parameters
 """
 dump_data = True
-dump_filepath = "output/1d_testcase_dump.nc"  # Filename of our previously dumped state
+dump_filepath = "output/1d_testcase_dumpnew.nc"  # Filename of our previously dumped state
 reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 if __name__ == "__main__":
