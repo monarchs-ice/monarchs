@@ -97,7 +97,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
         if not cell["exposed_water"] and not cell["saturation"][0]:
             if firn_column_toggle:
-                firn_functions.firn_column(
+                root0 = firn_functions.firn_column(
                     cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
                 )
 
@@ -189,7 +189,54 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
         )
 
+        #
+        # from netCDF4 import Dataset
+        # is_new_file = (cell['day'] == 0 and cell['t_step'] == 1)
+        # # Write out everything in cell to this netCDF in a loop over all attributes of cell
+        # with Dataset("output/test.nc", 'a' if not is_new_file else 'w', ) as f:
+        #     if is_new_file:
+        #         # Define dimensions
+        #         f.createDimension('hour', None)  # Unlimited time
+        #         f.createDimension('vert_grid', cell['vert_grid'])
+        #         f.createDimension('vert_grid_lid', cell['vert_grid_lid'])
+        #         f.createDimension('vert_grid_lake', cell['vert_grid_lake'])
+        #         f.createDimension('direction', 8)
+        #         # check shape and create variable with dimensions either a) time, if single value or b) time, vert_grid if array
+        #         # need to account for some variables being boolean type first - need to convert these to int
+        #
+        #
+        #         for key in cell.dtype.names:
+        #             field_dtype = cell[key].dtype
+        #             if field_dtype == np.dtype('bool'):
+        #                 field_dtype = np.int32
+        #             else:
+        #                 field_dtype = field_dtype
+        #
+        #             # some variables are for lid/lakes, so need to be accounted for as have different size
+        #             if key in ['lid_depth', 'v_lid_depth', 'lid_temperature', 'rho_lid']:
+        #                 f.createVariable(key, field_dtype, ('hour', 'vert_grid_lid'))
+        #             elif key in ['water_direction']:
+        #                 f.createVariable(key, field_dtype, ('hour', 'direction'))
+        #             elif key in ['lake_depth', 'lake_temperature']:
+        #                 f.createVariable(key, field_dtype, ('hour', 'vert_grid_lake'))
+        #             elif isinstance(cell[key], np.ndarray):
+        #                 f.createVariable(key, field_dtype, ('hour', 'vert_grid'))
+        #             else:
+        #                 f.createVariable(key, field_dtype, ('hour',))
+        #             # Manually add root[0]
+        #         f.createVariable('root0', np.float64, ('hour',))
+        #     # Index is the current timestep accounting for the day
+        #     idx = cell["day"] * t_steps_per_day + cell["t_step"] - 1
+        #     print(idx)
+        #     for key in cell.dtype.names:
+        #
+        #         f.variables[key][idx] = cell[key]
+        #
+        #     f.variables['root0'][idx] = root0
+
         cell["t_step"] += 1
+
+
 
     cell["day"] += 1
 

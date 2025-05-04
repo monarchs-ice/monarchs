@@ -79,7 +79,7 @@ def flow_plot(grid, netcdf=False, index=0, fig=False, ax=False):
 def make_fd_plot(a, idx=0, fig=False, ax=False):
     if not fig and not ax:
         fig, ax = plt.subplots()
-    im = ax.imshow(a.variables['water_level'][idx], vmax=100, animated=True)
+    im = ax.imshow(a.variables['water_level'][idx], vmax=65, animated=True)
     return fig, ax, im
 
 
@@ -102,6 +102,6 @@ def flow_anim(data):
     for i in range(len(data.variables['water_level'])):
         frame = make_new_frame(i, fig, ax)
         frames.append(frame)
-    ani = ArtistAnimation(fig, frames, interval=100, blit=False)
+    ani = ArtistAnimation(fig, frames, interval=200, blit=False)
     ani.save("flow_animation.gif", writer="imagemagick")
     plt.show()

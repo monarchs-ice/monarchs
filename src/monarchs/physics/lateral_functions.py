@@ -51,7 +51,8 @@ def update_water_level(cell):
         cell["water"][0] += cell.lake_depth
 
     elif cell["lid"]:
-        cell["water_level"] = 999
+        cell["water_level"] = cell['lid_depth'] + cell["firn_depth"] + cell['lake_depth']  # shouldn't matter, as
+        # water can't move from a lid
         cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
 
 
@@ -389,10 +390,10 @@ def move_to_neighbours(
     cell['water_direction'][:] = 0  # clear water direction
     for idx, neighbour in enumerate(all_neighbours.keys()):
         if neighbour in biggest_neighbours:
-
-            cell['water_direction'][idx] = 1
             if cell["lid"]:
                 return 0
+            cell['water_direction'][idx] = 1
+
             n_s_index = all_neighbours[neighbour][0]
             w_e_index = all_neighbours[neighbour][1]
             temporary_cell = temp_grid[row][col]

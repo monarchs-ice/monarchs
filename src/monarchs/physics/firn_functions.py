@@ -82,6 +82,7 @@ def firn_column(
         x, args, fixed_sfc=False, solver_method=heateqn_solver
     )
     print(f'Root[0] = {root[0]}')
+    root0 = root[0]
     if root[0] > 273.15:
         cell["meltflag"][0] = 1
         cell["melt"] = True
@@ -117,7 +118,7 @@ def firn_column(
     new_mass = calc_mass_sum(cell)
 
     assert abs(original_mass - new_mass) < 1.5 * 10**-7
-
+    return root0
 
 def regrid_after_melt(cell, height_change, lake=False):
     """

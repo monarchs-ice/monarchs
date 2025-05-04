@@ -89,6 +89,7 @@ def percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=Tr
                             cell["meltflag"][v_lev] = 0
                             v_lev += 1
                             cell["meltflag"][v_lev] = 1
+
                         else:
                             for i in np.arange(v_lev + 1)[::-1]:
                                 calc_saturation(cell, i, end=True)
@@ -232,6 +233,8 @@ def calc_saturation(cell, v_lev_in, end=False):
             cell["saturation"][v_lev] = 1
         elif end:
             cell["meltflag"][v_lev] = 1
+            print('Setting meltflag to 1 - current cell')
+
         if excess_water > 0:
             while v_lev > 0:
                 cell["Lfrac"][v_lev] = cell["Lfrac"][v_lev] + excess_water
@@ -241,8 +244,11 @@ def calc_saturation(cell, v_lev_in, end=False):
                     cell["Lfrac"][v_lev] = Lfrac_max
                     if not end:
                         cell["saturation"][v_lev] = 1
+
                     else:
                         cell["meltflag"][v_lev] = 1
+                        print('Setting meltflag to 1 - going upward')
+
                     v_lev = v_lev - 1
                 else:
                     break

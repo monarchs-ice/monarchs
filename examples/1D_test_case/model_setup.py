@@ -91,8 +91,8 @@ vars_to_save = (
     "ice_lens_depth",
 )
 output_filepath = "output/1d_testcase_outputnew.nc"  # Filename for model output, including file extension (.nc for netCDF).
-output_grid_size = 400  # Size of interpolated output
-
+output_grid_size = vertical_points_firn  # Size of interpolated output
+lateral_movement_toggle = False
 """
 Dumping and reloading parameters
 """

@@ -64,7 +64,27 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         mesg = "Fixed surface temperature"
 
     else:
-        N = 100
+        N = 50
+        # N = cell['vert_grid']
+        # If N is set to equal vert_grid, then when we solve for the surface temperature, we effectively
+        # solve for the whole column, so should just return that at the end of the function.
+        if N == cell['vert_grid']:
+            print('Solving for whole column using fsolve')
+            soldict = heateqn.find_surface_temperature(
+                cell,
+                LW_in,
+                SW_in,
+                T_air,
+                p_air,
+                T_dp,
+                wind,
+                dz,
+                dt,
+                solver_method=solver_method,
+                N=N
+            )
+            return soldict.x, soldict.success, soldict.message, soldict.success
+
         soldict = heateqn.find_surface_temperature(
             cell,
             LW_in,
@@ -87,11 +107,13 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     # Now use tridiagonal solver to solve the heat equation once we have the surface temp
 
     if fixed_sfc:
+        print('Solving fixed sfc heat equation')
         fs = "(fixed sfc)"
         T = heateqn.propagate_temperature(cell, dz, dt, sol, N=1)
         T = np.concatenate((np.array([sol]), T))
     else:
         fs = ""
+        print('Solving non-fixed sfc heat equation')
         # Take our root-finding algorithm output (from first N layers),
         # use it as the top boundary condition to the tridiagonal solver,
         # then concatenate the two
