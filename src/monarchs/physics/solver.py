@@ -65,6 +65,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
 
     else:
         N = cell['vert_grid']
+        N = 50
         # N = cell['vert_grid']
         # If N is set to equal vert_grid, then when we solve for the surface temperature, we effectively
         # solve for the whole column, so should just return that at the end of the function.

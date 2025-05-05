@@ -530,10 +530,10 @@ def mass_conserving_profile(cell, var='Sfrac'):
     mass_final = np.sum(var_new * dz_new * rho)
 
 
-    print(f'Solid mass from MONARCHS: {mon_mass:.3f} kg/m²')
-    print(f"Initial solid mass: {mass_initial:.3f} kg/m²")
-    print(f"Final solid mass:   {mass_final:.3f} kg/m²")
-    print(f"Difference:         {mass_final - mass_initial:.3e} kg/m²")
+    # print(f'Solid mass from MONARCHS: {mon_mass:.3f} kg/m²')
+    # print(f"Initial solid mass: {mass_initial:.3f} kg/m²")
+    # print(f"Final solid mass:   {mass_final:.3f} kg/m²")
+    # print(f"Difference:         {mass_final - mass_initial:.3e} kg/m²")
 
     return np.clip(var_new, 0, 1)
 

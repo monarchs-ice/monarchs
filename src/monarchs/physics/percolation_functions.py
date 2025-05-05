@@ -233,7 +233,6 @@ def calc_saturation(cell, v_lev_in, end=False):
             cell["saturation"][v_lev] = 1
         elif end:
             cell["meltflag"][v_lev] = 1
-            print('Setting meltflag to 1 - current cell')
 
         if excess_water > 0:
             while v_lev > 0:
@@ -247,7 +246,6 @@ def calc_saturation(cell, v_lev_in, end=False):
 
                     else:
                         cell["meltflag"][v_lev] = 1
-                        print('Setting meltflag to 1 - going upward')
 
                     v_lev = v_lev - 1
                 else:
