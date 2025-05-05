@@ -16,14 +16,14 @@ from pyproj import CRS, Transformer
 import numpy as np
 
 matplotlib.use("TkAgg")
-dumppath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_140425\progress.nc"
-diagpath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_140425\model_output.nc"
+dumppath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\progress.nc"
+diagpath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\model_output.nc"
 # dumppath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc'
 # diagpath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\model_output.nc'
 # dumppath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_dump.nc'
 # diagpath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_output.nc'
 big_data_path = (
-    r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc"
+    r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\progress.nc"
 )
 flowdata = Dataset(dumppath)
 t0data = Dataset(diagpath)

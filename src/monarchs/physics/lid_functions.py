@@ -368,6 +368,8 @@ def combine_lid_firn(cell):
     -------
     None (amends cell inplace)
     """
+    old_sfrac = np.copy(cell["Sfrac"])
+    old_lfrac = np.copy(cell["Lfrac"])
     original_mass = calc_mass_sum(cell)
     print(
         f"Combining lid and firn to create one profile..., column = {cell['column']}, row = {cell['row']}"
@@ -378,6 +380,9 @@ def combine_lid_firn(cell):
     new_depth_grid = np.linspace(
         0, cell["firn_depth"] + cell["lid_depth"], new_vert_grid
     )
+
+    # We need to interpolate in such a way that we conserve mass.
+
 
     # Interpolate lid and firn properties to the new depth grid
     old_depth_grid = np.append(
@@ -395,16 +400,25 @@ def combine_lid_firn(cell):
     new_rho = np.interp(
         new_depth_grid, old_depth_grid, np.append(cell["rho_lid"], cell["rho"])
     )
-    new_Lfrac = np.interp(
-        new_depth_grid,
-        old_depth_grid,
-        np.append(np.zeros(cell["vert_grid_lid"]), cell["Lfrac"]),
-    )
-    new_Sfrac = np.interp(
-        new_depth_grid,
-        old_depth_grid,
-        np.append(np.ones(cell["vert_grid_lid"]), cell["Sfrac"]),
-    )
+
+    column_dz = cell['vertical_profile']
+    lid_dz = np.linspace(0, cell['lid_depth'], cell['vert_grid_lid'])
+    dz_full = np.concatenate((lid_dz, column_dz))
+    z_edges_full = np.concatenate(([0], np.cumsum(dz_full)))
+
+    # New target vertical grid:
+    dz_new = np.full(cell['vert_grid'], np.sum(dz_full) / cell['vert_grid'])
+    z_edges_new = np.concatenate(([0], np.cumsum(dz_new)))
+
+    # Solid and liquid fractions on old grid
+    sfrac_full = np.concatenate((np.ones(cell['vert_grid_lid']), cell['Sfrac']))  # lid at top
+    lfrac_full = np.concatenate((np.zeros(cell['vert_grid_lid']), cell['Lfrac']))
+    # sfrac_new = mass_conserving_profile(cell, var='Sfrac')
+    # lfrac_new = mass_conserving_profile(cell, var='Lfrac')
+    sfrac_new = mass_conserving_profile(cell, var='Sfrac')
+    lfrac_new = mass_conserving_profile(cell, var='Lfrac')
+
+
     new_saturation = np.round(
         np.interp(
             new_depth_grid,
@@ -420,17 +434,18 @@ def combine_lid_firn(cell):
         )
     )
 
+
     # Update cell properties with the new combined profiles
     cell["firn_temperature"] = new_firn_temperature
     cell["rho"] = new_rho
-    cell["Lfrac"] = new_Lfrac
-    cell["Sfrac"] = np.clip(new_Sfrac, 0, 1)
+    cell["Lfrac"] = lfrac_new
+    cell["Sfrac"] = sfrac_new
     cell["saturation"] = new_saturation
     cell["meltflag"] = new_meltflag
     cell["firn_depth"] += cell["lid_depth"]
     cell["vertical_profile"] = new_depth_grid
 
-    # Reset lid-related properties
+    # Reset lake/lid-related properties
     cell["lid_depth"] = 0
     cell["v_lid"] = False
     cell["lid"] = False
@@ -455,3 +470,70 @@ def combine_lid_firn(cell):
     except Exception:
         print(f"new mass = {new_mass}, original mass = {original_mass}")
         raise Exception
+
+
+def mass_conserving_profile(cell, var='Sfrac'):
+
+
+    lid_dz = np.full(cell['vert_grid_lid'], cell['lid_depth'] / cell['vert_grid_lid'])
+    if var == 'Sfrac':
+        var_lid = np.ones(cell['vert_grid_lid'])
+        rho = cell['rho_ice']
+        mon_mass = np.sum(
+            cell["Sfrac"] * cell["rho_ice"] * (cell["firn_depth"] / cell["vert_grid"])
+        ) + cell["lid_depth"] * cell["rho_ice"] + cell["v_lid_depth"] * cell["rho_ice"]
+
+    else:
+        var_lid = np.zeros(cell['vert_grid_lid'])
+        rho = cell['rho_water']
+        mon_mass = np.sum(
+            cell["Lfrac"] * cell["rho_water"] * (cell["firn_depth"] / cell["vert_grid"])
+        ) + cell["lake_depth"] * cell["rho_water"]
+
+    column_dz = np.full(cell['vert_grid'], cell['firn_depth'] / cell['vert_grid'])
+    var_column = cell[var]
+
+    # Combine into full profile
+    dz_full = np.concatenate((lid_dz, column_dz))
+    sfrac_full = np.concatenate((var_lid, var_column))
+
+    # Depth edges of full profile (top at 0)
+    z_edges_full = np.concatenate(([0], np.cumsum(dz_full)))  # Length 521
+    z_centers_full = 0.5 * (z_edges_full[:-1] + z_edges_full[1:])
+
+    # Total depth
+    total_depth = np.sum(dz_full)
+
+    # New grid: 500 layers
+    num_layers_new = cell['vert_grid']
+    dz_new = np.full(num_layers_new, total_depth / num_layers_new)
+    z_edges_new = np.linspace(0, total_depth, num_layers_new + 1)
+    z_centers_new = 0.5 * (z_edges_new[:-1] + z_edges_new[1:])
+
+    # Solid mass per layer in old grid
+    mass_old = sfrac_full * dz_full * rho
+
+    # Create mass function to integrate
+    mass_profile = np.zeros_like(z_edges_full)
+    mass_profile[1:] = np.cumsum(mass_old)
+
+    # Interpolate cumulative mass to new layer edges
+    mass_interp_edges = np.interp(z_edges_new, z_edges_full, mass_profile)
+
+    # New solid mass per layer
+    mass_new = np.diff(mass_interp_edges)
+
+    # Recover new solid fraction
+    var_new = mass_new / (dz_new * rho)
+
+    mass_initial = np.sum(mass_old)
+    mass_final = np.sum(var_new * dz_new * rho)
+
+
+    print(f'Solid mass from MONARCHS: {mon_mass:.3f} kg/m²')
+    print(f"Initial solid mass: {mass_initial:.3f} kg/m²")
+    print(f"Final solid mass:   {mass_final:.3f} kg/m²")
+    print(f"Difference:         {mass_final - mass_initial:.3e} kg/m²")
+
+    return np.clip(var_new, 0, 1)
+
