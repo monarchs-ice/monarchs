@@ -81,7 +81,7 @@ def firn_column(
     root, fvec, success, info = solver.firn_heateqn_solver(
         x, args, fixed_sfc=False, solver_method=heateqn_solver
     )
-    print(f'Root[0] = {root[0]}')
+    # print(f'Root[0] = {root[0]}')
     root0 = root[0]
     if root[0] > 273.15:
         cell["meltflag"][0] = 1
