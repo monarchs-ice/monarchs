@@ -13,29 +13,35 @@ from monarchs.physics.timestep import timestep_loop
 from monarchs.core.utils import get_2d_grid
 import time
 
-def process_chunk(start_idx, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day):
+
+def process_chunk(original_indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day):
     results = []
     for offset, (cell, met_data), in enumerate(zip(chunk, met_data_chunk)):
         val = timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict)
-        results.append((start_idx + offset, val))
+        results.append((original_indices[offset], val))
     return results
 
+
 def chunk_grid(flat_grid, met_data_grid, chunk_size):
-    for i in range(0, len(flat_grid), chunk_size):
-        yield i, flat_grid[i:i + chunk_size], met_data_grid[i:i + chunk_size]
+
+    valid_indices = np.where(flat_grid["valid_cell"] == True)[0]
+    valid_cells = flat_grid[valid_indices]
+    valid_met_data = met_data_grid[valid_indices]
+    for i in range(0, len(valid_cells), chunk_size):
+        yield valid_indices[i:i + chunk_size], valid_cells[i:i + chunk_size], valid_met_data[i:i + chunk_size]
 
 
 def loop_over_grid(
-    row_amount,
-    col_amount,
-    grid,
-    dt,
-    met_data,
-    t_steps_per_day,
-    toggle_dict,
-    parallel=False,
-    use_mpi=False,
-    ncores="all",
+        row_amount,
+        col_amount,
+        grid,
+        dt,
+        met_data,
+        t_steps_per_day,
+        toggle_dict,
+        parallel=False,
+        use_mpi=False,
+        ncores="all",
 ):
     """
     This function wraps timestep_loop, allowing for it to be
@@ -103,12 +109,15 @@ def loop_over_grid(
     x0 = get_2d_grid(grid, "column")
 
     if parallel:
-        chunksize = 10
+        # A potentially important optimisation is the use of chunking. The code is now fast enough that the
+        # work per cell is small. This means that the overhead of setting up the parallel processes is large
+        # enough to cause issues
+        chunksize = len(grid)
         # Reshape met data to (row * col, t_steps_per_day)
         met_data_grid = np.moveaxis(met_data_grid, 0, -1)
         # idx, cell, dt, met_data, t_steps_per_day, toggle_dict
         # We don't want to operate on invalid cells, as this adds overhead and can mess up the load balancing.
-        valid_cells = np.where(flat_grid[:, "valid_cell"] == True)[0]
+        valid_cells = np.where(flat_grid["valid_cell"] == True)[0]
 
         with ProcessPoolExecutor(max_workers=ncores) as pool:
             futures = [
@@ -120,13 +129,13 @@ def loop_over_grid(
                 results.extend(f.result())
 
         for idx, val in results:
+            print(idx)
             flat_grid[idx] = val
 
         # Reshape back to original grid shape
         grid = flat_grid.reshape(grid.shape)
 
         xnew = get_2d_grid(grid, "column")
-
         assert (xnew == x0).all()
         return grid
 
