@@ -172,7 +172,7 @@ if __name__ == "__main__":
     for i in range(len(grid)):
         for j in range(len(grid[0])):
             if grid[i][j]['lid']:
-                grid[i][j]['water_level'] = 0
+                grid[i][j]['water_level'] = grid[i][j]['lid_depth'] + grid[i][j]['lake_depth'] + grid[i][j]['firn_depth']
 
     plt.imshow(get_2d_grid(grid, 'water_level'))
     plt.title('water_level')

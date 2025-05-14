@@ -7,43 +7,22 @@ in parallel (using either pathos.Pool or numba.prange, since the problem is
 embarassingly parallel), unless model_setup.parallel = False.
 """
 
-from multiprocessing import shared_memory, Manager
-from concurrent.futures import ProcessPoolExecutor as Pool
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
 from monarchs.core.utils import get_2d_grid
 import time
 
-def timestep_worker(args):
-    (
-        i,
-        shm_name,
-        shape,
-        dtype_descr,
-        dt,
-        shm_met_name,
-        met_data_shape,
-        met_data_dtype_descr,
-        t_steps_per_day,
-        toggle_dict,
-    ) = args
+def process_chunk(start_idx, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day):
+    results = []
+    for offset, (cell, met_data), in enumerate(zip(chunk, met_data_chunk)):
+        val = timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict)
+        results.append((start_idx + offset, val))
+    return results
 
-    # Reconstruct dtype and connect to shared memory
-    dtype = np.dtype(dtype_descr)
-    shm = shared_memory.SharedMemory(name=shm_name)
-    grid_view = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
-
-    shm_met = shared_memory.SharedMemory(name=shm_met_name)
-    met_data_dtype = np.dtype(met_data_dtype_descr)
-    met_data_view = np.ndarray(met_data_shape, dtype=met_data_dtype, buffer=shm_met.buf)
-
-    # print(f'Process sees: grid_view[{i}] = {grid_view[i]}')
-    # start = time.perf_counter()
-    # Access the cell directly and modify in-place
-    result = timestep_loop(grid_view[i], dt, met_data_view[i], t_steps_per_day, toggle_dict)
-    grid_view[i] = result
-    # print(f"Parallel time: {time.perf_counter() - start:.2f}s")
-    shm.close()
+def chunk_grid(flat_grid, met_data_grid, chunk_size):
+    for i in range(0, len(flat_grid), chunk_size):
+        yield i, flat_grid[i:i + chunk_size], met_data_grid[i:i + chunk_size]
 
 
 def loop_over_grid(
@@ -123,50 +102,28 @@ def loop_over_grid(
     toggle_dict_grid = []
     x0 = get_2d_grid(grid, "column")
 
-    manager = Manager()
-    shared_toggle_dict = manager.dict(toggle_dict)
-
     if parallel:
-        dt = [dt] * len(flat_grid)
-        t_steps_per_day = [t_steps_per_day] * len(flat_grid)
-
-        shm = shared_memory.SharedMemory(create=True, size=flat_grid.nbytes)
-        shared_array = np.ndarray(
-            flat_grid.shape, dtype=flat_grid.dtype, buffer=shm.buf
-        )
-        np.copyto(shared_array, flat_grid)
-
+        chunksize = 10
         # Reshape met data to (row * col, t_steps_per_day)
         met_data_grid = np.moveaxis(met_data_grid, 0, -1)
-        shm_met = shared_memory.SharedMemory(create=True, size=met_data_grid.nbytes)
-        met_data_shared = np.ndarray(
-            met_data_grid.shape, dtype=met_data_grid.dtype, buffer=shm_met.buf
-        )
-        np.copyto(met_data_shared, met_data_grid)
+        # idx, cell, dt, met_data, t_steps_per_day, toggle_dict
+        # We don't want to operate on invalid cells, as this adds overhead and can mess up the load balancing.
+        valid_cells = np.where(flat_grid[:, "valid_cell"] == True)[0]
 
-        arg_list = [
-            (
-                i,
-                shm.name,
-                shared_array.shape,
-                shared_array.dtype.descr,
-                dt[i],
-                shm_met.name,
-                met_data_shared.shape,
-                met_data_shared.dtype.descr,
-                t_steps_per_day[i],
-                shared_toggle_dict,
-            )
-            for i in range(np.shape(flat_grid)[0])
-        ]
-        with Pool(ncores) as pool:
-            pool.map(timestep_worker, arg_list, chunksize=1)
+        with ProcessPoolExecutor(max_workers=ncores) as pool:
+            futures = [
+                pool.submit(process_chunk, i, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day)
+                for i, chunk, met_data_chunk in chunk_grid(flat_grid, met_data_grid, chunksize)
+            ]
+            results = []
+            for f in as_completed(futures):
+                results.extend(f.result())
 
-        np.copyto(flat_grid, shared_array)
-        grid[:] = flat_grid.reshape(grid.shape)
+        for idx, val in results:
+            flat_grid[idx] = val
 
-        shm.close()
-        shm.unlink()
+        # Reshape back to original grid shape
+        grid = flat_grid.reshape(grid.shape)
 
         xnew = get_2d_grid(grid, "column")
 
