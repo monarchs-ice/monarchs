@@ -116,14 +116,14 @@ reload_from_dump = False  # Flag to determine whether to reload the state or not
 """
 Computing and numerical parameters
 """
-use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
+use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = 20  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+cores = 5  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 solver = "hybr"
 
 """

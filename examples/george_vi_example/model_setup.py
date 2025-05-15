@@ -12,8 +12,8 @@ print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 20  # Number of rows in your model grid, looking from top-down.
-col_amount = 20  # Number of columns in your model grid, looking from top-down.
+row_amount = 40  # Number of rows in your model grid, looking from top-down.
+col_amount = 40  # Number of columns in your model grid, looking from top-down.
 # lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate via 'dem'
 lat_grid_size = "dem"
 vertical_points_firn = 500  # Number of vertical grid cells

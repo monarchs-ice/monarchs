@@ -16,9 +16,12 @@ import time
 
 def process_chunk(original_indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day):
     results = []
+    t1 = time.time()
     for offset, (cell, met_data), in enumerate(zip(chunk, met_data_chunk)):
         val = timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict)
         results.append((original_indices[offset], val))
+    t0 = time.time()
+    print(f"Task took {t0 - t1:.2f}s")
     return results
 
 
@@ -112,24 +115,27 @@ def loop_over_grid(
         # A potentially important optimisation is the use of chunking. The code is now fast enough that the
         # work per cell is small. This means that the overhead of setting up the parallel processes is large
         # enough to cause issues
-        chunksize = len(grid)
+        chunksize = int(len(grid)/2)
         # Reshape met data to (row * col, t_steps_per_day)
         met_data_grid = np.moveaxis(met_data_grid, 0, -1)
         # idx, cell, dt, met_data, t_steps_per_day, toggle_dict
         # We don't want to operate on invalid cells, as this adds overhead and can mess up the load balancing.
         valid_cells = np.where(flat_grid["valid_cell"] == True)[0]
-
+        start_submit = time.time()
         with ProcessPoolExecutor(max_workers=ncores) as pool:
             futures = [
                 pool.submit(process_chunk, i, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day)
                 for i, chunk, met_data_chunk in chunk_grid(flat_grid, met_data_grid, chunksize)
             ]
+            end_submit = time.time()
+            print(f"Submission time: {end_submit - start_submit:.2f}s")
+
+            start_collect = time.time()
             results = []
             for f in as_completed(futures):
                 results.extend(f.result())
 
         for idx, val in results:
-            print(idx)
             flat_grid[idx] = val
 
         # Reshape back to original grid shape
@@ -137,6 +143,11 @@ def loop_over_grid(
 
         xnew = get_2d_grid(grid, "column")
         assert (xnew == x0).all()
+        end_collect = time.time()
+        print(f"Execution + result collection time: {end_collect - start_collect:.2f}s")
+
+        total_time = end_collect - start_submit
+        print(f"Total time (submit + exec + collect): {total_time:.2f}s")
         return grid
 
     # Sequential version - with inplace modification

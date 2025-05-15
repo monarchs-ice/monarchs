@@ -1,6 +1,7 @@
 import numpy as np
 from monarchs.core.utils import find_nearest
 from monarchs.physics.percolation_functions import percolation, calc_saturation
+from monarchs.core.utils import get_2d_grid
 
 
 def update_water_level(cell):
@@ -709,7 +710,6 @@ def move_water(
     # First, we need to determine the water level.
     total_water = 0
     catchment_out_water = 0
-    from monarchs.core.utils import get_2d_grid
 
     for row in range(0, max_grid_row):
         for col in range(0, max_grid_col):

@@ -22,7 +22,7 @@ def do_not_jit(function):
     return wrapper
 
 
-@do_not_jit
+
 def get_2d_grid(grid, attr, index=False):
     """
     Helper function to get a printout of a variable from a 2D grid of IceShelf
