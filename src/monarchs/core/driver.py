@@ -426,6 +426,7 @@ def main(model_setup, grid):
                 vert_grid_size=output_grid_size,
             )
         print(f"Serial time: {time.perf_counter() - start:.2f}s")
+        breakpoint()
 
     print("\n*******************************************\n")
     print("MONARCHS has finished running successfully!")
@@ -434,6 +435,7 @@ def main(model_setup, grid):
 
 
 def initialise(model_setup):
+
     if hasattr(model_setup, "lat_bounds") and model_setup.lat_bounds.lower() == "dem":
         (T_firn, rho, firn_depth, valid_cells, lat_array, lon_array, dx, dy) = (
             initial_conditions.initialise_firn_profile(
@@ -448,8 +450,12 @@ def initialise(model_setup):
         )
         lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
         lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
+
     if model_setup.met_data_source == "ERA5":
-        setup_met_data.setup_era5(model_setup, lat_array, lon_array)
+        if model_setup.load_met_data:
+            print('monarchs.core.driver.initialise: Loading in pre-calculated MONARCHS format met data')
+        else:
+            setup_met_data.setup_era5(model_setup, lat_array, lon_array)
     elif model_setup.met_data_source == "user_defined":
         setup_met_data.prescribed_met_data(model_setup)
     grid = initial_conditions.create_model_grid(

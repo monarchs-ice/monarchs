@@ -14,12 +14,7 @@ def setup_era5(model_setup, lat_array=False, lon_array=False):
 
     TODO - docstring
     """
-    try:
-        from mpi4py import MPI
 
-        comm = MPI.COMM_WORLD
-    except ImportError:
-        comm = None
     if model_setup.met_timestep == "hourly":
         index = 1
     elif model_setup.met_timestep == "three_hourly":

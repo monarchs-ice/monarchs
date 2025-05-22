@@ -85,85 +85,53 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
         met_end_write[:] = met_end_idx
 
 
-def reload_from_dump(fname, grid, keys="all"):
+def reload_from_dump(fname, dtype, keys="all"):
     """
-    Loads in the netCDF file containing the model state, and loads the data into
-    the format required for MONARCHS to function. This allows us to restart the model in the event of a failure.
-
-    Called by <main> if the relevant flag is set in <model_setup.py>.
+    Loads the netCDF file containing the model state into a NumPy structured array.
 
     Parameters
     ----------
     fname : str
-        Filename we want to load our data from.
-    grid : List, or numba.typed.List
-        grid of IceShelf objects to update with the reloaded values
-    keys: list, optional
-        List of keys to load in from the netCDF file. If not specified, all keys will be loaded in.
+        Filename to load data from.
+    dtype : np.dtype
+        The dtype of the structured array to load the data into.
+    keys : list or str, optional
+        List of keys to load from the netCDF file. If "all", all keys will be loaded.
+
     Returns
     -------
-    grid : List, or numba.typed.List
-        Updated grid of IceShelf objects, with values loaded in from our input netCDF.
+    grid : np.ndarray
+        NumPy structured array with data loaded from the netCDF file.
     met_start_idx : int
-        Starting index at which to slice our meteorological dataset at the current iteration.
+        Starting index for meteorological data.
     met_end_idx : int
-        As above, but ending index.
+        Ending index for meteorological data.
     iteration : int
-        Iteration (day) we wish to continue running the model from.
+        Iteration (day) to continue running the model from.
     """
     with Dataset(fname, mode="r") as data:
+        # Determine which keys to load
         scalars = ["met_start_idx", "met_end_idx"]
-        bool_keys = [
-            "melt",
-            "exposed_water",
-            "lake",
-            "lid",
-            "v_lid",
-            "ice_lens",
-            "has_had_lid",
-            "reset_combine",
-            "valid_cell",
-        ]
-        int_keys = [
-            "ice_lens_depth",
-            "x",
-            "y",
-            "rho_ice",
-            "rho_water",
-            "melt_hours",
-            "lid_sfc_melt",
-            "lid_melt_count",
-            "t_step",
-            "exposed_water_refreeze_counter",
-            "L_ice",
-            "iteration",
-        ]
         if keys == "all":
             desired_keys = [key for key in data.variables.keys() if key not in scalars]
         else:
             desired_keys = keys
-        print(f"monarchs.core.dump_model_state.reload_from_dump: ")
+
+        # Create the structured array
+        grid_shape = (len(data.dimensions["x"]), len(data.dimensions["y"]))
+        grid = np.zeros(grid_shape, dtype=dtype)
+
+        # Load data into the structured array
         for key in desired_keys:
-            print(f"Loading in key {key} from progress netCDF file")
-            if key == "log":
-                continue
-            for i in range(len(grid)):
-                for j in range(len(grid[0])):
-                    if len(np.shape(data.variables[key][:])) > 2:
-                        setattr(grid[i][j], key, data.variables[key][i, j, :].data)
-                    else:
-                        try:
-                            setattr(grid[i][j], key, data.variables[key][i, j].data)
-                        except AttributeError:
-                            setattr(grid[i][j], key, data.variables[key][i, j])
-                    if key in bool_keys:
-                        var = getattr(grid[i][j], key)
-                        setattr(grid[i][j], key, bool(var))
-                    if key in int_keys:
-                        var = getattr(grid[i][j], key)
-                        setattr(grid[i][j], key, int(var))
-        met_start_idx = data.variables["met_start_idx"][:].data
-        met_end_idx = data.variables["met_end_idx"][:].data
-        iteration = np.max(data.variables["day"][:].data)
-    grid = np.transpose(grid)
+            print(f"Loading key {key} into structured array")
+            if len(data.variables[key].shape) > 2:
+                grid[key] = data.variables[key][:, :, :].data
+            else:
+                grid[key] = data.variables[key][:, :].data
+
+        # Load scalar values
+        met_start_idx = int(data.variables["met_start_idx"][:].data)
+        met_end_idx = int(data.variables["met_end_idx"][:].data)
+        iteration = int(np.max(data.variables["day"][:].data))
+
     return grid, met_start_idx, met_end_idx, iteration

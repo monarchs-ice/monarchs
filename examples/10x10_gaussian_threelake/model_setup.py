@@ -19,8 +19,8 @@ from monarchs.DEM import create_DEM_GaussianTestCase as cgt
 """
 Spatial parameters
 """
-row_amount = 10  # Number of rows in your model grid, looking from top-down.
-col_amount = 10  # Number of columns in your model grid, looking from top-down.
+row_amount = 3  # Number of rows in your model grid, looking from top-down.
+col_amount = 3  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -124,7 +124,6 @@ use_mpi = False
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
 cores = 'all'  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
-solver = "hybr"
 
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 

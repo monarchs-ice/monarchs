@@ -396,7 +396,7 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
 
     """
     water_to_move = calc_available_water(cell, water_frac, split, outflow=True)
-    if cell["lake"]:  # either remove water from the lake directly.
+    if cell["lake"] and not cell['lid']:  # either: remove water from the lake directly.
         water_out = np.copy(water_to_move)
         if cell["lake_depth"] < water_to_move:
             water_to_move = cell["lake_depth"]
@@ -407,7 +407,7 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
             temporary_cell["lake_depth"] -= water_to_move
             if temporary_cell["lake_depth"] < 0:
                 raise ValueError("Lake depth has gone below 0")
-    else:   # Otherwise, loop through the column and remove water from it, going from the top.
+    else:   # otherwise, loop through the column and remove water from it, going from the top.
         water_out = 0
         try:
             for _l in range(0, cell["ice_lens_depth"] + 1):
@@ -720,10 +720,12 @@ def move_water(
     # Create temporary cells for our water to move in and out of. This is required so that the water all moves
     # simultaneously - kind of like in a Jacobi solver
     dtype = grid.dtype
-    temp_grid = np.empty_like(grid, dtype=dtype)
-    temp_grid_vars = ['lake_depth', 'water', 'saturation', 'meltflag', 'lake']
-    for var in temp_grid_vars:
-        temp_grid[var] = np.copy(grid[var])
+    temp_grid = np.zeros((len(grid), len(grid[0])), dtype=dtype)
+    temp_grid['lake_depth'] = grid['lake_depth']
+    temp_grid['water'] = grid['water']
+    temp_grid['saturation'] = np.copy(grid['saturation'])
+    temp_grid['meltflag'] = np.copy(grid['meltflag'])
+    temp_grid['lake'] = np.copy(grid['lake'])
 
     # Now loop through the cells again, this time actually performing the movement step.
     for row in range(max_grid_row):
