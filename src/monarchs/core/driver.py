@@ -426,7 +426,6 @@ def main(model_setup, grid):
                 vert_grid_size=output_grid_size,
             )
         print(f"Serial time: {time.perf_counter() - start:.2f}s")
-        breakpoint()
 
     print("\n*******************************************\n")
     print("MONARCHS has finished running successfully!")
