@@ -452,12 +452,13 @@ def initialise(model_setup):
         lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
 
     if model_setup.met_data_source == "ERA5":
-        if model_setup.load_met_data:
+        if model_setup.load_precalculated_met_data:
             print('monarchs.core.driver.initialise: Loading in pre-calculated MONARCHS format met data')
         else:
             setup_met_data.setup_era5(model_setup, lat_array, lon_array)
     elif model_setup.met_data_source == "user_defined":
         setup_met_data.prescribed_met_data(model_setup)
+
     grid = initial_conditions.create_model_grid(
         model_setup.row_amount,
         model_setup.col_amount,

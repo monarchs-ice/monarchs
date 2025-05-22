@@ -170,6 +170,7 @@ def create_defaults_for_missing_flags(model_setup):
         "parallel",
         "use_numba",
         "catchment_outflow",
+        "load_precalculated_met_data",
     ]
     for attr in optional_args_to_true:
         if not hasattr(model_setup, attr):
