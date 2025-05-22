@@ -25,7 +25,6 @@ from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct
 from monarchs.met_data.metdata_class import initialise_met_data, get_spec
 from monarchs.physics import lateral_functions
 
-model_setup = configuration.model_setup
 
 
 
@@ -219,7 +218,7 @@ def check_firn_met_consistency(grid, met_data_grid):
 
 
 def print_model_end_of_timestep_messages(
-    grid, day, total_mass_start, snow_added, catchment_outflow, tic
+    grid, day, total_mass_start, snow_added, catchment_outflow, tic, model_setup
 ):
     """
     Messages to print out at the end of each model timestep (day).
@@ -397,7 +396,7 @@ def main(model_setup, grid):
             for j in range(len(grid[0])):
                 check_correct(grid[i][j])
         print_model_end_of_timestep_messages(
-            grid, day, total_mass_start, snow_added, catchment_outflow, tic
+            grid, day, total_mass_start, snow_added, catchment_outflow, tic, model_setup
         )
         met_start_idx = (day + 1) * model_setup.t_steps_per_day % met_data_len
         met_end_idx = (day + 2) * model_setup.t_steps_per_day % met_data_len
@@ -478,8 +477,23 @@ def initialise(model_setup):
 
 
 def monarchs():
+    if os.environ.get("MONARCHS_MPI", None) is not None:
+        mpi = True
+        print("Setting MPI to True")
+    else:
+        mpi = False
+    if mpi:
+        if os.environ.get("MONARCHS_MODEL_SETUP_PATH") is not None:
+            model_setup_path = os.environ.get("MONARCHS_MODEL_SETUP_PATH")
+        else:
+            model_setup_path = "model_setup.py"
+    else:
+        model_setup_path = configuration.parse_args()
+    model_setup = configuration.get_model_setup(model_setup_path)
 
-    model_setup = configuration.model_setup
+    if hasattr(model_setup, "use_numba") and model_setup.use_numba:
+        configuration.jit_modules()
+
     configuration.create_output_folders(model_setup)
     configuration.handle_incompatible_flags(model_setup)
     configuration.create_defaults_for_missing_flags(model_setup)

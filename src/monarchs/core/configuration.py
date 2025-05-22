@@ -292,7 +292,7 @@ def jit_modules():
     whenever importing the physics functions (which needed to know whether `use_numba` was `True`)
     which was causing an error.
     """
-    from numba import jit
+    from numba import njit
     from inspect import getmembers, isfunction
 
     fastmath = False
@@ -329,23 +329,13 @@ def jit_modules():
             if hasattr(function, "__wrapped__") or name.startswith("__"):
                 continue
             print(f"Applying Numba jit decorator to {module.__name__}.{name}")
-            jitted_function = jit(function, nopython=True, fastmath=fastmath)
+            jitted_function = njit(function, fastmath=fastmath)
 
             setattr(module, name, jitted_function)
 
-if os.environ.get("MONARCHS_MPI", None) is not None:
-    mpi = True
-    print("Setting MPI to True")
-else:
-    mpi = False
-if mpi:
-    if os.environ.get("MONARCHS_MODEL_SETUP_PATH") is not None:
-        model_setup_path = os.environ.get("MONARCHS_MODEL_SETUP_PATH")
-    else:
-        model_setup_path = "model_setup.py"
-else:
-    model_setup_path = parse_args()
-model_setup = ModelSetup(model_setup_path)
 
-if hasattr(model_setup, "use_numba") and model_setup.use_numba:
-    jit_modules()
+
+def get_model_setup(model_setup_path):
+    model_setup = ModelSetup(model_setup_path)
+    return model_setup
+
