@@ -63,7 +63,7 @@ def setup_era5(model_setup, lat_array=False, lon_array=False):
         selected_keys = [key for key in ERA5_grid.keys() if key not in ["lat", "long"]]
         for var in selected_keys:
             ERA5_grid[var] = np.repeat(ERA5_grid[var], index, axis=0)
-    with Dataset(ERA5_grid_path, "w", comm=comm) as f:
+    with Dataset(ERA5_grid_path, "w") as f:
         f.createGroup("variables")
         f.createDimension("time", len(ERA5_grid["SW_surf"]))
         f.createDimension("column", model_setup.col_amount)
