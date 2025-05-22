@@ -229,7 +229,7 @@ def create_model_grid(
     """
     Creates the model grid by initializing the ice shelf with the provided parameters.
     """
-    x, y = np.meshgrid(
+    y, x = np.meshgrid(
         np.arange(0, row_amount, 1), np.arange(0, col_amount, 1), indexing="ij"
     )
     dtype = get_spec(vert_grid, vert_grid_lake, vert_grid_lid)
