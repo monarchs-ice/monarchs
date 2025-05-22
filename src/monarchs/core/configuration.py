@@ -301,7 +301,9 @@ def jit_modules():
     from monarchs.physics import surface_fluxes
     from monarchs.physics import lake_functions
     from monarchs.physics import firn_functions
+    from monarchs.physics import lateral_functions
     from monarchs.core import model_output
+
 
     module_list = [
         surface_fluxes,
@@ -310,7 +312,7 @@ def jit_modules():
         lid_functions,
         percolation_functions,
         model_output,
-
+        lateral_functions
     ]
 
     # Set up a list of modules to not apply njit to.
@@ -321,7 +323,8 @@ def jit_modules():
                     'lid_formation', 'lid_development', 'combine_lid_firn', 'virtual_lid', # lid_functions
                    'root', 'solve_banded',  # scipy builtins (imported in heateqn)
                    'setup_output', 'update_model_output',  # netCDF output functions, we only want to hit interpolation
-                   'get_2d_grid'
+                   'get_2d_grid',
+                   'move_water'  # overarching lateral movement function
                   ]  # other builtins/decorators
 
     for module in module_list:

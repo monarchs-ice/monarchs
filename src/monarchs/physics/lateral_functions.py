@@ -807,7 +807,7 @@ def move_water(
             # update_water_level(cell)  # commented out as only affects lateral functions and can be updated at
             # start of next lateral timestep
 
-    print('Water level at end of timestep: ', get_2d_grid(grid, 'water_level'))
+    # print('Water level at end of timestep: ', get_2d_grid(grid, 'water_level'))
     print("\nLateral water movement diagnostics:")
     print("Starting water total = ", total_water)
     print("Finishing water total = ", new_water)
