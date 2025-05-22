@@ -306,10 +306,8 @@ def main(model_setup, grid):
         grid of IceShelf objects, amended from the original state by the model
 
     """
-    # TODO - testing - change structured array to a dictionary of arrays - may improve cache performance
-    # TODO - (going from array of structs to struct of arrays)
-    grid = {name: grid[name] for name in grid.dtype.names}
 
+    # A
     tic = time.perf_counter()
     met_start_idx = 0
     met_end_idx = model_setup.t_steps_per_day
