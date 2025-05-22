@@ -107,7 +107,7 @@ vars_to_save = (
     "water_direction"
 )
 output_filepath = "output/gaussian_threelake_example_output_new.nc"  # Filename for model output, including file extension (.nc for netCDF).
-# output_grid_size = 400  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.
+output_grid_size = 20  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.
 # output_timestep = 1  # How often to save output, in days. Commented out for this example.
 dump_data = True
 dump_filepath = "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state
