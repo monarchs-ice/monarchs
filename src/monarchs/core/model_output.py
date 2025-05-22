@@ -87,6 +87,28 @@ def setup_output(
                 var_write[0] = var
 
 
+def interpolate_model_output(grid, vert_grid_size, var):
+    new_var = np.zeros(
+        (
+            len(grid["firn_depth"]),
+            len(grid["firn_depth"][0]),
+            vert_grid_size,
+        )
+    )
+    for i in range(len(grid["firn_depth"])):
+        for j in range(len(grid["firn_depth"][i])):
+            new_var[i][j] = np.interp(
+                np.linspace(
+                    0, grid["firn_depth"][i][j], vert_grid_size
+                ),
+                np.linspace(
+                    0, grid["firn_depth"][i][j], grid["vert_grid"][i][j]
+                ),
+                var[i][j],
+            )
+    var = new_var
+    return var
+
 def update_model_output(
     fname,
     grid,
@@ -103,10 +125,13 @@ def update_model_output(
     t_step=0,
     vert_grid_size=False,
 ):
-    if not hourly:
+    # Determine if we are indexing by day number or by hour.
+    if not hourly:  # i.e. every day
         index = iteration
     else:
         index = iteration * 24 + t_step
+
+
     with Dataset(fname, clobber=True, mode="a") as data:
         for key in vars_to_save:
             var = get_2d_grid(grid, key, index="all")
@@ -116,24 +141,6 @@ def update_model_output(
                     vert_grid_size != grid["vert_grid"][0][0]
                     and vert_grid_size is not False
                 ):
-                    new_var = np.zeros(
-                        (
-                            len(grid["firn_depth"]),
-                            len(grid["firn_depth"][0]),
-                            vert_grid_size,
-                        )
-                    )
-                    for i in range(len(grid["firn_depth"])):
-                        for j in range(len(grid["firn_depth"][i])):
-                            new_var[i][j] = np.interp(
-                                np.linspace(
-                                    0, grid["firn_depth"][i][j], vert_grid_size
-                                ),
-                                np.linspace(
-                                    0, grid["firn_depth"][i][j], grid["vert_grid"][i][j]
-                                ),
-                                var[i][j],
-                            )
-                    var = new_var
+                    var = interpolate_model_output(grid, vert_grid_size, var)
 
             var_write[index] = var

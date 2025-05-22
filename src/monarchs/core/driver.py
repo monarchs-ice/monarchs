@@ -260,6 +260,8 @@ def print_model_end_of_timestep_messages(
     print("Firn depth = ", get_2d_grid(grid, "firn_depth"))
     print("Lake depth = ", get_2d_grid(grid, "lake_depth"))
     print("Lid depth = ", get_2d_grid(grid, "lid_depth"))
+    print('Number of lakes = ', np.sum(get_2d_grid(grid, "lake")))
+    print('Number of lids = ', np.sum(get_2d_grid(grid, "lid")))
 
 
 def main(model_setup, grid):
