@@ -779,7 +779,7 @@ def move_water(
                         flow_into_land=flow_into_land,
                     )
 
-            if (cell["water"] < 1E-12).any():
+            if (cell["water"] < -1E-12).any():
                 raise ValueError("cell.water is negative")
             elif (cell["water"] < 0).any():
                 # set everything to 0 that is below 0 but above 1E-12
