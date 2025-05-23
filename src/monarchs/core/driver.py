@@ -87,15 +87,18 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
 
     if model_setup.reload_from_dump:
         print("Reloading state from dump...")
+        from monarchs.core.iceshelf_class import get_spec as get_iceshelf_spec
         if not os.path.exists(reload_name):
             first_iteration = 0
             warnings.warn(
-                f"Reload/dump filepath {reload_name} does not exist - instead starting model from scratch. If you believe you do have a dump file, check that it is specified correctly in model_setup.py."
+                f"Reload/dump filepath {reload_name} does not exist - instead starting model from scratch. "
+                f"If you believe you do have a dump file, check that it is specified correctly in model_setup.py."
             )
             reload_dump_success = False
         else:
             grid, met_start_idx, met_end_idx, first_iteration = reload_from_dump(
-                reload_name, grid
+                reload_name, get_iceshelf_spec(model_setup.vertical_points_firn, model_setup.vertical_points_lid,
+                                               model_setup.vertical_points_lake),
             )
             print(
                 f"Loading model state from dump file {reload_name} - first iteration = ",
@@ -333,6 +336,7 @@ def main(model_setup, grid):
         )
     if reload_dump_success:
         start = True
+        output_counter = first_iteration
     else:
         start = False
     snow_added = 0

@@ -111,7 +111,7 @@ output_grid_size = 20  # Size of array outputs for each column (e.g. firn depth)
 # output_timestep = 1  # How often to save output, in days. Commented out for this example.
 dump_data = True
 dump_filepath = "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state
-reload_from_dump = False  # Flag to determine whether to reload the state or not
+reload_from_dump = True  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters
