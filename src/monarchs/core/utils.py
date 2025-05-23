@@ -118,7 +118,7 @@ def check_correct(cell):
         If any of the conditions are met, raise ValueError as the model has reached an unphysical state.
         See the code body for details.
     """
-    if cell["lake_depth"] < 1E-12:  # account for rounding errors
+    if cell["lake_depth"] < -1E-12:  # account for rounding errors
         print(f"monarchs.core.utils.check_correct: ")
         print("Lake depth = ", cell["lake_depth"])
         raise ValueError("Lake depth must not be negative \n")
