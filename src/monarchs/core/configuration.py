@@ -227,6 +227,7 @@ def create_defaults_for_missing_flags(model_setup):
     vardict["input_crs"] = 3031
     vardict["cores"] = "all"
     vardict["solver"] = "hybr"
+    vardict['dask_scheduler'] = 'processes'  # set to 'distributed' if using HPC across multiple nodes
     if hasattr(model_setup, "met_input_filepath"):
         vardict["met_data_source"] = "ERA5"
     elif hasattr(model_setup, "met_data") and isinstance(model_setup.met_data, dict):
@@ -324,7 +325,7 @@ def jit_modules():
                    'root', 'solve_banded',  # scipy builtins (imported in heateqn)
                    'setup_output', 'update_model_output',  # netCDF output functions, we only want to hit interpolation
                    'get_2d_grid',
-                   'move_water'  # overarching lateral movement function
+
                   ]  # other builtins/decorators
 
     for module in module_list:

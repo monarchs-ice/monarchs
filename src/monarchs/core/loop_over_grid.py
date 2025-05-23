@@ -60,7 +60,8 @@ def loop_over_grid(
         parallel=False,
         use_mpi=False,
         ncores="all",
-        use_dask=False,
+        dask_scheduler='processes',
+        client=None
 ):
     """
     This function wraps timestep_loop, allowing for it to be
@@ -100,32 +101,54 @@ def loop_over_grid(
     met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass the 24 timesteps
     met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
     if parallel:
-        chunksize = max(1, len(flat_grid) // (ncores * 4))  # Dynamic chunk size for load balancing
+        chunksize = max(1, len(flat_grid) // (ncores * 2))  # Dynamic chunk size for load balancing
 
         start_submit = time.time()
 
         # Use Dask for parallelism
-        tasks = [
-            delayed(process_chunk)(indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day)
-            for indices, chunk, met_data_chunk in chunk_grid(flat_grid, met_data_grid, chunksize)
+        if dask_scheduler != 'distributed':
+            tasks = [
+                delayed(process_chunk)(indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day)
+                for indices, chunk, met_data_chunk in chunk_grid(flat_grid, met_data_grid, chunksize)
+            ]
+            end_submit = time.time()
+            print(f"Submission time: {end_submit - start_submit:.2f}s")
+            start_compute = time.time()
+            results = compute(*tasks, scheduler=dask_scheduler)  # Use "threads" for I/O-bound tasks
+            end_compute = time.time()
+            print(f"Execution time: {end_compute - start_compute:.2f}s")
+            print(f"Total time (submit + exec): {end_compute - start_submit:.2f}s")
+            results = [item for sublist in results for item in sublist]  # Flatten results
+            # Update the grid with results
+            for idx, val in results:
+                flat_grid[idx] = val
+
+            # Reshape back to original grid shape
+            grid = flat_grid.reshape(grid.shape)
+            return grid
+        else:
+            scattered_chunks = [
+                client.scatter((indices, chunk, met_data_chunk))
+                for indices, chunk, met_data_chunk in chunk_grid(flat_grid, met_data_grid, chunksize)
+            ]
+
+        futures = [
+            client.submit(process_chunk, indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day)
+            for (indices, chunk, met_data_chunk) in scattered_chunks
         ]
-        end_submit = time.time()
-        print(f"Submission time: {end_submit - start_submit:.2f}s")
-        start_compute = time.time()
-        results = compute(*tasks, scheduler="processes")  # Use "threads" for I/O-bound tasks
-        end_compute = time.time()
-        print(f"Execution time: {end_compute - start_compute:.2f}s")
-        print(f"Total time (submit + exec): {end_compute - start_submit:.2f}s")
-        results = [item for sublist in results for item in sublist]  # Flatten results
 
+        results = client.gather(futures)
+        results = [item for sublist in results for item in sublist]  # Flatten
 
-        # Update the grid with results
+        # Update flat_grid
         for idx, val in results:
             flat_grid[idx] = val
 
         # Reshape back to original grid shape
-        grid = flat_grid.reshape(grid.shape)
+        grid = flat_grid.reshape((row_amount, col_amount))
         return grid
+
+
 
     # Sequential version - with inplace modification
     else:

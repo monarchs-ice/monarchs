@@ -20,7 +20,7 @@ from monarchs.DEM import create_DEM_GaussianTestCase as cgt
 Spatial parameters
 """
 row_amount = 20  # Number of rows in your model grid, looking from top-down.
-col_amount = 20  # Number of columns in your model grid, looking from top-down.
+col_amount = 20 # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -111,7 +111,7 @@ output_grid_size = 20  # Size of array outputs for each column (e.g. firn depth)
 # output_timestep = 1  # How often to save output, in days. Commented out for this example.
 dump_data = True
 dump_filepath = "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state
-reload_from_dump = True  # Flag to determine whether to reload the state or not
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters
@@ -120,6 +120,11 @@ use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
+dask_scheduler = 'processes'  # dask scheduler to use. 'processes', 'distributed' or 'threads'.
+                              # 'processes' is recommended for most cases.
+                              # If running on HPC across multiple nodes, you'll need to use "distributed".
+                              # Threads is fine for running small workloads in parallel, but scaling will be very
+                              # poor as this does not release the GIL.
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).

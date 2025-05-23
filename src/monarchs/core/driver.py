@@ -311,7 +311,14 @@ def main(model_setup, grid):
 
     """
 
-    # A
+    # If running in parallel across multiple nodes, then we first set up the dask Client object
+    if model_setup.dask_scheduler == 'distributed':
+        print('Setting up Dask Client object...')
+        from dask.distributed import Client
+        global client
+        client = Client()
+    else:
+        client = None  # else set up a dummy client to pass
     tic = time.perf_counter()
     met_start_idx = 0
     met_end_idx = model_setup.t_steps_per_day
@@ -355,7 +362,7 @@ def main(model_setup, grid):
     time_loop = range(first_iteration, model_setup.num_days)
     start = time.perf_counter()
     dt = 3600
-
+    breakpoint()
 
 
     for day in time_loop:
@@ -374,6 +381,8 @@ def main(model_setup, grid):
                 parallel=model_setup.parallel,
                 use_mpi=model_setup.use_mpi,
                 ncores=cores,
+                dask_scheduler=model_setup.dask_scheduler,
+                client=client,
             )
 
         print("Single-column physics finished")
