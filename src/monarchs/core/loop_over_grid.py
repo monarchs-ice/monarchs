@@ -7,10 +7,8 @@ in parallel (using either ProcessPoolExecutor or Dask, since the problem is
 embarrassingly parallel), unless model_setup.parallel = False.
 """
 
-from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
-from monarchs.core.utils import get_2d_grid
 import time
 from dask import delayed, compute
 

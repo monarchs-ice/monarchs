@@ -355,7 +355,7 @@ def main(model_setup, grid):
 
 
     for day in time_loop:
-
+        timestep_start = time.perf_counter()
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")
         if model_setup.single_column_toggle:
@@ -373,8 +373,8 @@ def main(model_setup, grid):
             )
 
         print("Single-column physics finished")
-        print(f"Parallel time: {time.perf_counter() - start:.2f}s")
-        start = time.perf_counter()
+        print(f"Single column physics time: {time.perf_counter() - start:.2f}s")
+        start_serial = time.perf_counter()
         if model_setup.dump_data_pre_lateral_movement:
             if model_setup.dump_format == "NETCDF4":
                 dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
@@ -384,6 +384,8 @@ def main(model_setup, grid):
                 outfile = open(model_setup.dump_filepath, "wb")
                 pickle.dump(grid, outfile)
                 outfile.close()
+
+        lat_start = time.perf_counter()
         if model_setup.lateral_movement_toggle:
             print("Moving water laterally...")
             grid, current_iteration_outwater = lateral_functions.move_water(
@@ -397,12 +399,20 @@ def main(model_setup, grid):
             )
             if model_setup.catchment_outflow:
                 catchment_outflow += current_iteration_outwater
+        lat_end = time.perf_counter()
+        start = time.perf_counter()
         for i in range(len(grid)):
             for j in range(len(grid[0])):
                 check_correct(grid[i][j])
+
         print_model_end_of_timestep_messages(
             grid, day, total_mass_start, snow_added, catchment_outflow, tic, model_setup
         )
+        msg_end = time.perf_counter()
+        print(f"Lateral movement time: {lat_end - lat_start:.2f}s")
+        print(f"Checking grid consistency time: {msg_end - start:.2f}s")
+        print(f"Diagnostic messages time: {time.perf_counter() - start:.2f}s")
+        start = time.perf_counter()
         met_start_idx = (day + 1) * model_setup.t_steps_per_day % met_data_len
         met_end_idx = (day + 2) * model_setup.t_steps_per_day % met_data_len
         if met_start_idx > met_end_idx:
@@ -410,6 +420,8 @@ def main(model_setup, grid):
         met_data_grid, met_data_len, snow_added = update_met_conditions(
             model_setup, grid, met_start_idx, met_end_idx, snow_added=snow_added
         )
+        print(f'Updating met data time: {time.perf_counter() - start:.2f}s')
+        start = time.perf_counter()
         if model_setup.dump_data:
             print(f"Dumping model state to {model_setup.dump_filepath}...")
             if model_setup.dump_format == "NETCDF4":
@@ -420,6 +432,8 @@ def main(model_setup, grid):
                 outfile = open(model_setup.dump_filepath, "wb")
                 pickle.dump(grid, outfile)
                 outfile.close()
+        print(f'Dumping model state time: {time.perf_counter() - start:.2f}s')
+        start = time.perf_counter()
         if model_setup.save_output and day % model_setup.output_timestep == 0:
             output_counter += 1
             update_model_output(
@@ -429,8 +443,9 @@ def main(model_setup, grid):
                 vars_to_save=model_setup.vars_to_save,
                 vert_grid_size=output_grid_size,
             )
-        print(f"Serial time: {time.perf_counter() - start:.2f}s")
-
+        print(f'Updating model output time: {time.perf_counter() - start:.2f}s')
+        print(f"Serial time total: {time.perf_counter() - start_serial:.2f}s")
+        print(f"Total time for day {day + 1}: {time.perf_counter() - timestep_start:.2f}s")
     print("\n*******************************************\n")
     print("MONARCHS has finished running successfully!")
     print("Total time taken = ", time.perf_counter() - tic)
