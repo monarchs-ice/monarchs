@@ -406,7 +406,11 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
         else:
             temporary_cell["lake_depth"] -= water_to_move
             if temporary_cell["lake_depth"] < 0:
-                raise ValueError("Lake depth has gone below 0")
+
+                if temporary_cell["lake_depth"] < -1E-12:  # account for rounding errors
+                    raise ValueError("Lake depth has gone below 0")
+                else:
+                    temporary_cell["lake_depth"] = 0
     else:   # otherwise, loop through the column and remove water from it, going from the top.
         water_out = 0
         try:
@@ -775,8 +779,13 @@ def move_water(
                         flow_into_land=flow_into_land,
                     )
 
-            if (cell["water"] < 0).any():
+            if (cell["water"] < 1E-12).any():
                 raise ValueError("cell.water is negative")
+            elif (cell["water"] < 0).any():
+                # set everything to 0 that is below 0 but above 1E-12
+                set_to_zeros = np.where(cell["water"] < 0)
+                cell["water"][set_to_zeros] = 0
+
     new_water = 0
     # Loop over our grid, set the values to the corresponding temporary values,
     # i.e. performing our movement in one step
