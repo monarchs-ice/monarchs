@@ -24,7 +24,7 @@ move_water(
     grid,
     row_amount,
     col_amount,
-    1000,
+    3600 * 24,
     catchment_outflow=True,
     flow_into_land=True,
     lateral_movement_percolation_toggle=True,

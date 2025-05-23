@@ -210,10 +210,8 @@ def find_biggest_neighbour(
                     elif not neighbour_cell["valid_cell"]:
                         neighbours[code] = -9999
 
-                except Exception:
-                    # spoof IndexError here - as not Numba-compatible, but still want to flag other errors
-                    if row + i >= max_grid_row or row + i < 0 or col + j >= max_grid_col or col + j < 0:
-                        continue
+                except IndexError:
+                    continue
 
 
     # Find neighbour with the biggest height difference in water level
@@ -422,11 +420,11 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
                     water_to_move -= cell["water"][_l]
                     water_out += cell["water"][_l]
                     temporary_cell['water'][_l] -= cell["water"][_l]
-        except Exception:
+        except IndexError:
             print(_l)
             print(water_out)
             print(cell["ice_lens_depth"])
-            raise Exception
+            raise IndexError
     return water_out
 
 
@@ -480,14 +478,14 @@ def move_to_neighbours(
     # by [row, col], i.e. [y, x] in the grid. And that we start indexing from the top left,
     # not the bottom left!
     all_neighbours = {
-        "NW": (-1, -1),
-        "N": (-1, 0),
-        "NE": (-1, 1),
-        "E": (0, 1),
-        "SE": (1, 1),
-        "S": (1, 0),
-        "SW": (1, -1),
-        "W": (0, -1),
+        "NW": [-1, -1],
+        "N": [-1, 0],
+        "NE": [-1, 1],
+        "E": [0, 1],
+        "SE": [1, 1],
+        "S": [1, 0],
+        "SW": [1, -1],
+        "W": [0, -1],
     }
     cell = grid[row][col]
     cell['water_direction'][:] = 0  # clear water direction
@@ -570,19 +568,16 @@ def move_to_neighbours(
             # If we are moving out of the catchment area, we will get an IndexError when trying to read neighbour_cell.
             # Instead, in this case, just determine how much water will move out of the catchment area.
             # We return straight out of the function in this case as we only want to move out one way.
-            except Exception:
-                # again, spoofing IndexError
-                if row + n_s_index >= len(grid) or col + w_e_index >= len(grid[0]) or \
-                    (row + n_s_index < 0 or col + w_e_index < 0):
-                    if catchment_outflow:
-                        water_out = calc_catchment_outflow(
-                            cell, temporary_cell, water_frac, split
-                        )
-                        return water_out
-                    else:
-                        raise ValueError(
-                            "Issue with lateral movement - trying to move to a non-existent grid cell and <catchment_outflow> is not enabled"
-                        )
+            except IndexError:
+                if catchment_outflow:
+                    water_out = calc_catchment_outflow(
+                        cell, temporary_cell, water_frac, split
+                    )
+                    return water_out
+                else:
+                    raise ValueError(
+                        "Issue with lateral movement - trying to move to a non-existent grid cell and <catchment_outflow> is not enabled"
+                    )
 
             # Case where the central cell has a lake.
             if cell["lake"]:
@@ -724,7 +719,13 @@ def move_water(
 
     # Create temporary cells for our water to move in and out of. This is required so that the water all moves
     # simultaneously - kind of like in a Jacobi solver
-    temp_grid = grid.copy()
+    dtype = grid.dtype
+    temp_grid = np.zeros((len(grid), len(grid[0])), dtype=dtype)
+    temp_grid['lake_depth'] = grid['lake_depth']
+    temp_grid['water'] = grid['water']
+    temp_grid['saturation'] = np.copy(grid['saturation'])
+    temp_grid['meltflag'] = np.copy(grid['meltflag'])
+    temp_grid['lake'] = np.copy(grid['lake'])
 
     # Now loop through the cells again, this time actually performing the movement step.
     for row in range(max_grid_row):
