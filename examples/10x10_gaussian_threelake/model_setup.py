@@ -117,7 +117,7 @@ reload_from_dump = False  # Flag to determine whether to reload the state or not
 Computing and numerical parameters
 """
 use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
-parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
+parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
 

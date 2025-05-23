@@ -350,9 +350,12 @@ def main(model_setup, grid):
     catchment_outflow = 0
     time_loop = range(first_iteration, model_setup.num_days)
     start = time.perf_counter()
+    dt = 3600
+
+
+
     for day in time_loop:
 
-        dt = 3600
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")
         if model_setup.single_column_toggle:

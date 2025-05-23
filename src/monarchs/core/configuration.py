@@ -301,7 +301,7 @@ def jit_modules():
     from monarchs.physics import surface_fluxes
     from monarchs.physics import lake_functions
     from monarchs.physics import firn_functions
-    from monarchs.physics import lateral_functions
+    # from monarchs.physics import lateral_functions
     from monarchs.core import model_output
 
 
@@ -312,7 +312,7 @@ def jit_modules():
         lid_functions,
         percolation_functions,
         model_output,
-        lateral_functions
+        # lateral_functions
     ]
 
     # Set up a list of modules to not apply njit to.
@@ -336,9 +336,11 @@ def jit_modules():
                 continue
             print(f"Applying Numba jit decorator to {module.__name__}.{name}")
             jitted_function = njit(function, fastmath=fastmath)
-
             setattr(module, name, jitted_function)
-
+            # TODO - add full type hints to functions. We can then read these in and use these as the
+            # TODO - expected types for the function and pre-compile it, which will enormously speed things
+            # TODO - up when running in parallel.
+            # jitted_function.compile()
 
 
 def get_model_setup(model_setup_path):
