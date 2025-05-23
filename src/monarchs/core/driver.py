@@ -362,7 +362,6 @@ def main(model_setup, grid):
     time_loop = range(first_iteration, model_setup.num_days)
     start = time.perf_counter()
     dt = 3600
-    breakpoint()
 
 
     for day in time_loop:

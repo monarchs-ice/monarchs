@@ -116,11 +116,11 @@ reload_from_dump = False  # Flag to determine whether to reload the state or not
 """
 Computing and numerical parameters
 """
-use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
+use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
-dask_scheduler = 'processes'  # dask scheduler to use. 'processes', 'distributed' or 'threads'.
+dask_scheduler = 'distributed'  # dask scheduler to use. 'processes', 'distributed' or 'threads'.
                               # 'processes' is recommended for most cases.
                               # If running on HPC across multiple nodes, you'll need to use "distributed".
                               # Threads is fine for running small workloads in parallel, but scaling will be very
