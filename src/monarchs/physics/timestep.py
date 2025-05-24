@@ -175,10 +175,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
                 if (
                     cell["lake_depth"] <= 0
-                    or np.any(
-                        cell["lake_temperature"][cell["lake_temperature"] > 273.15]
-                    )
-                    == False
+
                 ):
                     lid_functions.combine_lid_firn(cell)
 

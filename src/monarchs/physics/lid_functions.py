@@ -498,7 +498,7 @@ def mass_conserving_profile(cell, var='Sfrac'):
     sfrac_full = np.concatenate((var_lid, var_column))
 
     # Depth edges of full profile (top at 0)
-    z_edges_full = np.concatenate(([0], np.cumsum(dz_full)))  # Length 521
+    z_edges_full = np.concatenate(([0], np.cumsum(dz_full)))
     z_centers_full = 0.5 * (z_edges_full[:-1] + z_edges_full[1:])
 
     # Total depth
