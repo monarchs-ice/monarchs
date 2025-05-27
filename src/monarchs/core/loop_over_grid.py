@@ -98,8 +98,9 @@ def loop_over_grid(
     None. The function amends the instance of <grid> passed to it.
     """
     flat_grid = grid.flatten()
-    met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass the 24 timesteps
-    met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
+    met_data_grid = met_data
+    # met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass the 24 timesteps
+    # met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
     if parallel:
         chunksize = max(1, len(flat_grid) // (ncores * 2))  # Dynamic chunk size for load balancing
 

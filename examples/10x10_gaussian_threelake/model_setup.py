@@ -19,8 +19,8 @@ from monarchs.DEM import create_DEM_GaussianTestCase as cgt
 """
 Spatial parameters
 """
-row_amount = 20  # Number of rows in your model grid, looking from top-down.
-col_amount = 20 # Number of columns in your model grid, looking from top-down.
+row_amount = 3  # Number of rows in your model grid, looking from top-down.
+col_amount = 3  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -117,7 +117,7 @@ reload_from_dump = False  # Flag to determine whether to reload the state or not
 Computing and numerical parameters
 """
 use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
-parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
+parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
 dask_scheduler = 'distributed'  # dask scheduler to use. 'processes', 'distributed' or 'threads'.

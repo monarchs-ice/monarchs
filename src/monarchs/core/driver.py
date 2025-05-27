@@ -20,7 +20,6 @@ from netCDF4 import Dataset
 from monarchs.core import configuration, initial_conditions, setup_met_data
 from monarchs.core.dump_model_state import dump_state, reload_from_dump
 from monarchs.core.model_output import setup_output, update_model_output
-from monarchs.core.loop_over_grid import loop_over_grid
 from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct
 from monarchs.met_data.metdata_class import initialise_met_data, get_spec
 from monarchs.physics import lateral_functions
@@ -60,6 +59,19 @@ def setup_toggle_dict(model_setup):
     toggle_dict["densification_toggle"] = model_setup.densification_toggle
     toggle_dict["ignore_errors"] = model_setup.ignore_errors
     toggle_dict["use_mpi"] = model_setup.use_mpi
+
+    if model_setup.use_numba:
+        # in this case we need to convert to a Numba typed dict
+        from numba import types
+        from numba.typed import Dict
+        num_dict = Dict.empty(
+            key_type=types.unicode_type,
+            value_type=types.boolean,
+        )
+        for key, value in toggle_dict.items():
+            num_dict[key] = value
+        toggle_dict = num_dict
+
     return toggle_dict
 
 
@@ -190,6 +202,8 @@ def update_met_conditions(
                     raise IndexError(
                         "monarchs.core.driver.main: met_end_idx > days * hours, i.e. your grid of meteorological data is too small for the number of timesteps you wish to run"
                     )
+
+
     return met_data_grid, met_data_len, snow_added
 
 
@@ -312,13 +326,30 @@ def main(model_setup, grid):
     """
 
     # If running in parallel across multiple nodes, then we first set up the dask Client object
-    if model_setup.dask_scheduler == 'distributed':
+    if model_setup.parallel and model_setup.dask_scheduler == 'distributed' and not model_setup.use_numba:
         print('Setting up Dask Client object...')
         from dask.distributed import Client
         global client
         client = Client()
     else:
         client = None  # else set up a dummy client to pass
+
+    if model_setup.use_numba:
+        from numba import jit
+
+        from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
+        from numba import set_num_threads
+
+        if model_setup.cores in ["all", False]:
+            cores = pathos.helpers.cpu_count()
+        else:
+            cores = model_setup.cores
+        set_num_threads(int(cores))
+        loop_over_grid = jit(
+            loop_over_grid_numba, parallel=model_setup.parallel, nopython=True
+        )
+    else:
+        from monarchs.core.loop_over_grid import loop_over_grid
     tic = time.perf_counter()
     met_start_idx = 0
     met_end_idx = model_setup.t_steps_per_day
@@ -368,6 +399,11 @@ def main(model_setup, grid):
         timestep_start = time.perf_counter()
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")
+
+        # pre-flatten and rearrange met_data_grid
+        met_data_grid = met_data_grid.reshape(24, -1)
+        met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
+
         if model_setup.single_column_toggle:
             grid = loop_over_grid(
                 model_setup.row_amount,

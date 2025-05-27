@@ -297,15 +297,13 @@ def jit_modules():
     from inspect import getmembers, isfunction
 
     fastmath = False
-    from monarchs.physics import percolation_functions
-    from monarchs.physics import lid_functions
-    from monarchs.physics import surface_fluxes
-    from monarchs.physics import lake_functions
-    from monarchs.physics import firn_functions
+    from monarchs.physics import percolation_functions, lid_functions, surface_fluxes, lake_functions, firn_functions
+    from monarchs.physics import timestep, snow_accumulation
+
     # from monarchs.physics import lateral_functions
     from monarchs.core import model_output
 
-
+    # modules to search from when applying jit
     module_list = [
         surface_fluxes,
         firn_functions,
@@ -313,15 +311,17 @@ def jit_modules():
         lid_functions,
         percolation_functions,
         model_output,
+        timestep,
+        snow_accumulation
         # lateral_functions
     ]
 
     # Set up a list of modules to not apply njit to.
     # If a piece of code is refusing to compile, and you can't get it to debug, add it to here.
-    ignore_list = ['firn_column', # firn_functions
-                   'propagate_temperature', 'find_surface_temperature', # heateqn
-                   'lake_formation', 'lake_development', 'sfc_energy_lake_formation', 'sfc_energy_lake', # lake_functions
-                    'lid_formation', 'lid_development', 'combine_lid_firn', 'virtual_lid', # lid_functions
+    ignore_list = [#'firn_column', # firn_functions
+                   #'propagate_temperature', 'find_surface_temperature', # heateqn
+                   #'lake_formation', 'lake_development', 'sfc_energy_lake_formation', 'sfc_energy_lake', # lake_functions
+                   # 'lid_formation', 'lid_development', 'combine_lid_firn', 'virtual_lid', # lid_functions
                    'root', 'solve_banded',  # scipy builtins (imported in heateqn)
                    'setup_output', 'update_model_output',  # netCDF output functions, we only want to hit interpolation
                    'get_2d_grid',
@@ -342,6 +342,18 @@ def jit_modules():
             # TODO - expected types for the function and pre-compile it, which will enormously speed things
             # TODO - up when running in parallel.
             # jitted_function.compile()
+
+    from monarchs.physics import solver
+    from monarchs.physics.Numba import solver_nb as numba_solver
+    # relax the isfunction stipulation for `numba_solver` since it is mostly jitted functions
+    # (which are `<CPUDispatcher>` objects rather than `<function>` objects
+    jit_functions_list = getmembers(numba_solver)
+    for name, jitfunc in jit_functions_list:
+        # ignore builtins - which we did not filter out with getmembers
+        if not name.startswith('__'):
+            print(f'Setting {solver.__name__}.{name} to the equivalent Numba-compatible version')
+            setattr(solver, name, jitfunc)
+
 
 
 def get_model_setup(model_setup_path):

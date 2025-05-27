@@ -293,10 +293,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_di
         else:
             raise ValueError("Firn has all completely melted")
     old_depth_grid = np.linspace(0, cell["lake_depth"], cell["vert_grid_lake"])
-    if cell["lake_depth"] > 10:
-        print("Lake depth = ", cell["lake_depth"])
-        print("column = ", cell["column"])
-        print("row = ", cell["row"])
+
     if cell["lake_depth"] > 0:
         new_depth_grid = np.linspace(0, cell["lake_depth"], cell["vert_grid_lake"])
     else:
