@@ -11,7 +11,7 @@ import numpy.testing as npt
 def get_k_and_kappa(cell):
     # precompute some values
     rho = cell["Sfrac"] * 913 + cell["Lfrac"] * 1000
-    k_ice = np.zeros(np.shape(cell["firn_temperature"]))
+    k_ice = np.zeros(np.shape(cell["firn_temperature"]), dtype=np.float64)
     k_ice[cell["firn_temperature"] < 273.15] = 1000 * (
         2.24e-03
         + 5.975e-06
@@ -88,52 +88,6 @@ def surface_temperature_residual(
     return residual
 
 
-def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
-    T_old = cell["firn_temperature"]
-    k, kappa = get_k_and_kappa(cell)
-
-    total_len = len(T_old)
-    n = total_len - N  # Number of layers below the nonlinear region
-
-    # Initialize diagonals and RHS
-    A = np.zeros(n - 1)  # Sub-diagonal (lower)
-    B = np.zeros(n)  # Main diagonal
-    C = np.zeros(n - 1)  # Super-diagonal (upper)
-    D = np.zeros(n)  # RHS vector
-
-    factor = dt / dz**2
-
-    # First row: connect to top nonlinear region
-    i = 0
-    alpha = factor * kappa[N + i]
-    B[i] = 1 + 2 * alpha
-    C[i] = -alpha
-    D[i] = T_old[N + i] + alpha * T_bc_top
-
-    # Interior rows
-    for i in range(1, n - 1):
-        alpha = factor * kappa[N + i]
-        A[i - 1] = -alpha
-        B[i] = 1 + 2 * alpha
-        C[i] = -alpha
-        D[i] = T_old[N + i]
-
-    # Last row: Neumann BC using backward difference
-    i = n - 1
-    alpha = factor * kappa[N + i]
-    A[i - 1] = -alpha
-    B[i] = 1 + alpha
-    D[i] = T_old[N + i]
-
-    # Assemble banded matrix
-    ab = np.zeros((3, n))
-    ab[0, 1:] = C
-    ab[1, :] = B
-    ab[2, :-1] = A
-    T_new = solve_banded((1, 1), ab, D)
-    #T_new = solve_banded2(A, B, C, D)  
-    return T_new
-
 def find_surface_temperature(
     cell, LW_in, SW_in, T_air, p_air, T_dp, wind, dz, dt, solver_method="hybr", N=10
 ):
@@ -189,7 +143,54 @@ def find_surface_temperature(
     soldict = result  # Surface temperature solution
     return soldict
 
-def solve_banded2(a, b, c, d):
+def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
+    T_old = cell["firn_temperature"]
+    k, kappa = get_k_and_kappa(cell)
+
+    total_len = len(T_old)
+    n = total_len - N  # Number of layers below the nonlinear region
+
+    # Initialize diagonals and RHS
+    A = np.zeros(n - 1, dtype=np.float64)  # Sub-diagonal (lower)
+    B = np.zeros(n, dtype=np.float64)  # Main diagonal
+    C = np.zeros(n - 1, dtype=np.float64)  # Super-diagonal (upper)
+    D = np.zeros(n, dtype=np.float64)  # RHS vector
+
+    factor = np.float64(dt / dz**2)
+
+    # First row: connect to top nonlinear region
+    i = 0
+    alpha = factor * kappa[N + i]
+    B[i] = 1 + 2 * alpha
+    C[i] = -alpha
+    D[i] = T_old[N + i] + alpha * T_bc_top
+
+    # Interior rows
+    for i in range(1, n - 1):
+        alpha = factor * kappa[N + i]
+        A[i - 1] = -alpha
+        B[i] = 1 + 2 * alpha
+        C[i] = -alpha
+        D[i] = T_old[N + i]
+
+    # Last row: Neumann BC using backward difference
+    i = n - 1
+    alpha = factor * kappa[N + i]
+    A[i - 1] = -alpha
+    B[i] = 1 + alpha
+    D[i] = T_old[N + i]
+
+    # Assemble banded matrix
+    # ab = np.zeros((3, n))
+    # ab[0, 1:] = C
+    # ab[1, :] = B
+    # ab[2, :-1] = A
+    # T_new = solve_banded((1, 1), ab, D)
+    T_new = solve_tridiagonal(A, B, C, D)  
+    return T_new
+
+
+def solve_tridiagonal(a, b, c, d):
     """
     a: sub-diagonal (len n-1), A[i, i-1]
     b: main diagonal (len n), A[i, i]
@@ -198,8 +199,10 @@ def solve_banded2(a, b, c, d):
     """
     n = len(d)
     # Copy to avoid modifying input arrays
-    ac, bc, cc, dc = map(np.copy, (a, b, c, d))
-
+    ac = a
+    bc = b
+    cc = c
+    dc = d
     # Forward elimination
     for i in range(1, n):
         m = ac[i - 1] / bc[i - 1]

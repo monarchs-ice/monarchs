@@ -25,7 +25,7 @@ from monarchs.physics.surface_fluxes import sfc_flux
 def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
     rho = sfrac * 913 + lfrac * 1000
-    k_ice = np.zeros(np.shape(T))
+    k_ice = np.zeros(np.shape(T), dtype=np.float64)
     k_ice[T < 273.15] = 1000 * (
         2.24e-03
         + 5.975e-06
@@ -65,12 +65,12 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     n = total_len - N  # Number of layers below the nonlinear region
 
     # Initialize diagonals and RHS
-    A = np.zeros(n - 1)  # Sub-diagonal (lower)
-    B = np.zeros(n)  # Main diagonal
-    C = np.zeros(n - 1)  # Super-diagonal (upper)
-    D = np.zeros(n)  # RHS vector
+    A = np.zeros(n - 1, dtype=np.float64)  # Sub-diagonal (lower)
+    B = np.zeros(n, dtype=np.float64)  # Main diagonal
+    C = np.zeros(n - 1, dtype=np.float64)  # Super-diagonal (upper)
+    D = np.zeros(n, dtype=np.float64)  # RHS vector
 
-    factor = dt / dz**2
+    factor = np.float64(dt / dz**2)
 
     # First row: connect to top nonlinear region
     i = 0
@@ -108,8 +108,10 @@ def solve_tridiagonal(a, b, c, d):
     d: RHS (len n)
     """
     n = len(d)
-    # Copy to avoid modifying input arrays
-    ac, bc, cc, dc = map(np.copy, (a, b, c, d))
+    ac = a
+    bc = b
+    cc = c
+    dc = d
 
     # Forward elimination
     for i in range(1, n):

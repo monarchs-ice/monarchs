@@ -58,7 +58,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     wind = args[8]
 
     if fixed_sfc:
-        sol = 273.15
+        sol = np.array([273.15])
         infodict = {}
         ier = 1
         mesg = "Fixed surface temperature"
@@ -102,15 +102,15 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         ier = soldict.success
         mesg = soldict.message
         infodict = soldict.success
+        sol = np.around(sol, decimals=8)
         #print(sol)
     # Now use tridiagonal solver to solve the heat equation once we have the surface temp
 
     if fixed_sfc:
-        T = heateqn.propagate_temperature(cell, dz, dt, sol, N=1)
-        T = np.concatenate((np.array([sol]), T))
+        T = heateqn.propagate_temperature(cell, dz, dt, sol[-1], N=1)
+        T = np.concatenate((sol, T))
         #print('T fixed sfc = ', T)
     else:
-        fs = ""
         # Take our root-finding algorithm output (from first N layers),
         # use it as the top boundary condition to the tridiagonal solver,
         # then concatenate the two
@@ -119,9 +119,12 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         #print('T = ', T)
 
     # print(f'Temperature profile {fs} = ', T[:10])
-    for i in range(len(T)):
-        if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
-            T[i] = 273.15
+    # for i in range(len(T)):
+    #     if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
+    #         T[i] = 273.15
+    T = np.around(T, decimals=8)
+    print('Sol0 = ', sol[0])
+    print('T = ', T)
     return T, infodict, ier, mesg
 
 

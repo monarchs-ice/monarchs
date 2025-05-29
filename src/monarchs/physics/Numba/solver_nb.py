@@ -221,6 +221,8 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
 
     if not fixed_sfc:
         sol, fvec, success, info = hybrd(heq, x, args)
+        sol = np.around(sol, decimals=8)
+
         #print(sol)
     else:
         sol = np.array([273.15])
@@ -228,28 +230,13 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         success = 1
         info = 1
 
-    if info == 4:
-        # infostring = (
-        #     "hybrd: iteration is not making good progress, as measured by the improvement "
-        #     "from the last five Jacobian evaluations.\n"
-        # )
-        # print(infostring)
-        # cell.log = cell.log + infostring
-        pass
-    if info == 5:
-        # infostring = (
-        #     "hybrd: iteration is not making good progress, as measured by the improvement from the "
-        #     "last ten Jacobian evaluations.\n"
-        # )
-        # print(infostring)
-        # cell.log = cell.log + infostring
-        pass
+    
     # we only return root in the model (hence why in driver.py we index the function by [0],
     # but the other info is useful for testing so can be used if calling solver directly
 
     if fixed_sfc:
-        T = hnb.propagate_temperature(cell, dz, dt, 273.15, N=1)
-        T = np.concatenate((np.array([273.15]), T))
+        T_fixed = hnb.propagate_temperature(cell, dz, dt, 273.15, N=1)
+        T = np.concatenate((np.array([273.15]), T_fixed))
         #print('T fixed_sfc = ', T)
     else:
         # Take our root-finding algorithm output (from first N layers),
@@ -258,9 +245,12 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
         T = np.concatenate((sol[:], T_tri))
         #print('T = ', T)
-    for i in range(len(T)):
-        if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
-            T[i] = 273.15
+    # for i in range(len(T)):
+    #     if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
+    #         T[i] = 273.15
+    T = np.around(T, decimals=8)
+    print('Sol0 = ', sol[0])
+    print('T = ', T)
     return T, fvec, success, info
 
 
