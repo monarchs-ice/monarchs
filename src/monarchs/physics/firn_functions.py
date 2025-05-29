@@ -290,9 +290,9 @@ def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, s
     sigma = 5.670373 * 10**-8
     dz = cell["firn_depth"] / cell["vert_grid"]
     L_fus = 334000
-    if cell["firn_temperature"][0] > 273.15 and cell["firn_temperature"][0] < 273.151:
+    if cell["firn_temperature"][0] > 273.14999999 and cell["firn_temperature"][0] < 273.151:
         cell["firn_temperature"][0] = 273.15
-    if cell["firn_temperature"][1] > 273.15 and cell["firn_temperature"][1] < 273.151:
+    if cell["firn_temperature"][1] > 273.14999999 and cell["firn_temperature"][1] < 273.151:
         cell["firn_temperature"][1] = 273.15
     k_sfc = (
         1000 * 2.24 * 10**-3

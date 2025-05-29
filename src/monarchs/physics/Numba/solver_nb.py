@@ -116,7 +116,7 @@ def args_array(
     else:
         args = np.hstack(
             (
-                np.array([cell.vert_grid]),
+                np.array([N]),
                 cell.firn_temperature[:N],
                 cell.Sfrac[:N],
                 cell.Lfrac[:N],
@@ -193,6 +193,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     """
 
     N = 50  # number of cells at top to use in hybrd implementation
+    x = x[:N]
 
     # cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind = [arg for arg in args]
     cell = args[0]
@@ -218,8 +219,14 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         N=N
     )
 
-
-    sol, fvec, success, info = hybrd(heq, x, args)
+    if not fixed_sfc:
+        sol, fvec, success, info = hybrd(heq, x, args)
+        #print(sol)
+    else:
+        sol = np.array([273.15])
+        fvec = np.array([1.0]) 
+        success = 1
+        info = 1
 
     if info == 4:
         # infostring = (
@@ -241,16 +248,19 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     # but the other info is useful for testing so can be used if calling solver directly
 
     if fixed_sfc:
-        T = hnb.propagate_temperature(cell, dz, dt, sol, N=1)
+        T = hnb.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T = np.concatenate((np.array([273.15]), T))
+        #print('T fixed_sfc = ', T)
     else:
-        fs = ""
         # Take our root-finding algorithm output (from first N layers),
         # use it as the top boundary condition to the tridiagonal solver,
         # then concatenate the two
         T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
         T = np.concatenate((sol[:], T_tri))
-
+        #print('T = ', T)
+    for i in range(len(T)):
+        if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
+            T[i] = 273.15
     return T, fvec, success, info
 
 
@@ -277,9 +287,7 @@ def lake_development_eqn(x, output, args):
     None.
     """
 
-    J = args[
-        0
-    ]  # float, turbulent heat flux factor, equal to 1.907 E-5. [m s^-1 K^-(1/3)]
+    J = args[0]  # float, turbulent heat flux factor, equal to 1.907 E-5. [m s^-1 K^-(1/3)]
     Q = args[1]  # float, Surface energy flux [W m^-2]
     vert_grid_lake = args[2]  # float, number of vertical levels in the lake profile
     lake_temperature = np.zeros(
@@ -296,7 +304,7 @@ def lake_development_eqn(x, output, args):
     output[0] = (
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
-        + (np.sign(T_core - x[0]) * 1000 * 4181 * J * (abs(T_core - x[0]) ** (4 / 3)))
+        + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
     )
 
 

@@ -6,7 +6,7 @@ import numpy as np
 from monarchs.physics.surface_fluxes import sfc_flux
 from scipy.linalg import solve_banded
 from scipy.optimize import root
-
+import numpy.testing as npt
 
 def get_k_and_kappa(cell):
     # precompute some values
@@ -66,7 +66,6 @@ def surface_temperature_residual(
         wind,
         x[0],
     )
-
     k, kappa = get_k_and_kappa(cell)
     residual = np.zeros_like(x)
     # Surface temperature equation (residual)
@@ -88,6 +87,52 @@ def surface_temperature_residual(
     # print(f"Residual for T_sfc = {x}: {residual}")
     return residual
 
+
+def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
+    T_old = cell["firn_temperature"]
+    k, kappa = get_k_and_kappa(cell)
+
+    total_len = len(T_old)
+    n = total_len - N  # Number of layers below the nonlinear region
+
+    # Initialize diagonals and RHS
+    A = np.zeros(n - 1)  # Sub-diagonal (lower)
+    B = np.zeros(n)  # Main diagonal
+    C = np.zeros(n - 1)  # Super-diagonal (upper)
+    D = np.zeros(n)  # RHS vector
+
+    factor = dt / dz**2
+
+    # First row: connect to top nonlinear region
+    i = 0
+    alpha = factor * kappa[N + i]
+    B[i] = 1 + 2 * alpha
+    C[i] = -alpha
+    D[i] = T_old[N + i] + alpha * T_bc_top
+
+    # Interior rows
+    for i in range(1, n - 1):
+        alpha = factor * kappa[N + i]
+        A[i - 1] = -alpha
+        B[i] = 1 + 2 * alpha
+        C[i] = -alpha
+        D[i] = T_old[N + i]
+
+    # Last row: Neumann BC using backward difference
+    i = n - 1
+    alpha = factor * kappa[N + i]
+    A[i - 1] = -alpha
+    B[i] = 1 + alpha
+    D[i] = T_old[N + i]
+
+    # Assemble banded matrix
+    ab = np.zeros((3, n))
+    ab[0, 1:] = C
+    ab[1, :] = B
+    ab[2, :-1] = A
+    T_new = solve_banded((1, 1), ab, D)
+    #T_new = solve_banded2(A, B, C, D)  
+    return T_new
 
 def find_surface_temperature(
     cell, LW_in, SW_in, T_air, p_air, T_dp, wind, dz, dt, solver_method="hybr", N=10
@@ -135,7 +180,6 @@ def find_surface_temperature(
             dt,
         ),
         method=solver_method,
-        options={"maxfev": 1000},
     )
 
     if not result.success:
@@ -145,55 +189,31 @@ def find_surface_temperature(
     soldict = result  # Surface temperature solution
     return soldict
 
+def solve_banded2(a, b, c, d):
+    """
+    a: sub-diagonal (len n-1), A[i, i-1]
+    b: main diagonal (len n), A[i, i]
+    c: super-diagonal (len n-1), A[i, i+1]
+    d: RHS (len n)
+    """
+    n = len(d)
+    # Copy to avoid modifying input arrays
+    ac, bc, cc, dc = map(np.copy, (a, b, c, d))
 
-def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
-    T_old = cell["firn_temperature"]
-    k, kappa = get_k_and_kappa(cell)
-    total_len = len(T_old)
-    n = total_len - N  # Number of layers below the nonlinear region
+    # Forward elimination
+    for i in range(1, n):
+        m = ac[i - 1] / bc[i - 1]
+        bc[i] -= m * cc[i - 1]
+        dc[i] -= m * dc[i - 1]
 
-    # Initialize diagonals and RHS
-    A = np.zeros(n)  # Sub-diagonal (lower)
-    B = np.zeros(n)  # Main diagonal
-    C = np.zeros(n)  # Super-diagonal (upper)
-    D = np.zeros(n)  # RHS vector
+    # Back substitution
+    x = np.zeros(n)
+    x[-1] = dc[-1] / bc[-1]
+    for i in range(n - 2, -1, -1):
+        x[i] = (dc[i] - cc[i] * x[i + 1]) / bc[i]
 
-    factor = dt / dz**2
-
-    # First row: connect to top nonlinear region
-    i = 0
-    alpha = factor * kappa[N + i]
-    B[i] = 1 + 2 * alpha
-    C[i] = -alpha
-    D[i] = T_old[N + i] + alpha * T_bc_top
-
-    # Interior rows
-    for i in range(1, n - 1):
-        alpha = factor * kappa[N + i]
-        A[i] = -alpha
-        B[i] = 1 + 2 * alpha
-        C[i] = -alpha
-        D[i] = T_old[N + i]
-
-    # Last row: Neumann BC using backward difference
-    i = n - 1
-    alpha = factor * kappa[N + i]
-    A[i] = -alpha
-    B[i] = 1 + alpha
-    D[i] = T_old[N + i]
-
-    # Assemble banded matrix
-    ab = np.zeros((3, n))
-    ab[0, 1:] = C[:-1]
-    ab[1, :] = B
-    ab[2, :-1] = A[1:]
-
-    T_new = solve_banded((1, 1), ab, D)
-    return T_new
-
-
-# Solve for surface temperature (T_sfc)
-
+    return x
+    
 
 def heateqn_lid(
     x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k_lid, Sfrac_lid

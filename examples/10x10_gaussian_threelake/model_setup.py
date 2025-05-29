@@ -19,8 +19,8 @@ from monarchs.DEM import create_DEM_GaussianTestCase as cgt
 """
 Spatial parameters
 """
-row_amount = 3  # Number of rows in your model grid, looking from top-down.
-col_amount = 3  # Number of columns in your model grid, looking from top-down.
+row_amount = 15  # Number of rows in your model grid, looking from top-down.
+col_amount = 15  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -117,10 +117,10 @@ reload_from_dump = False  # Flag to determine whether to reload the state or not
 Computing and numerical parameters
 """
 use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
-parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
+parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
-dask_scheduler = 'distributed'  # dask scheduler to use. 'processes', 'distributed' or 'threads'.
+dask_scheduler = 'processes'  # dask scheduler to use. 'processes', 'distributed' or 'threads'.
                               # 'processes' is recommended for most cases.
                               # If running on HPC across multiple nodes, you'll need to use "distributed".
                               # Threads is fine for running small workloads in parallel, but scaling will be very
@@ -139,7 +139,8 @@ catchment_outflow = False  # Determines if water on the edge of the catchment ar
 # or flow out of the catchment area (resulting in us 'losing' water)
 flow_into_land = False  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
 lateral_movement_toggle = True
-
+lake_development_toggle = True
+lid_development_toggle = True
 # Just for this specific case - assert that the DEM is symmetric
 import numpy.testing as npt
 

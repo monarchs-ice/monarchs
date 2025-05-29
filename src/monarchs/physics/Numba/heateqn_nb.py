@@ -16,51 +16,58 @@ from NumbaMinpack import minpack_sig
 
 from monarchs.physics.Numba.extract_args import (
     extract_args,
-    extract_args_fixedsfc,
     extract_args_lid,
 )
 from monarchs.physics.surface_fluxes import sfc_flux
 
 
 @njit
-def get_k_and_kappa(cell):
+def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
-    rho = cell["Sfrac"] * 913 + cell["Lfrac"] * 1000
-    k_ice = np.zeros(np.shape(cell["firn_temperature"]))
-    k_ice[cell["firn_temperature"] < 273.15] = 1000 * (
+    rho = sfrac * 913 + lfrac * 1000
+    k_ice = np.zeros(np.shape(T))
+    k_ice[T < 273.15] = 1000 * (
         2.24e-03
         + 5.975e-06
         * (
-            (273.15 - cell["firn_temperature"][cell["firn_temperature"] < 273.15])
+            (273.15 - T[T < 273.15])
             ** 1.156
         )
     )
-    k_ice[cell["firn_temperature"] >= 273.15] = 2.24
+    k_ice[T >= 273.15] = 2.24
     k = (
-        cell["Sfrac"] * k_ice
-        + (1 - cell["Sfrac"] - cell["Lfrac"]) * cell["k_air"]
-        + cell["Lfrac"] * cell["k_water"]
+        sfrac * k_ice
+        + (1 - sfrac - lfrac) * k_air
+        + lfrac * k_water
     )
-    cp_ice = 7.16 * cell["firn_temperature"] + 138
+    cp_ice = 7.16 * T + 138
     cp = (
-        cell["Sfrac"] * cp_ice
-        + (1 - cell["Sfrac"] - cell["Lfrac"]) * cell["cp_air"]
-        + cell["Lfrac"] * cell["cp_water"]
+        sfrac * cp_ice
+        + (1 - sfrac - lfrac) * cp_air
+        + lfrac * cp_water
     )
     kappa = k / (cp * rho)
     return k, kappa
 
+
+
 @njit
 def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     T_old = cell["firn_temperature"]
-    k, kappa = get_k_and_kappa(cell)
+    Sfrac = cell['Sfrac']
+    Lfrac = cell['Lfrac']
+    cp_air = cell['cp_air']
+    cp_water = cell['cp_water']
+    k_air = cell['k_air']
+    k_water = cell['k_water']
+    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
     total_len = len(T_old)
     n = total_len - N  # Number of layers below the nonlinear region
 
     # Initialize diagonals and RHS
-    A = np.zeros(n)  # Sub-diagonal (lower)
+    A = np.zeros(n - 1)  # Sub-diagonal (lower)
     B = np.zeros(n)  # Main diagonal
-    C = np.zeros(n)  # Super-diagonal (upper)
+    C = np.zeros(n - 1)  # Super-diagonal (upper)
     D = np.zeros(n)  # RHS vector
 
     factor = dt / dz**2
@@ -70,12 +77,12 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     alpha = factor * kappa[N + i]
     B[i] = 1 + 2 * alpha
     C[i] = -alpha
-    D[i] = T_old[N + i] + np.array(alpha) * T_bc_top
+    D[i] = T_old[N + i] + alpha * T_bc_top
 
     # Interior rows
     for i in range(1, n - 1):
         alpha = factor * kappa[N + i]
-        A[i] = -alpha
+        A[i - 1] = -alpha
         B[i] = 1 + 2 * alpha
         C[i] = -alpha
         D[i] = T_old[N + i]
@@ -83,40 +90,38 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     # Last row: Neumann BC using backward difference
     i = n - 1
     alpha = factor * kappa[N + i]
-    A[i] = -alpha
+    A[i - 1] = -alpha
     B[i] = 1 + alpha
     D[i] = T_old[N + i]
 
-    T_new = solve_banded(A, B, C, D)
+
+    T_new = solve_tridiagonal(A, B, C, D)  
+    #print(T_new)  
     return T_new
 
 @njit
-def solve_banded(a, b, c, d):
+def solve_tridiagonal(a, b, c, d):
     """
-    Solve Ax = d for tridiagonal A using the Thomas algorithm.
-    a: sub-diagonal (length n-1)
-    b: main diagonal (length n)
-    c: super-diagonal (length n-1)
-    d: right-hand side (length n)
+    a: sub-diagonal (len n-1), A[i, i-1]
+    b: main diagonal (len n), A[i, i]
+    c: super-diagonal (len n-1), A[i, i+1]
+    d: RHS (len n)
     """
-    n = len(b)
-    cp = np.empty(n-1, dtype=b.dtype)
-    dp = np.empty(n, dtype=d.dtype)
+    n = len(d)
+    # Copy to avoid modifying input arrays
+    ac, bc, cc, dc = map(np.copy, (a, b, c, d))
 
-    # Forward sweep
-    cp[0] = c[0] / b[0]
-    dp[0] = d[0] / b[0]
-    for i in range(1, n-1):
-        denom = b[i] - a[i-1] * cp[i-1]
-        cp[i] = c[i] / denom
-        dp[i] = (d[i] - a[i-1] * dp[i-1]) / denom
-    dp[n-1] = (d[n-1] - a[n-2] * dp[n-2]) / (b[n-1] - a[n-2] * cp[n-2])
+    # Forward elimination
+    for i in range(1, n):
+        m = ac[i - 1] / bc[i - 1]
+        bc[i] -= m * cc[i - 1]
+        dc[i] -= m * dc[i - 1]
 
     # Back substitution
-    x = np.empty(n, dtype=d.dtype)
-    x[-1] = dp[-1]
-    for i in range(n-2, -1, -1):
-        x[i] = dp[i] - cp[i] * x[i+1]
+    x = np.zeros(n)
+    x[-1] = dc[-1] / bc[-1]
+    for i in range(n - 2, -1, -1):
+        x[i] = (dc[i] - cc[i] * x[i + 1]) / bc[i]
 
     return x
 
@@ -149,8 +154,7 @@ def heateqn(x, output, args):
 
     """
 
-    vert_grid = np.int32(args[0])
-    # output = np.zeros(vert_grid)
+
     # separate "args" into the relevant variables
     (
         T,
@@ -174,31 +178,11 @@ def heateqn(x, output, args):
         T_dp,
         wind,
     ) = extract_args(args)
-
-    k_ice = np.zeros(np.shape(T))
-    # output = np.zeros(np.shape(T))
-    for i in np.arange(len(T)):
-        # If surface temperature is above 273.15, then we assume that T is at 273.15
-        if T[i] < 273.15:
-            k_ice[i] = 1000 * (2.24e-3 + 5.975e-6 * ((273.15 - T[i]) ** 1.156))
-        else:
-            k_ice[i] = 2.24
-    # if np.isnan(k_ice).any():
-    #     for i in range(len(k_ice)):
-    #         k_ice[i] = k_ice[i].real
-    #     print(np.max(T))
-    # raise ValueError('k_ice = nan \n')
-
-    k = Sfrac * k_ice + (1 - Sfrac - Lfrac) * k_air + Lfrac * k_water
-
-    cp_ice = 7.16 * T + 138
-
-    cp = Sfrac * cp_ice + (1 - Sfrac - Lfrac) * cp_air + Lfrac * cp_water
-    rho = Sfrac * 913 + Lfrac * 1000
-    kappa = k / (cp * rho)  # thermal diffusivity [m^2 s^-1]
-
+    
+    N = np.int32(args[0])
+    
     epsilon = 0.98
-    sigma = 5.670374 * (10**-8)
+    sigma = 5.670374e-8
 
     Q = sfc_flux(
         melt,
@@ -215,21 +199,26 @@ def heateqn(x, output, args):
         x[0],
     )
 
-    # print(x[0])
+
+    k, kappa = get_k_and_kappa(T, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
+    # Surface temperature equation (residual)
     output[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
-    for idx in np.arange(1, vert_grid - 1):
-        # idx = np.int32(idx)
+
+    # Calculate the temperature profile for the first 10 layers
+    for idx in np.arange(1, N - 1, 1):
         output[idx] = (
             T[idx]
             - x[idx]
             + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
         )
-
-    output[vert_grid - 1] = (
-        T[vert_grid - 1]
-        - x[vert_grid - 1]
-        + dt * (kappa[vert_grid - 1] / dz**2) * (-x[vert_grid - 1] + x[vert_grid - 2])
+        
+    output[N-1] = (
+        T[N - 1]
+        - x[N - 1]
+        + dt * (kappa[N - 1] / dz**2) * (-x[N - 1] + x[N - 2])
     )
+    
+    # print(f"Residual for T_sfc = {x}: {residual}")
 
 
 def heateqn_lid(x, output, args):
