@@ -298,7 +298,7 @@ def jit_modules():
 
     fastmath = False
     from monarchs.physics import percolation_functions, lid_functions, surface_fluxes, lake_functions, firn_functions
-    from monarchs.physics import timestep, snow_accumulation
+    from monarchs.physics import timestep, snow_accumulation, lateral_functions
 
     # from monarchs.physics import lateral_functions
     from monarchs.core import model_output
@@ -312,8 +312,8 @@ def jit_modules():
         percolation_functions,
         model_output,
         timestep,
-        snow_accumulation
-        # lateral_functions
+        snow_accumulation,
+        lateral_functions
     ]
 
     # Set up a list of modules to not apply njit to.
