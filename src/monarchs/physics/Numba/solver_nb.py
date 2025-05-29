@@ -249,8 +249,8 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     #     if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
     #         T[i] = 273.15
     T = np.around(T, decimals=8)
-    print('Sol0 = ', sol[0])
-    print('T = ', T)
+    #print('Sol0 = ', sol[0])
+    #print('T = ', T)
     return T, fvec, success, info
 
 
