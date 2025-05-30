@@ -202,7 +202,10 @@ def find_biggest_neighbour(
                         code.append("E")
 
                     code_str = "".join(code)
-                    neighbour_cell = grid[row + i][col + j]
+                    if 0 <= row + i < grid.shape[0] and 0 <= col + j < grid.shape[1]:
+                        neighbour_cell = grid[row + i][col + j]
+                    else:
+                        continue
                     # If the water level is a local minimum, then we want to flow water into the land.
 
                     if max(neighbours.values()) <= 0:
@@ -593,6 +596,7 @@ def move_to_neighbours(
                 return 0
             cell['water_direction'][idx] = 1
 
+
             n_s_index = all_neighbours[neighbour][0]  # i.e. row index
             w_e_index = all_neighbours[neighbour][1]  # i.e. col index
             temporary_cell = temp_grid[row][col]
@@ -627,8 +631,10 @@ def move_to_neighbours(
                     )
             # Determine the neighbour and create a temporary version of it to hold info while we move
             # to/from other cells
-
-            temporary_neighbour = temp_grid[row + n_s_index][col + w_e_index]
+            if 0 <= row + n_s_index < len(grid) and 0 <= col + w_e_index < len(grid[0]):
+                temporary_neighbour = temp_grid[row + n_s_index][col + w_e_index]
+            else:
+                raise ValueError('This shouldnt be happening - the code should have tried to do catchment outflow')
 
             # If cell is invalid, we aren't interested in flowing water
             if not grid[row + n_s_index][col + w_e_index]["valid_cell"] and not flow_into_land:
@@ -664,7 +670,6 @@ def move_to_neighbours(
                                                                     temporary_neighbour,
                                                                     row, col, n_s_index, w_e_index,
                                                                     water_to_move)
-
 
             elif cell["ice_lens"] and not cell["lake"]:
                 (
