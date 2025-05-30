@@ -11,6 +11,7 @@ main then calls the lateral movement functions, and handles saving the data,
 both in terms of the model state (also known as a "dump"), and the
 variables that the user wants to track over time.
 """
+from numba import njit
 
 import os
 import time
@@ -124,7 +125,7 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
     return (grid, met_start_idx, met_end_idx, first_iteration, reload_dump_success)
 
 @njit
-def get_snow_sum(met_data_grid, grid, snow_added):
+def get_snow_sum(met_data_grid, grid, met_start_idx, met_end_idx, snow_added):
     for i in range(len(met_data_grid)):
         for j in range(len(met_data_grid[0])):
             if grid["valid_cell"][i, j]:
@@ -134,6 +135,8 @@ def get_snow_sum(met_data_grid, grid, snow_added):
                     met_data_grid["snowfall"][met_start_idx:met_end_idx, i, j]
                 )
                 snow_added += np.sum(snow_array)
+    return snow_added
+
 
 def get_num_cores(model_setup):
     """
@@ -198,7 +201,7 @@ def update_met_conditions(
             model_setup.t_steps_per_day
         )
 
-        snow_added = get_snow_sum(met_data_grid, grid, snow_added)
+        snow_added = get_snow_sum(met_data_grid, grid, met_start_idx, met_end_idx, snow_added)
 
         for key in met_data.variables.keys():
             if key != "cell_latitude" and key != "cell_longitude":
