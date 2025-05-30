@@ -2,6 +2,7 @@ import numpy as np
 from monarchs.core.utils import find_nearest
 from monarchs.physics.percolation_functions import percolation, calc_saturation
 from numba.typed import Dict
+from numba import types, float64
 
 
 def update_water_level(cell):
@@ -71,8 +72,10 @@ def update_water_level(cell):
 
 
 def get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row):
-    neighbours = Dict()
-    # if not on top edge of domain - init N, possibly NE/NW
+    neighbours = Dict.empty(
+        key_type=types.unicode_type,
+        value_type=types.float64
+    )    # if not on top edge of domain - init N, possibly NE/NW
     if row > 0:
         # north neighbour = -1 in row index (i.e. when selecting rows, previous row
         # is the cell directly above)
