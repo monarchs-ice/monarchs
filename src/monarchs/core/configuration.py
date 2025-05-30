@@ -336,7 +336,7 @@ def jit_modules():
             if hasattr(function, "__wrapped__") or name.startswith("__"):
                 continue
             print(f"Applying Numba jit decorator to {module.__name__}.{name}")
-            jitted_function = njit(function, fastmath=fastmath)
+            jitted_function = njit(function, fastmath=fastmath, debug=False)
             setattr(module, name, jitted_function)
             # TODO - add full type hints to functions. We can then read these in and use these as the
             # TODO - expected types for the function and pre-compile it, which will enormously speed things
