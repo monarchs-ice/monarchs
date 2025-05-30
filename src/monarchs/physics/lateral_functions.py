@@ -641,7 +641,7 @@ def move_to_neighbours(
                     cell, temporary_cell, water_frac, split
                 )
                 if water_out > 0:
-                    print(f"Moved {water_out} units of water into the land")
+                    print(f"Moved {float(water_out)} units of water into the land")
                 if temporary_cell["lake_depth"] < 0:
                     print(
                         f"temporary_cell['lake_depth'] = {temporary_cell['lake_depth']}, col = {col}, row = {row}"

@@ -134,10 +134,10 @@ cores = 'all'  # number of processing cores to use. 'all' or False will tell MON
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
 All of these default to True.
 """
-catchment_outflow = False  # Determines if water on the edge of the catchment area will
+catchment_outflow = True  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
-flow_into_land = False  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
+flow_into_land = True  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
 lateral_movement_toggle = True
 lake_development_toggle = True
 lid_development_toggle = True
