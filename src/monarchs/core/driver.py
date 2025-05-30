@@ -126,14 +126,12 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
 
 @njit
 def get_snow_sum(met_data_grid, grid, met_start_idx, met_end_idx, snow_added):
-    for i in range(len(met_data_grid)):
-        for j in range(len(met_data_grid[0])):
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
             if grid["valid_cell"][i, j]:
-                snow_array = np.array(
-                    met_data_grid["snow_dens"][met_start_idx:met_end_idx, i, j]
-                ) * np.array(
-                    met_data_grid["snowfall"][met_start_idx:met_end_idx, i, j]
-                )
+                snow_array = met_data_grid["snow_dens"][met_start_idx:met_end_idx, i, j] * \
+                              met_data_grid["snowfall"][met_start_idx:met_end_idx, i, j]
+
                 snow_added += np.sum(snow_array)
     return snow_added
 
