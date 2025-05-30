@@ -172,7 +172,24 @@ def check_correct(cell):
             f"""monarchs.core.utils.check_correct: Sum of liquid and solid fraction must be less than 1 
 """
         )
+def check_grid_correctness(grid):
+    """
+    Wraps check_correct for each cell in the grid. We do this in a separate function so that we can wrap it
+    with numba.njit and speed things up.
 
+    Parameters
+    ----------
+    grid
+
+    Returns
+    -------
+
+    """
+    from numba import prange
+
+    for i in prange(len(grid)):
+        for j in range(len(grid[0])):
+            check_correct(grid[i][j])
 
 def calc_mass_sum(cell):
     """

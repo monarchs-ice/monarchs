@@ -21,7 +21,7 @@ from netCDF4 import Dataset
 from monarchs.core import configuration, initial_conditions, setup_met_data
 from monarchs.core.dump_model_state import dump_state, reload_from_dump
 from monarchs.core.model_output import setup_output, update_model_output
-from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_correct
+from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_grid_correctness
 from monarchs.met_data.metdata_class import initialise_met_data, get_spec
 from monarchs.physics import lateral_functions
 
@@ -454,9 +454,8 @@ def main(model_setup, grid):
                 catchment_outflow += current_iteration_outwater
         lat_end = time.perf_counter()
         start = time.perf_counter()
-        for i in range(len(grid)):
-            for j in range(len(grid[0])):
-                check_correct(grid[i][j])
+        check_grid_correctness(grid)
+
 
         print_model_end_of_timestep_messages(
             grid, day, total_mass_start, snow_added, catchment_outflow, tic, model_setup
