@@ -117,7 +117,7 @@ reload_from_dump = False  # Flag to determine whether to reload the state or not
 Computing and numerical parameters
 """
 use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
-parallel = False  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
+parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
 dask_scheduler = 'processes'  # dask scheduler to use. 'processes', 'distributed' or 'threads'.
@@ -138,7 +138,7 @@ catchment_outflow = False  # Determines if water on the edge of the catchment ar
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
 flow_into_land = False  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
-lateral_movement_toggle = False
+lateral_movement_toggle = True
 lake_development_toggle = True
 lid_development_toggle = True
 single_column_toggle = True

@@ -174,10 +174,10 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
         wind,
         x[0],
     )
-    print('Q = ', Q)
-    print('k[0] = ', k[0])
+    # print('Q = ', Q)
+    # print('k[0] = ', k[0])
     old_T_sfc = sfc_energy_lake_formation(T_air, Q, k, cell)
-    print('old_T_sfc = ', old_T_sfc)
+    # print('old_T_sfc = ', old_T_sfc)
     new_mass = calc_mass_sum(cell)
     assert abs(original_mass - new_mass) < 1.5 * 10**-7
     if old_T_sfc >= 273.15 and Q > 0:
