@@ -136,7 +136,7 @@ flow_speed_scaling = 1.0  # Scaling factor for flow speed, used to adjust the sp
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
 All of these default to True.
 """
-catchment_outflow = True  # Determines if water on the edge of the catchment area will
+catchment_outflow = False  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
 flow_into_land = True  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
