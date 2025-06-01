@@ -211,6 +211,7 @@ def create_defaults_for_missing_flags(model_setup):
     vardict["min_height_handler"] = "filter"
     vardict["max_height_handler"] = "filter"
     vardict["output_timestep"] = 1
+    vardict["dump_timestep"] = 1
     vardict["vars_to_save"] = (
         "firn_temperature",
         "Sfrac",

@@ -474,7 +474,7 @@ def main(model_setup, grid):
         )
         print(f'Updating met data time: {time.perf_counter() - start:.2f}s')
         start = time.perf_counter()
-        if model_setup.dump_data:
+        if model_setup.dump_data and day % model_setup.dump_timestep == 0:
             print(f"Dumping model state to {model_setup.dump_filepath}...")
             if model_setup.dump_format == "NETCDF4":
                 dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
@@ -484,7 +484,7 @@ def main(model_setup, grid):
                 outfile = open(model_setup.dump_filepath, "wb")
                 pickle.dump(grid, outfile)
                 outfile.close()
-        print(f'Dumping model state time: {time.perf_counter() - start:.2f}s')
+            print(f'Dumping model state time: {time.perf_counter() - start:.2f}s')
         start = time.perf_counter()
         if model_setup.save_output and day % model_setup.output_timestep == 0:
             output_counter += 1
