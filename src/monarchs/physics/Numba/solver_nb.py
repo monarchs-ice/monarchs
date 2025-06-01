@@ -248,7 +248,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     # for i in range(len(T)):
     #     if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
     #         T[i] = 273.15
-    T = np.around(T, decimals=8)
+    T = np.around(T, decimals=6)
     #print('Sol0 = ', sol[0])
     #print('T = ', T)
     return T, fvec, success, info
@@ -280,9 +280,8 @@ def lake_development_eqn(x, output, args):
     J = args[0]  # float, turbulent heat flux factor, equal to 1.907 E-5. [m s^-1 K^-(1/3)]
     Q = args[1]  # float, Surface energy flux [W m^-2]
     vert_grid_lake = args[2]  # float, number of vertical levels in the lake profile
-    lake_temperature = np.zeros(
-        int(vert_grid_lake)
-    )  # array_like, float, dimension(vert_grid_lake)
+    # array_like, float, dimension(vert_grid_lake)
+    lake_temperature = np.zeros(int(vert_grid_lake))
     # have to use a loop as Numba doesn't like slicing like args[3:] with cfuncs
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[3 + i]
@@ -423,13 +422,11 @@ def sfc_energy_lid(x, output, args):
     lid_depth = args[2]
     vert_grid_lid = args[3]
     sub_T = args[4]
-
     output[0] = (
-        -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
         - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
-
 
 sfc_energy_virtual_lid = cfunc(minpack_sig)(sfc_energy_virtual_lid)
 sfc_energy_lid = cfunc(minpack_sig)(sfc_energy_lid)

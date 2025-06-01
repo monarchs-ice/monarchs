@@ -8,7 +8,7 @@ usability, so that the different solvers can be generated according to the value
 """
 
 import numpy as np
-from scipy.optimize import root, fsolve, OptimizeResult
+from scipy.optimize import fsolve
 from monarchs.physics import heateqn
 
 
@@ -122,9 +122,10 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     # for i in range(len(T)):
     #     if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
     #         T[i] = 273.15
-    T = np.around(T, decimals=8)
+    T = np.around(T, decimals=6)
     #print('Sol0 = ', sol[0])
     #print('T = ', T)
+
     return T, infodict, ier, mesg
 
 
@@ -228,10 +229,11 @@ def lake_solver(x, args, formation=False):
     else:
         eqn = lake_development_eqn
     root, ier, mesg, infodict = fsolve(eqn, x, args=args, full_output=True)
+    root = np.around(root, decimals=8)
     return root, infodict, ier, mesg
 
 
-def sfc_energy_virtual_lid(x, args):
+def sfc_energy_virtual_lid(x, output, args):
     """
 
     Parameters
@@ -251,17 +253,17 @@ def sfc_energy_virtual_lid(x, args):
     lake_temperature = np.zeros(int(vert_grid_lake))
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[5 + i]
-    output = (
+    output[0] = (
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
         - k_v_lid
-        * (-lake_temperature[-2] + x[0])
+        * (-lake_temperature[2] + x[0])
         / (lake_depth / (vert_grid_lake / 2) + v_lid_depth)
     )
     return output
 
 
-def sfc_energy_lid(x, args):
+def sfc_energy_lid(x, output, args):
     """
 
     Parameters
@@ -279,7 +281,7 @@ def sfc_energy_lid(x, args):
     lid_depth = args[2]
     vert_grid_lid = args[3]
     sub_T = args[4]
-    output = (
+    output[0] = (
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
         - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
@@ -321,7 +323,8 @@ def lid_seb_solver(x, args, v_lid=False):
         eqn = sfc_energy_virtual_lid
     else:
         eqn = sfc_energy_lid
-    root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
+    output = np.array([0.0])
+    root, infodict, ier, mesg = fsolve(eqn, x, args=(output, args), full_output=True)
     return root, infodict, ier, mesg
 
 

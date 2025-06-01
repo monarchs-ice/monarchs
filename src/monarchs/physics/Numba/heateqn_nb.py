@@ -278,7 +278,7 @@ def heateqn_lid(x, output, args):
     # k = cell.Sfrac_lid * k_ice + (1 - cell.Sfrac_lid - cell.Lfrac_lid) * cell.k_air + cell.Lfrac_lid * cell.k_water
     cp_ice = 1000 * (0.00716 * lid_temperature + 0.138)
     cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cp_air
-    rho = 913
+    rho = 917
     kappa = k_lid / (cp * rho)  # thermal diffusivity [m^2 s^-1]
     epsilon = 0.98
     sigma = 5.670373 * (10**-8)

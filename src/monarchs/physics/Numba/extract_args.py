@@ -91,10 +91,10 @@ def extract_args(args):
     # we had to convert these to floats for the purposes of
     # reading them in as args needed a unified datatype - now recast them
     # to the original dtypes.
-    melt = bool(args[arrind + 6])
-    exposed_water = bool(args[arrind + 7])
-    lid = bool(args[arrind + 8])
-    lake = bool(args[arrind + 9])
+    melt = bool(np.round(args[arrind + 6]))
+    exposed_water = bool(np.round(args[arrind + 7]))
+    lid = bool(np.round(args[arrind + 8]))
+    lake = bool(np.round(args[arrind + 9]))
     lake_depth = args[arrind + 10]
     LW_in = args[arrind + 11]
     SW_in = args[arrind + 12]
@@ -210,10 +210,10 @@ def extract_args_lid(args):
     # we had to convert these to floats for the purposes of
     # reading them in as args needed a unified datatype - now recast them
     # to the original dtypes.
-    melt = bool(args[arrind + 5])
-    exposed_water = bool(args[arrind + 6])
-    lid = bool(args[arrind + 7])
-    lake = bool(args[arrind + 8])
+    melt = bool(np.round(args[arrind + 5]))
+    exposed_water = bool(np.round(args[arrind + 6]))
+    lid = bool(np.round(args[arrind + 7]))
+    lake = bool(np.round(args[arrind + 8]))
     lake_depth = args[arrind + 9]
     LW_in = args[arrind + 10]
     SW_in = args[arrind + 11]
