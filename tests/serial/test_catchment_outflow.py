@@ -24,7 +24,7 @@ def test_catchment_outflow():
                     ice_lens=False,
                     ice_lens_depth=999,
                     rho_water=1000,
-                    rho=np.ones(40) * 913,
+                    rho=np.ones(40) * 917,
                     Lfrac=np.zeros(40),
                     Sfrac=np.ones(40) * 0.5,
                     valid_cell=True,

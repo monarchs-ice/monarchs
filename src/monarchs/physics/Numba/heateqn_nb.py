@@ -24,7 +24,7 @@ from monarchs.physics.surface_fluxes import sfc_flux
 @njit
 def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
-    rho = sfrac * 913 + lfrac * 1000
+    rho = sfrac * 917 + lfrac * 1000
     k_ice = np.zeros(np.shape(T), dtype=np.float64)
     k_ice[T < 273.15] = 1000 * (
         2.24e-03
@@ -53,15 +53,15 @@ def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
 
 @njit
 def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
-    T_old = cell["firn_temperature"]
-    Sfrac = cell['Sfrac']
-    Lfrac = cell['Lfrac']
+    T_old = cell["firn_temperature"][N:]
+    Sfrac = cell['Sfrac'][N:]
+    Lfrac = cell['Lfrac'][N:]
     cp_air = cell['cp_air']
     cp_water = cell['cp_water']
     k_air = cell['k_air']
     k_water = cell['k_water']
     k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
-    total_len = len(T_old)
+    total_len = np.shape(cell['firn_temperature'])[0]  # Total number of layers in the firn column
     n = total_len - N  # Number of layers below the nonlinear region
 
     # Initialize diagonals and RHS
@@ -74,27 +74,33 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
 
     # First row: connect to top nonlinear region
     i = 0
-    alpha = factor * kappa[N + i]
+    alpha = factor * kappa[i]
     B[i] = 1 + 2 * alpha
     C[i] = -alpha
-    D[i] = T_old[N + i] + alpha * T_bc_top
+    D[i] = T_old[i] + alpha * T_bc_top
 
     # Interior rows
-    for i in range(1, n - 1):
-        alpha = factor * kappa[N + i]
+    # First row: connect to top nonlinear region
+    i = 0
+    alpha = factor * kappa[i]
+    B[i] = 1 + 2 * alpha
+    C[i] = -alpha
+    D[i] = T_old[i] + alpha * T_bc_top
+
+    # Interior rows
+    for i in np.arange(1, n - 1):
+        alpha = factor * kappa[i]
         A[i - 1] = -alpha
         B[i] = 1 + 2 * alpha
         C[i] = -alpha
-        D[i] = T_old[N + i]
+        D[i] = T_old[i]
 
     # Last row: Neumann BC using backward difference
     i = n - 1
-    alpha = factor * kappa[N + i]
+    alpha = factor * kappa[i]
     A[i - 1] = -alpha
     B[i] = 1 + alpha
-    D[i] = T_old[N + i]
-
-
+    D[i] = T_old[i]
     T_new = solve_tridiagonal(A, B, C, D)  
     #print(T_new)  
     return T_new
@@ -107,14 +113,11 @@ def solve_tridiagonal(a, b, c, d):
     c: super-diagonal (len n-1), A[i, i+1]
     d: RHS (len n)
     """
-    n = len(d)
-    ac = a
-    bc = b
-    cc = c
-    dc = d
+    n = np.shape(d)[0]
+    ac, bc, cc, dc = map(np.copy, (a, b, c, d))
 
     # Forward elimination
-    for i in range(1, n):
+    for i in np.arange(1, n):
         m = ac[i - 1] / bc[i - 1]
         bc[i] -= m * cc[i - 1]
         dc[i] -= m * dc[i - 1]
@@ -122,7 +125,7 @@ def solve_tridiagonal(a, b, c, d):
     # Back substitution
     x = np.zeros(n)
     x[-1] = dc[-1] / bc[-1]
-    for i in range(n - 2, -1, -1):
+    for i in np.arange(n - 2, -1, -1):
         x[i] = (dc[i] - cc[i] * x[i + 1]) / bc[i]
 
     return x
@@ -281,7 +284,7 @@ def heateqn_lid(x, output, args):
     rho = 917
     kappa = k_lid / (cp * rho)  # thermal diffusivity [m^2 s^-1]
     epsilon = 0.98
-    sigma = 5.670373 * (10**-8)
+    sigma = 5.670374 * (10**-8)
     Q = sfc_flux(
         melt,
         exposed_water,

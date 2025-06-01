@@ -8,7 +8,7 @@ usability, so that the different solvers can be generated according to the value
 """
 
 import numpy as np
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve, root
 from monarchs.physics import heateqn
 
 
@@ -62,29 +62,20 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         infodict = {}
         ier = 1
         mesg = "Fixed surface temperature"
-
+        T_tri = heateqn.propagate_temperature(cell, dz, dt, 273.15, N=1)
+        T = np.concatenate((np.array([273.15]), T_tri))
+        # print('T fixed sfc = ', T)
     else:
         N = 50
+        x = x[:N]
         # N = cell['vert_grid']
         # If N is set to equal vert_grid, then when we solve for the surface temperature, we effectively
         # solve for the whole column, so should just return that at the end of the function.
-        if N == cell['vert_grid']:
-            soldict = heateqn.find_surface_temperature(
-                cell,
-                LW_in,
-                SW_in,
-                T_air,
-                p_air,
-                T_dp,
-                wind,
-                dz,
-                dt,
-                solver_method=solver_method,
-                N=N
-            )
-            return soldict.x, soldict.success, soldict.message, soldict.success
 
-        soldict = heateqn.find_surface_temperature(
+        soldict = root(
+        heateqn.heateqn,
+        x,
+        args=(
             cell,
             LW_in,
             SW_in,
@@ -94,39 +85,66 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
             wind,
             dz,
             dt,
-            solver_method=solver_method,
-            N=N,
-        )
+         ),
+        method=solver_method,
+          )
+
+        if not soldict.success:
+            print(f"Root-finding for surface temperature failed - "
+                  f"returning original guess. row = {cell['row']}, col = {cell['column']}")
+
+        if N == cell['vert_grid']:
+            return soldict.x, soldict.success, soldict.message, soldict.success
 
         sol = soldict.x
         ier = soldict.success
         mesg = soldict.message
         infodict = soldict.success
-        sol = np.around(sol, decimals=8)
         #print(sol)
-    # Now use tridiagonal solver to solve the heat equation once we have the surface temp
-
-    if fixed_sfc:
-        T = heateqn.propagate_temperature(cell, dz, dt, sol[-1], N=1)
-        T = np.concatenate((sol, T))
-        #print('T fixed sfc = ', T)
-    else:
         # Take our root-finding algorithm output (from first N layers),
         # use it as the top boundary condition to the tridiagonal solver,
         # then concatenate the two
+        # Now use tridiagonal solver to solve the heat equation once we have the surface temp
+
         T_tri = heateqn.propagate_temperature(cell, dz, dt, sol[-1], N=N)
         T = np.concatenate((sol[:], T_tri))
-        #print('T = ', T)
+        # print('T free = ', T)
 
-    # print(f'Temperature profile {fs} = ', T[:10])
-    # for i in range(len(T)):
-    #     if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
-    #         T[i] = 273.15
-    T = np.around(T, decimals=6)
+    T = np.around(T, decimals=8)
     #print('Sol0 = ', sol[0])
     #print('T = ', T)
 
     return T, infodict, ier, mesg
+
+def lake_formation_eqn(x, args):
+    """
+    Scipy-compatible form of the lake formation version of the surface temperature equation.
+    Called in get_lake_solver.
+
+    Parameters
+    ----------
+    x : array_like, float, dimension(vert_grid_lake)
+        Initial estimate of the lake temperature. [K]
+    args : array_like
+        Array of input arguments to be extracted into the relevant variables
+        (firn_depth, vert_grid, Q, k, and T1).
+
+    Returns
+    -------
+    output : float
+        Estimate of the surface lake temperature [K].
+    """
+    firn_depth = args[0]
+    vert_grid = args[1]
+    Q = args[2]
+    k = args[3]
+    T1 = args[4]
+    output = np.array([
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        - k * (-T1 + x[0]) / (firn_depth / vert_grid)]
+    )
+    return output
 
 
 def lake_development_eqn(x, args):
@@ -155,43 +173,13 @@ def lake_development_eqn(x, args):
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[3 + i]
     T_core = lake_temperature[int(vert_grid_lake / 2)]
-    output = (
+    output = np.array([
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
-        + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
+        + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)]
     )
     return output
 
-
-def lake_formation_eqn(x, args):
-    """
-    Scipy-compatible form of the lake formation version of the surface temperature equation.
-    Called in get_lake_solver.
-
-    Parameters
-    ----------
-    x : array_like, float, dimension(vert_grid_lake)
-        Initial estimate of the lake temperature. [K]
-    args : array_like
-        Array of input arguments to be extracted into the relevant variables
-        (firn_depth, vert_grid, Q, k, and T1).
-
-    Returns
-    -------
-    output : float
-        Estimate of the surface lake temperature [K].
-    """
-    firn_depth = args[0]
-    vert_grid = args[1]
-    Q = args[2]
-    k = args[3]
-    T1 = args[4]
-    output = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
-        + Q
-        - k * (-T1 + x[0]) / (firn_depth / vert_grid)
-    )
-    return output
 
 
 def lake_solver(x, args, formation=False):
@@ -233,7 +221,7 @@ def lake_solver(x, args, formation=False):
     return root, infodict, ier, mesg
 
 
-def sfc_energy_virtual_lid(x, output, args):
+def sfc_energy_virtual_lid(x,  args):
     """
 
     Parameters
@@ -251,19 +239,25 @@ def sfc_energy_virtual_lid(x, output, args):
     vert_grid_lake = args[3]
     v_lid_depth = args[4]
     lake_temperature = np.zeros(int(vert_grid_lake))
-    for i in range(len(lake_temperature)):
+    # hacky way to assign lake_temperature as the cfunc doesn't like slicing normally
+    for i in np.arange(len(lake_temperature)):
         lake_temperature[i] = args[5 + i]
+
+    # set output[0] rather than just output as solution doesn't converge otherwise as it expects
+    # an array
+    output = np.zeros(1)
     output[0] = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
         + Q
         - k_v_lid
-        * (-lake_temperature[2] + x[0])
-        / (lake_depth / (vert_grid_lake / 2) + v_lid_depth)
+        * (-lake_temperature[1] + x[0])
+        / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
     )
+
     return output
 
 
-def sfc_energy_lid(x, output, args):
+def sfc_energy_lid(x, args):
     """
 
     Parameters
@@ -281,6 +275,7 @@ def sfc_energy_lid(x, output, args):
     lid_depth = args[2]
     vert_grid_lid = args[3]
     sub_T = args[4]
+    output = np.zeros(1)
     output[0] = (
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
@@ -323,8 +318,8 @@ def lid_seb_solver(x, args, v_lid=False):
         eqn = sfc_energy_virtual_lid
     else:
         eqn = sfc_energy_lid
-    output = np.array([0.0])
-    root, infodict, ier, mesg = fsolve(eqn, x, args=(output, args), full_output=True)
+    root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
+    root = np.around(root, decimals=8)
     return root, infodict, ier, mesg
 
 
@@ -367,4 +362,5 @@ def lid_heateqn_solver(x, args):
     k_lid = args[-1]
     args = (cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k_lid, Sfrac_lid)
     root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
+    root = np.around(root, decimals=8)
     return root, infodict, ier, mesg

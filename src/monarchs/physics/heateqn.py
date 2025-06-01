@@ -8,35 +8,36 @@ from scipy.linalg import solve_banded
 from scipy.optimize import root
 import numpy.testing as npt
 
-def get_k_and_kappa(cell):
+
+def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
-    rho = cell["Sfrac"] * 913 + cell["Lfrac"] * 1000
-    k_ice = np.zeros(np.shape(cell["firn_temperature"]), dtype=np.float64)
-    k_ice[cell["firn_temperature"] < 273.15] = 1000 * (
+    rho = sfrac * 917 + lfrac * 1000
+    k_ice = np.zeros(np.shape(T), dtype=np.float64)
+    k_ice[T < 273.15] = 1000 * (
         2.24e-03
         + 5.975e-06
         * (
-            (273.15 - cell["firn_temperature"][cell["firn_temperature"] < 273.15])
+            (273.15 - T[T < 273.15])
             ** 1.156
         )
     )
-    k_ice[cell["firn_temperature"] >= 273.15] = 2.24
+    k_ice[T >= 273.15] = 2.24
     k = (
-        cell["Sfrac"] * k_ice
-        + (1 - cell["Sfrac"] - cell["Lfrac"]) * cell["k_air"]
-        + cell["Lfrac"] * cell["k_water"]
+        sfrac * k_ice
+        + (1 - sfrac - lfrac) * k_air
+        + lfrac * k_water
     )
-    cp_ice = 7.16 * cell["firn_temperature"] + 138
+    cp_ice = 7.16 * T + 138
     cp = (
-        cell["Sfrac"] * cp_ice
-        + (1 - cell["Sfrac"] - cell["Lfrac"]) * cell["cp_air"]
-        + cell["Lfrac"] * cell["cp_water"]
+        sfrac * cp_ice
+        + (1 - sfrac - lfrac) * cp_air
+        + lfrac * cp_water
     )
     kappa = k / (cp * rho)
     return k, kappa
 
 
-def surface_temperature_residual(
+def heateqn(
     x,
     cell,
     LW_in,
@@ -66,7 +67,15 @@ def surface_temperature_residual(
         wind,
         x[0],
     )
-    k, kappa = get_k_and_kappa(cell)
+    N = len(x)
+    T_old = cell["firn_temperature"][:N]
+    Sfrac = cell['Sfrac'][:N]
+    Lfrac = cell['Lfrac'][:N]
+    cp_air = cell['cp_air']
+    cp_water = cell['cp_water']
+    k_air = cell['k_air']
+    k_water = cell['k_water']
+    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
     residual = np.zeros_like(x)
     # Surface temperature equation (residual)
     residual[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
@@ -88,66 +97,19 @@ def surface_temperature_residual(
     return residual
 
 
-def find_surface_temperature(
-    cell, LW_in, SW_in, T_air, p_air, T_dp, wind, dz, dt, solver_method="hybr", N=10
-):
-    """
-    The system of equations being solved (the heat equation with a variable boundary condition based on the
-    surface fluxes) is highly nonlinear, given the dependence of the surface fluxes to the surface temperature
-    (which is being solved for). This approach uses a root-finding algorithm to iteratively calculate the
-    temperature. Doing so for the whole firn column is extremely expensive however; a compromise solution is
-    to solve for the first N layers of the firn column using this optimisation method, and then use
-    a linear solver to propagate the temperature down the column.
 
-    Parameters
-    ----------
-    cell
-    LW_in
-    SW_in
-    T_air
-    p_air
-    T_dp
-    wind
-    dz
-    dt
-    solver_method
-    N
-
-    Returns
-    -------
-
-    """
-    initial_guess = cell["firn_temperature"][:N]
-    # Use root-finding to solve for surface temperature
-    result = root(
-        surface_temperature_residual,
-        initial_guess,
-        args=(
-            cell,
-            LW_in,
-            SW_in,
-            T_air,
-            p_air,
-            T_dp,
-            wind,
-            dz,
-            dt,
-        ),
-        method=solver_method,
-    )
-
-    if not result.success:
-        print(f"Root-finding for surface temperature failed - "
-              f"returning original guess. row = {cell['row']}, col = {cell['column']}")
-
-    soldict = result  # Surface temperature solution
-    return soldict
 
 def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
-    T_old = cell["firn_temperature"]
-    k, kappa = get_k_and_kappa(cell)
+    T_old = cell["firn_temperature"][N:]
+    Sfrac = cell['Sfrac'][N:]
+    Lfrac = cell['Lfrac'][N:]
+    cp_air = cell['cp_air']
+    cp_water = cell['cp_water']
+    k_air = cell['k_air']
+    k_water = cell['k_water']
+    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
 
-    total_len = len(T_old)
+    total_len = np.shape(cell['firn_temperature'])[0]  # Total number of layers in the firn column
     n = total_len - N  # Number of layers below the nonlinear region
 
     # Initialize diagonals and RHS
@@ -160,25 +122,25 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
 
     # First row: connect to top nonlinear region
     i = 0
-    alpha = factor * kappa[N + i]
+    alpha = factor * kappa[i]
     B[i] = 1 + 2 * alpha
     C[i] = -alpha
-    D[i] = T_old[N + i] + alpha * T_bc_top
+    D[i] = T_old[i] + alpha * T_bc_top
 
     # Interior rows
-    for i in range(1, n - 1):
-        alpha = factor * kappa[N + i]
+    for i in np.arange(1, n - 1):
+        alpha = factor * kappa[i]
         A[i - 1] = -alpha
         B[i] = 1 + 2 * alpha
         C[i] = -alpha
-        D[i] = T_old[N + i]
+        D[i] = T_old[i]
 
     # Last row: Neumann BC using backward difference
     i = n - 1
-    alpha = factor * kappa[N + i]
+    alpha = factor * kappa[i]
     A[i - 1] = -alpha
     B[i] = 1 + alpha
-    D[i] = T_old[N + i]
+    D[i] = T_old[i]
 
     # Assemble banded matrix
     # ab = np.zeros((3, n))
@@ -197,12 +159,9 @@ def solve_tridiagonal(a, b, c, d):
     c: super-diagonal (len n-1), A[i, i+1]
     d: RHS (len n)
     """
-    n = len(d)
+    n = np.shape(d)[0]
     # Copy to avoid modifying input arrays
-    ac = a
-    bc = b
-    cc = c
-    dc = d
+    ac, bc, cc, dc = map(np.copy, (a, b, c, d))
     # Forward elimination
     for i in range(1, n):
         m = ac[i - 1] / bc[i - 1]
@@ -260,7 +219,7 @@ def heateqn_lid(
     cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cell["cp_air"]
     kappa = k_lid / (cp * cell["rho_ice"])
     epsilon = 0.98
-    sigma = 5.670373 * 10**-8
+    sigma = 5.670374 * 10**-8
     Q = sfc_flux(
         cell["melt"],
         cell["exposed_water"],

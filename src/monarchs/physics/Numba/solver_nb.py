@@ -218,40 +218,68 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         fixed_sfc=fixed_sfc,
         N=N
     )
-
-    if not fixed_sfc:
-        sol, fvec, success, info = hybrd(heq, x, args)
-        sol = np.around(sol, decimals=8)
-
-        #print(sol)
-    else:
-        sol = np.array([273.15])
-        fvec = np.array([1.0]) 
-        success = 1
-        info = 1
-
     
     # we only return root in the model (hence why in driver.py we index the function by [0],
     # but the other info is useful for testing so can be used if calling solver directly
-
     if fixed_sfc:
+        sol = np.array([273.15])
+        fvec = np.array([1.0])
+        success = 1
+        info = 1
         T_fixed = hnb.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T = np.concatenate((np.array([273.15]), T_fixed))
-        #print('T fixed_sfc = ', T)
+        # print('T fixed sfc = ', T)
     else:
+        sol, fvec, success, info = hybrd(heq, x, args)
+        #sol = np.around(sol, decimals=8)
+
         # Take our root-finding algorithm output (from first N layers),
         # use it as the top boundary condition to the tridiagonal solver,
         # then concatenate the two
         T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
         T = np.concatenate((sol[:], T_tri))
-        #print('T = ', T)
-    # for i in range(len(T)):
-    #     if abs(T[i] - 273.15) < 1e-6:  # Testing for floating point divergence 
-    #         T[i] = 273.15
-    T = np.around(T, decimals=6)
+        # print('T free = ', T)
+
+    T = np.around(T, decimals=8)
     #print('Sol0 = ', sol[0])
     #print('T = ', T)
     return T, fvec, success, info
+
+
+
+@jit(nopython=True, fastmath=False)
+def lake_formation_eqn(x, output, args):
+    """
+    Numba-compatible form of the lake formation version of the surface temperature equation.
+    Called in get_lake_solver.
+
+    Parameters
+    ----------
+    x : array_like, float, dimension(vert_grid_lake)
+        Initial estimate of the lake temperature. [K]
+    output : array_like, float, dimension(vert_grid_lake)
+        Output array containing the lake temperature. We only actually return the first element of this array.
+        This may be possible to set to float, along with x, but Numba works in mysterious ways and this seems
+        to compile and work.
+    args : array_like
+        Array of input arguments to be extracted into the relevant variables
+        (firn_depth, vert_grid, Q, k, and T1).
+
+    Returns
+    -------
+    None.
+    """
+    firn_depth = args[0]
+    vert_grid = args[1]
+    Q = args[2]
+    k = args[3]
+    T1 = args[4]
+    # set output[0] rather than just output else we will just return our initial guess.
+    output[0] = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        - k * (-T1 + x[0]) / (firn_depth / vert_grid)
+    )
 
 
 @jit(nopython=True, fastmath=False)
@@ -294,41 +322,6 @@ def lake_development_eqn(x, output, args):
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
         + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
-    )
-
-
-@jit(nopython=True, fastmath=False)
-def lake_formation_eqn(x, output, args):
-    """
-    Numba-compatible form of the lake formation version of the surface temperature equation.
-    Called in get_lake_solver.
-
-    Parameters
-    ----------
-    x : array_like, float, dimension(vert_grid_lake)
-        Initial estimate of the lake temperature. [K]
-    output : array_like, float, dimension(vert_grid_lake)
-        Output array containing the lake temperature. We only actually return the first element of this array.
-        This may be possible to set to float, along with x, but Numba works in mysterious ways and this seems
-        to compile and work.
-    args : array_like
-        Array of input arguments to be extracted into the relevant variables
-        (firn_depth, vert_grid, Q, k, and T1).
-
-    Returns
-    -------
-    None.
-    """
-    firn_depth = args[0]
-    vert_grid = args[1]
-    Q = args[2]
-    k = args[3]
-    T1 = args[4]
-    # set output[0] rather than just output else we will just return our initial guess.
-    output[0] = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
-        + Q
-        - k * (-T1 + x[0]) / (firn_depth / vert_grid)
     )
 
 
@@ -375,7 +368,7 @@ def lake_solver(x, args, formation=False):
         eqn = dev_eqnaddress
 
     root, fvec, success, info = hybrd(eqn, x, args)
-
+    root = np.around(root, decimals=8)
     return root, fvec, success, info
 
 
@@ -388,18 +381,19 @@ def sfc_energy_virtual_lid(x, output, args):
     v_lid_depth = args[4]
     lake_temperature = np.zeros(int(vert_grid_lake))
     # hacky way to assign lake_temperature as the cfunc doesn't like slicing normally
-    for i in range(len(lake_temperature)):
+    for i in np.arange(len(lake_temperature)):
         lake_temperature[i] = args[5 + i]
 
-    # set output[0] rather than just output as solution doesn't converge otherwise
-    # for whatever reason.
+    # set output[0] rather than just output as solution doesn't converge otherwise as it expects
+    # an array
     output[0] = (
         -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
         + Q
         - k_v_lid
-        * (-lake_temperature[2] + x[0])
+        * (-lake_temperature[1] + x[0])
         / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
     )
+
 
 
 @jit(nopython=True, fastmath=False)
@@ -487,6 +481,7 @@ def lid_seb_solver(x, args, v_lid=False):
 
     root, fvec, success, info = hybrd(eqn, x, args)
 
+    root = np.around(root, decimals=8)
     return root, fvec, success, info
 
 
@@ -564,4 +559,5 @@ def lid_heateqn_solver(x, args):
     # print('args shape = ', np.shape(args))
     root, fvec, success, info = hybrd(eqn, x, args)
 
+    root = np.around(root, decimals=8)
     return root, fvec, success, info

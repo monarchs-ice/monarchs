@@ -76,7 +76,7 @@ def firn_column(
     perc_time_toggle = toggle_dict["perc_time_toggle"]
     heateqn_solver = 'hybr'
     x = cell["firn_temperature"]
-    x = np.clip(x, 0, 273.15)
+    #x = np.clip(x, 0, 273.15)
     args = [cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind]
     root, fvec, success, info = solver.firn_heateqn_solver(
         x, args, fixed_sfc=False, solver_method=heateqn_solver

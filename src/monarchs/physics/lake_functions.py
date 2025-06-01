@@ -24,10 +24,10 @@ def sfc_energy_lake(J, Q, cell):
     lake_surf_temp : float
         Surface temperature of the lake. [K]
     """
-    x = np.array(cell["lake_temperature"][int(cell["vert_grid_lake"] / 2)])
+    x = np.array([cell["lake_temperature"][int(cell["vert_grid_lake"] / 2)]])
     args = np.array([J, Q, cell["vert_grid_lake"]])
     args = np.append(args, cell["lake_temperature"])
-    lake_surf_temp = solver.lake_solver(x, args)[0]
+    lake_surf_temp = solver.lake_solver(x, args)[0][0]
     return lake_surf_temp
 
 
@@ -58,7 +58,7 @@ def sfc_energy_lake_formation(T_air, Q, k, cell):
     args = np.array(
         [cell["firn_depth"], cell["vert_grid"], Q, k[0], cell["firn_temperature"][1]]
     )
-    old_surf_temp = solver.lake_solver(x, args, formation=True)[0]
+    old_surf_temp = solver.lake_solver(x, args, formation=True)[0][0]
     return old_surf_temp
 
 
@@ -174,7 +174,10 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
         wind,
         x[0],
     )
+    print('Q = ', Q)
+    print('k[0] = ', k[0])
     old_T_sfc = sfc_energy_lake_formation(T_air, Q, k, cell)
+    print('old_T_sfc = ', old_T_sfc)
     new_mass = calc_mass_sum(cell)
     assert abs(original_mass - new_mass) < 1.5 * 10**-7
     if old_T_sfc >= 273.15 and Q > 0:
@@ -252,8 +255,9 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_di
             wind,
             x[0],
         )
-
+        print('Q = ', Q)
         cell["lake_temperature"][0] = sfc_energy_lake(J, Q, cell)
+        print('Lake temp after sfc energy = ', cell["lake_temperature"][0])
         if cell["lake_temperature"][0] < 273.15:
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15

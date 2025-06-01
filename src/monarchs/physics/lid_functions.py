@@ -44,6 +44,7 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     """
     original_mass = calc_mass_sum(cell)
     x = np.array([cell["virtual_lid_temperature"]])
+
     Q = sfc_flux(
         cell["melt"],
         cell["exposed_water"],
@@ -66,13 +67,21 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         [Q, k_v_lid, cell["lake_depth"], cell["vert_grid_lake"], cell["v_lid_depth"]]
     )
     args = np.append(args, cell["lake_temperature"])
+
+    # want only root, not fvec etc, and root is an array of one element so extract out first elem
     cell["virtual_lid_temperature"] = solver.lid_seb_solver(x, args, v_lid=True)[0][0]
+    #print('Virtual lid temperature after seb = ', cell["virtual_lid_temperature"])
     kdTdz = (
         (-cell["lake_temperature"][1] + cell["virtual_lid_temperature"])
         * abs(cell["k_water"])
         / (cell["lake_depth"] / (cell["vert_grid_lake"] / 2) + cell["v_lid_depth"])
     )
+
     new_boundary_change = -kdTdz / (cell["L_ice"] * cell["rho_ice"]) * dt
+    # print('v_lid_temperature = ', cell["virtual_lid_temperature"])
+    # print('New boundary change = ', new_boundary_change)
+    # print('Lake depth = ', cell["lake_depth"])
+    # print('Virtual lid depth = ', cell["v_lid_depth"])
     if cell["virtual_lid_temperature"] < 273.15:
         if new_boundary_change > 0:
             if new_boundary_change < cell["lake_depth"]:
@@ -107,6 +116,8 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             / (cell["lake_depth"] / (cell["vert_grid_lake"] / 2 + cell["v_lid_depth"]))
         )
         new_boundary_change = (Q - kdTdz) / (cell["L_ice"] * cell["rho_ice"]) * dt
+
+
         if new_boundary_change > 0:
             if new_boundary_change > cell["v_lid_depth"]:
                 cell["lake_depth"] += (
@@ -121,6 +132,7 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
                 )
                 cell["v_lid_depth"] = cell["v_lid_depth"] - new_boundary_change
                 cell["total_melt"] = cell["total_melt"] + new_boundary_change
+
         if cell["v_lid_depth"] <= 0:
             cell["v_lid"] = True
             cell["v_lid_depth"] = 0
@@ -274,9 +286,12 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         [Q, k_lid, cell["lid_depth"], cell["vert_grid_lid"], cell["lid_temperature"][0]]
     )
     x = np.array([float(T_air)])
+
     cell["lid_temperature"][0] = solver.lid_seb_solver(x, args)[0][0]
+
     if cell["lid_temperature"][0] > 273.15:
         calc_surface_melt(cell, dt, Q)
+
     cell["lid_temperature"] = np.clip(cell["lid_temperature"], 0, 273.15)
     kdTdz = (
         (-cell["lake_temperature"][2] + cell["lid_temperature"][-2])
@@ -355,121 +370,113 @@ def interpolate_profiles(cell, new_depth_grid, old_depth_grid):
 
 
 def combine_lid_firn(cell):
-    # """
-    # Combines the lid and firn profiles into a single column when the lake is completely frozen.
-    # This avoids overwriting fixed-length arrays by creating new arrays for the combined profiles.
-    #
-    # Parameters
-    # ----------
-    # cell : core.iceshelf_class.IceShelf
-    #     Instance of IceShelf within the model grid that is to have the lid and firn profiles combined.
-    #
-    # Returns
-    # -------
-    # None (amends cell inplace)
-    # """
-    # old_sfrac = np.copy(cell["Sfrac"])
-    # old_lfrac = np.copy(cell["Lfrac"])
-    # original_mass = calc_mass_sum(cell)
+    """
+    Combines the lid and firn profiles into a single column when the lake is completely frozen.
+    This avoids overwriting fixed-length arrays by creating new arrays for the combined profiles.
+
+    Parameters
+    ----------
+    cell : core.iceshelf_class.IceShelf
+        Instance of IceShelf within the model grid that is to have the lid and firn profiles combined.
+
+    Returns
+    -------
+    None (amends cell inplace)
+    """
+    old_sfrac = np.copy(cell["Sfrac"])
+    old_lfrac = np.copy(cell["Lfrac"])
+    original_mass = calc_mass_sum(cell)
     # print(
     #     f"Combining lid and firn to create one profile..., column = {cell['column']}, row = {cell['row']}"
     # )
-    #
-    # # Create new arrays for the combined profiles
-    # new_vert_grid = cell["vert_grid"]
-    # new_depth_grid = np.linspace(
-    #     0, cell["firn_depth"] + cell["lid_depth"], new_vert_grid
-    # )
-    #
-    # # We need to interpolate in such a way that we conserve mass.
-    #
-    #
-    # # Interpolate lid and firn properties to the new depth grid
-    # old_depth_grid = np.append(
-    #     np.linspace(0, cell["lid_depth"], cell["vert_grid_lid"]),
-    #     np.linspace(
-    #         cell["lid_depth"], cell["firn_depth"] + cell["lid_depth"], cell["vert_grid"]
-    #     ),
-    # )
-    #
-    # new_firn_temperature = np.interp(
-    #     new_depth_grid,
-    #     old_depth_grid,
-    #     np.append(cell["lid_temperature"], cell["firn_temperature"]),
-    # )
-    # new_rho = np.interp(
-    #     new_depth_grid, old_depth_grid, np.append(cell["rho_lid"], cell["rho"])
-    # )
-    #
-    # column_dz = cell['vertical_profile']
-    # lid_dz = np.linspace(0, cell['lid_depth'], cell['vert_grid_lid'])
-    # dz_full = np.concatenate((lid_dz, column_dz))
-    # z_edges_full = np.concatenate(([0], np.cumsum(dz_full)))
-    #
-    # # New target vertical grid:
-    # dz_new = np.full(cell['vert_grid'], np.sum(dz_full) / cell['vert_grid'])
-    # z_edges_new = np.concatenate(([0], np.cumsum(dz_new)))
-    #
-    # # Solid and liquid fractions on old grid
-    # sfrac_full = np.concatenate((np.ones(cell['vert_grid_lid']), cell['Sfrac']))  # lid at top
-    # lfrac_full = np.concatenate((np.zeros(cell['vert_grid_lid']), cell['Lfrac']))
-    # # sfrac_new = mass_conserving_profile(cell, var='Sfrac')
-    # # lfrac_new = mass_conserving_profile(cell, var='Lfrac')
-    # sfrac_new = mass_conserving_profile(cell, var='Sfrac')
-    # lfrac_new = mass_conserving_profile(cell, var='Lfrac')
-    #
-    #
-    # new_saturation = np.round(
-    #     np.interp(
-    #         new_depth_grid,
-    #         old_depth_grid,
-    #         np.append(np.ones(cell["vert_grid_lid"]), cell["saturation"]),
-    #     )
-    # )
-    # new_meltflag = np.round(
-    #     np.interp(
-    #         new_depth_grid,
-    #         old_depth_grid,
-    #         np.append(np.zeros(cell["vert_grid_lid"]), cell["meltflag"]),
-    #     )
-    # )
-    #
-    #
-    # # Update cell properties with the new combined profiles
-    # cell["firn_temperature"] = new_firn_temperature
-    # cell["rho"] = new_rho
-    # cell["Lfrac"] = lfrac_new
-    # cell["Sfrac"] = sfrac_new
-    # cell["saturation"] = new_saturation
-    # cell["meltflag"] = new_meltflag
-    # cell["firn_depth"] += cell["lid_depth"]
-    # cell["vertical_profile"] = new_depth_grid
-    #
-    # # Reset lake/lid-related properties
-    # cell["lid_depth"] = 0
-    # cell["v_lid"] = False
-    # cell["lid"] = False
-    # cell["lake"] = False
-    # cell["lake_depth"] = 0.0
-    # cell["ice_lens"] = True
-    # cell["ice_lens_depth"] = 0
-    # cell["exposed_water"] = False
-    # cell["v_lid_depth"] = 0
-    # cell["has_had_lid"] = False
-    # cell["water"][0] = 0
-    # cell["melt"] = False
-    # cell["reset_combine"] = True
-    # cell["virtual_lid_temperature"] = 273.15
-    # cell["lid_temperature"] = np.ones(cell["vert_grid_lid"]) * 273.15
-    # cell["lake_temperature"] = np.ones(cell["vert_grid_lake"]) * 273.15
-    #
-    # # Validate mass conservation
-    # new_mass = calc_mass_sum(cell)
-    # try:
-    #     assert abs(new_mass - original_mass) < original_mass / 1000
-    # except Exception:
-    #     print(f"new mass = {new_mass}, original mass = {original_mass}")
-    #     raise Exception
+    cell['lid_depth'] = cell['v_lid_depth'] + cell['lid_depth'] + cell['lake_depth'] * cell['rho_water'] / cell['rho_ice']
+
+    # Create new arrays for the combined profiles
+    new_vert_grid = cell["vert_grid"]
+    new_depth_grid = np.linspace(
+        0, cell["firn_depth"] + cell["lid_depth"], new_vert_grid
+    )
+
+    # Add lake depth to lid depth. If the lake has frozen, then this will ensure that mass is conserved.
+    # We need to interpolate in such a way that we conserve mass.
+
+
+    # Interpolate lid and firn properties to the new depth grid
+    old_depth_grid = np.append(
+        np.linspace(0, cell["lid_depth"], cell["vert_grid_lid"]),
+        np.linspace(
+            cell["lid_depth"], cell["firn_depth"] + cell["lid_depth"] + cell['lake_depth'], cell["vert_grid"]
+        ),
+    )
+
+    new_firn_temperature = np.interp(
+        new_depth_grid,
+        old_depth_grid,
+        np.append(cell["lid_temperature"],  cell["firn_temperature"]),
+    )
+    new_rho = np.interp(
+        new_depth_grid, old_depth_grid, np.append(cell["rho_lid"], cell["rho"])
+    )
+
+    column_dz = cell['vertical_profile']
+    lid_dz = np.linspace(0, cell['lid_depth'], cell['vert_grid_lid'])
+    dz_full = np.concatenate((lid_dz, column_dz))
+
+    sfrac_new = mass_conserving_profile(cell, var='Sfrac')
+    lfrac_new = mass_conserving_profile(cell, var='Lfrac')
+
+
+    new_saturation = np.round(
+        np.interp(
+            new_depth_grid,
+            old_depth_grid,
+            np.append(np.ones(cell["vert_grid_lid"]), cell["saturation"]),
+        )
+    )
+    new_meltflag = np.round(
+        np.interp(
+            new_depth_grid,
+            old_depth_grid,
+            np.append(np.zeros(cell["vert_grid_lid"]), cell["meltflag"]),
+        )
+    )
+
+
+    # Update cell properties with the new combined profiles
+    cell["firn_temperature"] = new_firn_temperature
+    cell["rho"] = new_rho
+    cell["Lfrac"] = lfrac_new
+    cell["Sfrac"] = sfrac_new
+    cell["saturation"] = new_saturation
+    cell["meltflag"] = new_meltflag
+    cell["firn_depth"] += cell["lid_depth"]
+    cell["vertical_profile"] = new_depth_grid
+
+    # Reset lake/lid-related properties
+    cell["lid_depth"] = 0
+    cell["v_lid"] = False
+    cell["lid"] = False
+    cell["lake"] = False
+    cell["lake_depth"] = 0.0
+    cell["ice_lens"] = True
+    cell["ice_lens_depth"] = 0
+    cell["exposed_water"] = False
+    cell["v_lid_depth"] = 0
+    cell["has_had_lid"] = False
+    cell["water"][0] = 0
+    cell["melt"] = False
+    cell["reset_combine"] = True
+    cell["virtual_lid_temperature"] = 273.15
+    cell["lid_temperature"] = np.ones(cell["vert_grid_lid"]) * 273.15
+    cell["lake_temperature"] = np.ones(cell["vert_grid_lake"]) * 273.15
+
+    # Validate mass conservation
+    new_mass = calc_mass_sum(cell)
+    try:
+        assert abs(new_mass - original_mass) < original_mass / 1000
+    except Exception:
+        print(f"new mass = {new_mass}, original mass = {original_mass}")
+        raise Exception
     pass
 
 
@@ -480,16 +487,10 @@ def mass_conserving_profile(cell, var='Sfrac'):
     if var == 'Sfrac':
         var_lid = np.ones(cell['vert_grid_lid'])
         rho = cell['rho_ice']
-        mon_mass = np.sum(
-            cell["Sfrac"] * cell["rho_ice"] * (cell["firn_depth"] / cell["vert_grid"])
-        ) + cell["lid_depth"] * cell["rho_ice"] + cell["v_lid_depth"] * cell["rho_ice"]
 
     else:
         var_lid = np.zeros(cell['vert_grid_lid'])
         rho = cell['rho_water']
-        mon_mass = np.sum(
-            cell["Lfrac"] * cell["rho_water"] * (cell["firn_depth"] / cell["vert_grid"])
-        ) + cell["lake_depth"] * cell["rho_water"]
 
     column_dz = np.full(cell['vert_grid'], cell['firn_depth'] / cell['vert_grid'])
     var_column = cell[var]
@@ -505,7 +506,6 @@ def mass_conserving_profile(cell, var='Sfrac'):
     # Total depth
     total_depth = np.sum(dz_full)
 
-    # New grid: 500 layers
     num_layers_new = cell['vert_grid']
     dz_new = np.full(num_layers_new, total_depth / num_layers_new)
     z_edges_new = np.linspace(0, total_depth, num_layers_new + 1)
