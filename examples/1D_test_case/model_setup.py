@@ -52,10 +52,10 @@ met_output_filepath = "output/met_data_1d_testcase.nc"
 # e.g. np.broadcast_to(met_data["LW_surf"], (row_amount, col_amount, len(met_data["LW_surf"])))
 met_data = {}
 met_data["LW_surf"] = np.append(
-    800 * np.ones(800), 0 * np.ones(1720)
+    800 * np.ones(800), 50 * np.ones(1720)
 )  # Incoming longwave radiation. [W m^-2].
 met_data["SW_surf"] = np.append(
-    800 * np.ones(800), 0 * np.ones(1720)
+    800 * np.ones(800), 100 * np.ones(1720)
 )  # Incoming shortwave (solar) radiation. [W m^-2].
 met_data["temperature"] = np.append(
     267 * np.ones(800), 250 * np.ones(1720)
@@ -99,7 +99,7 @@ Dumping and reloading parameters
 dump_data = True
 dump_filepath = "output/1d_testcase_dumpnew.nc"  # Filename of our previously dumped state
 reload_from_dump = False  # Flag to determine whether to reload the state or not
-
+use_numba=False
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 

@@ -386,9 +386,9 @@ def combine_lid_firn(cell):
     old_sfrac = np.copy(cell["Sfrac"])
     old_lfrac = np.copy(cell["Lfrac"])
     original_mass = calc_mass_sum(cell)
-    # print(
-    #     f"Combining lid and firn to create one profile..., column = {cell['column']}, row = {cell['row']}"
-    # )
+    print(
+        f"Combining lid and firn to create one profile..., column = {cell['column']}, row = {cell['row']}"
+    )
     cell['lid_depth'] = cell['v_lid_depth'] + cell['lid_depth'] + cell['lake_depth'] * cell['rho_water'] / cell['rho_ice']
 
     # Create new arrays for the combined profiles

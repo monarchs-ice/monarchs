@@ -229,6 +229,8 @@ def create_defaults_for_missing_flags(model_setup):
     vardict["cores"] = "all"
     vardict["solver"] = "hybr"
     vardict['dask_scheduler'] = 'processes'  # set to 'distributed' if using HPC across multiple nodes
+    vardict['flow_speed_scaling'] = 1.0
+    vardict['outflow_proportion'] = 1.0
     if hasattr(model_setup, "met_input_filepath"):
         vardict["met_data_source"] = "ERA5"
     elif hasattr(model_setup, "met_data") and isinstance(model_setup.met_data, dict):

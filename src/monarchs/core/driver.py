@@ -449,6 +449,8 @@ def main(model_setup, grid):
                 catchment_outflow=model_setup.catchment_outflow,
                 flow_into_land=model_setup.flow_into_land,
                 lateral_movement_percolation_toggle=model_setup.lateral_movement_percolation_toggle,
+                flow_speed_scaling=model_setup.flow_speed_scaling,
+                outflow_proportion=model_setup.outflow_proportion,
             )
             if model_setup.catchment_outflow:
                 catchment_outflow += current_iteration_outwater

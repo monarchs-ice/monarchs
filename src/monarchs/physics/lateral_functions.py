@@ -246,7 +246,7 @@ def find_biggest_neighbour(
     return biggest_height_difference, max_list
 
 
-def water_fraction(cell, m, timestep, direction):
+def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     """
     Determine the fraction of water that is allowed to move through the solid firn, dependent on its density.
     Called in <move_water>.
@@ -295,6 +295,8 @@ def water_fraction(cell, m, timestep, direction):
         water_frac = u * timestep / cell_size
         water_frac[np.where(water_frac > 1)] = 1
 
+        # JE - added flow_speed_scaling variable here.
+        water_frac = water_frac * flow_speed_scaling
     return water_frac
 
 def calc_available_water_lake(cell, water_frac, split, neighbour_cell, outflow=False):
@@ -383,7 +385,7 @@ def calc_available_water_ice_lens(cell, water_frac, split, neighbour_cell, outfl
 
 
 
-def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
+def calc_catchment_outflow(cell, temporary_cell, water_frac, split, outflow_proportion=1.0):
     """
     Calculate the amount of water that can be moved from a cell to the land
     (i.e. outside of the model domain).
@@ -407,6 +409,10 @@ def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
         water_to_move, lowest_water_level, move_from_index, top_saturation_level = calc_available_water_ice_lens(
             cell, water_frac, split, cell, outflow=True
         )
+
+    # Whether we are moving from a lake or ice lens, scale by the outflow proportion.
+    water_to_move = water_to_move * outflow_proportion  # scale by outflow proportion
+
     if cell["lake"] and not cell['lid']:  # either: remove water from the lake directly.
         water_out = water_to_move
         if cell["lake_depth"] < water_to_move:
@@ -540,6 +546,8 @@ def move_to_neighbours(
         biggest_height_difference,
         timestep,
         flow_into_land=False,
+        flow_speed_scaling=1.0,
+        outflow_proportion=1.0
 ):
     """
     Moves water from the central cell (grid[i][j]) to the neighbours with the lowest water level.
@@ -604,7 +612,7 @@ def move_to_neighbours(
             w_e_index = all_neighbours[neighbour][1]  # i.e. col index
             temporary_cell = temp_grid[row][col]
             water_frac = water_fraction(
-                cell, biggest_height_difference, timestep, neighbour
+                cell, biggest_height_difference, timestep, neighbour, flow_speed_scaling=flow_speed_scaling
             )
 
             # Before actually moving water, we first need to find out how much water can actually move.
@@ -625,7 +633,7 @@ def move_to_neighbours(
                 # We return straight out of the function in this case as we only want to move out one way.
                 if catchment_outflow:
                     water_out = calc_catchment_outflow(
-                        cell, temporary_cell, water_frac, split
+                        cell, temporary_cell, water_frac, split, outflow_proportion=outflow_proportion
                     )
                     return water_out
                 else:
@@ -647,7 +655,7 @@ def move_to_neighbours(
             # do the catchment outflow algorithm, then return out of the function.
             elif not grid[row + n_s_index][col + w_e_index]["valid_cell"] and flow_into_land:
                 water_out = calc_catchment_outflow(
-                    cell, temporary_cell, water_frac, split
+                    cell, temporary_cell, water_frac, split, outflow_proportion=outflow_proportion
                 )
                 if water_out > 0:
                     print(f"Moved {float(water_out)} units of water into the land")
@@ -704,6 +712,8 @@ def move_water(
         catchment_outflow=True,
         lateral_movement_percolation_toggle=True,
         flow_into_land=False,
+        flow_speed_scaling=1.0,
+        outflow_proportion=1.0,
 ):
     """
     Loop over our grid and determine which cells water is allowed to move from/to, then perform this movement
@@ -738,6 +748,10 @@ def move_water(
     # First, we need to determine the water level.
     total_water = 0
     catchment_out_water = 0
+
+    # set flow_speed_scaling to always be a float in case a user specifies it as 1 - so we ensure that
+    # water_to_move is always a float also
+    flow_speed_scaling = float(flow_speed_scaling)
 
     for row in range(0, max_grid_row):
         for col in range(0, max_grid_col):
@@ -806,6 +820,8 @@ def move_water(
                         biggest_height_difference,
                         timestep,
                         flow_into_land=flow_into_land,
+                        flow_speed_scaling=flow_speed_scaling,
+                        outflow_proportion=outflow_proportion,
                     )
 
             if (cell["water"] < -1E-12).any():
