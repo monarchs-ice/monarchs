@@ -85,4 +85,4 @@ def loop_over_grid_numba(
             t_steps_per_day,
             toggle_dict,
         )
-    return np.reshape(flat_grid, (row_amount, col_amount))   # reshape
+    # return np.reshape(flat_grid, (row_amount, col_amount))   # reshape

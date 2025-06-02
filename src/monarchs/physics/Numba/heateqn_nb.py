@@ -110,7 +110,7 @@ def solve_tridiagonal(a, b, c, d):
     d: RHS (len n)
     """
     n = np.shape(d)[0]
-    ac, bc, cc, dc = map(np.copy, (a, b, c, d))
+    ac, bc, cc, dc = a, b, c, d
 
     # Forward elimination
     for i in np.arange(1, n):
@@ -309,5 +309,4 @@ def heateqn_lid(x, output, args):
 
 heateqn = cfunc(minpack_sig)(heateqn)
 heateqn_lid = cfunc(minpack_sig)(heateqn_lid)
-heq = heateqn.address
-heq_lid = heateqn_lid.address
+

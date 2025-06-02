@@ -14,7 +14,8 @@ from numba import cfunc, jit
 import monarchs.physics.Numba.heateqn_nb as hnb
 
 
-
+heq = hnb.heateqn.address
+heqlid = hnb.heateqn_lid.address
 
 @jit(nopython=True, fastmath=False)
 def args_array(
@@ -193,7 +194,6 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
 
     N = 50  # number of cells at top to use in hybrd implementation
     x = x[:N]
-    heq = hnb.heq
     # cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind = [arg for arg in args]
     cell = args[0]
     dt = args[1]
@@ -218,6 +218,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         N=N
     )
 
+    T = np.empty_like(cell['firn_temperature'])
     # we only return root in the model (hence why in driver.py we index the function by [0],
     # but the other info is useful for testing so can be used if calling solver directly
     if fixed_sfc:
@@ -226,7 +227,8 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         success = 1
         info = 1
         T_fixed = hnb.propagate_temperature(cell, dz, dt, 273.15, N=1)
-        T = np.concatenate((np.array([273.15]), T_fixed))
+        T[0] = 273.15
+        T[1:] = T_fixed[:]
         # print('T fixed sfc = ', T)
     else:
         sol, fvec, success, info = hybrd(heq, x, args)
@@ -236,7 +238,8 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         # use it as the top boundary condition to the tridiagonal solver,
         # then concatenate the two
         T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
-        T = np.concatenate((sol[:], T_tri))
+        T[:N] = sol
+        T[N:] = T_tri[:]
         # print('T free = ', T)
 
     T = np.around(T, decimals=8)
@@ -524,7 +527,6 @@ def lid_heateqn_solver(x, args):
         !!    measured by the improvement from the last
         !!    ten iterations.
     """
-    heqlid = hnb.heq_lid
 
     eqn = heqlid
     cell = args[0]

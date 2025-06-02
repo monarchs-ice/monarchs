@@ -424,7 +424,7 @@ def main(model_setup, grid):
         met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
 
         if model_setup.single_column_toggle:
-            grid = loop_over_grid(
+            loop_over_grid(
                 model_setup.row_amount,
                 model_setup.col_amount,
                 grid,
