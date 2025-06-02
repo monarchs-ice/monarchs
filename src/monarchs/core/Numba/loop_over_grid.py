@@ -68,13 +68,10 @@ def loop_over_grid_numba(
     flat_grid = grid.flatten()
     # met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass the 24 timesteps
     # met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
-    print('Grid nbytes = ', grid.nbytes)
-    print('Flat grid nbytes = ', flat_grid.nbytes)
+
 
     for i in prange(row_amount * col_amount):
-        print(f"Index: {i}, flat_grid[i] type: {type(flat_grid[i])}, met_data[i] type: {type(met_data[i])}")
-        print(f"Flat grid shape: {flat_grid.shape}, met_data shape: {met_data.shape}")
-        print(f'Grid shape: {grid.shape}, row_amount: {row_amount}, col_amount: {col_amount}')
+
         timestep_loop(
             flat_grid[i],
             dt,
