@@ -1,6 +1,6 @@
 import numpy as np
-from monarchs.physics.firn_functions import regrid_after_melt
-from monarchs.physics.surface_fluxes import sfc_flux, sfc_albedo
+from monarchs.physics import firn_functions
+from monarchs.physics import surface_fluxes
 from monarchs.physics import solver
 from monarchs.core.utils import calc_mass_sum
 
@@ -83,7 +83,7 @@ def turbulent_mixing(cell, SW_in, dt):
     """
     tau = 0.025
     J = 0.1 * (9.8 * 5 * 10**-5 * (1.19 * 10**-7) ** 2 / 10**-6) ** (1 / 3)
-    albedo = sfc_albedo(
+    albedo = surface_fluxes.sfc_albedo(
         cell["melt"],
         cell["exposed_water"],
         cell["lid"],
@@ -160,7 +160,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
         air[i] = 1 - cell["Sfrac"][i] - cell["Lfrac"][i]
     k = cell["Sfrac"] * k_ice + air * cell["k_air"] + cell["Lfrac"] * cell["k_water"]
     x = cell["lake_temperature"]
-    Q = sfc_flux(
+    Q = surface_fluxes.sfc_flux(
         cell["melt"],
         cell["exposed_water"],
         cell["lid"],
@@ -190,7 +190,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
         if dHdt < 0:
             raise ValueError("Error in surface temperature in lake formation \n")
         cell["melt_hours"] += 1
-        regrid_after_melt(cell, dHdt, lake=True)
+        firn_functions.regrid_after_melt(cell, dHdt, lake=True)
         new_mass = calc_mass_sum(cell)
         assert abs(original_mass - new_mass) < 1.5 * 10**-7
         air[i] = 1 - cell["Sfrac"][i] - cell["Lfrac"][i]
@@ -241,7 +241,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_di
     original_mass = calc_mass_sum(cell)
     if not cell["v_lid"] and not cell["lid"]:
         x = cell["lake_temperature"]
-        Q = sfc_flux(
+        Q = surface_fluxes.sfc_flux(
             cell["melt"],
             cell["exposed_water"],
             cell["lid"],
@@ -293,7 +293,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_di
             boundary_change = (
                 -kdTdz / (cell["Sfrac"][0] * cell["L_ice"] * cell["rho_ice"]) * dt
             )
-            regrid_after_melt(cell, boundary_change, lake=True)
+            firn_functions.regrid_after_melt(cell, boundary_change, lake=True)
         else:
             raise ValueError("Firn has all completely melted")
     old_depth_grid = np.linspace(0, cell["lake_depth"], cell["vert_grid_lake"])

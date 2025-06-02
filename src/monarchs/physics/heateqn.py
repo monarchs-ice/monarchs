@@ -94,6 +94,7 @@ def heateqn(
         + dt * (kappa[len(x) - 1] / dz**2) * (-x[len(x) - 1] + x[len(x) - 2])
     )
     # print(f"Residual for T_sfc = {x}: {residual}")
+
     return residual
 
 

@@ -13,12 +13,8 @@ inputs in the correct format for this version, and the requirement to not return
 import numpy as np
 from numba import cfunc, njit
 from NumbaMinpack import minpack_sig
-
-from monarchs.physics.Numba.extract_args import (
-    extract_args,
-    extract_args_lid,
-)
-from monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics.Numba import extract_args
+from monarchs.physics import surface_fluxes
 
 
 @njit
@@ -182,14 +178,14 @@ def heateqn(x, output, args):
         p_air,
         T_dp,
         wind,
-    ) = extract_args(args)
+    ) = extract_args.extract_args_firn(args)
     
     N = np.int32(args[0])
     
     epsilon = 0.98
     sigma = 5.670374e-8
 
-    Q = sfc_flux(
+    Q = surface_fluxes.sfc_flux(
         melt,
         exposed_water,
         lid,
@@ -274,7 +270,7 @@ def heateqn_lid(x, output, args):
         p_air,
         T_dp,
         wind,
-    ) = extract_args_lid(args)
+    ) = extract_args.extract_args_lid(args)
 
     # print('here')
     # k_ice = (1000 * 2.24 * 0.001 + 5.975 * 0.000001 * (273.15 - cell.lid_temperature) ** 1.156)
@@ -285,7 +281,7 @@ def heateqn_lid(x, output, args):
     kappa = k_lid / (cp * rho)  # thermal diffusivity [m^2 s^-1]
     epsilon = 0.98
     sigma = 5.670374 * (10**-8)
-    Q = sfc_flux(
+    Q = surface_fluxes.sfc_flux(
         melt,
         exposed_water,
         lid,
@@ -313,3 +309,5 @@ def heateqn_lid(x, output, args):
 
 heateqn = cfunc(minpack_sig)(heateqn)
 heateqn_lid = cfunc(minpack_sig)(heateqn_lid)
+heq = heateqn.address
+heq_lid = heateqn_lid.address

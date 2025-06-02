@@ -13,8 +13,7 @@ from numba import cfunc, jit
 
 import monarchs.physics.Numba.heateqn_nb as hnb
 
-heqlid = hnb.heateqn_lid.address
-heq = hnb.heateqn.address
+
 
 
 @jit(nopython=True, fastmath=False)
@@ -194,7 +193,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
 
     N = 50  # number of cells at top to use in hybrd implementation
     x = x[:N]
-
+    heq = hnb.heq
     # cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind = [arg for arg in args]
     cell = args[0]
     dt = args[1]
@@ -218,7 +217,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         fixed_sfc=fixed_sfc,
         N=N
     )
-    
+
     # we only return root in the model (hence why in driver.py we index the function by [0],
     # but the other info is useful for testing so can be used if calling solver directly
     if fixed_sfc:
@@ -525,6 +524,8 @@ def lid_heateqn_solver(x, args):
         !!    measured by the improvement from the last
         !!    ten iterations.
     """
+    heqlid = hnb.heq_lid
+
     eqn = heqlid
     cell = args[0]
     dt = args[1]

@@ -1,17 +1,13 @@
 from monarchs.core.driver import monarchs
 
+
+def cli_entry(return_grid=False):
+    """
+    Command line entry point for running the MONARCHS model.
+    """
+    grid = monarchs()
+    if return_grid:
+        return grid
+
 if __name__ == "__main__":
-
-    try:
-        from mpi4py import MPI
-
-        rank = MPI.COMM_WORLD.Get_rank()
-        print("MPI rank = ", rank)
-    except:
-        print("mpi4py not found, running in serial mode")
-        use_mpi = False
-        rank = 0
-    if rank == 0:
-        grid = monarchs()
-    else:
-        print("Rank {} not running monarchs".format(rank))
+    cli_entry()

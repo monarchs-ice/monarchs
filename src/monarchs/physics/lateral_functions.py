@@ -4,7 +4,11 @@ from monarchs.physics.percolation_functions import percolation, calc_saturation
 from numba.typed import Dict
 from numba import types, float64
 
-
+try:
+    from numba import prange
+except ImportError:
+    # in case we don't have Numba - use the standard range function
+    prange = range  # pragma: no cover
 def update_water_level(cell):
     """
     Determine the water level of a single IceShelf object, so we can determine where water flows laterally to and from.
@@ -763,7 +767,7 @@ def move_water(
     # simultaneously - kind of like in a Jacobi solver
     dtype = grid.dtype
     temp_grid = np.zeros((len(grid), len(grid[0])), dtype=dtype)
-    for i in range(grid.shape[0]):
+    for i in prange(grid.shape[0]):
         for j in range(grid.shape[1]):
             temp_grid[i, j]['lake_depth'] = grid[i, j]['lake_depth']
             temp_grid[i, j]['lake'] = grid[i, j]['lake']
@@ -775,7 +779,7 @@ def move_water(
                 temp_grid[i, j]['meltflag'][k] = grid[i, j]['meltflag'][k]
 
     # Now loop through the cells again, this time actually performing the movement step.
-    for row in range(max_grid_row):
+    for row in prange(max_grid_row):
         for col in range(max_grid_col):
             cell = grid[row][col]
             cell['water_direction'][:] = 0  # clear water direction

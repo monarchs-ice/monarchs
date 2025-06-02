@@ -5,10 +5,9 @@ state of the column, then running firn_column and lake/lid functions accordingly
 """
 
 import numpy as np
-from monarchs.core.utils import check_correct
 from monarchs.physics import snow_accumulation
 from monarchs.physics import firn_functions, lake_functions, solver, lid_functions
-
+from monarchs.core import utils
 
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """
@@ -181,7 +180,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     lid_functions.combine_lid_firn(cell)
 
         if not ignore_errors:
-            check_correct(cell)
+            utils.check_correct(cell)
 
         cell["rho"] = (
             cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
@@ -194,6 +193,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     cell["day"] += 1
 
 
-    return cell
+    #return cell
     # if parallel and not use_numba:
     #     return cell

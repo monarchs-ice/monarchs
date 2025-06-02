@@ -1,7 +1,7 @@
 import numpy as np
-from monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics import surface_fluxes
 from monarchs.physics import solver
-from monarchs.core.utils import calc_mass_sum
+from monarchs.core import utils
 
 
 def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
@@ -42,10 +42,10 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     -------
     None (amends cell inplace)
     """
-    original_mass = calc_mass_sum(cell)
+    original_mass = utils.calc_mass_sum(cell)
     x = np.array([cell["virtual_lid_temperature"]])
 
-    Q = sfc_flux(
+    Q = surface_fluxes.sfc_flux(
         cell["melt"],
         cell["exposed_water"],
         cell["lid"],
@@ -144,7 +144,7 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     if cell["v_lid_depth"] <= 0 and cell["lid_depth"] <= 0:
         cell["lid"] = False
         cell["v_lid"] = False
-    new_mass = calc_mass_sum(cell)
+    new_mass = utils.calc_mass_sum(cell)
     try:
         assert abs(new_mass - original_mass) < 1.5 * 10**-7
     except Exception:
@@ -173,7 +173,7 @@ def calc_surface_melt(cell, dt, Q):
     -------
     None (amends cell inplace)
     """
-    original_mass = calc_mass_sum(cell)
+    original_mass = utils.calc_mass_sum(cell)
     cell["lid_melt_count"] += 1
     k_lid = 1000 * (1.017 * 10**-4 + 1.695 * 10**-6 * cell["lid_temperature"][0])
     kdTdz = (
@@ -183,7 +183,7 @@ def calc_surface_melt(cell, dt, Q):
     )
     cell["lid_sfc_melt"] += (Q - kdTdz) / (cell["L_ice"] * cell["rho_ice"]) * dt
     cell["lid_temperature"][0] = 273.15
-    new_mass = calc_mass_sum(cell)
+    new_mass = utils.calc_mass_sum(cell)
     assert abs(new_mass - original_mass) < 1.5 * 10**-7
 
 
@@ -220,9 +220,9 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     -------
     None (amends cell inplace)
     """
-    original_mass = calc_mass_sum(cell)
+    original_mass = utils.calc_mass_sum(cell)
     x = cell["lid_temperature"]
-    Q = sfc_flux(
+    Q = surface_fluxes.sfc_flux(
         cell["melt"],
         cell["exposed_water"],
         cell["lid"],
@@ -309,7 +309,7 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             )
         cell["lake_depth"] -= new_boundary_change * cell["rho_ice"] / cell["rho_water"]
         cell["lid_depth"] += new_boundary_change
-    new_mass = calc_mass_sum(cell)
+    new_mass = utils.calc_mass_sum(cell)
     assert abs(new_mass - original_mass) < 1.5 * 10**-7
     x = cell["lid_temperature"]
     dz = cell["lid_depth"] / cell["vert_grid_lid"]
@@ -323,7 +323,7 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell["lid"] = False
         cell["has_had_lid"] = False
         cell["v_lid"] = True
-    new_mass = calc_mass_sum(cell)
+    new_mass = utils.calc_mass_sum(cell)
     assert abs(new_mass - original_mass) < 1.5 * 10**-7
 
 
@@ -385,7 +385,7 @@ def combine_lid_firn(cell):
     """
     old_sfrac = np.copy(cell["Sfrac"])
     old_lfrac = np.copy(cell["Lfrac"])
-    original_mass = calc_mass_sum(cell)
+    original_mass = utils.calc_mass_sum(cell)
     print(
         f"Combining lid and firn to create one profile..., column = {cell['column']}, row = {cell['row']}"
     )
@@ -471,7 +471,7 @@ def combine_lid_firn(cell):
     cell["lake_temperature"] = np.ones(cell["vert_grid_lake"]) * 273.15
 
     # Validate mass conservation
-    new_mass = calc_mass_sum(cell)
+    new_mass = utils.calc_mass_sum(cell)
     try:
         assert abs(new_mass - original_mass) < original_mass / 1000
     except Exception:

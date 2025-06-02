@@ -93,13 +93,17 @@ vars_to_save = (
 output_filepath = "output/1d_testcase_outputnew.nc"  # Filename for model output, including file extension (.nc for netCDF).
 output_grid_size = vertical_points_firn  # Size of interpolated output
 lateral_movement_toggle = False
+firn_column_toggle = True
+lake_development_toggle = False
+lid_development_toggle = False
+
 """
 Dumping and reloading parameters
 """
 dump_data = True
 dump_filepath = "output/1d_testcase_dumpnew.nc"  # Filename of our previously dumped state
 reload_from_dump = False  # Flag to determine whether to reload the state or not
-use_numba=False
+use_numba = True
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 

@@ -5,7 +5,7 @@ Created on Tue May  9 17:04:04 2023
 """
 
 import numpy as np
-from monarchs.core.utils import calc_mass_sum
+from monarchs.core import utils
 
 
 def snowfall(cell, snow_depth, snow_rho, snow_T):
@@ -34,7 +34,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
         if cell["lake"]:
             cell["lake_depth"] += snow_depth * snow_rho / cell["rho_water"]
         else:
-            original_mass = calc_mass_sum(cell)
+            original_mass = utils.calc_mass_sum(cell)
             orig_liquid = np.sum(
                 cell["Lfrac"]
                 * cell["rho_water"]
@@ -128,7 +128,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             cell["Lfrac"] = lfrac_hold
             cell["firn_temperature"] = T_hold
             assert (
-                abs(calc_mass_sum(cell) - (original_mass + snow_depth * snow_rho))
+                abs(utils.calc_mass_sum(cell) - (original_mass + snow_depth * snow_rho))
                 < 1.5 * 10**-7
             )
 

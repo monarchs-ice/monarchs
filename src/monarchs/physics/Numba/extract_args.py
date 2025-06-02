@@ -2,7 +2,7 @@ import numpy as np
 from numba import jit
 
 
-def extract_args(args):
+def extract_args_firn(args):
     """
     NumbaMinpack gives large performance boosts, but has very crude
     syntax which requires us to place all of our arguments to heateqn in
@@ -244,5 +244,5 @@ def extract_args_lid(args):
     )
 
 
-extract_args = jit(extract_args, nopython=True, fastmath=False)
+extract_args_firn = jit(extract_args_firn, nopython=True, fastmath=False)
 extract_args_lid = jit(extract_args_lid, nopython=True, fastmath=False)

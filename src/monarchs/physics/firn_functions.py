@@ -3,10 +3,10 @@ Module containing functions relating to the firn column. Some physics is contain
 """
 
 import numpy as np
-from monarchs.physics.percolation_functions import percolation
-from monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics import percolation_functions
+from monarchs.physics import surface_fluxes
 from monarchs.physics import solver
-from monarchs.core.utils import calc_mass_sum
+from monarchs.core import utils
 
 
 def firn_column(
@@ -71,7 +71,7 @@ def firn_column(
     -------
     None (amends cell inplace)
     """
-    original_mass = calc_mass_sum(cell)
+    original_mass = utils.calc_mass_sum(cell)
     percolation_toggle = toggle_dict["percolation_toggle"]
     perc_time_toggle = toggle_dict["perc_time_toggle"]
     heateqn_solver = 'hybr'
@@ -112,10 +112,10 @@ def firn_column(
         pass
 
     if percolation_toggle:
-        percolation(cell, dt, perc_time_toggle=perc_time_toggle)
+        percolation_functions.percolation(cell, dt, perc_time_toggle=perc_time_toggle)
 
     cell["rho"] = cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
-    new_mass = calc_mass_sum(cell)
+    new_mass = utils.calc_mass_sum(cell)
 
     assert abs(original_mass - new_mass) < 1.5 * 10**-7
     return root0
@@ -142,7 +142,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     -------
     None
     """
-    original_mass = calc_mass_sum(cell)
+    original_mass = utils.calc_mass_sum(cell)
     dz_old = cell["firn_depth"] / cell["vert_grid"]
     old_firn_depth = cell["firn_depth"] + 0
     cell["firn_depth"] -= height_change
@@ -234,7 +234,7 @@ def regrid_after_melt(cell, height_change, lake=False):
                 cell["firn_depth"] / cell["vert_grid"]
             )
             cell["Lfrac"][0] = 1 - cell["Sfrac"][0]
-        assert abs(calc_mass_sum(cell) - original_mass) < 1.5 * 10**-7
+        assert abs(utils.calc_mass_sum(cell) - original_mass) < 1.5 * 10**-7
 
     if np.isnan(cell["firn_temperature"]).any():
         print(cell["firn_temperature"])
@@ -253,7 +253,7 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     cell["vertical_profile"] = np.linspace(0, cell["firn_depth"], cell["vert_grid"])
 
-    assert abs(calc_mass_sum(cell) - original_mass) < 1.5 * 10**-7
+    assert abs(utils.calc_mass_sum(cell) - original_mass) < 1.5 * 10**-7
 
 
 def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, surf_T):
@@ -301,7 +301,7 @@ def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, s
         * (273.15 - (cell["firn_temperature"][0] + cell["firn_temperature"][1]) / 2)
         ** 1.156
     )
-    Q = sfc_flux(
+    Q = surface_fluxes.sfc_flux(
         cell["melt"],
         cell["exposed_water"],
         cell["lid"],

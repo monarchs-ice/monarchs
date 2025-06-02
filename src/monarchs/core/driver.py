@@ -27,7 +27,6 @@ from monarchs.physics import lateral_functions
 
 
 
-
 def setup_toggle_dict(model_setup):
     """
     Set up a dictionary of switches to determine the running of the model.
@@ -350,9 +349,10 @@ def main(model_setup, grid):
         else:
             cores = model_setup.cores
         set_num_threads(int(cores))
-        loop_over_grid = jit(
-            loop_over_grid_numba, parallel=model_setup.parallel, nopython=True
-        )
+        # loop_over_grid = jit(
+        #     loop_over_grid_numba, parallel=model_setup.parallel, nopython=True
+        # )
+        loop_over_grid = loop_over_grid_numba
     else:
         from monarchs.core.loop_over_grid import loop_over_grid
     tic = time.perf_counter()
@@ -401,6 +401,20 @@ def main(model_setup, grid):
 
 
     for day in time_loop:
+        from numba.core.registry import CPUDispatcher
+        import gc
+        def count_dispatchers():
+            count = 0
+            for obj in gc.get_objects():
+                try:
+                    if isinstance(obj, CPUDispatcher):
+                        count += 1
+                except ReferenceError:
+                    continue  # The object was already garbage collected
+            return count
+
+        print("Compiled Numba functions:", count_dispatchers())
+        print("Compiled functions:", count_dispatchers())
         timestep_start = time.perf_counter()
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")

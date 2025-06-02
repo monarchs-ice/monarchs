@@ -114,7 +114,10 @@ def handle_incompatible_flags(model_setup):
         raise ValueError(
             f"monarchs.core.configuration.handle_incompatible_flags(): solver must be one of {valid_solvers}, not {model_setup.solver}"
         )
-
+    if hasattr(model_setup, "outflow_proportion") and model_setup.outflow_proportion > 1.0:
+        raise ValueError(
+            f"monarchs.core.configuration.handle_incompatible_flags(): outflow_proportion must be <= 1.0, not {model_setup.outflow_proportion}"
+        )
 
 def create_defaults_for_missing_flags(model_setup):
     """
@@ -302,44 +305,45 @@ def jit_modules():
     fastmath = False
     from monarchs.physics import percolation_functions, lid_functions, surface_fluxes, lake_functions, firn_functions
     from monarchs.physics import timestep, snow_accumulation, lateral_functions
-
-    # from monarchs.physics import lateral_functions
-    from monarchs.core import model_output
+    from monarchs.core import model_output, utils
 
     # modules to search from when applying jit
     module_list = [
+        utils,
+        snow_accumulation,
         surface_fluxes,
-        firn_functions,
         lake_functions,
         lid_functions,
         percolation_functions,
+        firn_functions,
         model_output,
         timestep,
-        snow_accumulation,
-        lateral_functions
+        lateral_functions,
     ]
 
     # Set up a list of modules to not apply njit to.
     # If a piece of code is refusing to compile, and you can't get it to debug, add it to here.
-    ignore_list = [#'firn_column', # firn_functions
-                   #'propagate_temperature', 'find_surface_temperature', # heateqn
-                   #'lake_formation', 'lake_development', 'sfc_energy_lake_formation', 'sfc_energy_lake', # lake_functions
-                   # 'lid_formation', 'lid_development', 'combine_lid_firn', 'virtual_lid', # lid_functions
-                   'root', 'solve_banded',  # scipy builtins (imported in heateqn)
-                   'setup_output', 'update_model_output',  # netCDF output functions, we only want to hit interpolation
-                   'get_2d_grid',
-
+    ignore_list = ['setup_output', 'update_model_output',  # netCDF output functions, we only want to hit interpolation
+                   'get_2d_grid', 'memory_tracker', 'do_not_jit', 'wraps'
                   ]  # other builtins/decorators
 
     for module in module_list:
         functions_list = getmembers(module, isfunction)
+
         for name, function in functions_list:
+
+            # Ignore functions that are imported, are in our ignore list, or have the __wrapped__ attribute
+
+            # if function.__module__ != module.__name__:
+            #     print(f"Skipping {name} because it belongs to {function.__module__}, not {module.__name__}")
+            #     continue
+
             if name in ignore_list:
                 continue
             if hasattr(function, "__wrapped__") or name.startswith("__"):
                 continue
             print(f"Applying Numba jit decorator to {module.__name__}.{name}")
-            jitted_function = njit(function, fastmath=fastmath, debug=False)
+            jitted_function = njit(function, fastmath=fastmath, debug=False, cache=True)
             setattr(module, name, jitted_function)
             # TODO - add full type hints to functions. We can then read these in and use these as the
             # TODO - expected types for the function and pre-compile it, which will enormously speed things
