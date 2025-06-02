@@ -349,10 +349,9 @@ def main(model_setup, grid):
         else:
             cores = model_setup.cores
         set_num_threads(int(cores))
-        # loop_over_grid = jit(
-        #     loop_over_grid_numba, parallel=model_setup.parallel, nopython=True
-        # )
-        loop_over_grid = loop_over_grid_numba
+        loop_over_grid = jit(
+             loop_over_grid_numba, parallel=model_setup.parallel, nopython=True
+         )
     else:
         from monarchs.core.loop_over_grid import loop_over_grid
     tic = time.perf_counter()
@@ -424,7 +423,7 @@ def main(model_setup, grid):
         met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
 
         if model_setup.single_column_toggle:
-            loop_over_grid(
+            grid = loop_over_grid(
                 model_setup.row_amount,
                 model_setup.col_amount,
                 grid,

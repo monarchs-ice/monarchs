@@ -1,11 +1,8 @@
 import numba
-from numba import prange, types
-from numba.typed import Dict
-from monarchs.physics.timestep import timestep_loop
+from numba import prange
 import numpy as np
-from memory_profiler import profile
+from monarchs.physics.timestep import timestep_loop
 
-@profile
 def loop_over_grid_numba(
     row_amount,
     col_amount,
@@ -85,4 +82,4 @@ def loop_over_grid_numba(
             t_steps_per_day,
             toggle_dict,
         )
-    # return np.reshape(flat_grid, (row_amount, col_amount))   # reshape
+    return np.reshape(flat_grid, (row_amount, col_amount))   # reshape
