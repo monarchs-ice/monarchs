@@ -255,9 +255,9 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_di
             wind,
             x[0],
         )
-        print('Q = ', Q)
+        # print('Q = ', Q)
         cell["lake_temperature"][0] = sfc_energy_lake(J, Q, cell)
-        print('Lake temp after sfc energy = ', cell["lake_temperature"][0])
+        # print('Lake temp after sfc energy = ', cell["lake_temperature"][0])
         if cell["lake_temperature"][0] < 273.15:
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15
