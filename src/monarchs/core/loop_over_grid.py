@@ -48,7 +48,6 @@ def chunk_grid(flat_grid, met_data_grid, chunk_size):
     for i in range(0, len(valid_cells), chunk_size):
         yield valid_indices[i:i + chunk_size], valid_cells[i:i + chunk_size], valid_met_data[i:i + chunk_size]
 
-@profile
 def loop_over_grid(
         row_amount,
         col_amount,

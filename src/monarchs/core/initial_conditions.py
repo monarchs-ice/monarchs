@@ -71,9 +71,8 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     if not np.array_equal(valid_cells_old, valid_cells):
         print("Removed some isolated cells - new grid = ", valid_cells)
 
-    firn_columns = np.transpose(
-        np.linspace(0, firn_depth, int(model_setup.vertical_points_firn))
-    )
+    firn_columns = np.moveaxis(np.linspace(0, firn_depth, int(model_setup.vertical_points_firn)), 0, -1)
+
     if hasattr(model_setup, "rho_init") and model_setup.rho_init != "default":
         rho = model_setup.rho_init
     else:

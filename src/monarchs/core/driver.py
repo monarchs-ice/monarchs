@@ -14,6 +14,7 @@ variables that the user wants to track over time.
 from numba import njit
 
 import os
+import sys
 import time
 import numpy as np
 import pathos
@@ -283,7 +284,9 @@ def print_model_end_of_timestep_messages(
     print("Lid depth = ", get_2d_grid(grid, "lid_depth"))
     print('Number of lakes = ', np.sum(get_2d_grid(grid, "lake")))
     print('Number of lids = ', np.sum(get_2d_grid(grid, "lid")))
-
+    # ensure that output is flushed to the console immediately rather than being buffered. Mostly a fix for
+    # output not updating when running with Slurm.
+    sys.stdout.flush()
 
 def main(model_setup, grid):
     """
@@ -397,7 +400,6 @@ def main(model_setup, grid):
     time_loop = range(first_iteration, model_setup.num_days)
     start = time.perf_counter()
     dt = 3600
-
 
     for day in time_loop:
         from numba.core.registry import CPUDispatcher

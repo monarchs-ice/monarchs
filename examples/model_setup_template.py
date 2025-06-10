@@ -259,6 +259,7 @@ dump_filepath = (
 )
 reload_from_dump = False  # Flag to determine whether to reload the state or not
 dump_format = "NETCDF4"  # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
+dump_timestep = 1
 """
 Computing and numerical parameters
 """
@@ -304,6 +305,8 @@ heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 
 met_dem_diagnostic_plots = False
 radiation_forcing_factor = 1
+flow_speed_scaling = 1.0
+
 
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs

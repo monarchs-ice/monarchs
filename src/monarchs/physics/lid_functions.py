@@ -501,7 +501,6 @@ def mass_conserving_profile(cell, var='Sfrac'):
 
     # Depth edges of full profile (top at 0)
     z_edges_full = np.concatenate((np.array([0]), np.cumsum(dz_full)))
-    z_centers_full = 0.5 * (z_edges_full[:-1] + z_edges_full[1:])
 
     # Total depth
     total_depth = np.sum(dz_full)
@@ -509,7 +508,6 @@ def mass_conserving_profile(cell, var='Sfrac'):
     num_layers_new = cell['vert_grid']
     dz_new = np.full(num_layers_new, total_depth / num_layers_new)
     z_edges_new = np.linspace(0, total_depth, num_layers_new + 1)
-    z_centers_new = 0.5 * (z_edges_new[:-1] + z_edges_new[1:])
 
     # Solid mass per layer in old grid
     mass_old = sfrac_full * dz_full * rho

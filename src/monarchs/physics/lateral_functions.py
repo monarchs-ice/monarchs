@@ -626,8 +626,8 @@ def move_to_neighbours(
             if (
                     row + n_s_index == -1
                     or col + w_e_index == -1
-                    or row + n_s_index >= len(grid)
-                    or col + w_e_index >= len(grid[0])
+                    or row + n_s_index == len(grid)
+                    or col + w_e_index == len(grid[0])
             ):
                 # edge case handling - since Python handles "-1" as
                 # a valid index this will impose periodic boundary conditions rather than raise an error, which
