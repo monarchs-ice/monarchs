@@ -31,8 +31,8 @@ def percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=Tr
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object containing the information on the gridcell we are operating on.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     timestep : int
         Amount of time in seconds for each timestep. [s]
     lateral_refreeze_flag : bool, optional
@@ -113,8 +113,8 @@ def calc_refreezing(cell, v_lev):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object containing the information on the gridcell we are operating on.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     v_lev : int
         Vertical level at which to calculate the refreezing of the firn.
 
@@ -190,7 +190,7 @@ def calc_saturation(cell, v_lev_in, end=False):
     """
     Determine whether the firn is saturated, calculating upwards from a vertical level
     specified by v_lev_in. If the firn is saturated, then water can no longer percolate
-    downward, and we need to set the IceShelf attribute saturation to True at the
+    downward, and we need to set the cell attribute saturation to True at the
     relevant vertical level. Any water that is left over is then moved upwards to the
     next vertical layer, and the process repeats until either all water is accounted for
     (i.e. can remain in the current layer), or we reach the surface (at which point we
@@ -201,8 +201,8 @@ def calc_saturation(cell, v_lev_in, end=False):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object containing the information on the gridcell we are operating on.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     v_lev_in : int
         Vertical level from which to determine whether the cell is saturated.
     end : bool, optional
@@ -277,8 +277,8 @@ def perc_time(cell, v_lev):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object containing the information on the gridcell we are operating on.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     v_lev : int
         Vertical level of cell that we are looking at to determine the available percolation
         time for.
@@ -310,8 +310,8 @@ def capillary(cell, v_lev):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object containing the information on the gridcell we are operating on.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     v_lev : int
         Vertical level of cell that we are looking at to determine the capillary effect for.
 

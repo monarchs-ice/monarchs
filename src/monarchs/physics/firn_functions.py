@@ -42,12 +42,12 @@ def firn_column(
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object that will be amended inplace according to the model physics.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     dt : int
         Number of seconds in the current timestep [s]
     dz : float
-        Height of each vertical point in the IceShelf. [m]
+        Height of each vertical point in the cell. [m]
     LW_in : float
         Downwelling longwave radiation at the current timestep. [W m^-2]
     SW_in : float
@@ -129,8 +129,8 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object containing the firn column we need to regrid.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     height_change : float
         Change in the firn height as a result of melting. [m]
     lake : bool, optional
@@ -262,8 +262,8 @@ def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, s
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object that will be amended inplace according to the model physics.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     timestep : float
         Number of seconds in each timestep. [s]
     LW_in : float

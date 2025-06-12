@@ -46,7 +46,7 @@ runscript to adjust SW downwelling radiation by a multiplicative factor.
 Outputting data
 ===============
 MONARCHS has two ways of outputting data. The main way which is scientifically useful is using the `save_output`
-flag in `model_setup`. This reads in a variable `vars_to_save`, which determines which IceShelf variables
+flag in `model_setup`. This reads in a variable `vars_to_save`, which determines which model variables
 the user wants to output after each model day (iteration). This is used to generate time series of the model evolution.
 By default it will save firn variables at the model vertical resolution, but if output filesizes are an issue you can
 interpolate these to a resolution set using the `output_grid_size` parameter.

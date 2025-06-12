@@ -22,8 +22,8 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
     ----------
     fname : str
         Filename we wish to save our data into.
-    grid : List, or numba.typed.List
-        grid of IceShelf objects that we want to save progress information for.
+    grid : numpy structured array
+        Model grid containing our ice shelf.
     met_start_idx : int
         Index used to determine where in our grid of meteorological data we want to start from if we were
         to restart the model.

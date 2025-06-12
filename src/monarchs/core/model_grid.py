@@ -1,8 +1,5 @@
 """
-Define IceShelf class and initialise grid
-
-S Buzzard created, last updated 06/07/2021
-
+Define the model grid datatype. This is a Numpy structured array.
 """
 
 import numpy as np
@@ -52,11 +49,11 @@ def initialise_iceshelf(
     size_dy=1000,
 ):
     """
-    Initialize a NumPy structured array representing the IceShelf grid.
+    Initialize a NumPy structured array representing the ice shelf.
 
     Parameters
     ----------
-    All parameters correspond to the attributes of the IceShelf class.
+    All parameters correspond to the attributes specified in get_spec() below.
 
     Returns
     -------
@@ -156,7 +153,7 @@ def initialise_iceshelf(
 
 def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
     """
-    Define the structured array dtype for the IceShelf class, with explicit sizes for dimensions.
+    Define the structured array dtype for the model grid, with explicit sizes for dimensions.
 
     Parameters
     ----------
@@ -174,7 +171,7 @@ def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
     Returns
     -------
     dtype : np.dtype
-        Structured array dtype for the IceShelf class.
+        Structured array dtype for the model grid.
     """
     dtype = np.dtype(
         [

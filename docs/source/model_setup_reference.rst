@@ -28,7 +28,7 @@ Parameters controlling the spatial resolution of MONARCHS, in terms of the numbe
         Size of each grid cell in m. This is used to determine how much water can flow during the lateral
         flow calculations. If set to a number, then the cells are assumed square. If set to ``'dem'``, then the ``x`` and
         ``y`` dimensions are calculated separately - in which case the cells are not necessarily assumed to be square.
-        This value is stored in the IceShelf class as ``cell.size_dx`` and ``cell.size_dy``.
+        This value is stored in the model grid as ``cell.size_dx`` and ``cell.size_dy`` (where cell is an element of the grid).
         If a valid DEM is provided, then this is calculated from the DEM automatically, *but is overwritten* if the user
         specifies a value other than 'dem' here..
 
@@ -269,7 +269,7 @@ every ``output_timestep`` days.
 
         Tuple containing the names of the variables that we wish to save during the evolution of MONARCHS over time.
         If you want to save a particular diagnostic, then you should add it here.
-        See ``monarchs.core.iceshelf_class`` for details on the full list of variables that ``vars_to_save`` accepts.
+        See ``monarchs.core.model_grid`` for details on the full list of variables that ``vars_to_save`` accepts.
 
     output_filepath : str, optional (required if ``save_output`` is ``True``)
         Path to the file that you want to save output into, including file extension.
@@ -335,9 +335,21 @@ how many CPU cores to use if running in parallel, and whether to use Numba to ji
         since the model will many of the single-column gridpoints at the same time.
 
         The exact flavour of parallelism is determined by other flags - if ``use_numba`` and ``use_mpi`` are False, then
-        parallelism is via ``pathos.Pool``, a more powerful version of the default ``multiprocessing`` module. If ``use_numba``
-        is enabled, then this comes via Numba's ``prange`` function, which works similarly to an OpenMP parallel do loop.
-        If ``use_mpi`` is enabled, then ``mpi4py`` is used.
+        parallelism is via ``dask``.
+        If ``use_numba`` is enabled, then this comes via Numba's ``prange`` function, which works similarly to an OpenMP parallel do loop.
+        If ``use_mpi`` is enabled, then ``mpi4py`` is used. This functionality is WIP, and may be removed in favour of
+        a ``dask`` Client.
+
+    dask_scheduler : str, optional
+
+        Default ``'processes'``. Other options available are ``distributed`` for running on multiple nodes, and
+        ``'threads'``.
+
+        Determines which scheduler to use for parallelism if ``use_numba`` and ``use_mpi`` are both False.
+        It is recommended to use ``use_numba`` for large workloads if possible, as this gives significantly better
+        performance. For running lots of very small workloads (e.g. running lots of 1D columns),
+        you may get good performance using ``threads``. For other purposes, e.g. if running on Windows without a
+        working Fortran compiler, for medium-sized workloads, ``processes`` is recommended.
 
     use_mpi : bool, optional
         Default ``False``.
@@ -375,11 +387,30 @@ grid cells.
         nowhere else to go, and thus a positive feedback loop occurs where the lake grows, melts the firn underneath,
         and more water flows in.
 
+    outflow_proportion: int, optional
+        Default ``1``, maximum ``1``.
+
+        Determines how much water will flow out of the catchment as a proportion of the total water available to flow out.
+        If ``1``, then all water that is at a local minimum and adjacent to the edge of the grid will flow out.
+        Setting it to ``0`` will effectively set ``catchment_outflow`` to ``False``.
+
+    flow_speed_scaling: int, optional
+        Default ``1``.
+
+        Determines how much water can flow from a cell in the firn to its neighbours during the lateral flow step.
+        The amount of water that can flow is determined by the density of the cell, and the available water in the
+        cell. This flag scales the amount of water that *can* flow by the value given - it will not move more
+        water than there is in the cell.
+
+        It has no effect on the amount of water that can flow from lakes - since it is assumed that all water
+        is available to move from lakes.
+
 Debug settings
 ------------------------------------------------------
 These can be safely ignored unless you are actively developing the model.
 
-### Physics toggles
+Physics toggles
+======================================================
 These parameters control the physics that is applied to either the single-column vertical processes, or the
 lateral processes. By default these should all be on unless specified, but you may want to switch some off for testing purposes.
 
@@ -428,9 +459,8 @@ lateral processes. By default these should all be on unless specified, but you m
         it can no longer move.
 
 
-Other flags - mostly for testing
-------------------------------------------------------
-
+Other debug/testing flags
+=================================
 This section includes miscellaneous flags that have been used during the development of MONARCHS to test certain things, but have been
 and retained as possible configuration flags for testing purposes for other users. These can be entirely ignored.
 

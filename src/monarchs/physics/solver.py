@@ -24,7 +24,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
 
     Parameters
     ----------
-    x : array_like, float, dimension(core.iceshelf_class.IceShelf.vert_grid)
+    x : array_like, float, dimension(cell.vert_grid)
         numpy array containing the initial estimate of the firn column temperature
     args : array_like
         Numpy array containing arguments to the heat equation.
@@ -34,7 +34,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
 
     Returns
     -------
-    root : array_like, float, dimension(core.iceshelf_class.IceShelf.vert_grid)
+    root : array_like, float, dimension(cell.vert_grid)
         Vector containing the calculated firn column temperature, either after successful completion or
         at the end of the final iteration for an unsuccessful solution. [K]
     infodict : dict
@@ -293,7 +293,7 @@ def lid_seb_solver(x, args, v_lid=False):
 
     Parameters
     ----------
-    x : array_like, float, dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
+    x : array_like, float, dimension(cell.vert_grid_lid)
         Initial estimate of the lid temperature. We only use the first value (i.e. the surface value). [K]
     args : array_like
         Array of arguments to pass into the function.
@@ -330,14 +330,14 @@ def lid_heateqn_solver(x, args):
 
     Parameters
     ----------
-    x : array_like, float, dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
+    x : array_like, float, dimension(cell.vert_grid_lid)
         Initial guess at the lid column temperature. [K]
     args : array_like
         Array of arguments to pass into the function. See args_array for details.
 
     Returns
     -------
-    root : array_like, float, dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
+    root : array_like, float, dimension(cell.vert_grid_lid)
         Vector containing the calculated lid column temperature, either after successful completion or
         at the end of the final iteration for an unsuccessful solution. [K]
     infodict : dict

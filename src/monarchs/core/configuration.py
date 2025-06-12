@@ -2,8 +2,6 @@ import argparse
 import warnings
 import os
 import numpy as np
-import psutil
-import functools
 
 def parse_args():
     """

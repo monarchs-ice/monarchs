@@ -11,14 +11,14 @@ from monarchs.core import utils
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
     Adds snowfall to surface of model and regrids model to incorporate it. This snow is added to the firn or lake
-    depth, depending on the current state of the IceShelf (cell).
+    depth, depending on the current state of the cell.
     Called in <timestep_loop>.
     TODO - what happens if we have a lid? Gets added to top and we just regrid as normal.
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object to add snow onto.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     snow_depth : float
         Depth of the snow, read in from the meteorological data input [m]
     snow_rho : float
@@ -139,7 +139,8 @@ def densification(cell, t_steps_per_day):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
+    cell : numpy structured array
+        Element of the model grid we are operating on.
 
     t_steps_per_day : int
 

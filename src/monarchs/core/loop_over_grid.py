@@ -1,17 +1,12 @@
 """
 Grid-looping module. This either runs sequentially, or runs through in parallel
 (effectively like a collapsed OpenMP parallel do loop).
-core.loop_over_grid sets up a 2D grid of IceShelf objects (defined in
-core.iceshelf_class), flattens this grid and then runs timestep_loop()
-in parallel (using either ProcessPoolExecutor or Dask, since the problem is
-embarrassingly parallel), unless model_setup.parallel = False.
 """
 
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
 import time
 from dask import delayed, compute
-from memory_profiler import profile
 
 def process_chunk(original_indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day):
     """
@@ -31,7 +26,7 @@ def chunk_grid(flat_grid, met_data_grid, chunk_size):
     Parameters
     ----------
     flat_grid : np.ndarray
-        Flattened grid of IceShelf objects.
+        Flattened model grid.
     met_data_grid : np.ndarray
         Flattened grid of met_data corresponding to the grid.
     chunk_size : int
@@ -72,13 +67,10 @@ def loop_over_grid(
         Number of rows in <grid>.
     col_amount : int
         Number of columns in <grid>.
-    grid : list, or np.ndarray
-        Nested list containing the instances of the IceShelf class for each
-        x and y point. Vertical (z) information is stored within each class
-        instance.
-    met_data : list, or np.ndarray
-        Nested list of the same shape as grid, containing instances of the
-        MetData class for each x and y point.
+    grid : numpy structured array
+        Model grid containing the ice shelf parameters.
+    met_data : numpy structured array
+        Grid containing the met data associated with the model grid.
     parallel : bool, optional
         Flag to determine whether the model is to be run in parallel across
         multiple cores or not.

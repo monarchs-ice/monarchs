@@ -6,7 +6,7 @@ Create an instance of an IceShelf object for testing with.
 
 
 def frozen_testcase():
-    from monarchs.core.iceshelf_class import IceShelf
+    from monarchs.core.model_grid import IceShelf
     from monarchs.core.initial_conditions import rho_init_emp
 
     firn_depth = 39.99973571

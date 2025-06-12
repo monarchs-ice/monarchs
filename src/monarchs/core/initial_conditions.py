@@ -6,7 +6,7 @@ interpolating it, and loading in/interpolating the digital elevation model (DEM)
 
 import numpy as np
 from monarchs.DEM.load_DEM import export_DEM
-from monarchs.core.iceshelf_class import initialise_iceshelf, get_spec
+from monarchs.core.model_grid import initialise_iceshelf, get_spec
 
 
 def initialise_firn_profile(model_setup, diagnostic_plots=False):

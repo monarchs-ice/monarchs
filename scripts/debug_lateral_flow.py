@@ -2,7 +2,7 @@ from monarchs.core.dump_model_state import reload_from_dump
 from monarchs.core.utils import get_2d_grid
 from matplotlib import pyplot as plt
 from monarchs.physics.lateral_functions import move_water
-from monarchs.core.iceshelf_class import get_spec
+from monarchs.core.model_grid import get_spec
 path = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\archer2_lateral/progress.nc"
 import numpy.testing as npt
 

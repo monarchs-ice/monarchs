@@ -184,8 +184,8 @@ Model output
     vars_to_save : tuple, str
         Default ('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth', 'lake', 'lid', 'v_lid').
         Tuple containing the names of the variables that we wish to save during the evolution of MONARCHS over time.
-        See <iceshelf_class> for details on the full list of variables that <vars_to_save> accepts.
-        # TODO - flag so that if var in vars to save not in iceshelf_class, flag this and either exit or write a warning
+        See <model_grid.py> for details on the full list of variables that <vars_to_save> accepts.
+        # TODO - flag so that if var in vars to save not in model_grid, flag this and either exit or write a warning
 
     output_filepath : str
         Path to the file that you want to save output into, including file extension. 

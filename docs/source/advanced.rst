@@ -5,9 +5,9 @@ Optimised performance using Numba (the ``use_numba`` flag)
 
 tl;dr - should I set ``use_numba`` to True or False?
 ===========================================
-If performance is important (e.g. if running on HPC), set it to `True`. Otherwise, you are OK without.
+If performance is important (e.g. if running on HPC), set it to ``True``. Otherwise, you are OK without.
 
-If you need to debug your run, then keep `use_numba` `False`.
+If you need to debug your run, then keep ``use_numba`` ``False``.
 
 Why Numba?
 ==================
@@ -16,16 +16,21 @@ myriad other reasons. However, one of the drawbacks of Python is that it is slow
 such as C and Fortran. A compromise is to make use of Numba, a just-in-time compiler for Python. This significantly
 bridges the performance gap between these languages, at the cost of somewhat more complex code.
 
-In many cases, this is "free". However, since we need to use `hybrd` from MINPACK to solve the heat equation, and the standard
-Python implmentation is not `Numba` compatible (`scipy.optimize.fsolve`), we instead make use of `NumbaMinpack`, a
-Python library that calls MINPACK from a compiled Fortran source using Numba's `ctypes` compatability. This makes the
+In many cases, this is "free". However, since we need to use ``hybrd`` from MINPACK to solve the heat equation, and the standard
+Python implmentation is not ``Numba`` compatible (``scipy.optimize.fsolve``), we instead make use of ``NumbaMinpack``, a
+Python library that calls MINPACK from a compiled Fortran source using Numba's ``ctypes`` compatability. This makes the
 resulting source code a little more complex.
 
 Numba also has great support for parallel Python via OpenMP, which we use in MONARCHS. Since the single-column physics
-does not affect other columns, this approach is very efficient.
+does not affect other columns, this approach is very efficient; resulting in speedups to the overall runtime of ~50x
+or more for long runs.
 
 What are the drawbacks?
 ========================
+Since the code is compiled before running, for small runs
+(e.g. single column over fewer than 1000 timesteps), this overhead will dominate the runtime, in which case it may
+be prudent to keep ``use_numba`` ``False``.
+
 This makes code development more complex since Numba requires strict static typing, and only supports a subset of
 inbuilt Python and ``numpy`` functions. Important libraries such as ``scipy`` are not yet supported. The code has been
 written to try and hide away most of this where possible, but some design choices were made during the development
@@ -34,53 +39,24 @@ of MONARCHS that are inelegant or un-Pythonic, to accommodate the use of Numba.
 In this vein, feedback or suggestions on how to improve the readability of the MONARCHS source code are appreciated.
 
 Additionally, Numba code is significantly harder to debug, since it doesn't use the normal Python stack trace.
-A compromise here is to initially run your code with Numba, ensuring that the model :doc:`dumping flags <model_setup_reference>`
+A compromise here is to initially run your code with Numba, ensuring that the model :doc:``dumping flags <model_setup_reference>``
 are enabled, and then after the code crashes, run the model from this dump with ``parallel = False`` and
 ``use_numba = False`` in your runscript to debug.
 
 What parts of the code are actually different if using Numba?
 =============================================================
 -  ``timestep_loop`` and all functions called by ``timestep_loop`` or deeper are called by Numba's ``jit`` function,
-   equivalent to decorating them using the ``@jit`` decorator. This is controlled by the `jit_modules` function
-   in `monarchs.core.configuration`.
--  The core building block of MONARCHS, the IceShelf ``class``, is converted to a ``numba.experimental.jitclass``. This
-   is a Numba-compatible version of the inbuilt Python class. Using a jitclass requires type specification,
-   which can be found in the ``spec`` variable in ``core.iceshelf_class``. If adding new variables to the MONARCHS
-   code, ensure that you add them to ``spec`` if you want the code to run with Numba. Arrays can be specified using
-   e.g. ``float64[:,:]`` for a 2D array of dtype ``float64``.
--  the model grid is converted from a ``List`` to a ``numba.typed.List``. This ensures compatibility but doesn't make much
-   difference practically.
+   equivalent to decorating them using the ``@jit`` decorator. This is controlled by the ``jit_modules`` function
+   in ``monarchs.core.configuration``.
 -  Different versions of the firn heat equation, lake surface energy balance, and lid heat equation/surface energy balance
    solver functions are selected. This is because of the different input formatting requirements of the Scipy and Numba
    implementations. In the non-Numba implementation, these are solved using ``scipy.optimize.fsolve``. In the Numba
    implementation, an external library ``NumbaMinpack`` (developed by Nicholas Wogan) is used to call the Fortran
-   MINPACK library's ``hybrd`` function.
+   MINPACK library's ``hybrd`` function. In future, this will use a dedicated fork of this library built into MONARCHS,
+   to ensure that it is maintained.
 
 Are there any differences between the two versions?
 ===================================================
 The model flow and algorithms are exactly the same in the non-Numba and Numba versions. However, there may be some
 small differences in the numerics, which can evolve over time. In general, the output of the two versions is extremely
 close, with no significant divergence observed over multi-year runs.
-Running with MPI
-----------------
-
-It is possible to run MONARCHS across multiple nodes on HPC systems using MPI. This is achieved without the need for
-significant MPI code using an ``mpi4py.futures`` ``Pool``. This allows us to spawn MPI processes as and when they are needed, in
-a similar way to how a ``multiprocessing`` ``Pool`` works, and allows for the code to be mostly free of complex MPI directives
-and boilerplate. This does not have a significant overhead compared to using ``multiprocessing`` even on single-node
-systems.
-
-Currently, it is not possible to use MPI with Numba. This is current WIP but will not be ready on release.
-
-Running MONARCHS with MPI may be slightly different to how you may have used MPI in the past, since it uses this pool/spawning
-approach. You should run with only a single MPI process, i.e. do:
-
-``mpirun -n 1 python run_MONARCHS.py -i <model_setup_path>``
-
-The number of MPI processes is controlled by the model setup variable ``cores``. If running on HPC, you likely want
-to use ``cores = 'all'`` to ensure that you use all of the cores you have available in your job.
-
-Attempting to do mpirun with more than 1 process will result in several processes running the whole code, which will result
-in an attempt to spawn ``<cores>`` processes for each of the N processes you create with the call to ``mpirun``.
-
-Currently this implementation does not work on ARCHER2 - this is a known issue and is being worked on.

@@ -19,7 +19,8 @@ def initialise_met_data(
         t_steps_per_day
     ):
     """
-       Create a grid of MetData objects, each one associated with an IceShelf object.
+       Create a structured array containing our met data, with each element
+       associated with an element of the model grid.
        The data is loaded in as NumPy arrays, obtained from the input netCDF file of meterological data.
        This is done at each iteration, so we only store one day's worth of met data in memory at any given time.
        Called in <main>.
@@ -49,8 +50,8 @@ def initialise_met_data(
 
        Returns
        -------
-       grid : List, or numba.typed.List
-           Model grid of IceShelf objects. This is the main data structure of MONARCHS.
+       metdata - numpy structured array
+           Grid containing meteorological data for the model run.
        """
 
     metdata = np.zeros((t_steps_per_day, num_rows, num_cols), dtype=dtype)

@@ -23,7 +23,7 @@ from monarchs.core import configuration, initial_conditions, setup_met_data
 from monarchs.core.dump_model_state import dump_state, reload_from_dump
 from monarchs.core.model_output import setup_output, update_model_output
 from monarchs.core.utils import get_2d_grid, calc_grid_mass, check_grid_correctness
-from monarchs.met_data.metdata_class import initialise_met_data, get_spec
+from monarchs.met_data.met_data_grid import initialise_met_data, get_spec
 from monarchs.physics import lateral_functions
 
 
@@ -100,7 +100,7 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
 
     if model_setup.reload_from_dump:
         print("Reloading state from dump...")
-        from monarchs.core.iceshelf_class import get_spec as get_iceshelf_spec
+        from monarchs.core.model_grid import get_spec as get_iceshelf_spec
         if not os.path.exists(reload_name):
             first_iteration = 0
             warnings.warn(
@@ -303,9 +303,9 @@ def main(model_setup, grid):
         This contains the following arguments used in this function:
 
             row_amount : int
-                number of rows in the grid of IceShelf objects we want to operate on.
+                number of rows in the model grid.
             col_amount : int
-                number of columns in the grid of IceShelf objects we want to operate on.
+                number of columns in the model grid.
             met_output_filepath : str
                 path to netCDF file containing the meteorological data used to drive the model.
             days : int
@@ -319,16 +319,16 @@ def main(model_setup, grid):
             output_filename : str, optional
                 Name of the netCDF file used to save model output, if applicable.
             vars_to_save: tuple, optional
-                Tuple containing the variables that you want to save from your IceShelf grid. These will be added
+                Tuple containing the variables that you want to save from your model grid. These will be added
                 to the output netCDF file defined in output_filename.
 
-    grid : List, or numba.typed.List
-        grid of IceShelf objects, each representing a single column.
+    grid : numpy structured array
+        Model grid, containing the data specified in get_spec() of monarchs.core.model_grid.
 
     Returns
     -------
-    grid : List, or numba.typed.List
-        grid of IceShelf objects, amended from the original state by the model
+    grid : numpy structured array
+        Model grid at the end of the run.
 
     """
 
@@ -414,8 +414,7 @@ def main(model_setup, grid):
                     continue  # The object was already garbage collected
             return count
 
-        print("Compiled Numba functions:", count_dispatchers())
-        print("Compiled functions:", count_dispatchers())
+
         timestep_start = time.perf_counter()
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")

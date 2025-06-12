@@ -17,8 +17,8 @@ def sfc_energy_lake(J, Q, cell):
         See Buzzard (2017), pp. 43 for details.
     Q : float
         Surface energy flux, calculated via surface_fluxes.sfc_flux.  [W m^-2]
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object we wish to determine the lake properties for.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     Returns
     -------
     lake_surf_temp : float
@@ -46,8 +46,8 @@ def sfc_energy_lake_formation(T_air, Q, k, cell):
         Thermal conductivity of the firn column, as obtained by an Sfrac/Lfrac/air fraction weighted calculation
         using k_ice, k_water and k_air respectively.
         We only use the first element of this, i.e. the surface value. [W m^-1 K^-1]
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object we wish to determine the lake properties for.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
 
     Returns
     -------
@@ -71,8 +71,8 @@ def turbulent_mixing(cell, SW_in, dt):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object we wish to determine the lake properties for.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     SW_in : float
         Downwelling shortwave radiation. [W m^-2]
     dt : int
@@ -120,8 +120,8 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object we wish to determine the lake properties for.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     dt : int
         Number of seconds in the timestep, most likely 3600 (i.e. 1 hour) [s]
     LW_in : float
@@ -216,8 +216,8 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_di
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object we wish to determine the lake properties for.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     dt : int
         Number of seconds in the timestep, most likely 3600 (i.e. 1 hour) [s]
     LW_in : float

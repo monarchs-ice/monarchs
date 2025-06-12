@@ -25,13 +25,13 @@ def do_not_jit(function):
 
 def get_2d_grid(grid, attr, index=False):
     """
-    Helper function to get a printout of a variable from a 2D grid of IceShelf
+    Helper function to get a printout of a variable from the model grid, at a user-specified index.
     objects.
 
     Parameters
     ----------
     grid : List, or nb.typed.List
-        the grid of IceShelf instances
+        the model grid
     attr : str
         the attribute you want to print out, e.g:
         get_2d_grid(grid, 'firn_depth') will print out the firn depth
@@ -82,7 +82,7 @@ def calc_grid_mass(grid):
     Parameters
     ----------
     grid : List, or numba.typed.List
-        grid containing IceShelf objects.
+        the model grid
     Returns
     -------
     total_mass : float
@@ -105,8 +105,8 @@ def check_correct(cell):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object that we want to check.
+    cell : numpy structured array
+        Element of the model grid we want to check.
 
     Returns
     -------
@@ -201,8 +201,8 @@ def calc_mass_sum(cell):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        Instance of an IceShelf class from our model grid.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
 
     Returns
     -------
@@ -230,7 +230,7 @@ def add_random_water(grid, max_grid_row, max_grid_col):
     Parameters
     ----------
     grid : List, or numba.typed.List
-        grid of IceShelf objects we want to add water to
+        model grid
     max_grid_row : int
         Number of rows in the grid
     max_grid_col : int
@@ -256,7 +256,7 @@ def add_edge_water(grid, max_grid_row, max_grid_col):
     Parameters
     ----------
     grid : List, or numba.typed.List
-        grid of IceShelf objects we want to add water to
+        model grid
     max_grid_row : int
         Number of rows in the grid
     max_grid_col : int
@@ -304,8 +304,8 @@ def spinup(cell, x, args):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        cell that we want to spin up.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     x : array_like, dimension(vert_grid)
         Initial guess temperature [K]
     args : array_like
@@ -321,10 +321,13 @@ def spinup(cell, x, args):
         re-consider their initial conditions in this case.
     """
 
-import psutil
-import functools
-import os
-
+try:
+    import psutil
+    import functools
+    import os
+except ImportError:
+    print('monarchs.core.utils: psutil module not found. Memory profiling will not be available. To suppress this warning, '
+          'install psutil with "python -m pip install psutil".')
 
 def memory_tracker(label=""):
     """

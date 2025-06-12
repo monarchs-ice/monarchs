@@ -33,7 +33,7 @@ is the model telling you that it is using default values for several parameters 
 1D runscript (``model_setup.py``).
 
 
-The model will run for 20 days and then stop. It will print out some simple diagnostics - the firn depth, lake depth
+The model will run for 105 days and then stop. It will print out some simple diagnostics - the firn depth, lake depth
 and lid depth, and how much water was detected during the lateral movement step (which doesn't occur here of course
 as we are running a 1D case!).
 
@@ -89,7 +89,7 @@ where they are set to lower values - these add up to 105 days at hourly resoluti
 If we increase the number of days, we could e.g. increase the number of warm and cold timesteps to match.
 We can do this by changing the ``warm_timesteps`` and ``cold_timesteps`` in this specific example.
 For example, if we set ``num_days`` to 110 from 105, we need to increase the value of ``cold_timesteps`` or ``warm_timesteps`` by an additional 120 (``5 * 24``),
-or extend the data in some other way (e.g. ``append``ing another array with a different set of values for a different number of timesteps, or splitting the 120 extra timesteps required between ``cold_timesteps`` and ``warm_timesteps``).
+or extend the data in some other way (e.g. appending another array with a different set of values for a different number of timesteps, or splitting the 120 extra timesteps required between ``cold_timesteps`` and ``warm_timesteps``).
 
 .. note::
     Note that ``warm_timesteps`` and ``cold_timesteps`` are not values used by MONARCHS itself, they are just used to control the
@@ -154,7 +154,7 @@ nothing happening (as the model will try and start from the same day that it is 
 However, you can extend the run further by increasing ``num_days``.
 
 If you do this, remember that you will need to extend your
-meteorological dataset if you do this. MONARCHS will read from the index corresponding to the start day of the run,
+meteorological dataset. MONARCHS will read from the index corresponding to the start day of the run,
 which in this case is not 0 - e.g. if restarting from day 5 it will read from ``met_data`` at index (5 * 24) = 120 - the
 prior indices have already been used in the model.
 

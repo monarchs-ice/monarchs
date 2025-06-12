@@ -16,9 +16,7 @@ def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     k_ice[T < 273.15] = 1000 * (
         2.24e-03
         + 5.975e-06
-        * (
-            (273.15 - T[T < 273.15])
-            ** 1.156
+        * ((273.15 - T[T < 273.15]) ** 1.156
         )
     )
     k_ice[T >= 273.15] = 2.24
@@ -188,8 +186,8 @@ def heateqn_lid(
     ----------
     x : array_like, float, dimension(cell.vert_grid)
         initial estimate of the firn column temperature [K]
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object containing the details for that vertical column
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     dt : int
         timestep duration [s]
     dz : float

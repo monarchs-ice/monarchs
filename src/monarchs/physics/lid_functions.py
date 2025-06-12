@@ -21,8 +21,8 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        Instance of the IceShelf that we are tracking the virtual lid for.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     dt : int
         Number of seconds in the timestep, very like 3600 (i.e. 1h) [s]
     LW_in : float
@@ -163,8 +163,8 @@ def calc_surface_melt(cell, dt, Q):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        Instance of the IceShelf that we are calculating the lid surface melt of.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     dt : int
         Number of seconds in the timestep, very like 3600 (i.e. 1h) [s]
     Q : float
@@ -200,8 +200,8 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        Instance of the IceShelf that we are evolving the lid for.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     dt : int
         Number of seconds in the timestep, very like 3600 (i.e. 1h) [s]
     LW_in : float
@@ -329,7 +329,7 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
 def interpolate_profiles(cell, new_depth_grid, old_depth_grid):
     """
-    Interpolate various IceShelf variables when combining the lid and firn profiles.
+    Interpolate various model variables when combining the lid and firn profiles.
     The variables being regridded have the lid and firn profiles concatenated within combine_lid_firn prior to
     this function call.
     This could also be reused in other places to perform the same job when melting or freezing takes place.
@@ -338,8 +338,8 @@ def interpolate_profiles(cell, new_depth_grid, old_depth_grid):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        Instance of IceShelf within the model grid that is to have the lid and firn profiles combined.
+    cell : numpy structured array
+        Element of the model grid we are operating on..
     new_depth_grid : array_like, float, dimension(cell.vert_grid)
         New vertical profile to be interpolated to. This spans the bottom of the firn to the new top extent,
         i.e. the old firn depth + the old lid depth.
@@ -376,8 +376,8 @@ def combine_lid_firn(cell):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        Instance of IceShelf within the model grid that is to have the lid and firn profiles combined.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
 
     Returns
     -------

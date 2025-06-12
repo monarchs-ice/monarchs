@@ -11,7 +11,7 @@ except ImportError:
     prange = range  # pragma: no cover
 def update_water_level(cell):
     """
-    Determine the water level of a single IceShelf object, so we can determine where water flows laterally to and from.
+    Determine the water level of a single cell, so we can determine where water flows laterally to and from.
     This is determined by the presence of lakes, lids or ice lenses within the firn column.
     If there is no lake, lid or ice lens, then the entire grid cell is free for water to move into it.
     If there is no lake or lid, but there is an ice lens then the water level is the level of the highest point
@@ -23,8 +23,8 @@ def update_water_level(cell):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object that we want to determine the water level of.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
 
     Returns
     -------
@@ -147,8 +147,8 @@ def find_biggest_neighbour(
 
     Parameters
     ----------
-    cell: IceShelf
-        IceShelf object corresponding to a point in grid.
+    cell: numpy structured array
+       Element of our model grid.
     grid: List or numba.typed.List()
         List containing multiple instances of IceShelf objects.
     i: int
@@ -257,8 +257,8 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
 
     Parameters
     ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object that water is moving through
+    cell : numpy structured array
+        Element of the model grid we are operating on.
     m : float
         difference in heights between this cell and the cell the water is moving to
     timestep : int
@@ -562,8 +562,8 @@ def move_to_neighbours(
 
     Parameters
     ----------
-    grid : List, or numba.typed.List
-        grid of IceShelf objects
+    grid : numpy structured array
+        Model grid representing the ice shelf.
     biggest_neighbours : List
         List of the largest neighbour cells calculated from find_biggest_neighbour
     i : int

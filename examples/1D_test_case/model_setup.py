@@ -94,8 +94,8 @@ output_filepath = "output/1d_testcase_outputnew.nc"  # Filename for model output
 output_grid_size = vertical_points_firn  # Size of interpolated output
 lateral_movement_toggle = False
 firn_column_toggle = True
-lake_development_toggle = False
-lid_development_toggle = False
+lake_development_toggle = True
+lid_development_toggle = True
 
 """
 Dumping and reloading parameters

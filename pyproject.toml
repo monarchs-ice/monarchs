@@ -22,7 +22,8 @@ dependencies = [
     'pathos',
     'rioxarray',
     'rasterio',
-    'pyproj'
+    'pyproj',
+    'dask',
 ]
 
 classifiers = [
@@ -37,6 +38,9 @@ classifiers = [
 
 mpi = [
     'mpi4py',
+]
+numba = [
+    'NumbaMinpack',
 ]
 
 [project.scripts]

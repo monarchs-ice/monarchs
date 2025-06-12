@@ -11,20 +11,19 @@ from monarchs.core import utils
 
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """
-    Main timestepping loop applied to an instance of the IceShelf class.
+    Main timestepping loop applied to an instance of the model grid.
     Called by loop_over_grid to work in parallel over multiple instances.
 
     Parameters
     ----------
-    cell : numba.jitclass
-        Instance of the IceShelf class. For more info, see class definition
-        docstring in iceshelf_class.py.
+    cell : numpy structured array
+        Element of our model grid.
     dt : int32
         Time for each timestep <t_steps_per_day>. [s]
 
 
-    met_data : numba.jitclass
-        Instance of the MetData class. Contains thermodynamic variables, which
+    met_data : numpy structured array
+        Element of the met data grid. Contains thermodynamic variables, which
         are listed as follows:
 
         LW_in : int32 or float64

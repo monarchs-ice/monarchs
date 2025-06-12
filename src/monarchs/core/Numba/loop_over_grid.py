@@ -34,9 +34,8 @@ def loop_over_grid_numba(
         Nested list containing the instances of the IceShelf class for each
         x and y point. Vertical (z) information is stored within each class
         instance.
-    met_data: numba.typed.List
-        Nested list of the same shape as grid, containing instances of the
-        MetData class for each x and y point.
+    met_data: numpy structured array
+        Grid containing the met data associated with the model grid.
     t_steps_per_day: int
         Number of timesteps to run each day.
     toggle_dict : dict

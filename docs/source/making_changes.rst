@@ -1,21 +1,15 @@
 
 Making changes to MONARCHS
 ====================================
-Some of the below is only relevant if you want your change to be merged into the main branch of MONARCHS, or you want
-your changes to benefit from the performance gains obtained by using Numba.
-
 
 Adding new diagnostics or physics
 **********************************
 
 If adding new variables to the code, you will need to do the following:
-    - Add the variable into the ``IceShelf`` class, found in ``monarchs.core.iceshelf_class``, and initialising it if appropriate in ``monarchs.core.initial_conditions.create_model_grid``.
+    - Add the variable into the ``spec``, found in ``monarchs.core.model_grid``, and initialising it if appropriate in ``monarchs.core.initial_conditions.create_model_grid``. This is required since we need to ensure that our code is compilable with Numba, which forces strict typing.
     - Add the variable into the model code itself. This likely involves making the relevant changes to the various files/functions in ``monarchs.physics``.
     - If your new variable is a diagnostic, add the variable to ``vars_to_save`` in your runscript, so that the code knows to track it over time and save it to the output netCDF file.
     - If your new variable relies on a toggle or other ``model_setup`` variable, set a default value for this in ``monarchs.core.configuration.create_defaults_for_missing_flags``.
-
-If using Numba (see :doc:`advanced` and the section below), you will also need to:
-    - Add the variable into ``spec``, found in ``monarchs.core.iceshelf_class.get_spec()``, including its ``dtype``. Compare with other variables in ``spec`` for the syntax. This step is essential for the code to work with Numba support.
 
 
 Merging your changes into the MONARCHS source
@@ -26,7 +20,6 @@ Please make any changes you want to make to the code in a new branch of the main
 
 For your work to be merged into ``main``, it needs to pass our test suite. The tests are automatically run via Github Actions
 when a pull request into ``main`` is made, so it will quickly be apparent if it does not pass.
-The main one to look out for is the tests in ``tests/numba`` - if any new ``IceShelf`` variables are not added into ``spec`` this test will fail.
 
 Additionally, any new functions or physics/diagnostics should have docstrings or comments where possible. If you have written
 new physics functions, it is best if these have some kind of unit test. Any new physics should have an associated toggle

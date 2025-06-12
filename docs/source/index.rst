@@ -31,6 +31,7 @@ Contents
    model_setup_reference
    common_errors
    making_changes
+   structure
    autoapi/index
 
 
