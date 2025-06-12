@@ -8,12 +8,14 @@ matplotlib.use("TkAgg")
 dumppath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc"
 diagpath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\model_output.nc"
 
+
 # Load in the data - just focusing on lake depth from the diagnostics file
 
 diagnostic_data = Dataset(diagpath)
 
 lake_depth = diagnostic_data.variables["lake_depth"]
 lid_depth = diagnostic_data.variables["lid_depth"]
+
 # Plot the lake depth - we want to generate an ArtistAnimation to do this so we can create a gif over time
 fig, ax = plt.subplots()
 ims = []
@@ -31,6 +33,7 @@ for i in range(len(lake_depth)):
 
 ani = ArtistAnimation(fig, ims, interval=200, blit=True, repeat_delay=1000)
 ani.save("lake_depth.gif", writer="imagemagick")
+
 
 # Plot the lake depth - we want to generate an ArtistAnimation to do this so we can create a gif over time
 fig, ax = plt.subplots()
@@ -50,3 +53,4 @@ for i in range(len(lid_depth)):
 ani = ArtistAnimation(fig, ims, interval=200, blit=True, repeat_delay=1000)
 ani.save("lid_depth.gif", writer="imagemagick")
 diagnostic_data.close()
+
