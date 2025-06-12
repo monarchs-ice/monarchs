@@ -99,6 +99,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                         rho[rowidx, colidx] = np.interp(
                             model_setup.firn_min_height - column, profile_temp, rho_temp
                         )[::-1]
+
     if hasattr(model_setup, "T_init") and model_setup.rho_init != "default":
         T = model_setup.T_init
     else:

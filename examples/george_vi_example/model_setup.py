@@ -12,8 +12,8 @@ print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
-row_amount = 50  # Number of rows in your model grid, looking from top-down.
-col_amount = 50  # Number of columns in your model grid, looking from top-down.
+row_amount = 100  # Number of rows in your model grid, looking from top-down.
+col_amount = 100  # Number of columns in your model grid, looking from top-down.
 # lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate via 'dem'
 lat_grid_size = "dem"
 vertical_points_firn = 500  # Number of vertical grid cells
@@ -38,7 +38,7 @@ input_crs = 3031  # Coordinate reference system of the input data
 """
 Timestepping parameters
 """
-num_days = 250  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 365  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
