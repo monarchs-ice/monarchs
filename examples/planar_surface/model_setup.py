@@ -14,13 +14,13 @@ at monarchs-ice.github.io/monarchs/model_setup_reference.
 
 import os
 import numpy as np
-from monarchs.DEM import create_DEM_GaussianTestCase as cgt
+from monarchs.DEM import create_DEM_planar_test_case as cpt
 
 """
 Spatial parameters
 """
-row_amount = 10  # Number of rows in your model grid, looking from top-down.
-col_amount = 10  # Number of columns in your model grid, looking from top-down.
+row_amount = 3  # Number of rows in your model grid, looking from top-down.
+col_amount = 3  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -42,7 +42,7 @@ lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of late
 DEM/firn profile parameters
 """
 
-firn_depth = 35 * cgt.export_gaussian_DEM(row_amount, diagnostic_plots=False)
+firn_depth = 35 * cpt.export_planar_DEM(row_amount, diagnostic_plots=False)
 rho_init = "default"  # Initial density, use 'default' to use empirical formula for initial density profile
 T_init = "default"  # Initial temperature profile.
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
@@ -86,7 +86,6 @@ for key in met_data.keys():
         met_data[key][:, np.newaxis, np.newaxis],
         (len(met_data[key]), row_amount, col_amount),
     )
-
 met_output_filepath = "output/met_data_threelake.nc"
 """
 Output parameters
@@ -116,7 +115,7 @@ reload_from_dump = False  # Flag to determine whether to reload the state or not
 """
 Computing and numerical parameters
 """
-use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
+use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
@@ -135,7 +134,8 @@ flow_speed_scaling = 1.0  # Scaling factor for flow speed, used to adjust the sp
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
 All of these default to True.
 """
-catchment_outflow = False  # Determines if water on the edge of the catchment area will
+
+catchment_outflow = True  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
 flow_into_land = True  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
@@ -148,7 +148,7 @@ single_column_toggle = True
 # Just for this specific case - assert that the DEM is symmetric
 import numpy.testing as npt
 
-npt.assert_array_equal(firn_depth, firn_depth[::-1, ::-1])
+npt.assert_array_equal(firn_depth, firn_depth[::-1])
 
 if __name__ == "__main__":
     print(f"Loading runscript from {os.getcwd()}/model_setup.py")

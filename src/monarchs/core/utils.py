@@ -1,6 +1,7 @@
 import numpy as np
 from functools import wraps
 
+
 def do_not_jit(function):
     """
     An empty function used to decorate functions that we do not wish to jit-compile.
@@ -13,13 +14,15 @@ def do_not_jit(function):
     wrapped function
 
     """
+
     @wraps(function)
     def wrapper(*args, **kwargs):
         return function(*args, **kwargs)
 
     return wrapper
 
-@do_not_jit
+
+
 def get_2d_grid(grid, attr, index=False):
     """
     Helper function to get a printout of a variable from a 2D grid of IceShelf
@@ -43,23 +46,22 @@ def get_2d_grid(grid, attr, index=False):
     None. (but will print to stdout)
 
     """
-    # if no index specified, get surface values
     if not index:
         index = 0
     var = [None] * len(grid)
-    for row in range(len(grid)):
-        var[row] = [None] * len(grid[0])
-        for col in range(len(grid[0])):
-            var[row][col] = getattr(
-                grid[row][col], attr
-            )
-
-    # get all values
+    if not isinstance(grid, np.ndarray):
+        for row in range(len(grid)):
+            var[row] = [None] * len(grid[0])
+            for col in range(len(grid[0])):
+                var[row][col] = getattr(grid[row][col], attr)
+    else:
+        for row in range(len(grid)):
+            var[row] = [None] * len(grid[0])
+            for col in range(len(grid[0])):
+                var[row][col] = grid[attr][row][col]
     if index == "all":
         return np.array(var)
-    # otherwise
     else:
-        # ensure that we get the whole array regardless of whether it is a vector or scalar
         try:
             return np.array(var)[:, :, index]
         except IndexError:
@@ -90,7 +92,7 @@ def calc_grid_mass(grid):
     for i in range(len(grid)):
         for j in range(len(grid[0])):
             cell = grid[i][j]
-            if cell.valid_cell:
+            if cell["valid_cell"]:
                 total_mass += calc_mass_sum(cell)
     return total_mass
 
@@ -116,64 +118,78 @@ def check_correct(cell):
         If any of the conditions are met, raise ValueError as the model has reached an unphysical state.
         See the code body for details.
     """
-    if cell.lake_depth < 0:
+    if cell["lake_depth"] < -1E-12:  # account for rounding errors
         print(f"monarchs.core.utils.check_correct: ")
-        print("Lake depth = ", cell.lake_depth)
+        print("Lake depth = ", cell["lake_depth"])
         raise ValueError("Lake depth must not be negative \n")
-    if cell.firn_depth < 0:
+    elif cell["lake_depth"] < 0:
+        cell["lake_depth"] = 0
+
+    if cell["firn_depth"] < 0:
         print(
             "Error: column = ",
-            cell.column,
+            cell["column"],
             ", row = ",
-            cell.row,
+            cell["row"],
             ", firn_depth = ",
-            cell.firn_depth,
+            cell["firn_depth"],
             "\n",
         )
-        # cell.firn_depth = 0
-        raise ValueError(f"monarchs.core.utils.check_correct: " "All firn has melted.")
-
-    # For the following - use +/- 0.01 as the bounding maximum so that we have a "grace period" for the model
-    # to correct itself, and to be more robust to small numerical errors or rounding errors.
-
-    # Sfrac
-    if np.any(cell.Sfrac[cell.Sfrac < -0.01]) or np.any(cell.Sfrac[cell.Sfrac > 1.01]):
+        raise ValueError(f"monarchs.core.utils.check_correct: All firn has melted.")
+    if np.any(cell["Sfrac"][cell["Sfrac"] < -0.01]) or np.any(
+        cell["Sfrac"][cell["Sfrac"] > 1.01]
+    ):
         print(
-            f"{np.max(cell.Sfrac)} at level {np.where((cell.Sfrac > 1) | (cell.Sfrac < 0))},"
-            f" x = {cell.column}, y = {cell.row}\n"
+            f"""{np.max(cell['Sfrac'])} at level {np.where((cell['Sfrac'] > 1) | (cell['Sfrac'] < 0))}, x = {cell['column']}, y = {cell['row']}
+"""
         )
-        print("Minimum Sfrac = ", np.min(cell.Sfrac))
+        print("Minimum Sfrac = ", np.min(cell["Sfrac"]))
         raise ValueError(
-            f"monarchs.core.utils.check_correct: "
-            "Solid fraction must be between 0 and 1 \n"
+            f"""monarchs.core.utils.check_correct: Solid fraction must be between 0 and 1 
+"""
         )
-
-    # Lfrac
-    if np.any(cell.Lfrac[cell.Lfrac < -0.01]) or np.any(cell.Lfrac[cell.Lfrac > 1.01]):
-        print(np.max(cell.Lfrac))
-        print(np.min(cell.Lfrac))
-        print(np.where(cell.Lfrac < -0.01))
-        print(cell.Lfrac)
+    if np.any(cell["Lfrac"][cell["Lfrac"] < -0.01]) or np.any(
+        cell["Lfrac"][cell["Lfrac"] > 1.01]
+    ):
+        print(np.max(cell["Lfrac"]))
+        print(np.min(cell["Lfrac"]))
+        print(np.where(cell["Lfrac"] < -0.01))
+        print(cell["Lfrac"])
         raise ValueError(
-            f"monarchs.core.utils.check_correct: "
-            "Lfrac error - either above 1 or below 0"
+            f"monarchs.core.utils.check_correct: Lfrac error - either above 1 or below 0"
         )
-    # Sfrac + Lfrac
-    total = cell.Lfrac + cell.Sfrac
+    total = cell["Lfrac"] + cell["Sfrac"]
     if np.any(total > 1.01):
-        # print(total)
         print(f"monarchs.core.utils.check_correct: ")
         print(f"{np.max(total)} at level {np.where(total > 1)} \n")
-        print("Sfrac :", cell.Sfrac[np.where(total > 1)])
-        print("Lfrac :", cell.Lfrac[np.where(total > 1)])
+        print("Sfrac :", cell["Sfrac"][np.where(total > 1)])
+        print("Lfrac :", cell["Lfrac"][np.where(total > 1)])
         print(
             "Sfrac + Lfrac:",
-            cell.Lfrac[np.where(total > 1)] + cell.Sfrac[np.where(total > 1)],
+            cell["Lfrac"][np.where(total > 1)] + cell["Sfrac"][np.where(total > 1)],
         )
         raise ValueError(
-            f"monarchs.core.utils.check_correct: "
-            "Sum of liquid and solid fraction must be less than 1 \n"
+            f"""monarchs.core.utils.check_correct: Sum of liquid and solid fraction must be less than 1 
+"""
         )
+def check_grid_correctness(grid):
+    """
+    Wraps check_correct for each cell in the grid. We do this in a separate function so that we can wrap it
+    with numba.njit and speed things up.
+
+    Parameters
+    ----------
+    grid
+
+    Returns
+    -------
+
+    """
+    from numba import prange
+
+    for i in prange(len(grid)):
+        for j in range(len(grid[0])):
+            check_correct(grid[i][j])
 
 def calc_mass_sum(cell):
     """
@@ -194,11 +210,15 @@ def calc_mass_sum(cell):
         Amount of mass in the system, in arbitrary units.
     """
     total_mass = (
-        np.sum((cell.Sfrac * cell.rho_ice * (cell.firn_depth / cell.vert_grid)))
-        + np.sum((cell.Lfrac * cell.rho_water * (cell.firn_depth / cell.vert_grid)))
-        + (cell.lake_depth * cell.rho_water)
-        + (cell.lid_depth * cell.rho_ice)
-        + (cell.v_lid_depth * cell.rho_ice)
+        np.sum(
+            cell["Sfrac"] * cell["rho_ice"] * (cell["firn_depth"] / cell["vert_grid"])
+        )
+        + np.sum(
+            cell["Lfrac"] * cell["rho_water"] * (cell["firn_depth"] / cell["vert_grid"])
+        )
+        + cell["lake_depth"] * cell["rho_water"]
+        + cell["lid_depth"] * cell["rho_ice"]
+        + cell["v_lid_depth"] * cell["rho_ice"]
     )
     return total_mass
 
@@ -220,12 +240,13 @@ def add_random_water(grid, max_grid_row, max_grid_col):
     -------
     None
     """
-
     rand_water = np.random.rand(max_grid_row, max_grid_col) / 10
     for j in range(max_grid_col):
         for i in range(max_grid_row):
-            grid[i][j].water[0] = grid[i][j].water[0] + rand_water[i][j]
-            grid[i][j].water_level = grid[i][j].water[0] + grid[i][j].firn_depth
+            grid["water"][i][j][0] = grid["water"][i][j][0] + rand_water[i][j]
+            grid["water_level"][i][j] = (
+                grid["water"][i][j][0] + grid["firn_depth"][i][j]
+            )
 
 
 def add_edge_water(grid, max_grid_row, max_grid_col):
@@ -245,27 +266,36 @@ def add_edge_water(grid, max_grid_row, max_grid_col):
     -------
     None
     """
-
     edge_water = 2
     for i in range(max_grid_col):
         for j in range(max_grid_row):
             if i < 4 or max_grid_row - i < 4:
-                grid[i][j].water[0] += edge_water
+                grid["water"][i][j][0] += edge_water
             if j < 4 or max_grid_col - j < 4:
-                grid[i][j].water[0] += edge_water
-            grid[i][j].water_level = grid[i][j].lake_depth + grid[i][j].firn_depth
+                grid["water"][i][j][0] += edge_water
+            grid["water_level"][i][j] = (
+                grid["lake_depth"][i][j] + grid["firn_depth"][i][j]
+            )
+
 
 def check_energy_conservation(grid):
     energy = 0
     for i in range(len(grid)):
         for j in range(len(grid[0])):
             cell = grid[i][j]
-            if cell.valid_cell:
-                cp_ice = 1000 * (7.16 * 10 ** (-3) * cell.firn_temperature + 0.138)
-                cp = (cell.cp_water * cell.Lfrac + (1004 * (1 - cell.Sfrac - cell.Lfrac)) + (cp_ice * cell.Sfrac))
-                cell.rho = cell.Sfrac * cell.rho_ice + cell.Lfrac * cell.rho_water
-                energy += cell.rho * cell.firn_temperature * cp
-    print('Total energy = ', np.sum(energy))
+            if cell["valid_cell"]:
+                cp_ice = 1000 * (7.16 * 10**-3 * cell["firn_temperature"] + 0.138)
+                cp = (
+                    cell["cp_water"] * cell["Lfrac"]
+                    + 1004 * (1 - cell["Sfrac"] - cell["Lfrac"])
+                    + cp_ice * cell["Sfrac"]
+                )
+                cell["rho"] = (
+                    cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+                )
+                energy += cell["rho"] * cell["firn_temperature"] * cp
+    print("Total energy = ", np.sum(energy))
+
 
 def spinup(cell, x, args):
     """
@@ -290,33 +320,30 @@ def spinup(cell, x, args):
         If solution does not converge, then rather than attempting to continue it raises an error. The user should
         re-consider their initial conditions in this case.
     """
-    # days = 0
-    # success = False
-    # new_args = args
-    # while success is False and days < 200:
-    #     # print(new_args)
-    #     root, fvec, success, info = solver(x, new_args)
-    #     cell.firn_temperature = root
-    #     # reduce SW/LW/air temp a bit to simulate cooling
-    #     T_air = new_args[5] - 0.1
-    #     LW_in = new_args[3] - 1
-    #     SW_in = new_args[4] - 1
-    #     new_args = [
-    #         args[0],
-    #         args[1],
-    #         args[2],
-    #         LW_in,
-    #         SW_in,
-    #         T_air,
-    #         args[6],
-    #         args[7],
-    #         args[8],
-    #     ]
-    #     days = days + 1
-    # if success is False:
-    #     # print('Solution did not converge. Your initial conditions should be re-considered.')
-    #     raise ValueError(
-    #         "Solution did not converge. Your initial conditions should be re-considered."
-    #     )
+
+import psutil
+import functools
+import os
 
 
+def memory_tracker(label=""):
+    """
+    Decorator to measure memory usage before and after a function call.
+    Prints the difference in MB.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            process = psutil.Process(os.getpid())
+            mem_before = process.memory_info().rss / 1e6  # in MB
+            print(f"[{label}] Memory before: {mem_before:.2f} MB")
+
+            result = func(*args, **kwargs)
+
+            mem_after = process.memory_info().rss / 1e6
+            print(f"[{label}] Memory after:  {mem_after:.2f} MB")
+            print(f"[{label}] Memory delta:  {mem_after - mem_before:.2f} MB")
+            return result
+        return wrapper
+    return decorator

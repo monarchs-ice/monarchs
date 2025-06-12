@@ -13,10 +13,9 @@ from numba import cfunc, jit
 
 import monarchs.physics.Numba.heateqn_nb as hnb
 
-heqlid = hnb.heateqn_lid.address
-heq = hnb.heateqn.address
-heqfs = hnb.heateqn_fixedsfc.address
 
+heq = hnb.heateqn.address
+heqlid = hnb.heateqn_lid.address
 
 @jit(nopython=True, fastmath=False)
 def args_array(
@@ -29,11 +28,12 @@ def args_array(
     p_air,
     T_dp,
     wind,
-    fixed_sfc=False,
     Tsfc=273.15,
     lid=False,
     Sfrac_lid=np.array([np.nan]),
     k_lid=np.nan,
+    fixed_sfc=True,
+    N=50
 ):
     """
     Convert the variables from an instance of the IceShelf class into the
@@ -113,13 +113,13 @@ def args_array(
             )
         )
     # test = cell.firn_temperature
-    elif not fixed_sfc:
+    else:
         args = np.hstack(
             (
-                np.array([cell.vert_grid]),
-                cell.firn_temperature,
-                cell.Sfrac,
-                cell.Lfrac,
+                np.array([N]),
+                cell.firn_temperature[:N],
+                cell.Sfrac[:N],
+                cell.Lfrac[:N],
                 np.array([cell.k_air]),
                 np.array([cell.k_water]),
                 np.array([cell.cp_air]),
@@ -140,27 +140,12 @@ def args_array(
             )
         )
 
-    else:
-        args = np.hstack(
-            (
-                np.array([cell.vert_grid]),
-                cell.firn_temperature,
-                cell.Sfrac,
-                cell.Lfrac,
-                np.array([cell.k_air]),
-                np.array([cell.k_water]),
-                np.array([cell.cp_air]),
-                np.array([cell.cp_water]),
-                np.array([dt]),
-                np.array([dz]),
-                np.array([Tsfc]),
-            )
-        )
+
     return args
 
 
 @jit(nopython=True, fastmath=False)
-def firn_heateqn_solver(x, args, fixed_sfc=False):
+def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
     """
     Numba-compatible solver function to be used within the model.
     Solves physics.Numba.heateqn.
@@ -206,6 +191,9 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
         !!    ten iterations.
 
     """
+
+    N = 50  # number of cells at top to use in hybrd implementation
+    x = x[:N]
     # cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind = [arg for arg in args]
     cell = args[0]
     dt = args[1]
@@ -227,79 +215,38 @@ def firn_heateqn_solver(x, args, fixed_sfc=False):
         T_dp,
         wind,
         fixed_sfc=fixed_sfc,
+        N=N
     )
-    if fixed_sfc:
-        eqn = heqfs
-    else:
-        eqn = heq
 
-    root, fvec, success, info = hybrd(eqn, x, args)
-
-    if info == 4:
-        # infostring = (
-        #     "hybrd: iteration is not making good progress, as measured by the improvement "
-        #     "from the last five Jacobian evaluations.\n"
-        # )
-        # print(infostring)
-        # cell.log = cell.log + infostring
-        pass
-    if info == 5:
-        # infostring = (
-        #     "hybrd: iteration is not making good progress, as measured by the improvement from the "
-        #     "last ten Jacobian evaluations.\n"
-        # )
-        # print(infostring)
-        # cell.log = cell.log + infostring
-        pass
+    T = np.empty_like(cell['firn_temperature'])
     # we only return root in the model (hence why in driver.py we index the function by [0],
     # but the other info is useful for testing so can be used if calling solver directly
-    return root, fvec, success, info
+    if fixed_sfc:
+        sol = np.array([273.15])
+        fvec = np.array([1.0])
+        success = 1
+        info = 1
+        T_fixed = hnb.propagate_temperature(cell, dz, dt, 273.15, N=1)
+        T[0] = 273.15
+        T[1:] = T_fixed[:]
+        # print('T fixed sfc = ', T)
+    else:
+        sol, fvec, success, info = hybrd(heq, x, args)
+        #sol = np.around(sol, decimals=8)
 
+        # Take our root-finding algorithm output (from first N layers),
+        # use it as the top boundary condition to the tridiagonal solver,
+        # then concatenate the two
+        T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
+        T[:N] = sol
+        T[N:] = T_tri[:]
+        # print('T free = ', T)
 
-@jit(nopython=True, fastmath=False)
-def lake_development_eqn(x, output, args):
-    """
-    Numba-compatible form of the lake development version of the surface temperature equation.
-    Called in get_lake_solver.
+    T = np.around(T, decimals=8)
+    #print('Sol0 = ', sol[0])
+    #print('T = ', T)
+    return T, fvec, success, info
 
-    Parameters
-    ----------
-    x : array_like, float, dimension(vert_grid_lake)
-        Initial estimate of the lake temperature. [K]
-    output : array_like, float, dimension(vert_grid_lake)
-        Output array containing the lake temperature. We only actually return the first element of this array.
-        This may be possible to set to float, along with x, but Numba works in mysterious ways and this seems
-        to compile and work.
-    args : array_like
-        Array of input arguments to be extracted into the relevant variables
-        (J, Q, vert_grid_lake and lake_temperature).
-
-    Returns
-    -------
-    None.
-    """
-
-    J = args[
-        0
-    ]  # float, turbulent heat flux factor, equal to 1.907 E-5. [m s^-1 K^-(1/3)]
-    Q = args[1]  # float, Surface energy flux [W m^-2]
-    vert_grid_lake = args[2]  # float, number of vertical levels in the lake profile
-    lake_temperature = np.zeros(
-        int(vert_grid_lake)
-    )  # array_like, float, dimension(vert_grid_lake)
-    # have to use a loop as Numba doesn't like slicing like args[3:] with cfuncs
-    for i in range(len(lake_temperature)):
-        lake_temperature[i] = args[3 + i]
-    # get core temperature via central point of lake
-    T_core = lake_temperature[int(vert_grid_lake / 2)]
-
-    # set output[0] rather than just output else we will just return our initial guess.
-    # (i.e. solution does not converge and the code fails)
-    output[0] = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
-        + Q
-        + (np.sign(T_core - x[0]) * 1000 * 4181 * J * (abs(T_core - x[0]) ** (4 / 3)))
-    )
 
 
 @jit(nopython=True, fastmath=False)
@@ -334,6 +281,49 @@ def lake_formation_eqn(x, output, args):
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
         - k * (-T1 + x[0]) / (firn_depth / vert_grid)
+    )
+
+
+@jit(nopython=True, fastmath=False)
+def lake_development_eqn(x, output, args):
+    """
+    Numba-compatible form of the lake development version of the surface temperature equation.
+    Called in get_lake_solver.
+
+    Parameters
+    ----------
+    x : array_like, float, dimension(vert_grid_lake)
+        Initial estimate of the lake temperature. [K]
+    output : array_like, float, dimension(vert_grid_lake)
+        Output array containing the lake temperature. We only actually return the first element of this array.
+        This may be possible to set to float, along with x, but Numba works in mysterious ways and this seems
+        to compile and work.
+    args : array_like
+        Array of input arguments to be extracted into the relevant variables
+        (J, Q, vert_grid_lake and lake_temperature).
+
+    Returns
+    -------
+    None.
+    """
+
+    J = args[0]  # float, turbulent heat flux factor, equal to 1.907 E-5. [m s^-1 K^-(1/3)]
+    Q = args[1]  # float, Surface energy flux [W m^-2]
+    vert_grid_lake = args[2]  # float, number of vertical levels in the lake profile
+    # array_like, float, dimension(vert_grid_lake)
+    lake_temperature = np.zeros(int(vert_grid_lake))
+    # have to use a loop as Numba doesn't like slicing like args[3:] with cfuncs
+    for i in range(len(lake_temperature)):
+        lake_temperature[i] = args[3 + i]
+    # get core temperature via central point of lake
+    T_core = lake_temperature[int(vert_grid_lake / 2)]
+
+    # set output[0] rather than just output else we will just return our initial guess.
+    # (i.e. solution does not converge and the code fails)
+    output[0] = (
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        + Q
+        + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
     )
 
 
@@ -380,7 +370,7 @@ def lake_solver(x, args, formation=False):
         eqn = dev_eqnaddress
 
     root, fvec, success, info = hybrd(eqn, x, args)
-
+    root = np.around(root, decimals=8)
     return root, fvec, success, info
 
 
@@ -393,18 +383,19 @@ def sfc_energy_virtual_lid(x, output, args):
     v_lid_depth = args[4]
     lake_temperature = np.zeros(int(vert_grid_lake))
     # hacky way to assign lake_temperature as the cfunc doesn't like slicing normally
-    for i in range(len(lake_temperature)):
+    for i in np.arange(len(lake_temperature)):
         lake_temperature[i] = args[5 + i]
 
-    # set output[0] rather than just output as solution doesn't converge otherwise
-    # for whatever reason.
+    # set output[0] rather than just output as solution doesn't converge otherwise as it expects
+    # an array
     output[0] = (
         -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
         + Q
         - k_v_lid
-        * (-lake_temperature[2] + x[0])
+        * (-lake_temperature[1] + x[0])
         / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
     )
+
 
 
 @jit(nopython=True, fastmath=False)
@@ -427,13 +418,11 @@ def sfc_energy_lid(x, output, args):
     lid_depth = args[2]
     vert_grid_lid = args[3]
     sub_T = args[4]
-
     output[0] = (
-        -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
+        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
         - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
-
 
 sfc_energy_virtual_lid = cfunc(minpack_sig)(sfc_energy_virtual_lid)
 sfc_energy_lid = cfunc(minpack_sig)(sfc_energy_lid)
@@ -494,6 +483,7 @@ def lid_seb_solver(x, args, v_lid=False):
 
     root, fvec, success, info = hybrd(eqn, x, args)
 
+    root = np.around(root, decimals=8)
     return root, fvec, success, info
 
 
@@ -537,6 +527,7 @@ def lid_heateqn_solver(x, args):
         !!    measured by the improvement from the last
         !!    ten iterations.
     """
+
     eqn = heqlid
     cell = args[0]
     dt = args[1]
@@ -571,4 +562,5 @@ def lid_heateqn_solver(x, args):
     # print('args shape = ', np.shape(args))
     root, fvec, success, info = hybrd(eqn, x, args)
 
+    root = np.around(root, decimals=8)
     return root, fvec, success, info

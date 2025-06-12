@@ -35,7 +35,9 @@ Model initial conditions (density/temperature profiles)
 rho_init = "default"  # Initial density, use 'default' to use empirical formula for initial density profile
 T_init = "default"  # Initial temperature profile.
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
-firn_depth = 35.0 * np.ones((row_amount, col_amount))   # needs to be an array as MONARCHS expects a 2D field
+firn_depth = 35.0 * np.ones(
+    (row_amount, col_amount)
+)  # needs to be an array as MONARCHS expects a 2D field
 
 """
 Meteorological parameters and input
@@ -49,14 +51,28 @@ met_output_filepath = "output/met_data_1d_testcase.nc"
 # np.broadcast_to to broadcast our data to the correct shape.
 # e.g. np.broadcast_to(met_data["LW_surf"], (row_amount, col_amount, len(met_data["LW_surf"])))
 met_data = {}
-met_data["LW_surf"] = np.append(800 * np.ones(800), 0 * np.ones(1720))  # Incoming longwave radiation. [W m^-2].
-met_data["SW_surf"] = np.append(800 * np.ones(800), 0 * np.ones(1720))  # Incoming shortwave (solar) radiation. [W m^-2].
-met_data["temperature"] = np.append(267 * np.ones(800), 250 * np.ones(1720))  # Surface-layer air temperature. [K].
-met_data["pressure"] = 1000 * np.ones(num_days * t_steps_per_day)  # Surface-layer air pressure. [hPa].
-met_data["dew_point_temperature"] = np.append(265 * np.ones(800), 240 * np.ones(1720))  # Dew-point temperature. [K].
+met_data["LW_surf"] = np.append(
+    800 * np.ones(800), 50 * np.ones(1720)
+)  # Incoming longwave radiation. [W m^-2].
+met_data["SW_surf"] = np.append(
+    800 * np.ones(800), 100 * np.ones(1720)
+)  # Incoming shortwave (solar) radiation. [W m^-2].
+met_data["temperature"] = np.append(
+    267 * np.ones(800), 250 * np.ones(1720)
+)  # Surface-layer air temperature. [K].
+met_data["pressure"] = 1000 * np.ones(
+    num_days * t_steps_per_day
+)  # Surface-layer air pressure. [hPa].
+met_data["dew_point_temperature"] = np.append(
+    265 * np.ones(800), 240 * np.ones(1720)
+)  # Dew-point temperature. [K].
 met_data["wind"] = 5 * np.ones(num_days * t_steps_per_day)  # Wind speed. [m s^-1].
-met_data["snowfall"] = 0 * np.ones(num_days * t_steps_per_day)  # Snowfall rate. [m s^-1].
-met_data["snow_dens"] = 300 * np.ones(num_days * t_steps_per_day)  # Snow density. [kg m^-3].
+met_data["snowfall"] = 0 * np.ones(
+    num_days * t_steps_per_day
+)  # Snowfall rate. [m s^-1].
+met_data["snow_dens"] = 300 * np.ones(
+    num_days * t_steps_per_day
+)  # Snow density. [kg m^-3].
 
 """
 Model output
@@ -74,19 +90,21 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "output/1d_testcase_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
-output_grid_size = 400  # Size of interpolated output
+output_filepath = "output/1d_testcase_outputnew.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_grid_size = vertical_points_firn  # Size of interpolated output
+lateral_movement_toggle = False
+firn_column_toggle = True
+lake_development_toggle = False
+lid_development_toggle = False
 
 """
 Dumping and reloading parameters
 """
 dump_data = True
-dump_filepath = (
-    "output/1d_testcase_dump.nc"  # Filename of our previously dumped state
-)
+dump_filepath = "output/1d_testcase_dumpnew.nc"  # Filename of our previously dumped state
 reload_from_dump = False  # Flag to determine whether to reload the state or not
-
-if __name__ == '__main__':
+use_numba = True
+if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
     grid = monarchs()

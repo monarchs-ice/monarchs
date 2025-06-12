@@ -19,8 +19,8 @@ from monarchs.DEM import create_DEM_GaussianTestCase as cgt
 """
 Spatial parameters
 """
-row_amount = 10  # Number of rows in your model grid, looking from top-down.
-col_amount = 10  # Number of columns in your model grid, looking from top-down.
+row_amount = 50  # Number of rows in your model grid, looking from top-down.
+col_amount = 50  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -32,7 +32,7 @@ vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 """
 Timestepping parameters
 """
-num_days = 105  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 10  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
@@ -55,8 +55,8 @@ min_height_handler = "extend"
 Met data parameters
 """
 met_data = {}
-timesteps_warm = 800
-timesteps_cold = 1720
+timesteps_warm = 24 * 10
+timesteps_cold = 0
 met_data["LW_surf"] = np.append(
     800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold)
 )  # Incoming longwave radiation. [W m^-2].
@@ -107,7 +107,7 @@ vars_to_save = (
     "water_direction"
 )
 output_filepath = "output/gaussian_threelake_example_output_new.nc"  # Filename for model output, including file extension (.nc for netCDF).
-output_grid_size = 20  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.
+# output_grid_size = 400  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.
 # output_timestep = 1  # How often to save output, in days. Commented out for this example.
 dump_data = True
 dump_filepath = "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state
@@ -120,17 +120,12 @@ use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False
-dask_scheduler = 'processes'  # dask scheduler to use. 'processes', 'distributed' or 'threads'.
-                              # 'processes' is recommended for most cases.
-                              # If running on HPC across multiple nodes, you'll need to use "distributed".
-                              # Threads is fine for running small workloads in parallel, but scaling will be very
-                              # poor as this does not release the GIL.
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = 8  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+cores = 10  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+solver = "hybr"
 
-flow_speed_scaling = 1.0  # Scaling factor for flow speed, used to adjust the speed of water flow in the model.
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
 All of these default to True.
@@ -138,12 +133,8 @@ All of these default to True.
 catchment_outflow = False  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
-flow_into_land = True  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
+flow_into_land = False  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
 lateral_movement_toggle = True
-lake_development_toggle = True
-lid_development_toggle = True
-single_column_toggle = True
-
 
 # Just for this specific case - assert that the DEM is symmetric
 import numpy.testing as npt
@@ -175,43 +166,43 @@ if __name__ == "__main__":
     else:
         grid = monarchs()
 
-    from matplotlib import pyplot as plt
-
-    plt.figure()
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            if grid[i][j]['lid']:
-                grid[i][j]['water_level'] = grid[i][j]['lid_depth'] + grid[i][j]['lake_depth'] + grid[i][j]['firn_depth']
-
-    plt.imshow(get_2d_grid(grid, 'water_level'))
-    plt.title('water_level')
-    plt.figure()
-    plt.imshow(get_2d_grid(grid, 'lake_depth'))
-    plt.title('Lake depth')
-
-    import sys
-
-    sys.path.append('../../scripts')
-    import flow_plot as fp
-
-    flow_plot = fp.flow_plot
-
-    from netCDF4 import Dataset
-
-    a = Dataset(output_filepath)
-
-    idx = 45
-
-    def make_fd_plot(a, idx=0):
-        fig, ax = plt.subplots()
-        ax.imshow(a.variables['water_level'][idx])
-        return fig, ax
-
-
-    def make_both(a, idx=0):
-        fig, ax = make_fd_plot(a, idx=idx)
-        flow_plot(a, netcdf=True, index=idx, fig=fig, ax=ax)
-
-
-    make_both(a, idx=30)
-    a.close()
+    # from matplotlib import pyplot as plt
+    #
+    # plt.figure()
+    # for i in range(len(grid)):
+    #     for j in range(len(grid[0])):
+    #         if grid[i][j]['lid']:
+    #             grid[i][j]['water_level'] = 0
+    #
+    # plt.imshow(get_2d_grid(grid, 'water_level'))
+    # plt.title('water_level')
+    # plt.figure()
+    # plt.imshow(get_2d_grid(grid, 'lake_depth'))
+    # plt.title('Lake depth')
+    #
+    # import sys
+    #
+    # sys.path.append('../../scripts')
+    # import flow_plot as fp
+    #
+    # flow_plot = fp.flow_plot
+    #
+    # from netCDF4 import Dataset
+    #
+    # a = Dataset(output_filepath)
+    #
+    # idx = 45
+    #
+    # def make_fd_plot(a, idx=0):
+    #     fig, ax = plt.subplots()
+    #     ax.imshow(a.variables['water_level'][idx])
+    #     return fig, ax
+    #
+    #
+    # def make_both(a, idx=0):
+    #     fig, ax = make_fd_plot(a, idx=idx)
+    #     flow_plot(a, netcdf=True, index=idx, fig=fig, ax=ax)
+    #
+    #
+    # make_both(a, idx=30)
+    # a.close()

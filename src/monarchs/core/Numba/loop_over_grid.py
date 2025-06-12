@@ -1,8 +1,7 @@
 import numba
 from numba import prange
-from numba.typed import List
+import numpy as np
 from monarchs.physics.timestep import timestep_loop
-
 
 def loop_over_grid_numba(
     row_amount,
@@ -15,6 +14,8 @@ def loop_over_grid_numba(
     parallel=False,
     use_mpi=False,
     ncores="all",
+    dask_scheduler=None,
+    client=None,
 ):
     """
     This function wraps timestep_loop, allowing for it to be
@@ -48,7 +49,7 @@ def loop_over_grid_numba(
         Number of cores to use. Default 'all', in which case it will use
         numba.config.NUMBA_DEFAULT_NUM_THREADS threads (i.e. all of them that
         Numba can detect on the system).
-
+    dask_scheduler, client: Dummy arguments for compatibility
 
     Returns
     -------
@@ -64,19 +65,18 @@ def loop_over_grid_numba(
 
     numba.set_num_threads(nthreads)
     # append everything to a new 1D instance of a Numba typed list, flatten, and loop over that.
-    flat_grid = List()
-    met_data_grid = List()
+    flat_grid = grid.flatten()
+    # met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass the 24 timesteps
+    # met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
 
-    for i in range(row_amount):
-        for j in range(col_amount):
-            flat_grid.append(grid[i][j])
-            met_data_grid.append(met_data[i][j])
 
     for i in prange(row_amount * col_amount):
+
         timestep_loop(
             flat_grid[i],
             dt,
-            met_data_grid[i],
+            met_data[i],
             t_steps_per_day,
             toggle_dict,
         )
+    return np.reshape(flat_grid, (row_amount, col_amount))   # reshape

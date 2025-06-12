@@ -14,24 +14,21 @@ from cartopy import crs as ccrs
 from cartopy import feature as cfeature
 from pyproj import CRS, Transformer
 import numpy as np
+from matplotlib import rcParams
 
-
+rcParams["font.family"] = "arial"
+rcParams["font.sans-serif"] = "Helvetica"
+rcParams["font.size"] = 16
 matplotlib.use("TkAgg")
-dumppath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\progress.nc"
-diagpath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\model_output.nc"
-# dumppath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc'
-# diagpath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\model_output.nc'
+# dumppath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_140425\progress.nc'
+# diagpath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_140425\model_output.nc'
+dumppath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc"
+diagpath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\model_output.nc"
 # dumppath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_dump.nc'
 # diagpath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_output.nc'
-big_data_path = (
-    r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\progress.nc"
-)
+
 flowdata = Dataset(dumppath)
 t0data = Dataset(diagpath)
-big_data = Dataset(big_data_path)
-
-lat_big = big_data.variables["lat"][:]
-lon_big = big_data.variables["lon"][:]
 
 
 def plot_variable(dset, variable_name, cmap="Blues", vmax=None):
@@ -102,8 +99,6 @@ print(proj_string)
 crs_cartopy_proj = CRS.from_proj4(proj_string)
 transformer = Transformer.from_crs("EPSG:4326", crs_cartopy_proj, always_xy=True)
 x, y = transformer.transform(lons, lats)  # still 2D, same shape
-x_big, y_big = transformer.transform(lon_big, lat_big)  # still 2D, same shape
-xmin, xmax, ymin, ymax = x_big.min(), x_big.max(), y_big.min(), y_big.max()
 # Transform back as a sanity check
 transformer = Transformer.from_crs(crs_cartopy_proj, "EPSG:4326", always_xy=True)
 lon2, lat2 = transformer.transform(x, y)  # still 2D, same shape
@@ -115,8 +110,8 @@ lon2, lat2 = transformer.transform(x, y)  # still 2D, same shape
 # 2018-01-03 = 2925 days
 # 2925 / 30 = 97.5 - so index ~98
 
-lake = t0data.variables["lake"][98]
-lakedepth = t0data.variables["lake_depth"][98]
+lake = t0data.variables["lake"][97]
+lakedepth = t0data.variables["lake_depth"][97]
 
 
 def lake_thresh(thresh):
@@ -151,32 +146,51 @@ def make_lake_plot(lake_plot, thresh):
     ax.set_title(f"Lake present (model), depth threshold = {thresh} m")
 
 
+lake_plot = lake_thresh(0.1)
+make_lake_plot(lake_plot, 0.1)
 lake_plot = lake_thresh(0.5)
 make_lake_plot(lake_plot, 0.5)
-lake_plot = lake_thresh(1)
-make_lake_plot(lake_plot, 1)
+
 lake_plot = lake_thresh(0.2)
 make_lake_plot(lake_plot, 0.2)
 
 # Moussavi data
 moussavi_lake_depth = np.load("../validation/lake_depth_moussavi.npy")
-x_moussavi = np.load("../validation/x_moussavi_pooled.npy")
-y_moussavi = np.load("../validation/y_moussavi_pooled.npy")
+x = np.load("../validation/x_moussavi_pooled.npy")
+y = np.load("../validation/y_moussavi_pooled.npy")
+
+valid_cells = flowdata.variables["valid_cell"][:]
+
+for i in range(len(lakedepth)):
+    for j in range(len(lakedepth[0])):
+        if valid_cells[i][j] == 0:
+            lakedepth[i][j] = np.nan
+            moussavi_lake_depth[i][j] = np.nan
+
+lakedepth[~valid_cells] = np.nan
+moussavi_lake_depth[~valid_cells] = np.nan
 
 
-def plot_on_map(x, y, mask_array, labelstr="Moussavi", vmax=False):
+def plot_on_map(
+    x, y, mask_array, labelstr="Moussavi", vmax=False, norm=False, cmap="Blues"
+):
     fig, ax = plt.subplots(
         figsize=(10, 8), subplot_kw={"projection": ccrs.SouthPolarStereo()}
     )
 
     # Plot the data using pcolormesh
-    if vmax:
-        mesh = ax.pcolormesh(
-            x, y, mask_array, cmap="Blues", shading="auto", transform=None, vmax=vmax
-        )
+    if not norm:
+        if vmax:
+            mesh = ax.pcolormesh(
+                x, y, mask_array, cmap=cmap, shading="auto", transform=None, vmax=vmax
+            )
+        else:
+            mesh = ax.pcolormesh(
+                x, y, mask_array, cmap=cmap, shading="auto", transform=None
+            )
     else:
         mesh = ax.pcolormesh(
-            x, y, mask_array, cmap="Blues", shading="auto", transform=None
+            x, y, mask_array, cmap=cmap, shading="auto", transform=None, norm=norm
         )
 
     # Add map features
@@ -185,15 +199,72 @@ def plot_on_map(x, y, mask_array, labelstr="Moussavi", vmax=False):
     ax.add_feature(cfeature.LAND, edgecolor="black", facecolor="lightgray")
     ax.add_feature(cfeature.OCEAN)
     ax.gridlines(draw_labels=True)
-    # ax.set_extent([xmin, xmax, ymin, ymax], crs=ccrs.SouthPolarStereo())
+
     # Colorbar and title
     plt.colorbar(mesh, ax=ax, orientation="vertical", label="Lake depth (m)")
-    ax.set_title(f"Lake depth - {labelstr}")
+    ax.set_title(f"George VI lake depth - {labelstr}")
 
+
+from matplotlib.colors import CenteredNorm
 
 # Plot up Moussavi lake data
-plot_on_map(x, y, moussavi_lake_depth)
-plot_on_map(x, y, lakedepth, labelstr="MONARCHS")
+# Count how many pixels have a lake of depth > 0.1 m
+lake_count = np.count_nonzero(lakedepth > 0.1)
+print(f"MONARCHS lake count (depth > 0.1 m): {lake_count}")
+# Count how many pixels have a lake of depth > 0.1 m - in Moussavi data
+moussavi_lake_count = np.count_nonzero(moussavi_lake_depth > 0.1)
+print(f"Moussavi lake count (depth > 0.1 m): {moussavi_lake_count}")
+
+plot_on_map(
+    x,
+    y,
+    moussavi_lake_depth,
+    vmax=np.nanmax(lakedepth),
+    labelstr=f"Moussavi,"
+    f" coverage = {moussavi_lake_count / len(np.ravel(lakedepth)) * 100:.2f} % ({moussavi_lake_count} / {len(np.ravel(lakedepth))})",
+)
+plot_on_map(
+    x,
+    y,
+    lakedepth,
+    labelstr=f"MONARCHS, "
+    f"coverage = {lake_count / len(np.ravel(lakedepth)) * 100:.2f} % ({lake_count} / {len(np.ravel(lakedepth))})",
+)
+plot_on_map(
+    x,
+    y,
+    lakedepth - moussavi_lake_depth,
+    labelstr="model - observation",
+    norm=CenteredNorm(),
+    cmap="coolwarm",
+)
+
+plt.figure()
+plt.hist(
+    np.ravel(lakedepth[lakedepth > 0.1]),
+    bins=50,
+    range=(0.1, 8),
+    label=f"Mean depth = {np.mean(lakedepth[lakedepth > 0.1]):.2f} m",
+)
+plt.title("Georve VI lake depth histogram (MONARCHS)")
+plt.xlabel("Lake depth (m)")
+plt.ylabel("Count")
+plt.grid()
+plt.legend()
+
+plt.figure()
+plt.hist(
+    np.ravel(moussavi_lake_depth[moussavi_lake_depth > 0.1]),
+    range=(0.1, 8),
+    bins=50,
+    label=f"Mean depth = {np.mean(moussavi_lake_depth[moussavi_lake_depth > 0.1]):.2f} m",
+)
+plt.title("George VI lake depth histogram (Moussavi)")
+plt.legend()
+plt.xlabel("Lake depth (m)")
+plt.ylabel("Count")
+plt.grid()
+
 
 # fig, ax = plt.subplots(figsize=(10, 8), subplot_kw={
 #     'projection': ccrs.SouthPolarStereo()

@@ -51,7 +51,6 @@ def test_ice_lens():
         for j in range(len(grid[i])):
             grid[i][j].rho_ice = 917
 
-
     print(get_2d_grid(grid, "Lfrac"))
     move_water(
         grid,
@@ -117,7 +116,6 @@ def test_ice_lens():
     for i in range(len(grid)):
         for j in range(len(grid[i])):
             grid[i][j].rho_ice = 917
-
 
     print(get_2d_grid(grid, "Lfrac"))
     move_water(

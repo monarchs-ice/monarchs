@@ -19,7 +19,7 @@ class IceShelf:
              ice_lens_depth=999,
              water=np.zeros(40),
              rho_water=1000,
-             rho=np.ones(40) * 913,
+             rho=np.ones(40) * 917,
              Lfrac=np.zeros(40))
     """
 
