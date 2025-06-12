@@ -10,10 +10,13 @@ import geotiff as gt
 from cartopy import crs as ccrs
 
 Image.MAX_IMAGE_PIXELS = 3172163365  # Number of pixels in image from error
-iceshelves = ["George_VI"]#, "Wilkins", "Riiser-Larsen", "Nivlisen", "Amery", "Bach"]
+iceshelves = ["George_VI"]  # , "Wilkins", "Riiser-Larsen", "Nivlisen", "Amery", "Bach"]
 for iceshelf in iceshelves:
     im = gt.GeoTiff(f"AntarcticLakes/{iceshelf}/202001_1_max_extent.tif")
-    print(f'{iceshelf} coordinates ((min long, min lat), (max long, max lat)):', im.tif_bBox_converted)
+    print(
+        f"{iceshelf} coordinates ((min long, min lat), (max long, max lat)):",
+        im.tif_bBox_converted,
+    )
     projection = ccrs.PlateCarree()
     area_box = ((-69.5, -72.3), (-66.5, -71.25))
     lake_data = np.array(im.read_box(area_box))
@@ -28,15 +31,9 @@ for iceshelf in iceshelves:
     # first panel
 
     ax = fig.add_subplot(111, projection=projection)
-    cont = ax.contourf(
-        lons,
-        lats,
-        lake_data,
-        cmap=cmap,
-        transform=projection
-    )
+    cont = ax.contourf(lons, lats, lake_data, cmap=cmap, transform=projection)
 
-    #meta_dict = {TAGS[key]: im.tag[key] for key in im.tag_v2}
+    # meta_dict = {TAGS[key]: im.tag[key] for key in im.tag_v2}
     # plt.colorbar(label="Pixel values")
     plt.title(f"TIF Image, {iceshelf}")
     ax.coastlines()

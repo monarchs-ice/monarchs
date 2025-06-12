@@ -8,7 +8,7 @@ y = rng.random(10) - 0.5
 z = np.hypot(x, y)
 X = np.linspace(min(x), max(x))
 Y = np.linspace(min(y), max(y))
-X, Y = np.meshgrid(X, Y)  # 2D grid for interpolation
+X, Y = np.meshgrid(X, Y)
 print(np.shape(list(zip(x, y))))
 print(np.shape(z))
 interp = LinearNDInterpolator(list(zip(x, y)), z)

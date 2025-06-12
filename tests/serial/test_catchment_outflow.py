@@ -24,7 +24,7 @@ def test_catchment_outflow():
                     ice_lens=False,
                     ice_lens_depth=999,
                     rho_water=1000,
-                    rho=np.ones(40) * 913,
+                    rho=np.ones(40) * 917,
                     Lfrac=np.zeros(40),
                     Sfrac=np.ones(40) * 0.5,
                     valid_cell=True,
@@ -32,15 +32,14 @@ def test_catchment_outflow():
                     col=i,
                     row=j,
                     meltflag=np.zeros(40),
-                    size_dx = 2000,
-                    size_dy = 2000,
+                    size_dx=2000,
+                    size_dy=2000,
                 )
-
             )
 
         grid.append(_l)
     print(get_2d_grid(grid, "lake_depth"))
-    move_water(grid, 3, 2,  3600, catchment_outflow=False)
+    move_water(grid, 3, 2, 3600, catchment_outflow=False)
     print(get_2d_grid(grid, "lake_depth"))
     move_water(grid, 3, 2, 3600, catchment_outflow=True)
     print(get_2d_grid(grid, "lake_depth"))

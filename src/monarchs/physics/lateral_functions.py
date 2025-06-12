@@ -1,9 +1,14 @@
-# All functions related to the lateral transport of meltwater in the MONARCHS model
 import numpy as np
 from monarchs.core.utils import find_nearest
 from monarchs.physics.percolation_functions import percolation, calc_saturation
+from numba.typed import Dict
+from numba import types, float64
 
-
+try:
+    from numba import prange
+except ImportError:
+    # in case we don't have Numba - use the standard range function
+    prange = range  # pragma: no cover
 def update_water_level(cell):
     """
     Determine the water level of a single IceShelf object, so we can determine where water flows laterally to and from.
@@ -26,101 +31,114 @@ def update_water_level(cell):
 
     """
 
-    if not cell.valid_cell:
-        cell.water_level = 999
+    if not cell["valid_cell"]:
+        # Invalid cell - not interested so set water level to something unreasonably high
+        cell["water_level"] = 999
         return
 
-    elif not cell.lake and not cell.lid:
-        if cell.ice_lens:
-            # We find the water level by the topmost bit of saturated firn above the ice lens.
+    elif not cell["lake"] and not cell["lid"]:
+        if cell["ice_lens"]:
 
-            if not np.any(cell.saturation[: cell.ice_lens_depth + 1] > 0):
-                top_saturation_depth = cell.ice_lens_depth
+            # We find the water level by the topmost bit of saturated firn above the ice lens.
+            if not np.any(cell["saturation"][: cell["ice_lens_depth"] + 1] > 0):
+                top_saturation_depth = cell["ice_lens_depth"]
             else:
                 top_saturation_depth = np.argmax(
-                    cell.saturation[: cell.ice_lens_depth + 1] > 0
+                    cell["saturation"][: cell["ice_lens_depth"] + 1] > 0
                 )
-
-            cell.water_level = cell.vertical_profile[::-1][top_saturation_depth]
+            cell["water_level"] = cell["vertical_profile"][::-1][top_saturation_depth]
 
         # Otherwise, water is free to percolate all the way to the bottom, so it doesn't move laterally from here.
         else:
-            cell.water_level = 0
+            cell["water_level"] = 0
 
         # cell.water is only used for the lateral movement. So we first need to update it based on Lfrac,
         # which is used in the rest of MONARCHS.
-        cell.water = cell.Lfrac * (cell.firn_depth / cell.vert_grid)
+        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
 
     # Add lake depth into water for the purposes of moving it around if a lake is present.
-    elif cell.lake and not cell.lid:
-        # cell.water[0] = cell.water[0] + cell.lake_depth
+    elif cell["lake"] and not cell["lid"]:
+        cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
         # Determine the water level from the water on top + the firn depth.
-        cell.water_level = cell.lake_depth + cell.firn_depth
-        cell.water = cell.Lfrac * (cell.firn_depth / cell.vert_grid)
-    elif cell.lake_depth > 0.1 and not cell.lid:
-        # Same again - account for a bug where lake switch doesn't activate
-        cell.water_level = cell.lake_depth + cell.firn_depth
-        cell.water = cell.Lfrac * (cell.firn_depth / cell.vert_grid)
+        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
 
-    elif cell.lid:
-        # cell.water_level = (cell.water_level + cell.firn_depth
-        #                     + cell.lake_depth + cell.lid_depth)
-        cell.water_level = 999
-        cell.water = cell.Lfrac * (cell.firn_depth / cell.vert_grid)
+
+    elif cell["lake_depth"] > 0.1 and not cell["lid"]:
+        # Same again - account for a bug where lake switch doesn't activate
+        cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
+        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
+        cell["water"][0] += cell.lake_depth
+
+    elif cell["lid"]:
+        # shouldn't matter, as water can't move from a lid
+        cell["water_level"] = cell['lid_depth'] + cell["firn_depth"] + cell['lake_depth']
+        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
 
 
 def get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row):
-    neighbours = {}
-
-    # if not on bottom edge of domain - init N, possibly NE/NW
-
+    neighbours = Dict.empty(
+        key_type=types.unicode_type,
+        value_type=types.float64
+    )    # if not on top edge of domain - init N, possibly NE/NW
     if row > 0:
         # north neighbour = -1 in row index (i.e. when selecting rows, previous row
         # is the cell directly above)
-        neighbours['N'] = cell.water_level - grid[row - 1][col].water_level
-
+        neighbours["N"] = cell["water_level"] - grid["water_level"][row - 1][col]
         if col < max_grid_col - 1:  # if not at right edge - init NE
-            neighbours['NE'] = cell.water_level - grid[row - 1][col + 1].water_level
+            neighbours["NE"] = (
+                    cell["water_level"] - grid["water_level"][row - 1][col + 1]
+            )
         if col > 0:  # if not at left edge - init NW
-            neighbours['NW'] = cell.water_level - grid[row - 1][col - 1].water_level
+            neighbours["NW"] = (
+                    cell["water_level"] - grid["water_level"][row - 1][col - 1]
+            )
     else:  # if at top edge - N/NW/NE all False
-        neighbours['N'] = -999
-        neighbours['NE'] = -999
-        neighbours['NW'] = -999
+        neighbours["N"] = -999
+        neighbours["NE"] = -999
+        neighbours["NW"] = -999
 
-    # if not on bottom edge of domain - init E, possibly SE/NE
+    # if not on bottom edge of domain - init S, possibly SE/SW
     if row < max_grid_row - 1:
-        neighbours['S'] = cell.water_level - grid[row + 1][col].water_level
-
-        if col < max_grid_col - 1:  # if not at bottom - init SE
-            neighbours['SE'] = cell.water_level - grid[row + 1][col + 1].water_level
-        if col > 0:  # if not at top - init NE
-            neighbours['SW'] = cell.water_level - grid[row + 1][col - 1].water_level
-
+        neighbours["S"] = cell["water_level"] - grid["water_level"][row + 1][col]
+        if col < max_grid_col - 1:  # if not at right edge - init SE
+            neighbours["SE"] = (
+                    cell["water_level"] - grid["water_level"][row + 1][col + 1]
+            )
+        if col > 0:  # if not at left edge - init SW
+            neighbours["SW"] = (
+                    cell["water_level"] - grid["water_level"][row + 1][col - 1]
+            )
     else:  # if at bottom edge - S/SW/SE all False
-        neighbours['S'] = -999
-        neighbours['SE'] = -999
-        neighbours['SW'] = -999
+        neighbours["S"] = -999
+        neighbours["SE"] = -999
+        neighbours["SW"] = -999
 
-    if col > 0:  # if not at left edge - initialise W neighbour
-        neighbours['W'] = cell.water_level - grid[row][col - 1].water_level
+    if col > 0:  # if not at left edge - init W - NW/SW have already been initialised if possible to do so
+        neighbours["W"] = cell["water_level"] - grid["water_level"][row][col - 1]
+    else:  # if at left edge - W/SW/NW all False
+        neighbours["W"] = -999
+        neighbours["SW"] = -999
+        neighbours["NW"] = -999
+    if col < max_grid_col - 1:  # As above, for the right edge
+        neighbours["E"] = cell["water_level"] - grid["water_level"][row][col + 1]
     else:
-        neighbours['W'] = -999
-        neighbours['SW']= -999
-        neighbours['NW'] = -999
-
-    # if not at right edge - initialise east neighbour(s)
-    if col < max_grid_col - 1:
-        neighbours['E'] = cell.water_level - grid[row][col + 1].water_level
-    else:
-        neighbours['E'] = -999
-        neighbours['SE'] = -999
-        neighbours['NE'] = -999
+        neighbours["E"] = -999
+        neighbours["SE"] = -999
+        neighbours["NE"] = -999
     return neighbours
 
 
+
+
 def find_biggest_neighbour(
-        cell, grid, col, row, max_grid_col, max_grid_row, catchment_outflow, flow_into_land=False
+        cell,
+        grid,
+        col,
+        row,
+        max_grid_col,
+        max_grid_row,
+        catchment_outflow,
+        flow_into_land=False,
 ):
     """
     Finds the points in grid surrounding a central point cell that have the highest difference
@@ -160,15 +178,16 @@ def find_biggest_neighbour(
         "8": [1, 1],  # NE
     }
     """
-
-    neighbours = get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row)
+    neighbours = get_neighbour_water_levels(
+        cell, grid, col, row, max_grid_col, max_grid_row
+    )
     # Ensure that if catchment_outflow is set, water that reaches the edge of the
     # catchment area will flow outward, if it is in the lowest cell locally.
     # This way, water will preferentially stay in the model.
     if catchment_outflow and max(neighbours.values()) <= 0:
         for key in neighbours.keys():
             if neighbours[key] == -999:
-                neighbours[key] = 9999  # set to 9999 so that this overrides flow_into_land
+                neighbours[key] = 9999
 
     # if flow_into_land is True, then if the cell is at a local minimum aside
     # from invalid cells, then it will flow into the land. This is motivated by the appearance
@@ -179,31 +198,33 @@ def find_biggest_neighbour(
         for i in range(-1, 2, 1):
             for j in range(-1, 2, 1):
                 try:
-                    code = ''
-
+                    code = []
                     if i == -1:
-                        code += 'N'
+                        code.append("N")
                     elif i == 1:
-                        code += 'S'
+                        code.append("S")
                     if j == -1:
-                        code += 'W'
+                        code.append("W")
                     elif j == 1:
-                        code += 'E'
+                        code.append("E")
 
-                    neighbour_cell = grid[row + i][col + j]
-                    # If the water level is a local minimum, then we want to flow water into the land.
-                    if max(neighbours.values()) <= 0:
-                        if not neighbour_cell.valid_cell:
-                            neighbours[code] = 9998
-                    # Otherwise, ensure we *don't* flow water into land as it has places it can go within the model.
+                    code_str = "".join(code)
+                    if 0 <= row + i < grid.shape[0] and 0 <= col + j < grid.shape[1]:
+                        neighbour_cell = grid[row + i][col + j]
                     else:
-                        if not neighbour_cell.valid_cell:
-                            neighbours[code] = -9999
-                except IndexError:
+                        continue
+                    # If the water level is a local minimum, then we want to flow water into the land.
+
+                    if max(neighbours.values()) <= 0:
+                        if not neighbour_cell["valid_cell"]:
+                            neighbours[code_str] = 9998
+
+                    # Otherwise, ensure we *don't* flow water into land as it has places it can go within the model.
+                    elif not neighbour_cell["valid_cell"]:
+                        neighbours[code_str] = -9999
+
+                except Exception:
                     continue
-
-
-        # run the algorithm again based on the new water levels.
 
     # Find neighbour with the biggest height difference in water level
     biggest_height_difference = max(neighbours.values())
@@ -216,7 +237,6 @@ def find_biggest_neighbour(
     # max_list = [
     #     idx for idx, val in enumerate(neighbour_list) if (val == biggest_height_difference and val > 0)
     # ]
-
     max_list = [k for k, v in neighbours.items() if v == biggest_height_difference]
 
     # A fix for the symmetric test case. What was happening was that there were tiny rounding errors. This caused
@@ -224,15 +244,13 @@ def find_biggest_neighbour(
     # Append any that are within a rounding error
     # (i.e. if the difference is 0.0000000001, then we want to include it)
     for k, v in neighbours.items():
-        if biggest_height_difference - v < 1E-8:
+        if biggest_height_difference - v < 1e-08:
             if k not in max_list:
                 max_list.append(k)
-
-
     return biggest_height_difference, max_list
 
 
-def water_fraction(cell, m, timestep, direction):
+def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     """
     Determine the fraction of water that is allowed to move through the solid firn, dependent on its density.
     Called in <move_water>.
@@ -254,40 +272,58 @@ def water_fraction(cell, m, timestep, direction):
         Fraction of the total water that is allowed to move. Either a single number if a lake is present,
         or a Numpy array of length cell.vert_grid if not. M is biggest height difference
     """
-
     # first calculate the distance the water has to move
     if direction in ["NW", "NE", "SW", "SE"]:
-        cell_size = np.sqrt(cell.size_dx ** 2 + cell.size_dy ** 2)
+        cell_size = np.sqrt(cell["size_dx"] ** 2 + cell["size_dy"] ** 2)
     elif direction in ["N", "S"]:
-        cell_size = cell.size_dy
+        cell_size = cell["size_dy"]
     elif direction in ["E", "W"]:
-        cell_size = cell.size_dx
+        cell_size = cell["size_dx"]
+    else:
+        raise ValueError("Direction not recognised")
     # TODO - should cell_size be divided by 2? Since water is moving from the centre of the cell. But if
-    # we consider that it is moving from centre to centre, is probably fine
+    # TODO - we consider that it is moving from centre to centre, is probably fine assuming size of adjacent cells
+    # TODO - is the same, but could implement a fix at some point.
 
     Big_pi = -2.53 * 10 ** -10  # hydraulic permeability (m^2)
     eta = 1.787 * 10 ** -3  # viscosity(Pa/s)
-    if cell.lake:
-        return 1  # if in a lake all water moves
-    cell.rho = cell.Sfrac * cell.rho_ice + cell.Lfrac * cell.rho_water
-    cell_density = cell.rho
-
-    u = Big_pi / eta * m / cell_size * cell_density * -9.8  # flow speed (m/s)
-    water_frac = u * timestep / cell_size
+    cell["rho"] = cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
 
     # This block ensures that u is not greater than 1, which would be unphysical.
     # if lake, then we only are interested in rho_water so u is a float (not an array)
-    if cell.lake:
-        water_frac = min(water_frac, 1)
+    if cell["lake"]:
+        water_frac = np.array([1.0])  # if in a lake all water moves
     else:  # otherwise we look at the density of a specific point in the firn so u is an array
-        water_frac[np.where(water_frac > 1)] = 1  # All water can move in one timestep
+        cell_density = cell["rho"]
+        u = Big_pi / eta * (m / cell_size) * cell_density * -9.8  # flow speed (m/s)
+        water_frac = u * timestep / cell_size
+        water_frac[np.where(water_frac > 1)] = 1
 
-
-    # water_move = cell.water * water_frac
+        # JE - added flow_speed_scaling variable here.
+        water_frac = water_frac * flow_speed_scaling
     return water_frac
 
+def calc_available_water_lake(cell, water_frac, split, neighbour_cell, outflow=False):
+    if outflow:  # outflow case, so most of the calculation is irrelevant
+        water_to_move = float(cell["lake_depth"])  # if flowing out, whole lake drains away.
+        return water_to_move, 0, 0, 0
 
-def calc_available_water(cell, water_frac, split, neighbour_cell=False, outflow=False):
+    # Otherwise, proceed as normal
+    # enough water should move such that we equalise water level, accounting for moving to multiple cells.
+    water_to_move = (water_frac * (
+            (cell["water_level"] - neighbour_cell["water_level"]) / (split + 1)
+    ))[0]  # [0] since we want a float not an array for Numba
+
+    # Ensure we have enough water to fill our "quota" - else everything goes but no more.
+    # multiply by split since we want the total water that can move.
+    # water frac is always 1 if the central cell is a lake
+    # so doesn't pose a problem
+    if cell["lake_depth"] < water_to_move * (split + 1):
+        water_to_move = float(cell["lake_depth"] / (split + 1))
+    return water_to_move, 0, 0, 0
+
+
+def calc_available_water_ice_lens(cell, water_frac, split, neighbour_cell, outflow=False):
     """
     Determine the amount of water that can be moved from one cell to the next.
 
@@ -309,109 +345,199 @@ def calc_available_water(cell, water_frac, split, neighbour_cell=False, outflow=
     # only the case if outside cells are equal so far - maybe change in future
     # We need to move enough water for the water levels to equalise.
     # If lake depth < difference between water levels, then all needs to move.
-    if cell.lake:
-        if outflow:  # outflow case, so most of the calculation is irrelevant
-            water_to_move = cell.lake_depth  # if flowing out, whole lake drains away.
-            return water_to_move
 
-        # Otherwise, proceed as normal
-        # enough water should move such that we equalise water level, accounting for moving to multiple cells.
-        water_to_move = water_frac * (
-                (cell.water_level - neighbour_cell.water_level) / (split + 1)
-        )
-        # Ensure we have enough water to fill our "quota" - else everything goes but no more.
-        # multiply by split since we want the total water that can move.
-        # water frac is always 1 if the central cell is a lake
-        # so doesn't pose a problem
-        if cell.lake_depth < water_to_move * (split + 1):
-            water_to_move = cell.lake_depth / (split + 1)
-        return water_to_move
 
-    elif cell.ice_lens and not cell.lake:
-        if outflow:
-            lowest_water_level = cell.vertical_profile[::-1][cell.ice_lens_depth]
-            vp = cell.vertical_profile[::-1]
-            move_from_index = find_nearest(vp, lowest_water_level)
-            water_to_move = np.sum(cell.water[: move_from_index + 1])
-            return water_to_move
-        # Determine the highest point of the water - this is needed later
-        top_saturation_level = np.argmax(cell.saturation[: cell.ice_lens_depth + 1] > 0)
-
-        # The water moves from the lowest level it can physically do so
-        # i.e. the ice lens depth:
-        if cell.vertical_profile[::-1][cell.ice_lens_depth] > neighbour_cell.water_level:
-            lowest_water_level = cell.vertical_profile[::-1][cell.ice_lens_depth]
-
-        else:  # or the midpoint of the water depths
-            lowest_water_level = cell.vertical_profile[::-1][
-                find_nearest(
-                    cell.vertical_profile[::-1],
-                    (cell.water_level + neighbour_cell.water_level) / (split + 1),
-                )
-            ]
-
-        vp = cell.vertical_profile[::-1]
+    if outflow:
+        lowest_water_level = cell["vertical_profile"][::-1][cell["ice_lens_depth"]]
+        vp = cell["vertical_profile"][::-1]
         move_from_index = find_nearest(vp, lowest_water_level)
+        water_to_move = np.sum(cell["water"][: move_from_index + 1])
+        return water_to_move, 0, 0, 0
 
-        water_to_move = (
-                water_frac[move_from_index]
-                * (cell.water_level - neighbour_cell.water_level)
-                / (split + 1)
-        )
-
-        # If saturated firn doesn't hold enough water to fill the "quota", then all of it moves but no more
-        # +1 so we include the one where we move from
-        if np.sum(cell.water[: move_from_index + 1]) / (split + 1) < water_to_move:
-            # i.e. if more water is allowed to move than we have in the cell
-            water_to_move = np.sum(cell.water[: move_from_index + 1]) / (split + 1)
-        return (
-            water_to_move,
-            lowest_water_level,
-            move_from_index,
-            top_saturation_level,
-        )
-    else:
-        raise ValueError('Water should not be able to flow from this cell')  # water should not be able to move from this cell
-
-
-def calc_catchment_outflow(cell, temporary_cell, water_frac, split):
-    water_to_move = calc_available_water(
-        cell, water_frac, split, outflow=True
+    # Determine the highest point of the water - this is needed later
+    top_saturation_level = np.argmax(
+        cell["saturation"][: cell["ice_lens_depth"] + 1] > 0
     )
-    if cell.lake:  # remove water from the lake directly.
-        water_out = np.copy(water_to_move)
-        
-        if cell.lake_depth < water_to_move:
-            water_to_move = cell.lake_depth
-            temporary_cell.lake_depth = 0
+    # The water moves from the lowest level it can physically do so
+    # i.e. the ice lens depth:
+    if (
+            cell["vertical_profile"][::-1][cell["ice_lens_depth"]]
+            > neighbour_cell["water_level"]
+    ):
+        lowest_water_level = cell["vertical_profile"][::-1][cell["ice_lens_depth"]]
+    else:  # or the midpoint of the water depths
+        lowest_water_level = cell["vertical_profile"][::-1][
+            find_nearest(
+                cell["vertical_profile"][::-1],
+                (cell["water_level"] + neighbour_cell["water_level"]) / (split + 1),
+            )
+        ]
+    vp = cell["vertical_profile"][::-1]
+    move_from_index = find_nearest(vp, lowest_water_level)
+    water_to_move = (
+            water_frac[move_from_index]
+            * (cell["water_level"] - neighbour_cell["water_level"])
+            / (split + 1)
+    )
+
+    # If saturated firn doesn't hold enough water to fill the "quota", then all of it moves but no more
+    # +1 so we include the one where we move from
+    if np.sum(cell["water"][: move_from_index + 1]) / (split + 1) < water_to_move:
+        # i.e. if more water is allowed to move than we have in the cell
+        water_to_move = np.sum(cell["water"][: move_from_index + 1]) / (split + 1)
+    return water_to_move, lowest_water_level, move_from_index, top_saturation_level
+
+
+
+def calc_catchment_outflow(cell, temporary_cell, water_frac, split, outflow_proportion=1.0):
+    """
+    Calculate the amount of water that can be moved from a cell to the land
+    (i.e. outside of the model domain).
+
+    Parameters
+    ----------
+    cell
+    temporary_cell
+    water_frac
+    split
+
+    Returns
+    -------
+
+    """
+    # call cell twice as "cell" is the neighbour cell in this instance - it isn't actually used but
+    # lets us jit-compile with Numba
+    if cell["lake"]:
+        water_to_move, _, __, ___ = calc_available_water_lake(cell, water_frac, split, cell, outflow=True)
+    elif cell["ice_lens"] and not cell["lid"]:
+        water_to_move, lowest_water_level, move_from_index, top_saturation_level = calc_available_water_ice_lens(
+            cell, water_frac, split, cell, outflow=True
+        )
+
+    # Whether we are moving from a lake or ice lens, scale by the outflow proportion.
+    water_to_move = water_to_move * outflow_proportion  # scale by outflow proportion
+
+    if cell["lake"] and not cell['lid']:  # either: remove water from the lake directly.
+        water_out = water_to_move
+        if cell["lake_depth"] < water_to_move:
+            water_to_move = cell["lake_depth"]
+            temporary_cell['lake_depth'] = 0
             water_out = water_to_move
             water_to_move = 0
         else:
-            temporary_cell.lake_depth -= water_to_move
-            if temporary_cell.lake_depth < 0:
-                raise ValueError('Lake depth has gone below 0')
-    else:  # Otherwise, loop through the column and remove water from it, going from the top.
+            temporary_cell["lake_depth"] -= water_to_move
+            if temporary_cell["lake_depth"] < 0:
+
+                if temporary_cell["lake_depth"] < -1E-12:  # account for rounding errors
+                    raise ValueError("Lake depth has gone below 0")
+                else:
+                    temporary_cell["lake_depth"] = 0
+    else:  # otherwise, loop through the column and remove water from it, going from the top.
         water_out = 0
         try:
-            for _l in range(0, cell.ice_lens_depth + 1):
-                if cell.water[_l] > water_to_move:
-                    temporary_cell.water[_l] -= water_to_move
-                    temporary_cell.saturation[_l] = 0
+            for _l in range(0, cell["ice_lens_depth"] + 1):
+                if cell["water"][_l] > water_to_move:
+                    temporary_cell['water'][_l] -= water_to_move
+                    temporary_cell['saturation'][_l] = 0
                     water_out += water_to_move
                     water_to_move = 0
                 else:
-                    water_to_move -= cell.water[_l]
-                    water_out += cell.water[_l]
-                    temporary_cell.water[_l] -= cell.water[_l]
-
-        except IndexError:
+                    water_to_move -= cell["water"][_l]
+                    water_out += cell["water"][_l]
+                    temporary_cell['water'][_l] -= cell["water"][_l]
+        except Exception:
             print(_l)
             print(water_out)
-            print(cell.ice_lens_depth)
-            raise IndexError
-
+            print(cell["ice_lens_depth"])
+            raise Exception
     return water_out
 
+
+def move_from_lake(cell, grid, temporary_cell, temporary_neighbour, row, col, n_s_index, w_e_index, water_to_move):
+    if grid[row + n_s_index][col + w_e_index]["lake"]:  # Simplest case - lake water into lake
+        temporary_neighbour['lake_depth'] += water_to_move
+
+    # In case where neighbour cell is not a lake, and is lower down, then the water moves to the
+    # top of that cell
+    elif (
+            cell["firn_depth"] + cell["lake_depth"]
+            > grid[row + n_s_index][col + w_e_index]["firn_depth"]
+    ):
+        temporary_neighbour['water'][0] += water_to_move
+    # Otherwise we need to move it to a specific point in the neighbour cell corresponding to the
+    # topmost saturated cell above the ice lens.
+    else:
+        move_to_index = find_nearest(
+            grid[row + n_s_index][col + w_e_index]["vertical_profile"][::-1], cell["water_level"]
+        )
+        temporary_neighbour['water'][move_to_index] += water_to_move
+
+    # Whatever outcome it was, we need to remove the moved water from the lake
+    temporary_cell["lake_depth"] -= water_to_move
+
+    # Fix floating-point errors before sanity checking
+    if 0 > temporary_cell["lake_depth"] > -1e-12:
+        temporary_cell["lake_depth"] = 0
+        print("Fixed floating point error in lake depth")
+    if temporary_cell["lake_depth"] < 0:
+        print("After = ", temporary_cell["lake_depth"])
+        print("Before = ", cell["lake_depth"])
+        raise ValueError(
+            "Moving water has caused lake depth to go below 0 - in the central cell"
+        )
+    return temporary_cell, temporary_neighbour
+
+
+def move_from_ice_lens(cell, grid, temporary_cell, temporary_neighbour, split, row,
+                       col, n_s_index, w_e_index, lowest_water_level, move_from_index, top_saturation_level,
+                       water_to_move):
+    # TODO | Rather than using water level, we actually need to account for the available pore space.
+    # TODO | This will be something along the lines of calculating 1 - Sfrac - Lfrac for the selected
+    # TODO | indices and weighting based on that, rather than just water_depth.
+    # TODO | Should normalise between different timesteps, so not a priority right now, but possible
+    # TODO | for future development.
+
+    # This is the most complicated case - moving from a cell with an ice lens to
+    # a cell with or without an ice lens, and that has no lake.
+    # We need to move water from the correct vertical layer
+    # of cell into the correct vertical layer of neighbour_cell. We do this in the loop after
+    # this one, so that we can check that we have enough water to move from each vertical
+    # layer of the central cell.
+    if not grid[row + n_s_index][col + w_e_index]["lake"]:
+        move_to_index = find_nearest(
+            grid[row + n_s_index][col + w_e_index]["vertical_profile"][::-1], lowest_water_level
+        )
+    else:
+        move_to_index = 0
+    # We now need to update the amount of water in the initial firn column.
+    # Water can only be deducted from the area above lowest_water_level.
+    for idx in range(top_saturation_level, move_from_index + 1):
+        # If more water in cell than we can move, then subtract that amount from the current cell
+        # JE - added factor of split so water is evenly moved from the bottom
+        if cell["water"][idx] / (split + 1) > water_to_move:
+            temporary_cell['water'][idx] -= water_to_move
+            if not grid[row + n_s_index][col + w_e_index]["lake"]:
+                temporary_neighbour['water'][move_to_index] += water_to_move
+                temporary_neighbour['meltflag'][move_to_index] = 1
+            else:
+                temporary_neighbour['lake_depth'] += water_to_move
+            temporary_cell['saturation'][idx] = 0
+            water_to_move = 0
+        # Otherwise - remove all of it from that cell and go up one.
+        else:
+            temporary_cell['water'][idx] -= cell["water"][idx] / (split + 1)
+            water_to_move -= cell["water"][idx] / split
+            if not grid[row + n_s_index][col + w_e_index]["lake"]:
+                temporary_neighbour["water"][move_to_index] += cell["water"][
+                                                                   idx
+                                                               ] / (split + 1)
+                temporary_neighbour['meltflag'][move_to_index] = 1
+            else:
+                temporary_neighbour['lake_depth'] += cell["water"][idx] / (
+                        split + 1
+                )
+            temporary_cell['saturation'][idx] = 0
+    return temporary_cell, temporary_neighbour
 
 def move_to_neighbours(
         grid,
@@ -423,7 +549,9 @@ def move_to_neighbours(
         catchment_outflow,
         biggest_height_difference,
         timestep,
-        flow_into_land=False
+        flow_into_land=False,
+        flow_speed_scaling=1.0,
+        outflow_proportion=1.0
 ):
     """
     Moves water from the central cell (grid[i][j]) to the neighbours with the lowest water level.
@@ -460,200 +588,124 @@ def move_to_neighbours(
         should not be able to move from (i.e. no lake or ice lens)
     """
     # recall that the "column" index is our *x* coordinate, not y, and we index
-    # by [row, col]
-    all_neighbours = {
-        "NW": [-1, -1],
-        "N": [-1, 0],
-        "NE": [-1, 1],
-        "E": [0, 1],
-        "SE": [1, 1],
-        "S": [1, 0],
-        "SW": [1, -1],
-        "W": [0, -1],
-    }
+    # by [row, col], i.e. [y, x] in the grid. And that we start indexing from the top left,
+    # not the bottom left!
+    all_neighbours = Dict()
+    all_neighbours["NW"] = np.array([-1, -1])
+    all_neighbours["N"] = np.array([-1, 0])
+    all_neighbours["NE"] = np.array([-1, 1])
+    all_neighbours["E"] = np.array([0, 1])
+    all_neighbours["SE"] = np.array([1, 1])
+    all_neighbours["S"] = np.array([1, 0])
+    all_neighbours["SW"] = np.array([1, -1])
+    all_neighbours["W"] = np.array([0, -1])
+
+    cell = grid[row][col]
+    cell['water_direction'][:] = 0  # clear water direction
 
     # for each of the neighbours we wish to move water to, which depends on the difference
     # in water level between the central cell and the cells at each cardinal point
     for idx, neighbour in enumerate(all_neighbours.keys()):
         if neighbour in biggest_neighbours:
+            if cell["lid"]:
+                return 0
+            cell['water_direction'][idx] = 1
 
 
             n_s_index = all_neighbours[neighbour][0]  # i.e. row index
             w_e_index = all_neighbours[neighbour][1]  # i.e. col index
-            cell = grid[row][col]
             temporary_cell = temp_grid[row][col]
             water_frac = water_fraction(
-                cell, biggest_height_difference, timestep, neighbour
+                cell, biggest_height_difference, timestep, neighbour, flow_speed_scaling=flow_speed_scaling
             )
-            if cell.lid:
-                return 0
 
             # Before actually moving water, we first need to find out how much water can actually move.
             # This try/except block happens in all non-lid cases, and determines how much water can move from the
             # central cell to the neighbour cell. If the neighbour cell is invalid, then we don't want to move water
             # (or maybe we do if flow_into_land is True).
-            try:
-                if row + n_s_index == -1 or col + w_e_index == -1 or row + n_s_index >= len(grid) or col + w_e_index >= len(grid[0]):
-                    # edge case handling - since Python handles "-1" as
-                    # a valid index this will impose periodic boundary conditions rather than raise an error, which
-                    # is not the behaviour we want!
-                    raise IndexError
-                neighbour_cell = grid[row + n_s_index][col + w_e_index]
-                temporary_neighbour = temp_grid[row + n_s_index][col + w_e_index]
-                # If cell is invalid, we aren't interested in flowing water
-                if not neighbour_cell.valid_cell and not flow_into_land:
-                    continue
-
-                # unless water can flow into the land (i.e. through crevices etc.) - in which case
-                # do the catchment outflow algorithm, then return out of the function.
-                elif not neighbour_cell.valid_cell and flow_into_land:
-                    water_out = calc_catchment_outflow(cell, temporary_cell, water_frac, split)
-                    if water_out > 0:
-                        print(f'Moved {water_out} units of water into the land')
-                    if temporary_cell.lake_depth < 0:
-                        print(f'temporary_cell.lake_depth = {temporary_cell.lake_depth}, col = {col}, row = {row}')
-                        print(f'split = {split}, water_frac = {water_frac}, cell.lake_depth = {cell.lake_depth}')
-                    return water_out
-
-                if cell.lid or neighbour_cell.lid:
-                    # Too complicated to model, so we just ignore this for now
-                    continue
-
-                if cell.lake:
-                    water_to_move = calc_available_water(
-                        cell, water_frac, split, neighbour_cell=neighbour_cell
-                    )
-                elif cell.ice_lens and not cell.lake:  # in this case we need to return a bit more info
-
-                    water_to_move, lowest_water_level, move_from_index, top_saturation_level \
-                        = calc_available_water(
-                        cell, water_frac, split, neighbour_cell=neighbour_cell
-                    )
-
-            # If we are moving out of the catchment area, we will get an IndexError when trying to read neighbour_cell.
-            # Instead, in this case, just determine how much water will move out of the catchment area.
-            # We return straight out of the function in this case as we only want to move out one way.
-            except IndexError:
+            if (
+                    row + n_s_index == -1
+                    or col + w_e_index == -1
+                    or row + n_s_index == len(grid)
+                    or col + w_e_index == len(grid[0])
+            ):
+                # edge case handling - since Python handles "-1" as
+                # a valid index this will impose periodic boundary conditions rather than raise an error, which
+                # is not the behaviour we want!
+                # If we are moving out of the catchment area, we will get an IndexError when trying to read neighbour_cell.
+                # Instead, in this case, just determine how much water will move out of the catchment area.
+                # We return straight out of the function in this case as we only want to move out one way.
                 if catchment_outflow:
-                    water_out = calc_catchment_outflow(cell, temporary_cell, water_frac, split)
+                    water_out = calc_catchment_outflow(
+                        cell, temporary_cell, water_frac, split, outflow_proportion=outflow_proportion
+                    )
                     return water_out
                 else:
                     raise ValueError(
-                        "Issue with lateral movement - trying to move to a non-existent grid cell and "
-                        "<catchment_outflow> is not enabled"
+                        "Issue with lateral movement - trying to move to a non-existent grid cell and <catchment_outflow> is not enabled"
                     )
+            # Determine the neighbour and create a temporary version of it to hold info while we move
+            # to/from other cells
+            if 0 <= row + n_s_index < len(grid) and 0 <= col + w_e_index < len(grid[0]):
+                temporary_neighbour = temp_grid[row + n_s_index][col + w_e_index]
+            else:
+                raise ValueError('This shouldnt be happening - the code should have tried to do catchment outflow')
+
+            # If cell is invalid, we aren't interested in flowing water
+            if not grid[row + n_s_index][col + w_e_index]["valid_cell"] and not flow_into_land:
+                continue
+
+            # unless water can flow into the land (i.e. through crevices etc.) - in which case
+            # do the catchment outflow algorithm, then return out of the function.
+            elif not grid[row + n_s_index][col + w_e_index]["valid_cell"] and flow_into_land:
+                water_out = calc_catchment_outflow(
+                    cell, temporary_cell, water_frac, split, outflow_proportion=outflow_proportion
+                )
+                if water_out > 0:
+                    print(f"Moved {float(water_out)} units of water into the land")
+                if temporary_cell["lake_depth"] < 0:
+                    print(
+                        f"temporary_cell['lake_depth'] = {temporary_cell['lake_depth']}, col = {col}, row = {row}"
+                    )
+                    print(
+                        f"split = {split}, water_frac = {water_frac}, cell.lake_depth = {cell['lake_depth']}"
+                    )
+                return water_out
+
+            if cell["lid"] or grid[row + n_s_index][col + w_e_index]["lid"]:
+                # Too complicated to model, so we just ignore this for now
+                continue
+
             # Case where the central cell has a lake.
-            if cell.lake:
-                if neighbour_cell.lake:  # Simplest case - lake water into lake
-                    temporary_neighbour.lake_depth += water_to_move
-                # Otherwise we need to move it to a specific point in the neighbour cell corresponding to the
-                # topmost saturated cell above the ice lens.
-                else:
-                    # Find the point at which we need to add the water -
-                    # either surface
-                    if cell.firn_depth + cell.lake_depth > neighbour_cell.firn_depth:
-                        temporary_neighbour.water[0] += water_to_move
+            if cell["lake"]:
+                water_to_move, _, _, _ = calc_available_water_lake(
+                    cell, water_frac, split, grid[row + n_s_index][col + w_e_index]
+                )
+                temporary_cell, temporary_neighbour = move_from_lake(cell, grid, temporary_cell,
+                                                                    temporary_neighbour,
+                                                                    row, col, n_s_index, w_e_index,
+                                                                    water_to_move)
 
-                    else:  # or somewhere along firn profile corresponding to cell.water_level
-                        move_to_index = find_nearest(
-                            neighbour_cell.vertical_profile[::-1],
-                            cell.water_level,
-                        )
-                        temporary_neighbour.water[move_to_index] += water_to_move
+            elif cell["ice_lens"] and not cell["lake"]:
+                (
+                    water_to_move,
+                    lowest_water_level,
+                    move_from_index,
+                    top_saturation_level,
+                ) = calc_available_water_ice_lens(
+                    cell, water_frac, split, grid[row + n_s_index][col + w_e_index]
+                )  # in this case we need to return a bit more info, hence the tuple
 
-                # Whatever outcome it was, we need to remove the moved water from the lake
-                temporary_cell.lake_depth -= water_to_move
-
-                # Fix floating-point errors before sanity checking
-                if 0 > temporary_cell.lake_depth > -0.000000000001:
-                    temporary_cell.lake_depth = 0
-                    print('Fixed floating point error in lake depth')
-
-                if temporary_cell.lake_depth < 0:
-                    print("After = ", temporary_cell.lake_depth)
-                    print("Before = ", cell.lake_depth)
-                    raise ValueError(
-                        "Moving water has caused lake depth to go below 0 - in the central cell"
-                    )
-
-            elif cell.ice_lens and not cell.lake:  # water is moving from an ice lens
-                # TODO | Rather than using water level, we actually need to account for the available pore space.
-                # TODO | This will be something along the lines of calculating 1 - Sfrac - Lfrac for the selected
-                # TODO | indices and weighting based on that, rather than just water_depth.
-                # TODO | Should normalise between different timesteps, so not a priority right now, but possible
-                # TODO | for future development.
-
-                # This is the most complicated case - moving from a cell with an ice lens to
-                # a cell with or without an ice lens, and that has no lake.
-                # We need to move water from the correct vertical layer
-                # of cell into the correct vertical layer of neighbour_cell. We do this in the loop after
-                # this one, so that we can check that we have enough water to move from each vertical
-                # layer of the central cell.
-                if not neighbour_cell.lake:
-                    move_to_index = find_nearest(
-                        neighbour_cell.vertical_profile[::-1],
-                        lowest_water_level,
-                    )
-                else:
-                    move_to_index = 0
-                # We now need to update the amount of water in the initial firn column.
-                # Water can only be deducted from the area above lowest_water_level.
-                for idx in range(top_saturation_level, move_from_index + 1):
-                    # If more water in cell than we can move, then subtract that amount from the current cell
-
-                    # JE - added factor of split so water is evenly moved from the bottom
-                    if cell.water[idx] / (split + 1) > water_to_move:
-                        temporary_cell.water[idx] -= water_to_move
-                        if not neighbour_cell.lake:
-                            temporary_neighbour.water[move_to_index] += water_to_move
-                            temporary_neighbour.meltflag[move_to_index] = 1
-                        else:
-                            temporary_neighbour.lake_depth += water_to_move
-
-
-                        temporary_cell.saturation[idx] = 0
-                        water_to_move = 0
-                    # Otherwise - remove all of it from that cell and go up one.
-                    else:
-                        temporary_cell.water[idx] -= cell.water[idx] / (split + 1)
-                        water_to_move -= cell.water[idx] / split
-                        if not neighbour_cell.lake:
-                            temporary_neighbour.water[move_to_index] += cell.water[idx] / (split + 1)
-                            temporary_neighbour.meltflag[move_to_index] = 1
-                        else:
-                            temporary_neighbour.lake_depth += cell.water[idx] / (split + 1)
-                        temporary_cell.saturation[idx] = 0
-
-
+                temporary_cell, temporary_neighbour = \
+                    move_from_ice_lens(cell, grid, temporary_cell, temporary_neighbour,
+                                    split, row, col, n_s_index, w_e_index,
+                                    lowest_water_level, move_from_index, top_saturation_level,
+                                       water_to_move)
             else:  # If no ice lens, then no water should be able to move as
                 # it should preferentially percolate downwards.
                 raise ValueError("This should not be happening...")
+
     return 0
-
-
-class TemporaryCell:
-    """
-    Define a temporary class for us to store info on where water has moved to and from.
-    This allows us to do the lateral movement "simultaneously", rather than moving it iteratively
-    (causing the end result to be determined by which cells you start moving water from)
-
-    Attributes
-    ----------
-    lake_depth : float
-        lake depth of the IceShelf we are mirroring
-    water : array_like, float, dimension(cell.vert_grid)
-        water content of the IceShelf
-    saturation : array_like, bool, dimension(cell.vert_grid)
-        boolean array determining whether the IceShelf is saturated at each vertical point
-    """
-
-    def __init__(self, lake_depth, water, saturation, meltflag, lake):
-        self.lake_depth = lake_depth
-        self.water = water
-        self.saturation = saturation
-        self.meltflag = meltflag
-        self.lake = lake
-
 
 
 def move_water(
@@ -663,7 +715,9 @@ def move_water(
         timestep,
         catchment_outflow=True,
         lateral_movement_percolation_toggle=True,
-        flow_into_land=False
+        flow_into_land=False,
+        flow_speed_scaling=1.0,
+        outflow_proportion=1.0,
 ):
     """
     Loop over our grid and determine which cells water is allowed to move from/to, then perform this movement
@@ -695,43 +749,47 @@ def move_water(
         This should not occur, so please get in touch with the developers, so we can source and fix the issue.
     """
 
-
     # First, we need to determine the water level.
     total_water = 0
     catchment_out_water = 0
+
+    # set flow_speed_scaling to always be a float in case a user specifies it as 1 - so we ensure that
+    # water_to_move is always a float also
+    flow_speed_scaling = float(flow_speed_scaling)
+
     for row in range(0, max_grid_row):
         for col in range(0, max_grid_col):
             cell = grid[row][col]
             update_water_level(cell)
-            # water_level_to_sort[row, col] = cell.water_level
-            total_water += np.sum(cell.water) + cell.lake_depth
+            total_water += np.sum(cell["water"]) + cell["lake_depth"]
 
     # Create temporary cells for our water to move in and out of. This is required so that the water all moves
-    # simultaneously.
+    # simultaneously - kind of like in a Jacobi solver
+    dtype = grid.dtype
+    temp_grid = np.zeros((len(grid), len(grid[0])), dtype=dtype)
+    for i in prange(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            temp_grid[i, j]['lake_depth'] = grid[i, j]['lake_depth']
+            temp_grid[i, j]['lake'] = grid[i, j]['lake']
 
-    temp_grid = []
-    for row in range(max_grid_row):
-        _l = []
-        for col in range(max_grid_col):
-            # Append *copies* of the arrays to temporary grid, otherwise these will be pointers to the *actual*
-            # cell arrays, making the whole thing pointless.
-            _l.append(
-                TemporaryCell(
-                    np.copy(grid[row][col].lake_depth),
-                    np.copy(grid[row][col].water),
-                    np.copy(grid[row][col].saturation),
-                    np.copy(grid[row][col].meltflag),
-                    np.copy(grid[row][col].lake)
-                )
-            )
-        temp_grid.append(_l)
+            # need to explicitly loop else it will create a shallow copy
+            for k in range(len(grid[i, j]['water'])):
+                temp_grid[i, j]['water'][k] = grid[i, j]['water'][k]
+                temp_grid[i, j]['saturation'][k] = grid[i, j]['saturation'][k]
+                temp_grid[i, j]['meltflag'][k] = grid[i, j]['meltflag'][k]
 
     # Now loop through the cells again, this time actually performing the movement step.
-    for row in range(max_grid_row):
+    for row in prange(max_grid_row):
         for col in range(max_grid_col):
             cell = grid[row][col]
+            cell['water_direction'][:] = 0  # clear water direction
 
-            if cell.valid_cell and ((cell.ice_lens and (cell.water > 0).any()) or (cell.lake and cell.lake_depth > 0)):
+            if cell["valid_cell"] and (
+                    cell["ice_lens"]
+                    and (cell["water"] > 0).any()
+                    or cell["lake"]
+                    and cell["lake_depth"] > 0
+            ):
                 # Get the points with the largest difference in heights
                 # TODO | Is the thing we are really interested in just "if water level > neighbour level, move water"?
                 # TODO | So rather than moving all to one lower gridcell, move equally to all adjacent grid cells
@@ -745,12 +803,10 @@ def move_water(
                     max_grid_col,
                     max_grid_row,
                     catchment_outflow,
-                    flow_into_land=flow_into_land
+                    flow_into_land=flow_into_land,
                 )
-
                 # If more than one cell is equally lower than central the water is split between them
                 split = len(max_list)
-
                 # Water moves if one of surrounding grid is lower than central cell
                 if biggest_height_difference > 0:
                     # Now calculate the amount of water to move.
@@ -767,11 +823,18 @@ def move_water(
                         catchment_outflow,
                         biggest_height_difference,
                         timestep,
-                        flow_into_land=flow_into_land
+                        flow_into_land=flow_into_land,
+                        flow_speed_scaling=flow_speed_scaling,
+                        outflow_proportion=outflow_proportion,
                     )
 
-            if (cell.water < 0).any():
+            if (cell["water"] < -1E-12).any():
                 raise ValueError("cell.water is negative")
+            elif (cell["water"] < 0).any():
+                # set everything to 0 that is below 0 but above 1E-12
+                set_to_zeros = np.where(cell["water"] < 0)
+                cell["water"][set_to_zeros] = 0
+
     new_water = 0
     # Loop over our grid, set the values to the corresponding temporary values,
     # i.e. performing our movement in one step
@@ -782,29 +845,27 @@ def move_water(
             # Round water and lake depth to 10 decimal places, which gives a bit of robustness to floating-point
             # errors. This is only ever really an issue in a case with some kind of symmetry, e.g. the
             # 10x10 Gaussian lakes test case.
-            cell.water = np.around(temporary_cell.water, 10)
-            cell.lake_depth = np.around(temporary_cell.lake_depth, 10)
-            cell.saturation = temporary_cell.saturation
-            cell.meltflag = temporary_cell.meltflag
-            new_water += np.sum(cell.water) + cell.lake_depth
-
-            if cell.valid_cell:
+            cell["water"] = np.around(temporary_cell['water'], 10)
+            cell["lake_depth"] = np.around(temporary_cell['lake_depth'], 10)
+            cell["saturation"] = temporary_cell['saturation']
+            cell["meltflag"] = temporary_cell['meltflag']
+            new_water += np.sum(cell["water"]) + cell["lake_depth"]
+            if cell["valid_cell"]:
                 # Once all water has moved, update the Lfrac of each cell based on where the water now is.
                 # The water level is calculated at the beginning of the next call to move_water, and is not
                 # used anywhere else in the code.
-                cell.Lfrac = cell.water / (cell.firn_depth / cell.vert_grid)
+                cell["Lfrac"] = cell["water"] / (cell["firn_depth"] / cell["vert_grid"])
                 # We have put all the water at one level in the firn - we need to percolate it to make sure that
                 # the water fills out the available pore space.
                 if lateral_movement_percolation_toggle:
                     # assume the percolation happens within 1 hour.
                     percolation(cell, 3600, lateral_refreeze_flag=True)
-                    for k in range(cell.vert_grid)[::-1]:
+                    for k in np.arange(cell["vert_grid"])[::-1]:
                         calc_saturation(cell, k, end=True)
+            # update_water_level(cell)  # commented out as only affects lateral functions and can be updated at
+            # start of next lateral timestep
 
-            update_water_level(cell)
-
-
-
+    # print('Water level at end of timestep: ', get_2d_grid(grid, 'water_level'))
     print("\nLateral water movement diagnostics:")
     print("Starting water total = ", total_water)
     print("Finishing water total = ", new_water)
@@ -815,7 +876,6 @@ def move_water(
     # nonzero as otherwise it will trigger when we have e.g. floating point errors.
     if abs(total_water - new_water - catchment_out_water) > 0.0001:
         raise ValueError(
-            "monarchs.physics.lateral_functions.move_water:"
-            "Too much water has appeared out of nowhere during lateral functions"
+            "monarchs.physics.lateral_functions.move_water:Too much water has appeared out of nowhere during lateral functions"
         )
     return grid, catchment_out_water

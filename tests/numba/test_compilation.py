@@ -5,8 +5,8 @@ def run(model_setup):
     from monarchs.core import driver
     from monarchs.core import initial_conditions, setup_met_data
 
-    T_firn, rho, firn_depth, valid_cells, dx, dy = initial_conditions.initialise_firn_profile(
-        model_setup, diagnostic_plots=False
+    T_firn, rho, firn_depth, valid_cells, dx, dy = (
+        initial_conditions.initialise_firn_profile(model_setup, diagnostic_plots=False)
     )
 
     lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
