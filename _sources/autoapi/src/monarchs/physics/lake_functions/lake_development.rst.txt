@@ -1,0 +1,18 @@
+src.monarchs.physics.lake_functions.lake_development
+====================================================
+
+.. py:function:: src.monarchs.physics.lake_functions.lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict)
+
+   Once a lake of at least 10 cm deep is present this function calculates
+   its evolution through a Stefan problem calculation of the lake-ice boundary.
+   Called by timestep_loop.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **dt** (*int*) -- Number of seconds in the timestep, most likely 3600 (i.e. 1 hour) [s]
+                * **LW_in** (*float*) -- Downwelling longwave radiation at the surface. [W m^-2]
+                * **SW_in** (*float*) -- Downwelling shortwave radiation at the surface [W m^-2]
+                * **T_air** (*float*) -- Surface air temperature. [K]
+                * **p_air** (*float*) -- Surface air pressure. [Pa]
+                * **T_dp** (*float*) -- Dewpoint temperature of the air at the surface. [K]
+                * **wind** (*float*) -- Wind speed at the surface. [m s^-1]
+

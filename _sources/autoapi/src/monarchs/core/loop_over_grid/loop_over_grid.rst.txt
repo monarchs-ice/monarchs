@@ -1,0 +1,23 @@
+src.monarchs.core.loop_over_grid.loop_over_grid
+===============================================
+
+.. py:function:: src.monarchs.core.loop_over_grid.loop_over_grid(row_amount, col_amount, grid, dt, met_data, t_steps_per_day, toggle_dict, parallel=False, use_mpi=False, ncores='all', dask_scheduler='processes', client=None)
+
+   This function wraps timestep_loop, allowing for it to be
+   run in parallel over an arbitrarily sized grid.
+
+   :Parameters: * **row_amount** (*int*) -- Number of rows in <grid>.
+                * **col_amount** (*int*) -- Number of columns in <grid>.
+                * **grid** (*numpy structured array*) -- Model grid containing the ice shelf parameters.
+                * **met_data** (*numpy structured array*) -- Grid containing the met data associated with the model grid.
+                * **parallel** (*bool, optional*) -- Flag to determine whether the model is to be run in parallel across
+                  multiple cores or not.
+                  Default False.
+                * **use_mpi** (*bool, optional*) -- Flag to determine whether to use MPI for parallelisation.
+                  Default False.
+                * **ncores** (*int or str*) -- Number of cores to use if running in parallel. If 'all', all available cores will be used.
+                * **use_dask** (*bool, optional*) -- Flag to determine whether to use Dask for parallelism.
+                  Default False.
+
+   :rtype: None. The function amends the instance of <grid> passed to it.
+

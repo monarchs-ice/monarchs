@@ -1,0 +1,17 @@
+src.monarchs.physics.percolation_functions.calc_refreezing
+==========================================================
+
+.. py:function:: src.monarchs.physics.percolation_functions.calc_refreezing(cell, v_lev)
+
+   Calculate refreezing of water within the firn column at a specified layer v_lev.
+   This refreezing changes Sfrac into Lfrac, accounting for expansion due to the different
+   densities.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **v_lev** (*int*) -- Vertical level at which to calculate the refreezing of the firn.
+
+   :rtype: None (amends cell inplace)
+
+   :raises ValueError: If Lfrac is less than 1, then throw ValueError as model has entered an unphysical
+       state.
+

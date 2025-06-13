@@ -1,0 +1,4 @@
+src.monarchs.physics.lateral_functions.move_from_ice_lens
+=========================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.move_from_ice_lens(cell, grid, temporary_cell, temporary_neighbour, split, row, col, n_s_index, w_e_index, lowest_water_level, move_from_index, top_saturation_level, water_to_move)

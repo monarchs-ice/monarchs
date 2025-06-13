@@ -1,0 +1,55 @@
+heateqn_nb
+==========
+
+.. py:module:: heateqn_nb
+
+.. autoapi-nested-parse::
+
+   Functions used to solve the heat equation using NumbaMinpack's hybrd function.
+   This gives significant performance boosts over scipy's fsolve(hybrd = True).
+
+   For the version of heateqn used with Scipy's optimize.fsolve, see /physics/heateqn.
+
+   These are kept separate as there is significantly more complexity required to get the
+   inputs in the correct format for this version, and the requirement to not return anything
+   (whereas scipy.optimize.fsolve requires a return value)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   heateqn_nb.heateqn
+   heateqn_nb.heateqn_lid
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/heateqn_nb/get_k_and_kappa
+   /autoapi/heateqn_nb/heateqn
+   /autoapi/heateqn_nb/heateqn_lid
+   /autoapi/heateqn_nb/propagate_temperature
+   /autoapi/heateqn_nb/solve_tridiagonal
+
+.. autoapisummary::
+
+   heateqn_nb.get_k_and_kappa
+   heateqn_nb.heateqn
+   heateqn_nb.heateqn_lid
+   heateqn_nb.propagate_temperature
+   heateqn_nb.solve_tridiagonal
+
+
+Module Contents
+---------------
+
+.. py:data:: heateqn
+
+.. py:data:: heateqn_lid
+

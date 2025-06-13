@@ -1,0 +1,13 @@
+src.monarchs.core.loop_over_grid.chunk_grid
+===========================================
+
+.. py:function:: src.monarchs.core.loop_over_grid.chunk_grid(flat_grid, met_data_grid, chunk_size)
+
+   Chunk the grid and met_data for valid cells only.
+
+   :Parameters: * **flat_grid** (*np.ndarray*) -- Flattened model grid.
+                * **met_data_grid** (*np.ndarray*) -- Flattened grid of met_data corresponding to the grid.
+                * **chunk_size** (*int*) -- Approximate size of each chunk.
+
+   :Yields: *tuple* -- (original_indices, chunk, met_data_chunk) for each chunk.
+

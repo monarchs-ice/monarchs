@@ -1,0 +1,10 @@
+src.monarchs.core.utils.check_grid_correctness
+==============================================
+
+.. py:function:: src.monarchs.core.utils.check_grid_correctness(grid)
+
+   Wraps check_correct for each cell in the grid. We do this in a separate function so that we can wrap it
+   with numba.njit and speed things up.
+
+   :Parameters: **grid**
+

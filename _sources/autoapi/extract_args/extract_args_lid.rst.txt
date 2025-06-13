@@ -1,0 +1,35 @@
+extract_args.extract_args_lid
+=============================
+
+.. py:function:: extract_args.extract_args_lid(args)
+
+   NumbaMinpack gives large performance boosts, but has very crude
+   syntax which requires us to place all of our arguments to heateqn in
+   a single vector. This function retrieves the relevant
+   arrays from the "args" vector and separates them into
+   physically-meaningful variables.
+
+   :Parameters: **args** (*float64[:]*) -- Input vector of arguments. Generated using args_array from
+                <module_name>.
+
+   :returns: * **T** (*float64[:]*) -- Temperature of each vertical point. [K].
+             * **Sfrac** (*float64[:]*) -- Solid fraction of each vertical point. [unitless]
+             * **k_air** (*float64*) -- Thermal conductivity of air.
+             * **k_water** (*float64*) -- Thermal conductivity of water.
+             * **cp_air** (*float64*) -- Heat capacity of air.
+             * **cp_water** (*float64*) -- Heat capacity of air.
+             * **dt** (*float64*) -- Timestep. [s]
+             * **dz** (*float64*) -- Change in firn height with respect to a step in vertical point?
+             * **melt** (*Bool*) -- Flag which indicates whether melting has occurred.
+             * **exposed_water** (*Bool*) -- Flag which describes whether there is exposed water at the surface.
+             * **lid** (*Bool*) -- Flag which indicates whether there is a lid at the surface due to
+               refreezing.
+             * **lake** (*Bool*) -- Flag which indicates whether there is a lake present.
+             * **lake_depth** (*float64*) -- Depth of the lake (in vertical points?)
+             * **LW_in** (*float64*) -- Incoming longwave radiation. [W m^-2].
+             * **SW_in** (*float64*) -- Incoming shortwave (solar) radiation. [W m^-2].
+             * **T_air** (*float64*) -- Surface-layer air temperature. [K].
+             * **p_air** (*float64*) -- Surface-layer air pressure. [hPa].
+             * **T_dp** (*float64*) -- Dew-point temperature. [K].
+             * **wind** (*float64*) -- Wind speed. [m s^-1].
+

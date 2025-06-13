@@ -1,0 +1,165 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Making changes to MONARCHS &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Code structure" href="structure.html" />
+    <link rel="prev" title="Common errors and debugging" href="common_errors.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Making changes to MONARCHS</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#adding-new-diagnostics-or-physics">Adding new diagnostics or physics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#merging-your-changes-into-the-monarchs-source">Merging your changes into the MONARCHS source</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-users">Advanced users</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-functions-with-numba-support">Adding functions with Numba support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Making changes to MONARCHS</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/making_changes.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="making-changes-to-monarchs">
+<h1>Making changes to MONARCHS<a class="headerlink" href="#making-changes-to-monarchs" title="Link to this heading"></a></h1>
+<section id="adding-new-diagnostics-or-physics">
+<h2>Adding new diagnostics or physics<a class="headerlink" href="#adding-new-diagnostics-or-physics" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>If adding new variables to the code, you will need to do the following:</dt><dd><ul class="simple">
+<li><p>Add the variable into the <code class="docutils literal notranslate"><span class="pre">spec</span></code>, found in <code class="docutils literal notranslate"><span class="pre">monarchs.core.model_grid</span></code>, and initialising it if appropriate in <code class="docutils literal notranslate"><span class="pre">monarchs.core.initial_conditions.create_model_grid</span></code>. This is required since we need to ensure that our code is compilable with Numba, which forces strict typing.</p></li>
+<li><p>Add the variable into the model code itself. This likely involves making the relevant changes to the various files/functions in <code class="docutils literal notranslate"><span class="pre">monarchs.physics</span></code>.</p></li>
+<li><p>If your new variable is a diagnostic, add the variable to <code class="docutils literal notranslate"><span class="pre">vars_to_save</span></code> in your runscript, so that the code knows to track it over time and save it to the output netCDF file.</p></li>
+<li><p>If your new variable relies on a toggle or other <code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable, set a default value for this in <code class="docutils literal notranslate"><span class="pre">monarchs.core.configuration.create_defaults_for_missing_flags</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="merging-your-changes-into-the-monarchs-source">
+<h2>Merging your changes into the MONARCHS source<a class="headerlink" href="#merging-your-changes-into-the-monarchs-source" title="Link to this heading"></a></h2>
+<p>If you have added anything to the MONARCHS source code, please let us know! We welcome pull requests from users who have added features or squashed bugs that we have let slip through the net.
+Please make any changes you want to make to the code in a new branch of the main repo (i.e. not <code class="docutils literal notranslate"><span class="pre">main</span></code>), or create a fork. Pushes directly into <code class="docutils literal notranslate"><span class="pre">main</span></code> are not allowed even if you are a collaborator in the <code class="docutils literal notranslate"><span class="pre">monarchs-ice</span></code> organisation.</p>
+<p>For your work to be merged into <code class="docutils literal notranslate"><span class="pre">main</span></code>, it needs to pass our test suite. The tests are automatically run via Github Actions
+when a pull request into <code class="docutils literal notranslate"><span class="pre">main</span></code> is made, so it will quickly be apparent if it does not pass.</p>
+<p>Additionally, any new functions or physics/diagnostics should have docstrings or comments where possible. If you have written
+new physics functions, it is best if these have some kind of unit test. Any new physics should have an associated toggle
+defined in <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>, added to <code class="docutils literal notranslate"><span class="pre">toggle_dict</span></code> in <code class="docutils literal notranslate"><span class="pre">monarchs.core.driver.setup_toggle_dict</span></code>, and
+a switch to turn it on or off using the value of <code class="docutils literal notranslate"><span class="pre">toggle_dict</span></code>.</p>
+<p>Any changes that require amendments to <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>
+should have suitable documentation added to <code class="docutils literal notranslate"><span class="pre">docs/source/model_setup_reference.rst</span></code>.</p>
+<section id="advanced-users">
+<h3>Advanced users<a class="headerlink" href="#advanced-users" title="Link to this heading"></a></h3>
+</section>
+</section>
+<section id="adding-functions-with-numba-support">
+<h2>Adding functions with Numba support<a class="headerlink" href="#adding-functions-with-numba-support" title="Link to this heading"></a></h2>
+<p>(first, see :doc:<code class="docutils literal notranslate"><span class="pre">advanced</span></code> for some background information).
+<em>If</em> Numba support is useful for your change, consult <a class="reference external" href="https://numba.readthedocs.io/en/stable/user/5minguide.html#will-numba-work-for-my-code">the Numba documentation</a> to ensure that your code uses only pure Python and <code class="docutils literal notranslate"><span class="pre">numpy</span></code> functions.
+Using other modules (e.g. <code class="docutils literal notranslate"><span class="pre">scipy</span></code>) is not supported by Numba, and therefore the code won’t work with the <code class="docutils literal notranslate"><span class="pre">use_numba</span></code> optimisation flag set in <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>. This will mean that the model as a whole runs slower.</p>
+<p>If your function is included within any of the existing <code class="docutils literal notranslate"><span class="pre">physics</span></code> modules (with the exception of <code class="docutils literal notranslate"><span class="pre">heateqn</span></code> and <code class="docutils literal notranslate"><span class="pre">solver</span></code>), or within <code class="docutils literal notranslate"><span class="pre">utils</span></code> or <code class="docutils literal notranslate"><span class="pre">timestep</span></code> in <code class="docutils literal notranslate"><span class="pre">core</span></code>, then provided that it fits the Numba specifications, Numba support should be
+automatic, i.e. MONARCHS will automatically try and jit the function. If you add a function that you specifically do not want to apply Numba decoration to (e.g. the code is not called by other Numba code and contains incompatible code),
+you can ensure that this step is avoided using the <code class="docutils literal notranslate"><span class="pre">do_not_jit</span></code> decorator in <code class="docutils literal notranslate"><span class="pre">core.utils</span></code>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="common_errors.html" class="btn btn-neutral float-left" title="Common errors and debugging" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="structure.html" class="btn btn-neutral float-right" title="Code structure" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

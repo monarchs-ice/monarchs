@@ -1,0 +1,181 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Setting up your own model run &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Running MONARCHS with a Digital Elevation Model (DEM)" href="dem.html" />
+    <link rel="prev" title="Tips and tricks" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tips and tricks</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Setting up your own model run</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#setting-up-model-setup">Setting up <code class="docutils literal notranslate"><span class="pre">model_setup</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#inputting-meteorological-data">Inputting meteorological data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#making-user-defined-changes-to-the-inputs">Making user-defined changes to the inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#outputting-data">Outputting data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Setting up your own model run</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/MONARCHS_model_setup.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="setting-up-your-own-model-run">
+<h1>Setting up your own model run<a class="headerlink" href="#setting-up-your-own-model-run" title="Link to this heading"></a></h1>
+<p>MONARCHS uses a Python file (by default called <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>) to handle user-defined input into the model.
+This file contains all of the necessary parameters required to run the model. You need to at minimum specify the following:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>An initial profile of firn column height (referred to in the model as “firn depth”, since arrays in MONARCHS
+are ordered with the surface at index 0). This can be in the form of a Numpy array</p></li>
+<li><p>The initial conditions of what is referred to in this documentation as the “model grid”, i.e. the columns
+of firn that you start with. You must at least provide an initial density and temperature profile. Alternatively,
+default profiles can be used for both of these.</p></li>
+<li><p>A set of meteorological conditions to drive the model. This should ideally be in the form of a netCDF file in
+<a class="reference external" href="https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation">ERA5 format</a>. A full list of allowed and
+required variables is in the <span class="xref std std-ref">Inputting meteorological data</span> section. This section also details how to use
+a dictionary if preferred over using ERA5 format netCDF.</p></li>
+</ul>
+</div></blockquote>
+<p>You can then run MONARCHS using python run_MONARCHS.py, if <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> is located in the same folder as MONARCHS.
+Alternatively, you can pass a path to a model setup file as an argument, e.g. python run_MONARCHS.py</p>
+<section id="setting-up-model-setup">
+<h2>Setting up <code class="docutils literal notranslate"><span class="pre">model_setup</span></code><a class="headerlink" href="#setting-up-model-setup" title="Link to this heading"></a></h2>
+<p>The MONARCHS runscript (default name <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>) is the core input to MONARCHS. There are a large number of
+possible input parameters, many of which are optional. MONARCHS will flag when there are incompatible parameters
+or where a parameter needs a second parameter to be specified to work properly.</p>
+<p>For more details on the runscript, see <a class="reference internal" href="model_setup_reference.html"><span class="doc">model_setup variable reference</span></a>.</p>
+</section>
+<section id="inputting-meteorological-data">
+<h2>Inputting meteorological data<a class="headerlink" href="#inputting-meteorological-data" title="Link to this heading"></a></h2>
+<p>This input data should be specified hourly, if possible. If using data at a lower temporal resolution, specify
+<code class="docutils literal notranslate"><span class="pre">met_timestep</span></code> in your runscript. See the detailed <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> documentation for details. <a class="reference internal" href="model_setup_reference.html"><span class="doc">model_setup variable reference</span></a>
+Alternatively, a python Dictionary object can be passed in, with the dict values being a set of Numpy arrays and the
+keys in the same format as ERA5. The Numpy arrays should be of dimension(time) or
+dimension(&lt;time, row_amount&gt;, &lt;col_amount&gt;). In the former case, at each timestep, the value will be used over the
+whole model grid. In the latter, the data is gridded to the model grid.</p>
+</section>
+<section id="making-user-defined-changes-to-the-inputs">
+<h2>Making user-defined changes to the inputs<a class="headerlink" href="#making-user-defined-changes-to-the-inputs" title="Link to this heading"></a></h2>
+<p>It is possible to amend the input pipeline to force changes to certain variables if you want to run some tests.
+For example, to force the model temperature to a higher value, one could amend <code class="docutils literal notranslate"><span class="pre">setup_era5_met_data</span></code>
+in <code class="docutils literal notranslate"><span class="pre">initial_conditions.py</span></code>, or to change the default temperature profile one could edit
+<code class="docutils literal notranslate"><span class="pre">initialise_firn_profile</span></code> in the same file.</p>
+<p>An example of this is shown in <code class="docutils literal notranslate"><span class="pre">setup_era5_met_data</span></code>, where a toggle <code class="docutils literal notranslate"><span class="pre">radiation_forcing_factor</span></code> may be specified in the
+runscript to adjust SW downwelling radiation by a multiplicative factor.</p>
+</section>
+<section id="outputting-data">
+<h2>Outputting data<a class="headerlink" href="#outputting-data" title="Link to this heading"></a></h2>
+<p>MONARCHS has two ways of outputting data. The main way which is scientifically useful is using the <cite>save_output</cite>
+flag in <cite>model_setup</cite>. This reads in a variable <cite>vars_to_save</cite>, which determines which model variables
+the user wants to output after each model day (iteration). This is used to generate time series of the model evolution.
+By default it will save firn variables at the model vertical resolution, but if output filesizes are an issue you can
+interpolate these to a resolution set using the <cite>output_grid_size</cite> parameter.</p>
+<p>The other way MONARCHS saves data is in the form of a “dump”. This is effectively MONARCHS’ way of saving the model
+state after every model day (iteration). This allows the user to restart a run that has failed for whatever reason
+(PC crashing, batch job timing out, etc). Additionally, it provides the user with a fully detailed view of the model
+state at the end of a run, in case more information is required than was saved to the time series output, or you
+want to look at some diagnostics after a failed run.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Tips and tricks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dem.html" class="btn btn-neutral float-right" title="Running MONARCHS with a Digital Elevation Model (DEM)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

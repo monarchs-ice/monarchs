@@ -1,0 +1,16 @@
+src.monarchs.physics.lid_functions.calc_surface_melt
+====================================================
+
+.. py:function:: src.monarchs.physics.lid_functions.calc_surface_melt(cell, dt, Q)
+
+   Determine the amount of melting that occurs at the surface of the frozen lid when the surface temperature
+   is above freezing. Also track the amount of times that the lid has melted in the variable lid_melt_count.
+
+   Called in lid_development.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **dt** (*int*) -- Number of seconds in the timestep, very like 3600 (i.e. 1h) [s]
+                * **Q** (*float*) -- Surface energy flux, taken from surface_fluxes.sfc_flux. [W m^-2]
+
+   :rtype: None (amends cell inplace)
+

@@ -1,0 +1,7 @@
+src.monarchs.core.initial_conditions.create_model_grid
+======================================================
+
+.. py:function:: src.monarchs.core.initial_conditions.create_model_grid(row_amount, col_amount, firn_depth, vert_grid, vert_grid_lake, vert_grid_lid, rho, firn_temperature, Sfrac=np.array([np.nan]), Lfrac=np.array([np.nan]), meltflag=np.array([np.nan]), saturation=np.array([np.nan]), lake_depth=0.0, lake_temperature=np.array([np.nan]), lid_depth=0.0, lid_temperature=np.array([np.nan]), melt=False, exposed_water=False, lake=False, v_lid=False, lid=False, water_level=0, water=np.array([np.nan]), ice_lens=False, ice_lens_depth=999, has_had_lid=False, lid_sfc_melt=0.0, lid_melt_count=0, melt_hours=0, exposed_water_refreeze_counter=0, virtual_lid_temperature=273.15, total_melt=0.0, valid_cells=np.array([np.nan]), use_numba=False, lats=np.array([np.nan]), lons=np.array([np.nan]), size_dx=1000.0, size_dy=1000.0)
+
+   Creates the model grid by initializing the ice shelf with the provided parameters.
+

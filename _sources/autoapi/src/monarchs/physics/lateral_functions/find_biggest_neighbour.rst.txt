@@ -1,0 +1,28 @@
+src.monarchs.physics.lateral_functions.find_biggest_neighbour
+=============================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.find_biggest_neighbour(cell, grid, col, row, max_grid_col, max_grid_row, catchment_outflow, flow_into_land=False)
+
+   Finds the points in grid surrounding a central point cell that have the highest difference
+   in water level.
+   Called in <move_water>.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of our model grid.
+                * **grid** (*List or numba.typed.List()*) -- List containing multiple instances of IceShelf objects.
+                * **i** (*int*) -- Iteration index along the x-axis of grid.
+                * **j** (*int*) -- Iteration index along the y-axis of grid.
+                * **max_grid_row** (*int*) -- Number of x points in grid.
+                * **max_grid_col** (*int*) -- Number of y points in grid.
+
+   :returns: * **biggest_height_difference** (*List*) -- List containing the values of the largest difference(s) in water level between cell and its neighbours.
+             * **max_list** (*List*) -- List containing the indices corresponding to the largest neighbour(s).
+             * *all_neighbours = {* -- "1": [-1, -1],  # NW
+               "2": [-1, 0],  # W
+               "3": [-1, 1],  # SW
+               "4": [0, -1],  # S
+               "5": [0, 1],  # N
+               "6": [1, -1],  # SE
+               "7": [1, 0],  # E
+               "8": [1, 1],  # NE
+             * *}*
+

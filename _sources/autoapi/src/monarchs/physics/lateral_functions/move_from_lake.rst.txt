@@ -1,0 +1,4 @@
+src.monarchs.physics.lateral_functions.move_from_lake
+=====================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.move_from_lake(cell, grid, temporary_cell, temporary_neighbour, row, col, n_s_index, w_e_index, water_to_move)

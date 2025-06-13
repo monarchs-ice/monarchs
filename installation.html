@@ -1,0 +1,221 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installing MONARCHS &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Running MONARCHS (a quickstart guide)" href="quickstart.html" />
+    <link rel="prev" title="Welcome to MONARCHS’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installing MONARCHS</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-for-use-on-hpc">Installation for use on HPC</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#singularity-docker-image">Singularity/Docker image</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installing MONARCHS</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installing-monarchs">
+<h1>Installing MONARCHS<a class="headerlink" href="#installing-monarchs" title="Link to this heading"></a></h1>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>MONARCHS requires Python 3.9 or later, and is specifically tested with versions 3.9-3.12.
+It is highly recommended that before installing MONARCHS, you set up and activate a
+fresh <a class="reference external" href="https://learn.scientific-python.org/development/tutorials/dev-environment/">virtual environment</a> (visit the
+hyperlink for more info on how and why to use virtual environments)</p>
+<p>You can do this either via e.g.</p>
+<p><code class="docutils literal notranslate"><span class="pre">conda</span></code></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">conda create -n monarchs_env python=3.9</span>
+<span class="go">conda activate monarchs_env</span>
+</pre></div>
+</div>
+<p>or using <code class="docutils literal notranslate"><span class="pre">venv</span></code> by first creating the environment with</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -m venv monarchs_env</span>
+</pre></div>
+</div>
+<p>and then activating (on Windows) via:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./monarchs_env/Scripts/activate</span>
+</pre></div>
+</div>
+<p>or on Linux via:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">source ./monarchs_env/bin/activate</span>
+</pre></div>
+</div>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>The best way to get MONARCHS is to download the <a class="reference external" href="https://github.com/monarchs-ice/monarchs">GitHub repository</a> (where the code is stored)  via the command line.
+Git is installed natively on Mac - on Windows, I recommend
+installing <a class="reference external" href="https://www.atlassian.com/git/tutorials/git-bash">git bash</a> and using this.
+for info on how to install Git if using Windows or Mac.</p>
+<p>To clone the repository, from the command line</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">git clone https://github.com/monarchs-ice/MONARCHS</span>
+</pre></div>
+</div>
+<p>You can alternatively download the repository as a zip file from the GitHub page, and unzip it.</p>
+<p>Once you have the code cloned or downloaded, do (ideally in a virtual environment, and including the <code class="docutils literal notranslate"><span class="pre">.</span></code>)</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -m pip install -e .</span>
+</pre></div>
+</div>
+<p>from the top level MONARCHS folder.</p>
+<p>This will install MONARCHS with all of its required dependencies, except those required for specific optimisation flags
+designed for use on HPC systems (see below). If when trying to run MONARCHS you get an <code class="docutils literal notranslate"><span class="pre">ImportError</span></code>, please submit
+an Issue on GitHub.</p>
+</section>
+<section id="installation-for-use-on-hpc">
+<h2>Installation for use on HPC<a class="headerlink" href="#installation-for-use-on-hpc" title="Link to this heading"></a></h2>
+<p>You can install MONARCHS with its advanced dependencies using (from the top level MONARCHS folder):</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Not all of the modules in requirements.txt are required to make MONARCHS work, but are required to enable certain features.
+If the install fails on either of the following, MONARCHS will still work, but only without the
+relevant <code class="docutils literal notranslate"><span class="pre">model_setup</span></code> flags enabled. MPI especially is suggested only for running on HPC systems.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The install will fail on <code class="docutils literal notranslate"><span class="pre">NumbaMinpack</span></code> if you don’t have a Fortran/C++ compiler.
+To solve, on Windows, you need to get a Fortran compiler. See <a class="reference external" href="https://fortran-lang.org/compilers/">https://fortran-lang.org/compilers/</a>
+On linux, doing <code class="docutils literal notranslate"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">gfortran</span> <span class="pre">build-essential</span></code> will work.
+On HPC, you may need to use <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span> <span class="pre">&lt;name&gt;</span></code> to load in whichever compiler setup your HPC has.
+You can get around the need for <code class="docutils literal notranslate"><span class="pre">NumbaMinpack</span></code> by setting <code class="docutils literal notranslate"><span class="pre">use_numba</span> <span class="pre">=</span> <span class="pre">False</span></code> in <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The installation will fail on <code class="docutils literal notranslate"><span class="pre">mpi4py</span></code> if you don’t have a working MPI installation. On Windows, you need to install
+<a class="reference external" href="https://learn.microsoft.com/en-us/message-passing-interface/microsoft-mpi">https://learn.microsoft.com/en-us/message-passing-interface/microsoft-mpi</a>.
+On Linux, <code class="docutils literal notranslate"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">mpich</span></code> should suffice.
+If you don’t want to run with MPI at any point, you can do
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.[numba]</span></code> to install MONARCHS with all the dependencies except
+<code class="docutils literal notranslate"><span class="pre">mpi4py</span></code>.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It should be re-iterated that neither NumbaMinpack nor Pyina are required to be installed for the code to run,
+provided that you set <code class="docutils literal notranslate"><span class="pre">use_numba</span> <span class="pre">=</span> <span class="pre">False</span></code> and <code class="docutils literal notranslate"><span class="pre">use_mpi</span> <span class="pre">=</span> <span class="pre">False</span></code> in <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>.</p>
+</div>
+<section id="singularity-docker-image">
+<h3>Singularity/Docker image<a class="headerlink" href="#singularity-docker-image" title="Link to this heading"></a></h3>
+<p>Instead of cloning the repo and installing the requirements yourself, you can get MONARCHS via a Docker image. This image
+contains a barebones Linux distribution, with all of the required libraries (including a Fortran compiler and MPI
+implementation) pre-installed.</p>
+<p>To obtain this, please get in touch with the model maintainers for access as the image is currently private.</p>
+<p>On HPC systems, you likely won’t have Docker installed, but may have Singularity or Apptainer.
+You can obtain the repo with Singularity (replace <code class="docutils literal notranslate"><span class="pre">singularity</span></code> with <code class="docutils literal notranslate"><span class="pre">apptainer</span></code> if required) via</p>
+<p><code class="docutils literal notranslate"><span class="pre">singularity</span> <span class="pre">pull</span> <span class="pre">docker://jelsey92/monarchs</span></code></p>
+<p>If you already have a copy of the container, then you may need to delete it first.
+A shell script to do this is provided in the <code class="docutils literal notranslate"><span class="pre">/scripts</span></code> folder of the MONARCHS repository.
+Additionally provided is an example runscript for running a batch job using this Singularity container.</p>
+<p>The MONARCHS source is included in the <code class="docutils literal notranslate"><span class="pre">/MONARCHS</span></code> folder of the container. If you are running the container
+interactively (e.g. using <code class="docutils literal notranslate"><span class="pre">singularity</span> <span class="pre">shell</span></code> or Docker Desktop), you can run MONARCHS using the <code class="docutils literal notranslate"><span class="pre">monarchs</span></code> CLI
+command as normal.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to MONARCHS’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="quickstart.html" class="btn btn-neutral float-right" title="Running MONARCHS (a quickstart guide)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+src.monarchs.physics.snow_accumulation.densification
+====================================================
+
+.. py:function:: src.monarchs.physics.snow_accumulation.densification(cell, t_steps_per_day)
+
+   TODO - not important now, but implement for later.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **t_steps_per_day** (*int*)
+

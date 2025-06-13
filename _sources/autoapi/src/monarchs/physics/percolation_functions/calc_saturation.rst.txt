@@ -1,0 +1,29 @@
+src.monarchs.physics.percolation_functions.calc_saturation
+==========================================================
+
+.. py:function:: src.monarchs.physics.percolation_functions.calc_saturation(cell, v_lev_in, end=False)
+
+   Determine whether the firn is saturated, calculating upwards from a vertical level
+   specified by v_lev_in. If the firn is saturated, then water can no longer percolate
+   downward, and we need to set the cell attribute saturation to True at the
+   relevant vertical level. Any water that is left over is then moved upwards to the
+   next vertical layer, and the process repeats until either all water is accounted for
+   (i.e. can remain in the current layer), or we reach the surface (at which point we
+   have exposed water and a lake will begin to form).
+   This function can also be called to ensure that water is simply moved to the correct place
+   due to changes from other effects (e.g. refreezing), without determining whether it is
+   saturated. The variable end determines whether this is the case.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **v_lev_in** (*int*) -- Vertical level from which to determine whether the cell is saturated.
+                * **end** (*bool, optional*) -- Flag that determines whether the function is called at the end of the percolation
+                  step, or not. If it is (i.e. the flag is True), then instead of saying the firn is
+                  saturated, we say that there is meltwater present. This allows the water to percolate
+                  again at the next timestep, and allows us to reuse most of the same logic for this
+                  case where there may be water that can percolate again later.
+                  Default False.
+
+   :rtype: None (amends cell inplace)
+
+   :raises ValueError: If lake depth goes negative, model is in an unphysical state so we throw an error.
+

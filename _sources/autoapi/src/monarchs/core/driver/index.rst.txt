@@ -1,0 +1,52 @@
+src.monarchs.core.driver
+========================
+
+.. py:module:: src.monarchs.core.driver
+
+.. autoapi-nested-parse::
+
+   Core functions used in the running of MONARCHS.
+   This module contains the core functions that drive the code
+   when it is executed.
+
+   When the code is run, it calls main(), which handles loading in the data,
+   calling core.loop_over_grid every model day (interchangeably called "iteration".
+   The loop over each timestep (by default 1 hour) is handled
+   in the single-column physics steps.
+   main then calls the lateral movement functions, and handles saving the data,
+   both in terms of the model state (also known as a "dump"), and the
+   variables that the user wants to track over time.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/core/driver/check_firn_met_consistency
+   /autoapi/src/monarchs/core/driver/check_for_reload_from_dump
+   /autoapi/src/monarchs/core/driver/get_num_cores
+   /autoapi/src/monarchs/core/driver/get_snow_sum
+   /autoapi/src/monarchs/core/driver/initialise
+   /autoapi/src/monarchs/core/driver/main
+   /autoapi/src/monarchs/core/driver/monarchs
+   /autoapi/src/monarchs/core/driver/print_model_end_of_timestep_messages
+   /autoapi/src/monarchs/core/driver/setup_toggle_dict
+   /autoapi/src/monarchs/core/driver/update_met_conditions
+
+.. autoapisummary::
+
+   src.monarchs.core.driver.check_firn_met_consistency
+   src.monarchs.core.driver.check_for_reload_from_dump
+   src.monarchs.core.driver.get_num_cores
+   src.monarchs.core.driver.get_snow_sum
+   src.monarchs.core.driver.initialise
+   src.monarchs.core.driver.main
+   src.monarchs.core.driver.monarchs
+   src.monarchs.core.driver.print_model_end_of_timestep_messages
+   src.monarchs.core.driver.setup_toggle_dict
+   src.monarchs.core.driver.update_met_conditions
+
+

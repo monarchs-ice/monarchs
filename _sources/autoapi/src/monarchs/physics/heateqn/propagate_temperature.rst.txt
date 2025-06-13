@@ -1,0 +1,4 @@
+src.monarchs.physics.heateqn.propagate_temperature
+==================================================
+
+.. py:function:: src.monarchs.physics.heateqn.propagate_temperature(cell, dz, dt, T_bc_top, N=10)

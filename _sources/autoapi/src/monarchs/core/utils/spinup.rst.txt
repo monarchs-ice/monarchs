@@ -1,0 +1,17 @@
+src.monarchs.core.utils.spinup
+==============================
+
+.. py:function:: src.monarchs.core.utils.spinup(cell, x, args)
+
+   Attempt to force the model into a solvable state if the initial conditions are unsuitable.
+   TODO - This is a definite work in progress. Need to update this further.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **x** (*array_like, dimension(vert_grid)*) -- Initial guess temperature [K]
+                * **args** (*array_like*) -- list of arguments to pass to the solver. See extract_args for details.
+
+   :rtype: None (amends the instance of cell passed to it)
+
+   :raises ValueError: If solution does not converge, then rather than attempting to continue it raises an error. The user should
+       re-consider their initial conditions in this case.
+

@@ -1,0 +1,22 @@
+src.monarchs.core
+=================
+
+.. py:module:: src.monarchs.core
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/src/monarchs/core/configuration/index
+   /autoapi/src/monarchs/core/driver/index
+   /autoapi/src/monarchs/core/dump_model_state/index
+   /autoapi/src/monarchs/core/initial_conditions/index
+   /autoapi/src/monarchs/core/loop_over_grid/index
+   /autoapi/src/monarchs/core/model_grid/index
+   /autoapi/src/monarchs/core/model_output/index
+   /autoapi/src/monarchs/core/utils/index
+
+

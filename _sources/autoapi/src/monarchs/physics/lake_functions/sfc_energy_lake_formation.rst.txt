@@ -1,0 +1,18 @@
+src.monarchs.physics.lake_functions.sfc_energy_lake_formation
+=============================================================
+
+.. py:function:: src.monarchs.physics.lake_functions.sfc_energy_lake_formation(T_air, Q, k, cell)
+
+   Calculate the surface energy balance for the lake, during the formation step.
+   Called by lake_solver, which is in turn called by either lake_formation, or lake_development.
+
+   :Parameters: * **T_air** (*float*) -- Surface air temperature. [K]
+                * **Q** (*float*) -- Surface energy balance, as calculated by surface_fluxes.sfc_flx
+                * **k** (*array_like, float, dimension(cell.vert_grid)*) -- Thermal conductivity of the firn column, as obtained by an Sfrac/Lfrac/air fraction weighted calculation
+                  using k_ice, k_water and k_air respectively.
+                  We only use the first element of this, i.e. the surface value. [W m^-1 K^-1]
+                * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+
+   :returns: **old_surf_temp** -- Surface temperature of the lake. [K]
+   :rtype: float
+

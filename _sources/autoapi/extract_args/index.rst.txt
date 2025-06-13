@@ -1,0 +1,37 @@
+extract_args
+============
+
+.. py:module:: extract_args
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   extract_args.extract_args_firn
+   extract_args.extract_args_lid
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/extract_args/extract_args_firn
+   /autoapi/extract_args/extract_args_lid
+
+.. autoapisummary::
+
+   extract_args.extract_args_firn
+   extract_args.extract_args_lid
+
+
+Module Contents
+---------------
+
+.. py:data:: extract_args_firn
+
+.. py:data:: extract_args_lid
+

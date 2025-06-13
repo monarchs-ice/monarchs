@@ -1,0 +1,4 @@
+solver_nb.sfc_energy_virtual_lid
+================================
+
+.. py:function:: solver_nb.sfc_energy_virtual_lid(x, output, args)

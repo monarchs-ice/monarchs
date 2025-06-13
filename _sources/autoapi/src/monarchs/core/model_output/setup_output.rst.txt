@@ -1,0 +1,4 @@
+src.monarchs.core.model_output.setup_output
+===========================================
+
+.. py:function:: src.monarchs.core.model_output.setup_output(fname, grid, vars_to_save=('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth'), vert_grid_size=False)

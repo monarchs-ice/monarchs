@@ -1,0 +1,20 @@
+src.monarchs.physics.lid_functions.interpolate_profiles
+=======================================================
+
+.. py:function:: src.monarchs.physics.lid_functions.interpolate_profiles(cell, new_depth_grid, old_depth_grid)
+
+   Interpolate various model variables when combining the lid and firn profiles.
+   The variables being regridded have the lid and firn profiles concatenated within combine_lid_firn prior to
+   this function call.
+   This could also be reused in other places to perform the same job when melting or freezing takes place.
+
+   Called in combine_lid_firn.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on..
+                * **new_depth_grid** (*array_like, float, dimension(cell.vert_grid)*) -- New vertical profile to be interpolated to. This spans the bottom of the firn to the new top extent,
+                  i.e. the old firn depth + the old lid depth.
+                * **old_depth_grid** (*array_like, float, dimension(cell.vert_grid + cell.vert_grid_lid)*) -- Vertical profile of the combined lid and firn before regridding takes place. This maps the relevant
+                  variables for the old lid profile and old firn profile, and concatenates one on top of the other.
+
+   :rtype: None (amends cell inplace)
+

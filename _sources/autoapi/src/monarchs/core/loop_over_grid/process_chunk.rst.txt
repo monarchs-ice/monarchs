@@ -1,0 +1,7 @@
+src.monarchs.core.loop_over_grid.process_chunk
+==============================================
+
+.. py:function:: src.monarchs.core.loop_over_grid.process_chunk(original_indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day)
+
+   Process a chunk of cells and return results with their original indices.
+

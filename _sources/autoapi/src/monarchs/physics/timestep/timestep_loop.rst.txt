@@ -1,0 +1,34 @@
+src.monarchs.physics.timestep.timestep_loop
+===========================================
+
+.. py:function:: src.monarchs.physics.timestep.timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict)
+
+   Main timestepping loop applied to an instance of the model grid.
+   Called by loop_over_grid to work in parallel over multiple instances.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of our model grid.
+                * **dt** (*int32*) -- Time for each timestep <t_steps_per_day>. [s]
+
+   met_data : numpy structured array
+       Element of the met data grid. Contains thermodynamic variables, which
+       are listed as follows:
+
+       LW_in : int32 or float64
+           Incoming broadband longwave radiation [W m^-2].
+       SW_in : int32 or float64
+            Incoming broadband shortwave radiation [W m^-2].
+       T_air : int32 or float64
+           Air temperature [K].
+       p_air : int32 or float64
+           Surface pressure [hPa].
+       T_dp : int32 or float64
+           Dew-point temperature [K]
+       wind : int32 or float64
+           Surface wind speed. [m s^-1]
+
+   toggle_dict : dict
+       A dictionary containing toggles that determine whether certain features are enabled.
+       Values are the following:
+
+   :rtype: None. The function amends the instance of <cell> passed to it.
+

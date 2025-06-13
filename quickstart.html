@@ -1,0 +1,264 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Running MONARCHS (a quickstart guide) &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tips and tricks" href="usage.html" />
+    <link rel="prev" title="Installing MONARCHS" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Running MONARCHS (a quickstart guide)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#running-a-basic-1d-test-case">Running a basic (1D) test case</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#model-outputs">Model outputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#a-more-complex-test-case">A more complex test case</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#restarting-a-model-run">Restarting a model run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#having-more-control-over-output-directories">Having more control over output directories</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Running MONARCHS (a quickstart guide)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/quickstart.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="running-monarchs-a-quickstart-guide">
+<h1>Running MONARCHS (a quickstart guide)<a class="headerlink" href="#running-monarchs-a-quickstart-guide" title="Link to this heading"></a></h1>
+<p>This section is a tutorial/quickstart on how to run MONARCHS.</p>
+<section id="running-a-basic-1d-test-case">
+<h2>Running a basic (1D) test case<a class="headerlink" href="#running-a-basic-1d-test-case" title="Link to this heading"></a></h2>
+<p>First, follow the (non-advanced) instructions in the <a class="reference internal" href="installation.html"><span class="doc">Installing MONARCHS</span></a> section to install the model.</p>
+<p>To run MONARCHS, the best way is to use the command line. From a terminal
+(you can open this in an IDE like PyCharm, Spyder, VSCode if you prefer to use one of these),
+make sure you activate the virtual environment MONARCHS is installed in.</p>
+<p>Then, navigate to the <code class="docutils literal notranslate"><span class="pre">examples/1D_test_case</span></code> folder in the MONARCHS repository, and run the model using:</p>
+<p><code class="docutils literal notranslate"><span class="pre">monarchs</span></code></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you are uncomfortable using the command line, you can run <code class="docutils literal notranslate"><span class="pre">1D_test_case/model_setup.py</span></code> as a Python script
+directly to run MONARCHS. This works since it has the following code at the end of the file.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">monarchs.core.driver</span> <span class="kn">import</span> <span class="n">monarchs</span>
+    <span class="n">monarchs</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The other examples in the <code class="docutils literal notranslate"><span class="pre">examples</span></code> folder can be run in the same way.</p>
+</div>
+<p>This will run a 1D column test case. It should run in a few seconds. The code will write a lot of output into the
+console. The first few lines will be from <code class="docutils literal notranslate"><span class="pre">monarchs.core.configuration</span></code>. You can ignore these for now, since this
+is the model telling you that it is using default values for several parameters that are not included in our simple
+1D runscript (<code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>).</p>
+<p>The model will run for 105 days and then stop. It will print out some simple diagnostics - the firn depth, lake depth
+and lid depth, and how much water was detected during the lateral movement step (which doesn’t occur here of course
+as we are running a 1D case!).</p>
+</section>
+<section id="model-outputs">
+<h2>Model outputs<a class="headerlink" href="#model-outputs" title="Link to this heading"></a></h2>
+<p>You should notice a new folder in the <code class="docutils literal notranslate"><span class="pre">1D_test_case</span></code> directory called <code class="docutils literal notranslate"><span class="pre">output</span></code>. This contains three files. In <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>,
+there are variables <code class="docutils literal notranslate"><span class="pre">met_output_filepath</span></code>, <code class="docutils literal notranslate"><span class="pre">output_filepath</span></code>  and <code class="docutils literal notranslate"><span class="pre">dump_filepath</span></code>. The model will write these files to the
+location set in these variables, and create any folders necessary to do this. In this case, we are running from the
+<code class="docutils literal notranslate"><span class="pre">1D_test_case</span></code> folder, and we have specified in <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> that we want to write these outputs to <code class="docutils literal notranslate"><span class="pre">output/*.nc</span></code>, so the <code class="docutils literal notranslate"><span class="pre">output</span></code> folder
+is created here and the files written to this path.</p>
+<p>The first of the created files is a file called <code class="docutils literal notranslate"><span class="pre">met_data_1D_test_case.nc</span></code>. This is a netCDF file containing the meteorological data that
+is used in the model, and is not useful to us aside from for debugging.</p>
+<p>The other files are <code class="docutils literal notranslate"><span class="pre">1d_testcase_dump.nc</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">1d_testcase_output.nc</span></code>. The first of these is a dump file, which contains the full state of the model at the end of the run.
+This can be useful to get a quick view of the state of the model at the end of the run, but more importantly can be loaded
+into the model to restart a run from the end of the previous one (or from a run that crashed). We will do this later in this tutorial.</p>
+<p>The second file, <code class="docutils literal notranslate"><span class="pre">1d_testcase_output.nc</span></code>, contains the output of the model. This contains information collected
+over the course of the model run. By default, it will output the firn depth, lake depth, lid depth, firn temperature,
+and ice lens depths. You can tell MONARCHS exactly which variables you are interested in by changing the <code class="docutils literal notranslate"><span class="pre">vars_to_save</span></code>
+variable in <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>. You can also change the frequency at which the model save the output, and the
+vertical resolution, as for larger model sizes this file can get very big.</p>
+</section>
+<section id="a-more-complex-test-case">
+<h2>A more complex test case<a class="headerlink" href="#a-more-complex-test-case" title="Link to this heading"></a></h2>
+<p>Let’s ignore the outputs for now, and move onto a more complex test case. In our previous case, the firn profile was
+specified as a single value to the <code class="docutils literal notranslate"><span class="pre">firn_depth</span></code> variable in <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>. In this case, we now have a 2D grid
+to run on. We therefore need to specify our firn profile on a 2D grid. This example uses a Gaussian profile, with one
+large lake in the centre and two smaller lakes in the top-left and bottom-right corners.</p>
+<p>Change directory to <code class="docutils literal notranslate"><span class="pre">examples/10x10_gaussian_threelake</span></code> (or open up <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> from this directory in your IDE
+if not using the command line), and run it in the same way as before. You will notice that this takes significantly longer to run
+than the 1D case. Wait for it to complete, and make a note of the time taken displayed at the end of the model run.
+We can make it faster by delving into <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>.</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> file, you will see a variable called <code class="docutils literal notranslate"><span class="pre">parallel</span></code>. This is set to <code class="docutils literal notranslate"><span class="pre">False</span></code> by default.
+Set this to <code class="docutils literal notranslate"><span class="pre">True</span></code>, and re-run the model. You can specify how many cores you want to use by changing the <code class="docutils literal notranslate"><span class="pre">cores</span></code>
+variable. By default, it is set to <code class="docutils literal notranslate"><span class="pre">'all'</span></code>, so if you are doing other things on your machine it may be best to set this
+to e.g. <code class="docutils literal notranslate"><span class="pre">4</span></code> for now.</p>
+<p>Since we are now running in parallel, the model should run significantly faster. Let’s take advantage of this and run
+the model at higher resolution. You can control this  by changing <code class="docutils literal notranslate"><span class="pre">row_amount</span></code> and <code class="docutils literal notranslate"><span class="pre">col_amount</span></code> from 10 to 20. Note that this increase in resolution
+will make the model take at least ~4x longer to run!</p>
+<p>We could instead increase the time the model runs for via the <code class="docutils literal notranslate"><span class="pre">num_days</span></code> variable. Currently is set to <code class="docutils literal notranslate"><span class="pre">105</span></code>.
+However, if we increase this, we also need to give the model a larger array of meteorological data as input.
+Our current data (see the <code class="docutils literal notranslate"><span class="pre">met_data</span></code> dictionary) covers 2520 timesteps, with 800 “warm” timesteps,
+where the longwave radiation, shortwave radiation and temperature are set to quite high values and 1720 “cold” timesteps
+where they are set to lower values - these add up to 105 days at hourly resolution.</p>
+<p>If we increase the number of days, we could e.g. increase the number of warm and cold timesteps to match.
+We can do this by changing the <code class="docutils literal notranslate"><span class="pre">warm_timesteps</span></code> and <code class="docutils literal notranslate"><span class="pre">cold_timesteps</span></code> in this specific example.
+For example, if we set <code class="docutils literal notranslate"><span class="pre">num_days</span></code> to 110 from 105, we need to increase the value of <code class="docutils literal notranslate"><span class="pre">cold_timesteps</span></code> or <code class="docutils literal notranslate"><span class="pre">warm_timesteps</span></code> by an additional 120 (<code class="docutils literal notranslate"><span class="pre">5</span> <span class="pre">*</span> <span class="pre">24</span></code>),
+or extend the data in some other way (e.g. appending another array with a different set of values for a different number of timesteps, or splitting the 120 extra timesteps required between <code class="docutils literal notranslate"><span class="pre">cold_timesteps</span></code> and <code class="docutils literal notranslate"><span class="pre">warm_timesteps</span></code>).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">warm_timesteps</span></code> and <code class="docutils literal notranslate"><span class="pre">cold_timesteps</span></code> are not values used by MONARCHS itself, they are just used to control the
+size of the meteorological data fed into MONARCHS in <em>this particular case</em>. The <code class="docutils literal notranslate"><span class="pre">met_data</span></code> dictionary (or a path to a netCDF file in ERA5 format, see <a class="reference internal" href="met_data.html"><span class="doc">Formatting input meteorological data</span></a>)
+is what is actually used by MONARCHS.</p>
+<p>We are merely exploiting the fact that our model setup script is a piece of Python code to generate an arbitrary set of values
+to use as input for this example. You could put anything you like here, using this example as a guideline - by e.g. changing the values of the LW/SW that correspond to
+the “warm” and “cold” timesteps, or changing the arrays from being constant to ramping up over time, etc.</p>
+<p>For a full list of variables that <em>are</em> used by MONARCHS, see <a class="reference internal" href="model_setup_reference.html"><span class="doc">model_setup variable reference</span></a>. Many of these you do not need to worry about
+until running more advanced cases, to have more control over exactly how the model runs.</p>
+</div>
+<p>Since our model is quite large, and we are running for a longer time, our output files can become quite large also. We can reduce the temporal frequency of the output
+by adding the <code class="docutils literal notranslate"><span class="pre">output_timestep</span></code> variable  into <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> anywhere before the <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">__name__</span> <span class="pre">==</span> <span class="pre">'__main__'</span></code> section  - if you look at the output of the start of a model run
+without this variable included in the runscript you will see the line</p>
+<p>i.e. that MONARCHS has detected that it is missing from <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> and set a “sensible” default value.
+Adding <code class="docutils literal notranslate"><span class="pre">output_timestep</span></code> into <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> will override this default value. Sensible values might be e.g.
+<code class="docutils literal notranslate"><span class="pre">7</span></code> for weekly output, or <code class="docutils literal notranslate"><span class="pre">30</span></code> for daily output.
+You can also reduce the vertical resolution of the output by adding or changing <code class="docutils literal notranslate"><span class="pre">output_grid_size</span></code> from e.g. <code class="docutils literal notranslate"><span class="pre">400</span></code> to <code class="docutils literal notranslate"><span class="pre">200</span></code>.
+Both of these steps will give you less vertical/temporal information, but decrease the size of the output file.</p>
+<p>The size of the output file can also be significantly decreased by removing variables from the <code class="docutils literal notranslate"><span class="pre">vars_to_save</span></code> variable. For example,
+if we are only interested in the amount/depth of lakes in the model, and not the firn column properties, then we can remove
+<code class="docutils literal notranslate"><span class="pre">firn_temperature</span></code>, <code class="docutils literal notranslate"><span class="pre">Sfrac</span></code> and <code class="docutils literal notranslate"><span class="pre">Lfrac</span></code> from <code class="docutils literal notranslate"><span class="pre">vars_to_save</span></code>. By default, these variables take up
+400 times as much space as e.g. the firn depth, lake depth and lid depth, since they are saved at the model vertical resolution (400 in this case)
+rather than being single values.</p>
+<p>You can see that the model setup script has a few additional parameters compared to the 1D case. As mentioned earlier,
+MONARCHS will set “sensible” default values for any parameters that are not specified in the model setup script, aside
+from those that the model will not be able to run without - i.e. an initial firn profile, and meteorological data.</p>
+<p>You will notice that the firn profile is determined by an imported Python function from <code class="docutils literal notranslate"><span class="pre">monarchs.DEM.create_DEM_GaussianTestCase</span></code>.
+A neat feature of our model setup file being a Python script is that you can freely generate any input firn distribution
+you want using Python code, as long as it is passed in as a 2D <code class="docutils literal notranslate"><span class="pre">numpy</span></code> array.
+This can be useful for testing, but also for generating realistic initial conditions using
+meshes that aren’t supported by default (see the <a class="reference internal" href="dem.html"><span class="doc">Running MONARCHS with a Digital Elevation Model (DEM)</span></a> section of the documentation for more on this).</p>
+<p>A more detailed introduction to <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> can be found in <a class="reference internal" href="MONARCHS_model_setup.html"><span class="doc">Setting up your own model run</span></a>.
+You can see all of the possible <code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variables in the <a class="reference internal" href="model_setup_reference.html"><span class="doc">model_setup variable reference</span></a> section of the documentation.
+This tutorial will not cover all of these, as many of them are for testing and debugging purposes. Many of these
+are related to the use of a digital elevation model (DEM) to set the initial firn profile, and synchronising this
+to the input meterorological data. This is covered more in the <a class="reference internal" href="dem.html"><span class="doc">Running MONARCHS with a Digital Elevation Model (DEM)</span></a> section of the documentation.</p>
+</section>
+<section id="restarting-a-model-run">
+<h2>Restarting a model run<a class="headerlink" href="#restarting-a-model-run" title="Link to this heading"></a></h2>
+<p>If you have a model that has crashed, or you want to restart a model from the end of a previous run, you can use the
+<code class="docutils literal notranslate"><span class="pre">reload_from_dump</span></code> variable in the model setup script. This will load in the state from the dump file specified in the
+<code class="docutils literal notranslate"><span class="pre">dump_filepath</span></code> variable, and restart the model from this point. This allows for finishing of crashed runs, or to
+use the initial conditions of a previous run as a starting point for a subsequent one.</p>
+<p>If your model run was not successful, then re-running will run it until your initially-intended
+finishing point.</p>
+<p>If it <cite>was</cite> successful, then attempting to re-run with no changes to the setup script will result in
+nothing happening (as the model will try and start from the same day that it is supposed to finish at!).
+However, you can extend the run further by increasing <code class="docutils literal notranslate"><span class="pre">num_days</span></code>.</p>
+<p>If you do this, remember that you will need to extend your
+meteorological dataset. MONARCHS will read from the index corresponding to the start day of the run,
+which in this case is not 0 - e.g. if restarting from day 5 it will read from <code class="docutils literal notranslate"><span class="pre">met_data</span></code> at index (5 * 24) = 120 - the
+prior indices have already been used in the model.</p>
+</section>
+<section id="having-more-control-over-output-directories">
+<h2>Having more control over output directories<a class="headerlink" href="#having-more-control-over-output-directories" title="Link to this heading"></a></h2>
+<p>You can call your run scripts anything you want, rather than just <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code>, and they can be in any folder, not
+just the folder you are running in. This is useful if you want to e.g. keep several test cases in the same folder, and write
+the outputs elsewhere. You can tell MONARCHS exactly which setup script to run from by using the <code class="docutils literal notranslate"><span class="pre">-i</span></code> flag on the command line.
+For example, from anywhere on your machine, assuming MONARCHS is installed in <code class="docutils literal notranslate"><span class="pre">/home/users/username/monarchs</span></code>, you can do:</p>
+<p><code class="docutils literal notranslate"><span class="pre">monarchs</span> <span class="pre">-i</span> <span class="pre">/home/users/username/monarchs/examples/10x10_gaussian_threelake/model_setup.py</span></code></p>
+<p>You could rename <code class="docutils literal notranslate"><span class="pre">model_setup.py</span></code> to <code class="docutils literal notranslate"><span class="pre">model_setup_threelake.py</span></code> and pass this as the name, and it would work the same
+were you to pass this as the argument.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installing MONARCHS" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-right" title="Tips and tricks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

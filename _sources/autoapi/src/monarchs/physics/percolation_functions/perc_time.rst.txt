@@ -1,0 +1,18 @@
+src.monarchs.physics.percolation_functions.perc_time
+====================================================
+
+.. py:function:: src.monarchs.physics.percolation_functions.perc_time(cell, v_lev)
+
+   Calculate the time it takes for water to percolate through the firn at vertical level v_lev.
+   This will determine how long the model has in practice to percolate water down through
+   the current vertical level. This is calculated as the height of the vertical level
+   divided by the speed of the flow.
+   # TODO - possibly add a reference and a DOI here.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **v_lev** (*int*) -- Vertical level of cell that we are looking at to determine the available percolation
+                  time for.
+
+   :returns: **perc_time** -- Amount of time that the water has left to percolate down the firn column. [s]
+   :rtype: float
+

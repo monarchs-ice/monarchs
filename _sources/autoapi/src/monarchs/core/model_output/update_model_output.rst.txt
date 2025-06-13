@@ -1,0 +1,4 @@
+src.monarchs.core.model_output.update_model_output
+==================================================
+
+.. py:function:: src.monarchs.core.model_output.update_model_output(fname, grid, iteration, vars_to_save=('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth'), hourly=False, t_step=0, vert_grid_size=False)

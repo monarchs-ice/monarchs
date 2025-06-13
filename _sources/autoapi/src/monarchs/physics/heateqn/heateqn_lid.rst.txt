@@ -1,0 +1,23 @@
+src.monarchs.physics.heateqn.heateqn_lid
+========================================
+
+.. py:function:: src.monarchs.physics.heateqn.heateqn_lid(x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k_lid, Sfrac_lid)
+
+   Solve the heat equation for the frozen lid, similarly to the calculation for the firn column.
+
+   :Parameters: * **x** (*array_like, float, dimension(cell.vert_grid)*) -- initial estimate of the firn column temperature [K]
+                * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **dt** (*int*) -- timestep duration [s]
+                * **dz** (*float*) -- height of a single vertical layer of the frozen lid [m]
+                * **LW_in** (*float*) -- Incoming longwave radiation at the current timestep [W m^-2]
+                * **SW_in** (*float*) -- Incoming shortwave radiation at the current timestep [W m^-2]
+                * **T_air** (*float*) -- Air temperature [K]
+                * **p_air** (*float*) -- Surface pressure [Pa]
+                * **T_dp** (*float*) -- Dewpoint temperature [K]
+                * **wind** (*float*) -- Wind speed [m s^-1]
+                * **k_lid** (*int*) -- thermal conductivity of the frozen lid [W m^-1 K^-1]
+                * **Sfrac_lid** (*array_like, float, dimension(cell.vert_grid_lid)*) -- Solid fraction of the frozen lid.
+
+   :returns: **output** -- roots of the function, used by scipy.optimize.fsolve to determine the new firn temperature
+   :rtype: array_like, float, dimension(cell.vert_grid)
+

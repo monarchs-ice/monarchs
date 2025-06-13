@@ -1,0 +1,4 @@
+src.monarchs.physics.heateqn.heateqn
+====================================
+
+.. py:function:: src.monarchs.physics.heateqn.heateqn(x, cell, LW_in, SW_in, T_air, p_air, T_dp, wind, dz, dt, epsilon=0.98, sigma=5.670374e-08)

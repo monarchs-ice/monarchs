@@ -1,0 +1,13 @@
+src.monarchs.core.utils.add_random_water
+========================================
+
+.. py:function:: src.monarchs.core.utils.add_random_water(grid, max_grid_row, max_grid_col)
+
+   For testing - create water randomly inside the grid.
+
+   :Parameters: * **grid** (*List, or numba.typed.List*) -- model grid
+                * **max_grid_row** (*int*) -- Number of rows in the grid
+                * **max_grid_col** (*int*) -- Number of columns in the grid
+
+   :rtype: None
+
