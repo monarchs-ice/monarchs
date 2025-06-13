@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from scipy.interpolate import RegularGridInterpolator
 
 
-def ERA5_to_variables(ERA5_input, met_timestep, total_days, start_index=0):
+def ERA5_to_variables(ERA5_input, met_timestep, total_days, start_index=0, chunk_size=365):
     """
     Take in an input ERA5 netCDF file, and convert it into a dictionary that can be read in by MONARCHS.
     This step also performs the necessary unit conversions from the Copernicus default units to the ones used in
@@ -24,10 +24,10 @@ def ERA5_to_variables(ERA5_input, met_timestep, total_days, start_index=0):
     """
 
     var_dict = {}
-
     # Determine indices for start and end of the year. We write only in one-yearly segments.
-    if total_days > start_index + (met_timestep * 365):
-        end_index = start_index + (met_timestep * 365)
+
+    if total_days * met_timestep > start_index + (met_timestep * chunk_size):
+        end_index = start_index + (met_timestep * chunk_size)
     else:
         end_index = start_index + (met_timestep * total_days - start_index)
 
@@ -41,9 +41,8 @@ def ERA5_to_variables(ERA5_input, met_timestep, total_days, start_index=0):
             f"the data available ({len(ERA5_data.variables['time'])} timesteps) in the input netCDF file."
             f" Please check your input data is large enough, or adjust your chosen number of days to compensate'."
         )
-
-    var_dict["long"] = ERA5_data.variables["longitude"][start_index:end_index]
-    var_dict["lat"] = ERA5_data.variables["latitude"][start_index:end_index]
+    var_dict["long"] = ERA5_data.variables["longitude"][:]
+    var_dict["lat"] = ERA5_data.variables["latitude"][:]
     try:
         var_dict["time"] = ERA5_data.variables["time"][start_index:end_index]
     except KeyError:

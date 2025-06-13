@@ -19,6 +19,8 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
         f"monarchs.core.initial_conditions.initialise_firn_profile: Setting up firn profile"
     )
     if hasattr(model_setup, "DEM_path"):
+        print("monarchs.core.initial_conditions.initialise_firn_profile: Reading in firn depth from DEM")
+
         firn_depth, lat_array, lon_array, dx, dy = export_DEM(
             model_setup.DEM_path,
             num_points=model_setup.row_amount,

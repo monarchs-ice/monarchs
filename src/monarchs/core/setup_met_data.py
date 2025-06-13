@@ -31,15 +31,17 @@ def setup_era5(model_setup, lat_array=False, lon_array=False):
     # Chunk the input data into years.
     # TODO - Make it so that we can pass yearly files in, controlled by a model_setup parameter whether we have a
     # TODO - single file or multiple.
-
-    model_years = max(1, model_setup.num_days // 365 + 1)
-    if model_setup.num_days % 365 == 0:
-        model_years -= 1  # If the number of days is a multiple of 365, we don't need an extra year.
+    chunk_size = 100
+    model_years = max(1, model_setup.num_days // chunk_size + 1)
+    if model_setup.num_days % chunk_size == 0:
+        model_years -= 1  # If the number of days is a multiple of chunk_size (default 365), we don't need an extra year.
     for year in range(model_years):
-        start_index = year * 365 * 24 / index
+        start_index = year * chunk_size * 24 / index
         timesteps_per_day = 24 / index
+
         total_days = model_setup.num_days
-        ERA5_vars = ERA5_to_variables(model_setup.met_input_filepath, timesteps_per_day, total_days, start_index=start_index)
+        ERA5_vars = ERA5_to_variables(model_setup.met_input_filepath, timesteps_per_day, total_days, start_index=start_index,
+        chunk_size=chunk_size)
         bounds = ["latmax", "latmin", "longmax", "longmin"]
         if all(hasattr(model_setup, attr) for attr in bounds) and all(
             ~np.isnan(getattr(model_setup, attr)) for attr in bounds
@@ -90,33 +92,45 @@ def write_to_netcdf(ERA5_grid_path, ERA5_grid, model_setup, start_index=0):
 
     start_index = int(start_index)
     end_index = int(start_index + len(ERA5_grid["SW_surf"]))
-    with Dataset(ERA5_grid_path, "w") as f:
+
+    if start_index == 0:
+        mode = "w"
+    else:
+        mode = "a"
+
+    with Dataset(ERA5_grid_path, mode) as f:
         if start_index == 0:
             f.createGroup("variables")
             f.createDimension("time", None)
             f.createDimension("column", model_setup.col_amount)
             f.createDimension("row", model_setup.row_amount)
         for key, value in ERA5_grid.items():
-            if key in ["long", "lat", "time"]:
-                if key == "long":
-                    var = f.createVariable(
-                        "cell_longitude", np.dtype("float64").char, ("column", "row")
-                    )
-                    var.long_name = "Longitude of grid cell"
-                    var[start_index:end_index] = value
-                if key == "lat":
-                    var = f.createVariable(
-                        "cell_latitude", np.dtype("float64").char, ("column", "row")
-                    )
-                    var.long_name = "Latitude of grid cell"
-                    var[start_index:end_index] = value
-                else:
+            if start_index == 0:
+                if key in ["long", "lat", "time"]:
+                    if key == "long":
+                        var = f.createVariable(
+                            "cell_longitude", np.dtype("float64").char, ("column", "row")
+                        )
+                        var.long_name = "Longitude of grid cell"
+                        var[start_index:end_index] = value
+                    elif key == "lat":
+                        var = f.createVariable(
+                            "cell_latitude", np.dtype("float64").char, ("column", "row")
+                        )
+                        var.long_name = "Latitude of grid cell"
+                        var[start_index:end_index] = value
+                    else:
+                        continue
+                var = f.createVariable(
+                    key, np.dtype("float64").char, ("time", "column", "row")
+                )
+                var.long_name = key
+                var[start_index:end_index] = value
+            else:
+                if key in ['long', 'lat', 'time']:
                     continue
-            var = f.createVariable(
-                key, np.dtype("float64").char, ("time", "column", "row")
-            )
-            var.long_name = key
-            var[start_index:end_index] = value
+                var = f.variables[key]
+                var[start_index:end_index] = value
 
 
 

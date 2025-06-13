@@ -111,7 +111,6 @@ def export_DEM(
     from scipy.ndimage import zoom
 
     # print(f'Box boundary = {input_raster.tif_bBox_converted}')
-    print("Reading in firn depth from DEM")
     input_raster = rioxarray.open_rasterio(tiffname).rio.reproject("EPSG:3031")
     # Get the lat/long coordinates of the DEM
 
