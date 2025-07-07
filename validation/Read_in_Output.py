@@ -13,5 +13,5 @@ print(output.dimensions["x"])
 
 
 #
-# P=dataset.variables['tp'][:,:,:]
+# P=dataset['tp'][:,:,:]
 #

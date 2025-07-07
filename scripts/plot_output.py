@@ -11,8 +11,11 @@ from matplotlib import pyplot as plt
 import numpy.ma as ma
 import matplotlib
 matplotlib.use('TkAgg')
-dumppath = '/media/dmwq2/2C40-69DF/progress.nc'
-diagpath = '/media/dmwq2/2C40-69DF/model_output.nc'
+#dumppath = '/media/dmwq2/New Volume/monarchs_120625/full/progress.nc'
+#diagpath = '/media/dmwq2/New Volume/monarchs_120625/full/model_output.nc'
+
+dumppath = '/media/dmwq2/New Volume/monarchs_120625/subset/progress.nc'
+diagpath = '/media/dmwq2/New Volume/monarchs_120625/subset/model_output.nc'
 
 flowdata = Dataset(dumppath)
 t0data = Dataset(diagpath)
@@ -51,6 +54,7 @@ def plot_variable(dset, variable_name, cmap='viridis', vmax=None):
 
 lakedepth = plot_variable(flowdata, 'lake_depth')
 lakedepth_max1 = plot_variable(flowdata,'lake_depth', vmax=1)
+lakedepth_max5 = plot_variable(flowdata,'lake_depth', vmax=5)
 ice_lens = plot_variable(flowdata,'ice_lens')
 ice_lens_depth = plot_variable(flowdata,'ice_lens_depth', vmax=500)
 firndepth = plot_variable(flowdata,'firn_depth', vmax=150)
@@ -61,13 +65,14 @@ lid = plot_variable(flowdata,'lid')
 plt.figure()
 ofd = t0data.variables['firn_depth'][0]
 plt.imshow(ofd, vmax=80)
-plt.colorbar()
+plt.colorbar(label='m')
+
 plt.title('Firn depth (original)')
 
 from matplotlib.colors import TwoSlopeNorm
 plt.figure()
 diff = firndepth[:] - ofd[:]
-plt.imshow(diff, cmap='coolwarm', norm=TwoSlopeNorm(vmin=-3, vcenter=0, vmax=3))
+plt.imshow(diff, cmap='coolwarm', norm=TwoSlopeNorm(vmin=-5, vcenter=0, vmax=5))
 plt.colorbar()
 plt.title('Firn depth difference (m)')
 
