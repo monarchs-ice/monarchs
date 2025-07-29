@@ -317,6 +317,7 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         )
 
     else:  # if lid_temperature_sfc >= 273.15 i.e. melting
+        #If in future we want lids to melt on surface (e.g. assuming perennial firn aquifers below) this needs to change
         calc_surface_melt(cell, dt, Q)
     for i in range(len(cell.lid_temperature)):
         if cell.lid_temperature[i] > 273.15:
