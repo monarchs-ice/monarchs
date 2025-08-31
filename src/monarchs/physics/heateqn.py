@@ -31,7 +31,7 @@ def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
         + (1 - sfrac - lfrac) * cp_air
         + lfrac * cp_water
     )
-    kappa = k / (cp * rho)
+    kappa = k / (cp * rho)  # thermal diffusivity [m^2 s^-1]
     return k, kappa
 
 
@@ -73,7 +73,7 @@ def heateqn(
     cp_water = cell['cp_water']
     k_air = cell['k_air']
     k_water = cell['k_water']
-    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
+    k, kappa = get_k_and_kappa(x, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
     residual = np.zeros_like(x)
     # Surface temperature equation (residual)
     residual[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
@@ -99,6 +99,23 @@ def heateqn(
 
 
 def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
+    """
+    The solution of the heat equation involves a highly nonlinear part in the top N layers, which is driven by the
+    surface energy balance, and a linear part, which is the diffusion of heat through the rest of the firn column.
+    This function handles the linear part of this calculation.
+
+    Parameters
+    ----------
+    cell
+    dz
+    dt
+    T_bc_top
+    N
+
+    Returns
+    -------
+
+    """
     T_old = cell["firn_temperature"][N:]
     Sfrac = cell['Sfrac'][N:]
     Lfrac = cell['Lfrac'][N:]
@@ -112,10 +129,10 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     n = total_len - N  # Number of layers below the nonlinear region
 
     # Initialize diagonals and RHS
-    A = np.zeros(n - 1, dtype=np.float64)  # Sub-diagonal (lower)
-    B = np.zeros(n, dtype=np.float64)  # Main diagonal
-    C = np.zeros(n - 1, dtype=np.float64)  # Super-diagonal (upper)
-    D = np.zeros(n, dtype=np.float64)  # RHS vector
+    A = np.zeros(n - 1, dtype=np.float64)
+    B = np.zeros(n, dtype=np.float64)
+    C = np.zeros(n - 1, dtype=np.float64)
+    D = np.zeros(n, dtype=np.float64)
 
     factor = np.float64(dt / dz**2)
 

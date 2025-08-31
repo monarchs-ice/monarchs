@@ -51,33 +51,54 @@ def percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=Tr
     -------
     None (amends Cell inplace)
     """
+    print('meltflag = ', cell["meltflag"][:50])
+    print('Lfrac = ', cell["Lfrac"][:50])
+    print('Saturation = ', cell["saturation"][:50])
+    # v_lev = 0 at surface, cell['vert_grid'] at bottom
     for point in range(0, len(cell["firn_temperature"])):
         v_lev = len(cell["firn_temperature"]) - (point + 1)
+        # starts search for flagged cells from bottom
+
         if cell["meltflag"][v_lev] and cell["Lfrac"][v_lev] != 0:
             time_remaining = timestep
+            # print('Beginning percolation algorithm, level = ', v_lev, 'time_remaining = ', time_remaining)
+
             while time_remaining > 0:
+                # If calling percolation for the purpose of calculating the lateral flow between an ice lens
+                # and the firn column, we don't want to trigger the refreezing algorithm.
                 if not lateral_refreeze_flag:
                     calc_refreezing(cell, v_lev)
+
                 if cell["Sfrac"][v_lev] * cell["rho_ice"] > cell["pore_closure"]:
+                    # print('Ice lens formed at depth ', v_lev)
                     cell["ice_lens"] = True
                     cell["saturation"][v_lev] = True
+
                     if v_lev < cell["ice_lens_depth"]:
                         cell["ice_lens_depth"] = v_lev
+
                     calc_saturation(cell, v_lev)
                     time_remaining = 0
+
                 elif cell["saturation"][v_lev] == 1 or cell["ice_lens_depth"] == v_lev:
                     calc_saturation(cell, v_lev)
                     time_remaining = 0
+
                 elif cell["Lfrac"][v_lev] > 0:
                     if perc_time_toggle:
                         p_time = perc_time(cell, v_lev)
                     else:
                         p_time = 0
                     time_remaining = time_remaining - p_time
+
+                    # else: flag remains at 1 and perc begins here next timestep
                     if time_remaining > 0:
                         cell["meltflag"][v_lev] = 0
                         capillary_remain = capillary(cell, v_lev)
+
+                        # percolation of remaining water to next cell
                         if capillary_remain < cell["Lfrac"][v_lev]:
+                            # if we would go beyond the end of the grid at the next timestep, stop percolating
                             if v_lev == cell["vert_grid"] - 2:
                                 time_remaining = 0
                             cell["Lfrac"][v_lev + 1] = (
@@ -91,19 +112,43 @@ def percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=Tr
                             cell["meltflag"][v_lev] = 1
 
                         else:
+                            # if water has stopped percolating, ensure that water does not
+                            # overfill the point at which it has stopped percolating
+                            print('Percolated water up to level, no time left', v_lev)
+                            print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                            print('Exposed water flag = ', cell["exposed_water"])
                             for i in np.arange(v_lev + 1)[::-1]:
                                 calc_saturation(cell, i, end=True)
                             time_remaining = 0
-                            break
+                            print('AFTER SATURATION CALCULATION')
+                            print('Percolated water up to level, capillary effects', v_lev)
+                            print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                            print('Exposed water flag = ', cell["exposed_water"])
+
                     else:
+                        print('Percolated water up to level, no time left', v_lev)
+                        print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                        print('Exposed water flag = ', cell["exposed_water"])
+
                         for i in np.arange(v_lev + 1)[::-1]:
                             calc_saturation(cell, i, end=True)
-                else:
+                        print('AFTER SATURATION CALCULATION')
+                        print('Percolated water up to level, no time left', v_lev)
+                        print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                        print('Exposed water flag = ', cell["exposed_water"])
+
+                else:  # All water frozen
+                    print('Percolated water up to level, all frozen ', v_lev)
+                    print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                    print('Exposed water flag = ', cell["exposed_water"])
                     cell["meltflag"][v_lev] = 0
                     time_remaining = 0
                     for i in np.arange(v_lev + 1)[::-1]:
                         calc_saturation(cell, i, end=True)
-
+                    print('AFTER SATURATION CALCULATION')
+                    print('Percolated water up to level, capillary effects', v_lev)
+                    print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                    print('Exposed water flag = ', cell["exposed_water"])
 
 def calc_refreezing(cell, v_lev):
     """
@@ -129,7 +174,8 @@ def calc_refreezing(cell, v_lev):
         state.
 
     """
-    T_change_max = 273.15 - cell["firn_temperature"][v_lev]
+
+    T_change_max = 273.15 - cell["firn_temperature"][v_lev]   # Maximum allowable temperature change
     cp = 7.16 * cell["firn_temperature"][v_lev] + 138
     excess_water = 0
     T_change_all = (
@@ -137,19 +183,23 @@ def calc_refreezing(cell, v_lev):
         * cell["L_ice"]
         * cell["rho_water"]
         / (cell["rho_ice"] * cp * cell["Sfrac"][v_lev])
-    )
+    )   # T change if all water freezes
     Vol_Rfrz_Max = (
         (1 - cell["Sfrac"][v_lev])
         * (cell["firn_depth"] / cell["vert_grid"])
         / (cell["rho_water"] / cell["rho_ice"])
-    )
+    )  # Volume available in the cell for refreezing, accounting for expansion of water
+
+    # is there excess water?
     if Vol_Rfrz_Max < cell["Lfrac"][v_lev] * (cell["firn_depth"] / cell["vert_grid"]):
         excess_water = (
             cell["Lfrac"][v_lev] * (cell["firn_depth"] / cell["vert_grid"])
             - Vol_Rfrz_Max
         )
         cell["Lfrac"][v_lev] = Vol_Rfrz_Max / (cell["firn_depth"] / cell["vert_grid"])
-    if T_change_all >= T_change_max:
+
+    # some of this water from the above will refreeze
+    if T_change_all >= T_change_max:  # but not all water will refreeze
         Vol_Change = (
             cell["rho_ice"]
             * cp
@@ -173,7 +223,8 @@ def calc_refreezing(cell, v_lev):
         cell["Sfrac"][v_lev] = cell["Sfrac"][v_lev] + Vol_Change * (
             cell["rho_water"] / cell["rho_ice"]
         ) / (cell["firn_depth"] / cell["vert_grid"])
-    else:
+
+    else:  # All water refreezes in this layer
         cell["Sfrac"][v_lev] = cell["Sfrac"][v_lev] + cell["Lfrac"][v_lev] * (
             cell["rho_water"] / cell["rho_ice"]
         )
@@ -224,45 +275,76 @@ def calc_saturation(cell, v_lev_in, end=False):
     """
     v_lev = int(v_lev_in)
     Lfrac_max = 1 - cell["Sfrac"][v_lev]
+
     if Lfrac_max < 0:
         Lfrac_max = 0
-    if cell["Lfrac"][v_lev] > Lfrac_max:
+
+    if cell["Lfrac"][v_lev] > Lfrac_max:  # There is currently too much water in this grid cell
         excess_water = cell["Lfrac"][v_lev] - Lfrac_max
-        cell["Lfrac"][v_lev] = Lfrac_max
-        if not end:
-            cell["saturation"][v_lev] = 1
-        elif end:
+        cell["Lfrac"][v_lev] = Lfrac_max  # cell is now saturated
+        # if we are doing this just to force cells to have physical amounts of water at the
+        # final step, say that this is meltwater that can percolate at the next step.
+
+        if end:
             cell["meltflag"][v_lev] = 1
+            cell["saturation"][v_lev] = 0
+        else:
+            cell["saturation"][v_lev] = 1
 
         if excess_water > 0:
+            # Fill cells with water from the ice lens upward
             while v_lev > 0:
                 cell["Lfrac"][v_lev] = cell["Lfrac"][v_lev] + excess_water
                 Lfrac_max = 1 - cell["Sfrac"][v_lev]
+
                 if cell["Lfrac"][v_lev] > Lfrac_max:
+                    # Recalculate excess water and set the current vertical level water to
+                    # the maximum.
                     excess_water = cell["Lfrac"][v_lev] - Lfrac_max
                     cell["Lfrac"][v_lev] = Lfrac_max
-                    if not end:
+                    # if we are doing this just to force cells to have physical amounts of water at the
+                    # final step, say that this is meltwater that can percolate at the next step.
+                    if end:
+                        cell["meltflag"][v_lev] = 1
+                        cell["saturation"][v_lev] = 0
+                    else:
                         cell["saturation"][v_lev] = 1
 
-                    else:
-                        cell["meltflag"][v_lev] = 1
 
                     v_lev = v_lev - 1
-                else:
+                else:  # cell has space for all the water, no need to move any more
                     break
+
             if v_lev <= 0:
+                # print('Adding excess water to surface, excess_water = ', excess_water, 'Lfrac = ', cell["Lfrac"][0])
                 cell["Lfrac"][0] = cell["Lfrac"][0] + excess_water
                 Lfrac_max = 1 - cell["Sfrac"][0]
-                if cell["Lfrac"][0] > Lfrac_max:
-                    cell["exposed_water"] = True
-                    cell["saturation"][0] = True
+
+                # Different paths depending on whether this is actually a percolation step, or simply
+                # moving water to where it needs to be. If the former, then the water is now exposed at the top
+                # since it has come from layers below it and so we trigger lake formation. If the latter, then
+                # we just set the meltflag so that it can percolate at the next timestep.
+                if cell["Lfrac"][0] > Lfrac_max and cell["Lfrac"][0] > 0 and not end:
+                    #if not cell['meltflag'][0]:
+                        #breakpoint()
+                    cell["exposed_water"] = 1
+                    # print('Cell has exposed water, Lfrac_max = ', Lfrac_max, 'Lfrac = ', cell["Lfrac"][0])
+                    cell["saturation"][0] = 1
+                    cell["meltflag"][0] = 0
                     excess_water = cell["Lfrac"][0] - Lfrac_max
                     cell["Lfrac"][0] = Lfrac_max
                     cell["lake_depth"] += excess_water * (
                         cell["firn_depth"] / cell["vert_grid"]
-                    )
+                    )  # convert to a height in m
                     if cell["lake"] and cell["lake_depth"] < 0:
                         raise ValueError("Lake depth is negative - problem...")
+                elif cell['Lfrac'][0] > Lfrac_max and cell["Lfrac"][0] > 0 and end:
+                    # In this case, this has happened likely because the regridding algorithm has resulted in the
+                    # surface cell having too much water. We don't want to trigger lake formation here, so instead
+                    # we just set the meltflag so that it can percolate at the next timestep.
+                    cell["meltflag"][0] = 1
+                    cell["saturation"][0] = 0
+
     elif cell["Lfrac"][v_lev] < Lfrac_max:
         cell["saturation"][v_lev] = 0
 
@@ -288,18 +370,24 @@ def perc_time(cell, v_lev):
     perc_time : float
         Amount of time that the water has left to percolate down the firn column. [s]
     """
+    # how long water takes to percolate through given cell
+    # if Lfrac is super small - just assume it all percolates - prevents divide by zero errors
     if cell["Lfrac"][v_lev] < 1e-10:
         p_time = 0
         return p_time
-    delta = 0.001
-    rho_s_star = cell["Sfrac"][v_lev] * cell["rho_ice"] / cell["rho_water"]
-    perm_s = 0.077 * delta**2 * np.exp(-7.8 * rho_s_star)
-    eta = 0.001787
+    delta = 0.001  # mean grain size
+    rho_s_star = cell["Sfrac"][v_lev] * cell["rho_ice"] / cell["rho_water"]   # specific gravity of the firn
+    perm_s = 0.077 * delta**2 * np.exp(-7.8 * rho_s_star)  # specific permeability
+    eta = 0.001787  # viscosity
+
     delta_p = cell["rho_water"] / (
         cell["firn_depth"] / cell["vert_grid"] / cell["Lfrac"][v_lev]
-    )
+    )  # pressure gradient, assuming no lake above
     u = -perm_s / eta * delta_p
-    p_time = -(cell["firn_depth"] / cell["vert_grid"]) / u
+    # TODO CHECK - This was double counting before. Removed the firn depth / vert_grid term in the numerator.
+    # TODO CHECK - Previously, doubling the grid size caused the percolation time per cell to quadruple.
+    p_time = 1 / u
+
     return p_time
 
 
@@ -320,5 +408,6 @@ def capillary(cell, v_lev):
     capillary_remain : float
         Amount of water (in units of liquid fraction) that is left in the cell.
     """
-    capillary_remain = 0.05 * (1 - cell["Sfrac"][v_lev])
+    # returns amount of water that can remain due to capillary effects as a fraction of the cell
+    capillary_remain = 0.05 * (1 - cell["Sfrac"][v_lev])  # available pore space
     return capillary_remain

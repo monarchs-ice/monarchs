@@ -128,8 +128,7 @@ def export_DEM(
         projected_raster = input_raster.rio.reproject("EPSG:4326")
         # we need to transform our bounding box coordinates to the EPSG:3031 projection, then back again
         # into lat/long.
-        from matplotlib.path import Path
-        import xarray as xr
+
         corners = [bottom_left, bottom_right, top_right, top_left]
         lon_min, lon_max = min([corner[1] for corner in corners]), max([corner[1] for corner in corners])
         lat_min, lat_max = min([corner[0] for corner in corners]), max([corner[0] for corner in corners])
@@ -139,7 +138,6 @@ def export_DEM(
         lat_subset = subset_raster.y.values
         lon_subset = subset_raster.x.values
         if len(lat_subset) != 0 and len(lon_subset) != 0:
-            dx, dy = get_xy_distance(lat_subset, lon_subset)
 
             from matplotlib import pyplot as plt
             if diagnostic_plots:

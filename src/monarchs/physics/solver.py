@@ -67,8 +67,9 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         # print('T fixed sfc = ', T)
     else:
         N = 50
+        #N = cell['vert_grid']
         x = x[:N]
-        # N = cell['vert_grid']
+        # print('x = ', x[:10])
         # If N is set to equal vert_grid, then when we solve for the surface temperature, we effectively
         # solve for the whole column, so should just return that at the end of the function.
 
@@ -89,11 +90,15 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         method=solver_method,
           )
 
+
         if not soldict.success:
             print(f"Root-finding for surface temperature failed - "
                   f"returning original guess. row = {cell['row']}, col = {cell['column']}")
 
         if N == cell['vert_grid']:
+            # print('Using hybrd on whole grid')
+            # print('Sold0 = ', soldict.x[0])
+            # print('Sold1 = ', soldict.x[1])
             return soldict.x, soldict.success, soldict.message, soldict.success
 
         sol = soldict.x
@@ -111,7 +116,8 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         # print('T free = ', T)
 
     T = np.around(T, decimals=8)
-    #print('Sol0 = ', sol[0])
+    # print('Sol0 = ', sol[0])
+    # print('Sol1 = ', sol[1])
     #print('T = ', T)
 
     return T, infodict, ier, mesg

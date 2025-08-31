@@ -6,7 +6,7 @@ state of the column, then running firn_column and lake/lid functions accordingly
 
 import numpy as np
 from monarchs.physics import snow_accumulation
-from monarchs.physics import firn_functions, lake_functions, solver, lid_functions
+from monarchs.physics import firn_functions, lake_functions, solver, lid_functions, percolation_functions
 from monarchs.core import utils
 
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
@@ -78,7 +78,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             )
 
             snow_accumulation.snowfall(
-                cell, met_data['snowfall'][t_step], met_data['snow_dens'][t_step], 260
+                cell, met_data['snowfall'][t_step], met_data['snow_dens'][t_step], 273.15
             )
         SW_in = met_data['SW_down'][t_step]
         LW_in = met_data['LW_down'][t_step]
@@ -92,9 +92,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         # in which case there are further branches depending on whether lakes or lids have formed yet.
         """
 
-        if not cell["exposed_water"] and not cell["saturation"][0]:
+        if not cell["exposed_water"]:
             if firn_column_toggle:
-                root0 = firn_functions.firn_column(
+                firn_functions.firn_column(
                     cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
                 )
 
@@ -136,13 +136,13 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             if not cell["lake"]:
                 if lake_development_toggle:
                     lake_functions.lake_formation(
-                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
+                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
                     )
 
             elif cell["lake"] and not cell["lid"]:
                 if lake_development_toggle:
                     lake_functions.lake_development(
-                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
+                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
                     )
 
                 if cell["v_lid"]:
@@ -164,7 +164,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                             p_air,
                             T_dp,
                             wind,
-                            toggle_dict,
                         )
                     lid_functions.lid_development(
                         cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
@@ -177,6 +176,22 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 ):
                     lid_functions.combine_lid_firn(cell)
 
+        # If we have Sfrac + Lfrac > 1, we need to ensure that Lfrac is adjusted accordingly.
+        # We can do this via calc_saturation, which is used to similar effect in the percolation step.
+        if np.any(cell["Lfrac"] + cell["Sfrac"] > 1):
+            # Get the lowest point at which the column is saturated, and use this as the starting point
+            # for the saturation algorithm. Then find the other points that are saturated and
+            # perform the same calculation here also.
+            saturation_points = np.where(cell["Lfrac"] + cell["Sfrac"] > 1)
+            for saturation_point in saturation_points[::-1][0]:
+                percolation_functions.calc_saturation(cell, saturation_point, end=True)
+            # Check again. We however will tolerate any instances where the solid + liquid fraction
+            # goes above 1 (unless Sfrac is above 1). This is because for small grid spacings,
+            # a layer may become saturated as a result of the regridding. Instead of hacking it into
+            # an adjacent cell, we just let it percolate in the next timestep.
+            if np.any(cell["Lfrac"][1:] + cell["Sfrac"][1:] > 1) and cell['Sfrac'][0] <= 1:
+                raise ValueError('Lfrac + Sfrac > 1 after regridding, after saturation calculation.')
+
         if not ignore_errors:
             utils.check_correct(cell)
 
@@ -185,7 +200,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         )
 
         cell["t_step"] += 1
-
+        # Update vertical profile to ensure we account for any firn depth changes
+        cell["vertical_profile"] = np.linspace(0, cell["firn_depth"], cell["vert_grid"])
 
 
     cell["day"] += 1

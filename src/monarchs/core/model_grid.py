@@ -147,7 +147,6 @@ def initialise_iceshelf(
     iceshelf["size_dx"][:] = size_dx
     iceshelf["size_dy"][:] = size_dy
     iceshelf["water_direction"] = np.zeros((num_rows, num_cols, 8))  # 8 possible directions
-
     return iceshelf
 
 

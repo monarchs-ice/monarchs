@@ -19,8 +19,8 @@ from monarchs.DEM import create_DEM_GaussianTestCase as cgt
 """
 Spatial parameters
 """
-row_amount = 10  # Number of rows in your model grid, looking from top-down.
-col_amount = 10  # Number of columns in your model grid, looking from top-down.
+row_amount = 25  # Number of rows in your model grid, looking from top-down.
+col_amount = 25  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)

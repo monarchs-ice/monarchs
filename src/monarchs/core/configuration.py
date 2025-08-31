@@ -277,7 +277,7 @@ class ModelSetup:
 
 
 
-def jit_modules():
+def jit_modules(fastmath=False):
     """
     If using Numba, then we need to apply the `numba.jit` decorator to several functions
     in `physics` and `core'.
@@ -300,7 +300,6 @@ def jit_modules():
     from numba import njit
     from inspect import getmembers, isfunction
 
-    fastmath = False
     from monarchs.physics import percolation_functions, lid_functions, surface_fluxes, lake_functions, firn_functions
     from monarchs.physics import timestep, snow_accumulation, lateral_functions
     from monarchs.core import model_output, utils
@@ -329,12 +328,10 @@ def jit_modules():
         functions_list = getmembers(module, isfunction)
 
         for name, function in functions_list:
-
             # Ignore functions that are imported, are in our ignore list, or have the __wrapped__ attribute
-
-            # if function.__module__ != module.__name__:
-            #     print(f"Skipping {name} because it belongs to {function.__module__}, not {module.__name__}")
-            #     continue
+            if function.__module__ != module.__name__:
+                print(f"Skipping {name} because it belongs to {function.__module__}, not {module.__name__}")
+                continue
 
             if name in ignore_list:
                 continue
@@ -343,10 +340,7 @@ def jit_modules():
             print(f"Applying Numba jit decorator to {module.__name__}.{name}")
             jitted_function = njit(function, fastmath=fastmath, debug=False, cache=True)
             setattr(module, name, jitted_function)
-            # TODO - add full type hints to functions. We can then read these in and use these as the
-            # TODO - expected types for the function and pre-compile it, which will enormously speed things
-            # TODO - up when running in parallel.
-            # jitted_function.compile()
+
 
     from monarchs.physics import solver
     from monarchs.physics.Numba import solver_nb as numba_solver

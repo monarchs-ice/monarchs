@@ -34,13 +34,25 @@ def ERA5_to_variables(ERA5_input, met_timestep, total_days, start_index=0, chunk
     start_index = int(start_index)
     end_index = int(end_index)
     ERA5_data = netCDF4.Dataset(ERA5_input)
+    errflag = False
+    try:
+        if len(ERA5_data.variables["time"]) < end_index:
+            errflag = True
+    except KeyError:
+        try:
+            if len(ERA5_data.variables['valid_time']) < end_index:
+                errflag = True
+        except KeyError:
+            raise ValueError('monarchs.met_data.import_ERA5.ERA5_to_variables:'
+                             ' No time variable found in the input netCDF file. Please check your input data.')
+    finally:
+        if errflag:
+            raise ValueError(
+                f"monarchs.met_data.import_ERA5.ERA5_to_variables: End index {end_index} is greater than the length of "
+                f"the data available ({len(ERA5_data.variables['time'])} timesteps) in the input netCDF file."
+                f" Please check your input data is large enough, or adjust your chosen number of days to compensate'."
+            )
 
-    if end_index > len(ERA5_data.variables["time"]):
-        raise ValueError(
-            f"monarchs.met_data.import_ERA5.ERA5_to_variables: End index {end_index} is greater than the length of "
-            f"the data available ({len(ERA5_data.variables['time'])} timesteps) in the input netCDF file."
-            f" Please check your input data is large enough, or adjust your chosen number of days to compensate'."
-        )
     var_dict["long"] = ERA5_data.variables["longitude"][:]
     var_dict["lat"] = ERA5_data.variables["latitude"][:]
     try:

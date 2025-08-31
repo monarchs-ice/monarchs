@@ -11,7 +11,6 @@ main then calls the lateral movement functions, and handles saving the data,
 both in terms of the model state (also known as a "dump"), and the
 variables that the user wants to track over time.
 """
-from numba import njit
 
 import os
 import sys
@@ -124,7 +123,6 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
         grid = grid
     return (grid, met_start_idx, met_end_idx, first_iteration, reload_dump_success)
 
-@njit
 def get_snow_sum(met_data_grid, grid, met_start_idx, met_end_idx, snow_added):
     for i in range(len(grid)):
         for j in range(len(grid[0])):

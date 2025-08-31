@@ -56,9 +56,10 @@ def sfc_flux(
         Surface energy flux. [W m^-2].
 
     """
+    # Positive going into ice shelf
     alpha = sfc_albedo(melt, exposed_water, lid, lake, lake_depth)
     Flat, Fsens = bulk_fluxes(wind, T_air, xsurf, p_air, T_dp)
-    epsilon = 0.98
+    epsilon = 0.98  # emissivity
     Q = epsilon * LW_in + (1 - alpha) * SW_in + Flat + Fsens
     return Q
 
@@ -93,18 +94,18 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
     if melt:
         if exposed_water:
             if lid:
-                alpha = 0.413
+                alpha = 0.413  # ice lid albedo
             elif lake:
                 h = lake_depth
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
                     -539 + 20000 * np.exp(3.6 * h)
-                )
+                )  # lake albedo
             else:
-                alpha = 0.6
+                alpha = 0.6   # saturated firn albedo
         else:
-            alpha = 0.6
+            alpha = 0.6   # wet snow albedo
     else:
-        alpha = 0.867
+        alpha = 0.867  # dry snow albedo
     return alpha
 
 
@@ -138,21 +139,24 @@ def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
 
     =======
     """
-    g = 9.8
+    g = 9.8   # Gravity
     b = 20
-    dz = 10
+    dz = 10   # Height windspeed is measured at
     CT0 = 1.3 * 10**-3
     c = 1961 * b * CT0
-    R_dry = 287.0597
-    R_sat = 461.525
-    a1 = 611.21
-    T_0 = 273.16
-    a3 = 17.502
-    a4 = 32.19
+    R_dry = 287.0597  # J kg−1 K−1 From section 12 of documentation in docstring
+    R_sat = 461.5250  # J kg−1 K−1
+    a1 = 611.21  # Pa
+    T_0 = 273.16  # K
+    a3 = 17.502  # This and a4 set to over water values as dewpoint temp being used (following ERA-5 documentation)
+    a4 = 32.19  # K
+    # Calculate the saturation vapour pressure at the dewpoint temperature (i.e. the vapour pressure at the real temp)
     e_sat = a1 * np.exp(a3 * (T_dp - T_0) / (T_dp - a4))
-    s_hum = R_dry / R_sat * e_sat / (p_air - e_sat * (1 - R_dry / R_sat))
+    # Alternative form for testing - Clausius-Clapeyron over ice
+    # e_sat = a1 * np.exp(22.587 * (T_dp - T_0) / (T_dp + 0.7))
+    s_hum = (R_dry / R_sat) * e_sat / (p_air - (e_sat * (1 - (R_dry / R_sat))))  # this is in kg/kg I think?
     if wind == 0:
-        Ri = 0
+        Ri = 0   # Richardson number
     else:
         Ri = g * (T_air - T_sfc) * dz / (T_air * wind**2)
     if Ri < 0:

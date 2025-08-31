@@ -31,7 +31,7 @@ def setup_era5(model_setup, lat_array=False, lon_array=False):
     # Chunk the input data into years.
     # TODO - Make it so that we can pass yearly files in, controlled by a model_setup parameter whether we have a
     # TODO - single file or multiple.
-    chunk_size = 100
+    chunk_size = 365
     model_years = max(1, model_setup.num_days // chunk_size + 1)
     if model_setup.num_days % chunk_size == 0:
         model_years -= 1  # If the number of days is a multiple of chunk_size (default 365), we don't need an extra year.

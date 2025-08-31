@@ -16,14 +16,14 @@ Spatial parameters
 row_amount = 1  # Number of rows in your model grid, looking from top-down.
 col_amount = 1  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
-vertical_points_firn = 500  # Number of vertical grid cells
+vertical_points_firn = 2500  # Number of vertical grid cells
 vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 
 """
 Timestepping parameters
 """
-num_days = 105  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = 35  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
@@ -51,20 +51,23 @@ met_output_filepath = "output/met_data_1d_testcase.nc"
 # np.broadcast_to to broadcast our data to the correct shape.
 # e.g. np.broadcast_to(met_data["LW_surf"], (row_amount, col_amount, len(met_data["LW_surf"])))
 met_data = {}
-met_data["LW_surf"] = np.append(
-    800 * np.ones(800), 50 * np.ones(1720)
+spinup_timesteps = 0 * 24
+hot_timesteps = 35 * 24
+cold_timesteps = 0 #1720
+met_data["LW_surf"] = np.concatenate([np.linspace(100, 800, spinup_timesteps),
+    800 * np.ones(hot_timesteps), 50 * np.ones(cold_timesteps)]
 )  # Incoming longwave radiation. [W m^-2].
-met_data["SW_surf"] = np.append(
-    800 * np.ones(800), 100 * np.ones(1720)
+met_data["SW_surf"] = np.concatenate([np.linspace(100, 800, spinup_timesteps),
+    800 * np.ones(hot_timesteps), 100 * np.ones(cold_timesteps)]
 )  # Incoming shortwave (solar) radiation. [W m^-2].
-met_data["temperature"] = np.append(
-    267 * np.ones(800), 250 * np.ones(1720)
+met_data["temperature"] = np.concatenate([np.linspace(100, 800, spinup_timesteps),
+    267 * np.ones(hot_timesteps), 250 * np.ones(cold_timesteps)]
 )  # Surface-layer air temperature. [K].
 met_data["pressure"] = 1000 * np.ones(
     num_days * t_steps_per_day
 )  # Surface-layer air pressure. [hPa].
-met_data["dew_point_temperature"] = np.append(
-    265 * np.ones(800), 240 * np.ones(1720)
+met_data["dew_point_temperature"] = np.concatenate([np.linspace(100, 800, spinup_timesteps),
+    265 * np.ones(hot_timesteps), 240 * np.ones(cold_timesteps)]
 )  # Dew-point temperature. [K].
 met_data["wind"] = 5 * np.ones(num_days * t_steps_per_day)  # Wind speed. [m s^-1].
 met_data["snowfall"] = 0 * np.ones(
@@ -90,21 +93,26 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "output/1d_testcase_outputnew.nc"  # Filename for model output, including file extension (.nc for netCDF).
+# Filename for model output, including file extension (.nc for netCDF).
+output_filepath = f"output/1d_testcase_{vertical_points_firn}res.nc"
 output_grid_size = vertical_points_firn  # Size of interpolated output
 lateral_movement_toggle = False
 firn_column_toggle = True
 lake_development_toggle = True
 lid_development_toggle = True
-
+load_precalculated_met_data = True
+perc_time_toggle = True
 """
 Dumping and reloading parameters
 """
 dump_data = True
-dump_filepath = "output/1d_testcase_dumpnew.nc"  # Filename of our previously dumped state
+dump_filepath = f"output/1d_testcase_dump_{vertical_points_firn}.nc"  # Filename of our previously dumped state
 reload_from_dump = False  # Flag to determine whether to reload the state or not
 use_numba = True
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
-
     grid = monarchs()
+
+    cell = grid[0][0]
+    from matplotlib import pyplot as plt
+    plt.plot(grid[0][0]['rho'], grid[0][0]['vertical_profile'][::-1])
