@@ -89,27 +89,37 @@ def firn_column(
     # the freezing point, then melt will occur.
     # Since the firn column has a fixed boundary condition (273.15 K), recalculate the firn column temperature
     # and regrid the column to account for the height change that occurs due to melting.
+    # breakpoint()
     if (root[0] > 273.15) and success:
-        cell["meltflag"][0] = 1
-        cell["melt"] = True
-        height_change = calc_height_change(
-            cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, root
-        )
-        print('Height change = ', height_change)
+        print('Root0 = ', root[0])
 
-        if np.isnan(height_change):
-            raise ValueError("Height change is NaN - likely due to unrealistic meteorological data.")
+        # root[0] = 285
+        # print('Forced root[0] to 285 for testing purposes - testing sensitivity to heat equation solver')
 
         dz = cell["firn_depth"] / cell["vert_grid"]
         args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
-        root, fvec, success_fixedsfc, info = solver.firn_heateqn_solver(
+        root_fs, fvec, success_fixedsfc, info = solver.firn_heateqn_solver(
             x, args, fixed_sfc=True, solver_method='hybr'
         )
         # if *this* solver works, then update the firn temperature and regrid the firn column, accounting
         # for the melt.
         if success_fixedsfc:
-            cell["firn_temperature"] = root
+            cell["firn_temperature"] = root_fs
+            cell["meltflag"][0] = 1
+            cell["melt"] = True
+            height_change = calc_height_change(
+                cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, root
+            )
+            print('Height change = ', height_change)
+
+            if np.isnan(height_change):
+                raise ValueError("Height change is NaN - likely due to unrealistic meteorological data.")
+
             regrid_after_melt(cell, height_change)
+        elif not success_fixedsfc and not toggle_dict["ignore_errors"]:
+            raise ValueError(
+                "Heat equation solver failed to converge when surface temperature was fixed."
+            )
 
     # If the surface temperature is below the melting point, then we simply update the firn temperature provided
     # the solver didn't fail.
@@ -127,6 +137,93 @@ def firn_column(
     # Test for mass conservation - if we lose mass, then there is an issue with the regridding.
     new_mass = utils.calc_mass_sum(cell)
     assert abs(original_mass - new_mass) < 1.5 * 10**-7
+
+def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, surf_T):
+    """
+    Determine the amount of firn height change that arises due to melting.
+
+    Parameters
+    ----------
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    timestep : float
+        Number of seconds in each timestep. [s]
+    LW_in : float
+        Downwelling longwave radiation at the current timestep. [W m^-2]
+    SW_in : float
+        Downwelling shortwave radiation at the current timestep. [W m^-2]
+    T_air : float
+        Surface air temperature at the current timestep. [K]
+    p_air : float
+        Surface air pressure at the current timestep. [Pa]
+    T_dp : float
+        Dewpoint temperature of the air at the surface at the current timestep. [K]
+    wind : float
+        Wind speed at the surface at the current timestep. [m s^-1]
+    surf_T : float
+        Calculated surface temperature of the firn from the initial (non-fixed surface) implementation of the heat
+        equation. [K]
+
+    Returns
+    -------
+
+    """
+    # breakpoint()
+    epsilon = 0.98
+    sigma = 5.670373 * 10**-8
+    dz = cell["firn_depth"] / cell["vert_grid"]
+    L_fus = 334000
+    if cell["firn_temperature"][0] > 273.14999999 and cell["firn_temperature"][0] < 273.151:
+        cell["firn_temperature"][0] = 273.15
+    if cell["firn_temperature"][1] > 273.14999999 and cell["firn_temperature"][1] < 273.151:
+        cell["firn_temperature"][1] = 273.15
+    k_sfc = (
+        1000 * 2.24 * 10**-3
+        + 5.975
+        * 10**-6
+        * (273.15 - (cell["firn_temperature"][0] + cell["firn_temperature"][1]) / 2)
+        ** 1.156
+    )
+    Q = surface_fluxes.sfc_flux(
+        cell["melt"],
+        cell["exposed_water"],
+        cell["lid"],
+        cell["lake"],
+        cell["lake_depth"],
+        LW_in,
+        SW_in,
+        T_air,
+        p_air,
+        T_dp,
+        wind,
+        surf_T[0],
+    )
+
+    # Strictly speaking, since the MONARCHS grid is defined from the surface downward, this
+    # is actually the "wrong" way round. It is simpler conceptually for this function to consider the
+    # height change rather than depth change, so dz is kept positive here.
+    dtdz = ((cell['firn_temperature'][0] - cell['firn_temperature'][1]) / dz)
+    dHdt = (Q - epsilon * sigma * (
+                1.5 * (cell['firn_temperature'][0] - 0.5 * cell['firn_temperature'][1])) ** 4 -
+            k_sfc * dtdz) / (
+                       cell['rho_ice'] * (cell['Sfrac'][0] * L_fus)) * timestep
+    # dHdt = 0.01
+    print('dHdt = ', dHdt)
+    cell["firn_boundary_change"] += dHdt
+
+    # dHdt = 0.01
+    if 0 > dHdt > -0.01:
+        dHdt = 0
+    elif dHdt < -0.01:
+        raise ValueError(
+            "Height change during melt is negative, and outside the bounds of a numerical error"
+        )
+    elif np.isnan(dHdt):
+        pass
+        print("...")
+        raise ValueError("Height change during melt is NaN")
+    return dHdt
+
 
 def regrid_after_melt(cell, height_change, lake=False):
     """
@@ -172,11 +269,13 @@ def regrid_after_melt(cell, height_change, lake=False):
     # the Sfrac we need to use is not just the top layer Sfrac, but a weighted average
     # of the melted layers. This may be more than one layer.
     if height_change > dz_old:
+        breakpoint()
         # the weights are just the fraction of each layer that is melted
         weights = np.ones(int(height_change / dz_old) + 1)
         weights[-1] = (height_change % dz_old) / dz_old  # partial layer at the bottom
         w_sum = np.sum(weights)
         sfrac_weight = np.sum(original_sfrac[: int(height_change / dz_old) + 1] * weights) / w_sum
+        print('Melt amount > dz_old, using weighted Sfrac = ', sfrac_weight)
     else:
         sfrac_weight = original_sfrac[0]
 
@@ -208,13 +307,11 @@ def regrid_after_melt(cell, height_change, lake=False):
     # Therefore, we may need to scale Sfrac and LFrac to compensate.
 
 
-
+    # If we have a lake, then we add the excess water to the lake depth after doing the regridding step.
     if lake:
-        print('Lfrac[0] = ', cell['Lfrac'][0])
-
         if cell["Lfrac"][0] + cell["Sfrac"][0] > 1:
             excess_water = cell["Lfrac"][0] + cell["Sfrac"][0] - 1
-            print('excess water = ', excess_water)
+            # print('excess water = ', excess_water)
             cell["lake_depth"] += excess_water * (
                 cell["firn_depth"] / cell["vert_grid"]
             )
@@ -230,83 +327,6 @@ def regrid_after_melt(cell, height_change, lake=False):
         print(new_mass)
         print(original_mass)
         raise AssertionError
-
-
-def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, surf_T):
-    """
-    Determine the amount of firn height change that arises due to melting.
-
-    Parameters
-    ----------
-    cell : numpy structured array
-        Element of the model grid we are operating on.
-    timestep : float
-        Number of seconds in each timestep. [s]
-    LW_in : float
-        Downwelling longwave radiation at the current timestep. [W m^-2]
-    SW_in : float
-        Downwelling shortwave radiation at the current timestep. [W m^-2]
-    T_air : float
-        Surface air temperature at the current timestep. [K]
-    p_air : float
-        Surface air pressure at the current timestep. [Pa]
-    T_dp : float
-        Dewpoint temperature of the air at the surface at the current timestep. [K]
-    wind : float
-        Wind speed at the surface at the current timestep. [m s^-1]
-    surf_T : float
-        Calculated surface temperature of the firn from the initial (non-fixed surface) implementation of the heat
-        equation. [K]
-
-    Returns
-    -------
-
-    """
-    epsilon = 0.98
-    sigma = 5.670373 * 10**-8
-    dz = cell["firn_depth"] / cell["vert_grid"]
-    L_fus = 334000
-    if cell["firn_temperature"][0] > 273.14999999 and cell["firn_temperature"][0] < 273.151:
-        cell["firn_temperature"][0] = 273.15
-    if cell["firn_temperature"][1] > 273.14999999 and cell["firn_temperature"][1] < 273.151:
-        cell["firn_temperature"][1] = 273.15
-    k_sfc = (
-        1000 * 2.24 * 10**-3
-        + 5.975
-        * 10**-6
-        * (273.15 - (cell["firn_temperature"][0] + cell["firn_temperature"][1]) / 2)
-        ** 1.156
-    )
-    Q = surface_fluxes.sfc_flux(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["lake_depth"],
-        LW_in,
-        SW_in,
-        T_air,
-        p_air,
-        T_dp,
-        wind,
-        surf_T[0],
-    )
-    dHdt = (Q - epsilon * sigma * (
-                1.5 * (cell['firn_temperature'][0] - 0.5 * cell['firn_temperature'][1])) ** 4 -
-            k_sfc * ((cell['firn_temperature'][0] - cell['firn_temperature'][1]) / dz)) / (
-                       cell['rho_ice'] * (cell['Sfrac'][0] * L_fus)) * timestep
-    print('dHdt = ', dHdt)
-    if 0 > dHdt > -0.01:
-        dHdt = 0
-    elif dHdt < -0.01:
-        raise ValueError(
-            "Height change during melt is negative, and outside the bounds of a numerical error"
-        )
-    elif np.isnan(dHdt):
-        pass
-        print("...")
-        raise ValueError("Height change during melt is NaN")
-    return dHdt
 
 
 def interp_nb(x_vals, x, y):

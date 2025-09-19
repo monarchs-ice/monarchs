@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument(
         "--input_path",
         "-i",
-        help="Absolute or relative path to an input file, in the formatof <model_setup.py>",
+        help="Absolute or relative path to an input file, in the format of <model_setup.py>",
         default="model_setup.py",
         required=False,
     )

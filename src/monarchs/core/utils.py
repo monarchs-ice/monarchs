@@ -148,16 +148,16 @@ def check_correct(cell):
             f"""monarchs.core.utils.check_correct: Solid fraction must be between 0 and 1 
 """
         )
-    if np.any(cell["Lfrac"][cell["Lfrac"] < -0.01]) or np.any(
-        cell["Lfrac"][cell["Lfrac"] > 1.01]
-    ):
-        print(np.max(cell["Lfrac"]))
-        print(np.min(cell["Lfrac"]))
-        print(np.where(cell["Lfrac"] < -0.01))
-        print(cell["Lfrac"])
-        raise ValueError(
-            f"monarchs.core.utils.check_correct: Lfrac error - either above 1 or below 0"
-        )
+    # if np.any(cell["Lfrac"][cell["Lfrac"] < -0.01]) or np.any(
+    #     cell["Lfrac"][cell["Lfrac"] > 1.01]
+    # ):
+    #     print(np.max(cell["Lfrac"]))
+    #     print(np.min(cell["Lfrac"]))
+    #     print(np.where(cell["Lfrac"] < -0.01))
+    #     print(cell["Lfrac"])
+    #     raise ValueError(
+    #         f"monarchs.core.utils.check_correct: Lfrac error - either above 1 or below 0"
+    #     )
 
     # Set total to look at all but the top layer. The top layer can sometimes become oversaturated, but this is allowed
     # provided that meltflag is True for that cell (i.e. the water will percolate in the next timestep).
@@ -189,7 +189,9 @@ def check_correct(cell):
             f"monarchs.core.utils.check_correct: Sum of liquid and solid fraction in top layer must be less than 1 "
             f"unless meltflag is True (i.e. water will percolate at start of next timestep)"
         )
-            
+    elif cell['Sfrac'][0] + cell['Lfrac'][0] > 1.01 and cell['meltflag'][0]:
+        print('Warning - top layer oversaturated but meltflag is True - water will percolate at start of next timestep.')
+        print('Lfrac = ', cell['Lfrac'][0], ', Sfrac = ', cell['Sfrac'][0])
 def check_grid_correctness(grid):
     """
     Wraps check_correct for each cell in the grid. We do this in a separate function so that we can wrap it

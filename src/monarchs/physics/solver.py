@@ -66,18 +66,54 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         T = np.concatenate((np.array([273.15]), T_tri))
         # print('T fixed sfc = ', T)
     else:
-        N = 50
-        #N = cell['vert_grid']
+        # Run the top 2% of the column in the root-finding algorithm.
+        N = int(np.floor(cell['vert_grid'] * 0.02))
+        # we need at least 3 points to actually solve the equation at all. Hard-code a minimum N of 10 points (which
+        # would be 2% of a 500-point grid). Testing (and physical reasoning) indicates that this is more than enough
+        # points to resolve this top boundary part, and we can solve the rest using the much cheaper
+        # tridiagonal solver.
+        if N < 100:
+            N = 100
+        # N=3
+        # N = cell['vert_grid']
         x = x[:N]
+        x = np.asarray(x)
         # print('x = ', x[:10])
-        # If N is set to equal vert_grid, then when we solve for the surface temperature, we effectively
-        # solve for the whole column, so should just return that at the end of the function.
 
+
+        # An experiment. I want here to set a "minimum" dz for the heat equation. The hope is that I can do this
+        # rather inexpensively. The idea is that if the top layer is very thin, then the temperature gradient
+        # is better-resolved, so this should help reduce the model's sensitivity to the vertical grid spacing.
+        # breakpoint()
+        # if cell['firn_depth'] / cell['vert_grid'] > 0.001:
+        #     # Interpolate the top N layers to a minimum dz of 1mm, just for the purposes of this calculation.
+        #     dz = 0.01  # 10mm
+        #     # print('Using min dz of 1mm for root-finding')
+        #     new_N = 50  # use 50 layers for this
+        #     # N_top - the number of layers we actually use from the column. We want to find the first 5cm.
+        #     # Use ceiling so we always round up, so we always encapsulate the new grid.
+        #     N_top = int(np.ceil(dz * new_N / (cell['firn_depth'] / cell['vert_grid'])))
+        #     # We need to interpolate the top N layers to a new grid with this dz.
+        #     new_z = np.linspace(0, dz * (new_N - 1), new_N)
+        #     old_z = np.linspace(0, cell['firn_depth'] / cell['vert_grid'] * (N_top - 1), N_top)
+        #     x = x[:N_top]
+        #     x = np.interp(new_z, old_z, x)
+        #     # we need to do the same for sfrac/lfrac etc. let's setup a temporary cell dict
+        #     temp_cell = cell.copy()
+        #     for key in ['Sfrac', 'Lfrac', 'firn_temperature']:
+        #         # only the first N values are ever used by the solver, so we don't care that we leave
+        #         # the rest of the values to be what they are initially
+        #         temp_cell[key][:new_N] = np.interp(new_z, old_z, cell[key][:N_top])
+        #     N = N_top
+        # else:
+        #     temp_cell = cell
+
+        temp_cell = cell.copy()
         soldict = root(
         heateqn.heateqn,
         x,
         args=(
-            cell,
+            temp_cell,
             LW_in,
             SW_in,
             T_air,
@@ -91,6 +127,7 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
           )
 
 
+
         if not soldict.success:
             print(f"Root-finding for surface temperature failed - "
                   f"returning original guess. row = {cell['row']}, col = {cell['column']}")
@@ -99,9 +136,15 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
             # print('Using hybrd on whole grid')
             # print('Sold0 = ', soldict.x[0])
             # print('Sold1 = ', soldict.x[1])
+            # breakpoint()
             return soldict.x, soldict.success, soldict.message, soldict.success
 
-        sol = soldict.x
+        # if cell['firn_depth'] / cell['vert_grid'] > 0.001:
+        #     # We now need to interpolate the solution back to the original grid spacing.
+        #     sol = np.interp(old_z, new_z, soldict.x)
+        else:
+            sol = soldict.x
+
         ier = soldict.success
         mesg = soldict.message
         infodict = soldict.success
@@ -113,13 +156,12 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
 
         T_tri = heateqn.propagate_temperature(cell, dz, dt, sol[-1], N=N)
         T = np.concatenate((sol[:], T_tri))
-        # print('T free = ', T)
+        # print('T free = ', T[:50])
 
     T = np.around(T, decimals=8)
     # print('Sol0 = ', sol[0])
     # print('Sol1 = ', sol[1])
     #print('T = ', T)
-
     return T, infodict, ier, mesg
 
 def lake_formation_eqn(x, args):

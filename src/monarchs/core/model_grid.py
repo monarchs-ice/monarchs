@@ -147,6 +147,9 @@ def initialise_iceshelf(
     iceshelf["size_dx"][:] = size_dx
     iceshelf["size_dy"][:] = size_dy
     iceshelf["water_direction"] = np.zeros((num_rows, num_cols, 8))  # 8 possible directions
+    iceshelf["firn_boundary_change"] = 0
+    iceshelf["lake_boundary_change"] = 0
+    iceshelf["lid_boundary_change"] = 0
     return iceshelf
 
 
@@ -229,6 +232,9 @@ def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
             ("size_dy", np.float64),
             ("numba", np.bool_),
             ("water_direction", np.int32, 8),
+            ("firn_boundary_change", np.float64),
+            ("lake_boundary_change", np.float64),
+            ("lid_boundary_change", np.float64),
         ]
     )
     return dtype

@@ -60,11 +60,17 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     if not cell["valid_cell"]:
         return cell
 
+    # track evolution of firn, lake and lid over time. We do this for each day, so it
+    # resets at the start of the model day.
+    cell["firn_boundary_change"] = 0
+    cell["lake_boundary_change"] = 0
+    cell["lid_boundary_change"] = 0
 
     if np.isnan(cell["firn_temperature"]).any():
         raise ValueError("NaN in firn temperature")
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
+        print('firn_boundary_change = ', cell['firn_boundary_change'])
         if cell["lake_depth"] == 0:
             cell["lake"] = False
         if cell["lid_depth"] == 0:
@@ -99,6 +105,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 )
 
         elif cell["exposed_water"]:
+            print('Exposed water present')
             args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
             x = cell["firn_temperature"]
 
@@ -154,19 +161,18 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             elif cell["lake"] and cell["lid"]:
                 if lid_development_toggle:
                     cell["v_lid"] = False  # turn virtual lid off if full lid present
-                    if lake_development_toggle:
-                        lake_functions.lake_development(
-                            cell,
-                            dt,
-                            LW_in,
-                            SW_in,
-                            T_air,
-                            p_air,
-                            T_dp,
-                            wind,
-                        )
+                    Fu = lake_functions.lake_development(
+                        cell,
+                        dt,
+                        LW_in,
+                        SW_in,
+                        T_air,
+                        p_air,
+                        T_dp,
+                        wind,
+                    )
                     lid_functions.lid_development(
-                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
+                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, Fu
                     )
 
                 if (

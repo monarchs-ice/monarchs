@@ -27,3 +27,5 @@ src/model_setup.py
 examples/*/output/
 *.ipynb
 *.zip
+examples/sarah_test_case/
+tests/resolution_benchmarking/

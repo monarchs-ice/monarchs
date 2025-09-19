@@ -51,9 +51,10 @@ def percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=Tr
     -------
     None (amends Cell inplace)
     """
-    print('meltflag = ', cell["meltflag"][:50])
-    print('Lfrac = ', cell["Lfrac"][:50])
-    print('Saturation = ', cell["saturation"][:50])
+    # print('meltflag = ', cell["meltflag"][:50])
+    # print('Lfrac = ', cell["Lfrac"][:50])
+    # print('Saturation = ', cell["saturation"][:50])
+    dz = cell["firn_depth"] / cell["vert_grid"]
     # v_lev = 0 at surface, cell['vert_grid'] at bottom
     for point in range(0, len(cell["firn_temperature"])):
         v_lev = len(cell["firn_temperature"]) - (point + 1)
@@ -114,41 +115,42 @@ def percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=Tr
                         else:
                             # if water has stopped percolating, ensure that water does not
                             # overfill the point at which it has stopped percolating
-                            print('Percolated water up to level, no time left', v_lev)
-                            print('Lfrac at level 0 = ', cell["Lfrac"][0])
-                            print('Exposed water flag = ', cell["exposed_water"])
-                            for i in np.arange(v_lev + 1)[::-1]:
-                                calc_saturation(cell, i, end=True)
+                            # print(f'Percolated water up to level {v_lev} ({dz * v_lev:2f} m),  capillary')
+                            # print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                            # print('Exposed water flag = ', cell["exposed_water"])
+                            # for i in np.arange(v_lev + 1)[::-1]:
+                            #     calc_saturation(cell, i, end=True)
                             time_remaining = 0
-                            print('AFTER SATURATION CALCULATION')
-                            print('Percolated water up to level, capillary effects', v_lev)
-                            print('Lfrac at level 0 = ', cell["Lfrac"][0])
-                            print('Exposed water flag = ', cell["exposed_water"])
+                            # print('AFTER SATURATION CALCULATION')
+                            # print(f'Percolated water up to level {v_lev} ({dz * v_lev:2f} m),  capillary')
+                            # print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                            # print('Exposed water flag = ', cell["exposed_water"])
 
                     else:
-                        print('Percolated water up to level, no time left', v_lev)
-                        print('Lfrac at level 0 = ', cell["Lfrac"][0])
-                        print('Exposed water flag = ', cell["exposed_water"])
+                        # print(f'Percolated water up to level {v_lev} ({dz * v_lev:2f} m),  no time left')
+                        cell['meltflag'][v_lev] = 1
+                        # print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                        # print('Exposed water flag = ', cell["exposed_water"])
 
-                        for i in np.arange(v_lev + 1)[::-1]:
-                            calc_saturation(cell, i, end=True)
-                        print('AFTER SATURATION CALCULATION')
-                        print('Percolated water up to level, no time left', v_lev)
-                        print('Lfrac at level 0 = ', cell["Lfrac"][0])
-                        print('Exposed water flag = ', cell["exposed_water"])
+                        # for i in np.arange(v_lev + 1)[::-1]:
+                        #     calc_saturation(cell, i, end=True)
+                        # print('AFTER SATURATION CALCULATION')
+                        # print(f'Percolated water up to level {v_lev} ({dz * v_lev:2f} m),  no time left')
+                        # print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                        # print('Exposed water flag = ', cell["exposed_water"])
 
                 else:  # All water frozen
-                    print('Percolated water up to level, all frozen ', v_lev)
-                    print('Lfrac at level 0 = ', cell["Lfrac"][0])
-                    print('Exposed water flag = ', cell["exposed_water"])
+                    # print(f'Percolated water up to level {v_lev} ({dz * v_lev:2f} m),  all frozen')
+                    # print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                    # print('Exposed water flag = ', cell["exposed_water"])
                     cell["meltflag"][v_lev] = 0
                     time_remaining = 0
-                    for i in np.arange(v_lev + 1)[::-1]:
-                        calc_saturation(cell, i, end=True)
-                    print('AFTER SATURATION CALCULATION')
-                    print('Percolated water up to level, capillary effects', v_lev)
-                    print('Lfrac at level 0 = ', cell["Lfrac"][0])
-                    print('Exposed water flag = ', cell["exposed_water"])
+                    # for i in np.arange(v_lev + 1)[::-1]:
+                    #     calc_saturation(cell, i, end=True)
+                    # print('AFTER SATURATION CALCULATION')
+                    # print(f'Percolated water up to level {v_lev} ({dz * v_lev:2f} m), all frozen')
+                    # print('Lfrac at level 0 = ', cell["Lfrac"][0])
+                    # print('Exposed water flag = ', cell["exposed_water"])
 
 def calc_refreezing(cell, v_lev):
     """
@@ -285,9 +287,9 @@ def calc_saturation(cell, v_lev_in, end=False):
         # if we are doing this just to force cells to have physical amounts of water at the
         # final step, say that this is meltwater that can percolate at the next step.
 
-        if end:
+        if end and not cell['saturation'][v_lev + 1]:
             cell["meltflag"][v_lev] = 1
-            cell["saturation"][v_lev] = 0
+            # cell["saturation"][v_lev] = 0
         else:
             cell["saturation"][v_lev] = 1
 
@@ -304,14 +306,15 @@ def calc_saturation(cell, v_lev_in, end=False):
                     cell["Lfrac"][v_lev] = Lfrac_max
                     # if we are doing this just to force cells to have physical amounts of water at the
                     # final step, say that this is meltwater that can percolate at the next step.
-                    if end:
+                    if end and not cell['saturation'][v_lev + 1]:
                         cell["meltflag"][v_lev] = 1
-                        cell["saturation"][v_lev] = 0
+                        # cell["saturation"][v_lev] = 0
                     else:
                         cell["saturation"][v_lev] = 1
 
 
                     v_lev = v_lev - 1
+
                 else:  # cell has space for all the water, no need to move any more
                     break
 
@@ -324,7 +327,7 @@ def calc_saturation(cell, v_lev_in, end=False):
                 # moving water to where it needs to be. If the former, then the water is now exposed at the top
                 # since it has come from layers below it and so we trigger lake formation. If the latter, then
                 # we just set the meltflag so that it can percolate at the next timestep.
-                if cell["Lfrac"][0] > Lfrac_max and cell["Lfrac"][0] > 0 and not end:
+                if cell["Lfrac"][0] > Lfrac_max and cell["Lfrac"][0] > 0 and (cell['saturation'][1] or not end):
                     #if not cell['meltflag'][0]:
                         #breakpoint()
                     cell["exposed_water"] = 1

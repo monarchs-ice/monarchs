@@ -90,6 +90,7 @@ def turbulent_mixing(cell, SW_in, dt):
     -------
     None (amends cell inplace).
     """
+
     tau = 0.025
     J = 0.1 * (9.8 * 5 * 10**-5 * (1.19 * 10**-7) ** 2 / 10**-6) ** (1 / 3)
     albedo = surface_fluxes.sfc_albedo(
@@ -99,15 +100,15 @@ def turbulent_mixing(cell, SW_in, dt):
         cell["lake"],
         cell["lake_depth"],
     )
-    # Beer's Law but (1 - alpha) taken out as already calculated with incoming SW
-    Int = (1 - albedo) * SW_in * np.exp(-tau * cell["lake_depth"]) - (
-        1 - albedo
-    ) * SW_in * np.exp(-tau * 0)
+
+    # Beer's Law but (1-alpha) taken out as already calculated with incoming SW
+    Int = (1 - albedo) * SW_in * np.exp(-tau * cell["lake_depth"]) - \
+          (1 - albedo) * SW_in * np.exp(-tau * 0)
     # factor by which you want to scale the temporal resolution of this calculation
     # it is very slow (taking up to half of the overall model runtime when not using Numba).
     # Increasing this value up to the max value (dt) will make the model run faster, but you
     # increase the likelihood of numerical instability
-    dt_scaling = 200
+    dt_scaling = 20
     for i in range(int(dt / dt_scaling)):
         T_core = cell["lake_temperature"][int(cell["vert_grid_lake"] / 2)]
         # Flux at upper boundary
@@ -127,7 +128,11 @@ def turbulent_mixing(cell, SW_in, dt):
         # start at 1 as want layers below surface, end at len-1 to avoid lower boundary
         indices = np.arange(1, cell["vert_grid_lake"] - 1)
         cell["lake_temperature"][indices] = T_core
-
+    # calculate Fl and Fu again one last time - Fu is used in lid development.
+    Fl = np.sign(T_core - 273.15) * 1000 * 4181 * J * abs(T_core - 273.15) ** (4 / 3)
+    Fu = (np.sign(T_core - cell["lake_temperature"][0]) * 1000 * 4181 * J *
+          abs(T_core - cell["lake_temperature"][0]) ** (4 / 3))
+    return Fl, Fu
 
 def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     """
@@ -306,6 +311,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell["lake_temperature"][0] = sfc_energy_lake(J, Q, cell)
         # when 10 cm - switch to a real lid
         if cell["lake_temperature"][0] < 273.15:
+
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15
             cell["v_lid"] = True
@@ -330,38 +336,38 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             )
 
     # Lake is assumed turbulent as over 10cm.
-    turbulent_mixing(cell, SW_in, dt)
+    Fl, Fu = turbulent_mixing(cell, SW_in, dt)
     air = 1 - (cell["Sfrac"] + cell["Lfrac"])
     k = cell["Sfrac"] * k_ice + air * cell["k_air"] + cell["Lfrac"] * cell["k_water"]
     if cell["lake_temperature"][-2] > 273.15:  # If lake is above freezing it will begin to melt the firn below it
         if cell["firn_depth"] > 0:  # but only if the firn isn't completely melted.
+            # coordinate system is defined in depth terms. Therefore, if the firn is colder than the lake,
+            # the gradient is negative, so heat flows in the positive direction (downwards).
             kdTdz = (
-                (273.15 - cell["lake_temperature"][-2])
+                (273.15 - cell['lake_temperature'][-2])
                 * abs(k[0])
                 / (2 * (cell["lake_depth"] / cell["vert_grid_lake"]))
-                # (2 * (cell["firn_depth"] / cell["vert_grid"]))
+                # / (2 * (cell["firn_depth"] / cell["vert_grid"]))
             )
-            # TODO JE - The above is causing some issues. If the vertical grid spacing is increased, then
-            # TODO JE - for effectively the same physical parameters everywhere else kdTdz is larger, which
-            # TODO JE - leads to more melting.
-            # TODO JE - Also, should it be using the lake? I.e. (cell["lake_depth"] / cell["vert_grid_lake"])
+            # -ve kdTdz = +ve boundary_change, as energy flows from the lake into the firn, causing
+            # it to melt. This motivates the - sign in front of kdTdz since the response to a positive
+            # kdTdz is melting (i.e. boundary shifts down/positive boundary_change). The lid case
+            # will have a reversed sign, since in that case the response to a negative kdTdz is
+            # freezing (which in turn shifts the boundary down).
 
-            # print('kdTdz = ', kdTdz)
-            # print('k[0] = ', k[0])
-            # print('firn_depth = ', cell["firn_depth"])
-            # print('lake temp bottom = ', cell["lake_temperature"][-2])
-            # print('lake temp top = ', cell["lake_temperature"][0])
-            # print('firn temp top = ', cell["firn_temperature"][0])
-
-            # change height of firn due to the melting
             boundary_change = (
-                -kdTdz / (cell["Sfrac"][0] * cell["L_ice"] * cell["rho_ice"]) * dt
+                    # (kdTdz + Fl) / (cell["Sfrac"][0] * cell["L_ice"] * cell["rho_ice"]) * dt
+                    -(kdTdz) / (cell["Sfrac"][0] * cell["L_ice"] * cell["rho_ice"]) * dt
             )
-            print('Boundary change = ', boundary_change)
+            cell["lake_boundary_change"] += boundary_change
             # Regrid the firn column to account for the change in boundary (which is
             # subtracted from the firn and added to the lake in this subroutine)
+            print('Lake melting firn, boundary change = ', boundary_change)
+            print('Fl = ', Fl, 'kdTdz = ', kdTdz)
+            if boundary_change < 0:
+                breakpoint()
             firn_functions.regrid_after_melt(cell, boundary_change, lake=True)
-            print('New firn depth = ', cell['firn_depth'])
+            # print('New firn depth = ', cell['firn_depth'])
             # Set end=False since we only care about the top cell, and in this case we want to put this water into
             # the lake.
             percolation_functions.calc_saturation(cell, 0)
@@ -412,3 +418,4 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     # mass conservation testing
     new_mass = utils.calc_mass_sum(cell)
     assert abs(original_mass - new_mass) < 1.5 * 10**-7
+    return Fu  # used in lid development later
