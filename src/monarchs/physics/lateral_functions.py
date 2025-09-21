@@ -2,13 +2,15 @@ import numpy as np
 from monarchs.core.utils import find_nearest
 from monarchs.physics.percolation_functions import percolation, calc_saturation
 from numba.typed import Dict
-from numba import types, float64
+from numba import types
 
 try:
     from numba import prange
 except ImportError:
     # in case we don't have Numba - use the standard range function
-    prange = range  # pragma: no cover
+    prange = range
+
+
 def update_water_level(cell):
     """
     Determine the water level of a single cell, so we can determine where water flows laterally to and from.
@@ -73,6 +75,7 @@ def update_water_level(cell):
         # shouldn't matter, as water can't move from a lid
         cell["water_level"] = cell['lid_depth'] + cell["firn_depth"] + cell['lake_depth']
         cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
+
 
 
 def get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row):
@@ -312,6 +315,8 @@ def calc_available_water_lake(cell, water_frac, split, neighbour_cell, outflow=F
     # so doesn't pose a problem
     if cell["lake_depth"] < water_to_move * (split + 1):
         water_to_move = float(cell["lake_depth"] / (split + 1))
+    if water_to_move < 0:
+        raise ValueError("Water to move from lake is less than 0")
     return water_to_move, 0, 0, 0
 
 
@@ -504,6 +509,7 @@ def move_from_ice_lens(cell, grid, temporary_cell, temporary_neighbour, split, r
         )
     else:
         move_to_index = 0
+
     # We now need to update the amount of water in the initial firn column.
     # Water can only be deducted from the area above lowest_water_level.
     for idx in range(top_saturation_level, move_from_index + 1):
@@ -838,8 +844,10 @@ def move_water(
     for row in prange(max_grid_row):
         for col in range(max_grid_col):
             cell = grid[row][col]
+
             update_water_level(cell)
             total_water += np.sum(cell["water"]) + cell["lake_depth"]
+
             # temporary cell specification
             temp_grid[row, col]['lake_depth'] = cell['lake_depth']
             temp_grid[row, col]['lake'] = cell['lake']
@@ -880,6 +888,9 @@ def move_water(
                 # If more than one cell is equally lower than central the water is split between them
                 split = len(max_list)
                 # Water moves if one of surrounding grid is lower than central cell
+                tol = -1E-8
+                # breakpoint()
+
                 if biggest_height_difference > 0:
                     # Now calculate the amount of water to move.
                     # Note that this is in the form of temporary arrays, as we need to avoid
@@ -900,14 +911,7 @@ def move_water(
                         outflow_proportion=outflow_proportion,
                     )
 
-            # Sometimes numerical noise can result in water being negative. In this case, if it is within some
-            # tolerance, we can accept it as noise, else an error is raised.
-            tol = 1E-8
-            if (cell["water"] < tol).any():
-                raise ValueError("cell.water is negative")
-            elif (cell["water"] < 0).any():
-                set_to_zeros = np.where(cell["water"] < 0)
-                cell["water"][set_to_zeros] = 0
+
 
     # Now we have the values calculated in our temporary grid, update the values of <grid>,
     # i.e. performing our movement in one step
@@ -924,6 +928,14 @@ def move_water(
             cell["saturation"] = temporary_cell['saturation']
             cell["meltflag"] = temporary_cell['meltflag']
             new_water += np.sum(cell["water"]) + cell["lake_depth"]
+            # Sometimes numerical noise can result in water being negative. In this case, if it is within some
+            # tolerance, we can accept it as noise, else an error is raised.
+            tol = -1E-8
+            if (cell["water"] < tol).any():
+                raise ValueError("cell.water is negative")
+            elif (cell["water"] < 0).any():
+                set_to_zeros = np.where(cell["water"] < 0)
+                cell["water"][set_to_zeros] = 0
 
             if cell["valid_cell"]:
                 # Once all water has moved, update the Lfrac of each cell based on where the water now is.

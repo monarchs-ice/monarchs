@@ -269,7 +269,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     # the Sfrac we need to use is not just the top layer Sfrac, but a weighted average
     # of the melted layers. This may be more than one layer.
     if height_change > dz_old:
-        breakpoint()
         # the weights are just the fraction of each layer that is melted
         weights = np.ones(int(height_change / dz_old) + 1)
         weights[-1] = (height_change % dz_old) / dz_old  # partial layer at the bottom

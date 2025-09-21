@@ -329,9 +329,9 @@ def jit_modules(fastmath=False):
 
         for name, function in functions_list:
             # Ignore functions that are imported, are in our ignore list, or have the __wrapped__ attribute
-            if function.__module__ != module.__name__:
-                print(f"Skipping {name} because it belongs to {function.__module__}, not {module.__name__}")
-                continue
+            # if function.__module__ != module.__name__:
+            #     print(f"Skipping {name} because it belongs to {function.__module__}, not {module.__name__}")
+            #     continue
 
             if name in ignore_list:
                 continue

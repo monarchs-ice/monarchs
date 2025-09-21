@@ -364,8 +364,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             # subtracted from the firn and added to the lake in this subroutine)
             print('Lake melting firn, boundary change = ', boundary_change)
             print('Fl = ', Fl, 'kdTdz = ', kdTdz)
-            if boundary_change < 0:
-                breakpoint()
+
             firn_functions.regrid_after_melt(cell, boundary_change, lake=True)
             # print('New firn depth = ', cell['firn_depth'])
             # Set end=False since we only care about the top cell, and in this case we want to put this water into

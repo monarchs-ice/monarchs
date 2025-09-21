@@ -96,7 +96,7 @@ vars_to_save = (
 # Filename for model output, including file extension (.nc for netCDF).
 output_filepath = f"output/1d_testcase_{vertical_points_firn}res.nc"
 output_grid_size = vertical_points_firn  # Size of interpolated output
-lateral_movement_toggle = False
+lateral_movement_toggle = True
 firn_column_toggle = True
 lake_development_toggle = True
 lid_development_toggle = True
@@ -108,7 +108,7 @@ Dumping and reloading parameters
 dump_data = True
 dump_filepath = f"output/1d_testcase_dump_{vertical_points_firn}.nc"  # Filename of our previously dumped state
 reload_from_dump = False  # Flag to determine whether to reload the state or not
-use_numba = False
+use_numba = True
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
     grid = monarchs()
