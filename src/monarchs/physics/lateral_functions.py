@@ -35,7 +35,7 @@ def update_water_level(cell):
 
     if not cell["valid_cell"]:
         # Invalid cell - not interested so set water level to something unreasonably high
-        cell["water_level"] = 999
+        cell["water_level"] = 1E10
         return
 
     elif not cell["lake"] and not cell["lid"]:
@@ -621,6 +621,7 @@ def handle_invalid_neighbour_cell(grid, cell, temporary_cell, row, col, n_s_inde
         )
         if water_out > 0:
             print(f"Moved {float(water_out)} units of water into the land")
+            return water_out
         if temporary_cell["lake_depth"] < 0:
             print(
                 f"temporary_cell['lake_depth'] = {temporary_cell['lake_depth']}, col = {col}, row = {row}"
@@ -628,7 +629,9 @@ def handle_invalid_neighbour_cell(grid, cell, temporary_cell, row, col, n_s_inde
             print(
                 f"split = {split}, water_frac = {water_frac}, cell.lake_depth = {cell['lake_depth']}"
             )
-        return water_out
+        else:
+            return -1
+
     else:
         return 0
 
@@ -709,7 +712,11 @@ def move_to_neighbours(
             water_frac = water_fraction(
                 cell, biggest_height_difference, timestep, neighbour, flow_speed_scaling=flow_speed_scaling
             )
-
+            # try:
+            #     # if grid[row + n_s_index][col + w_e_index]["row"] == 21 and grid[row + n_s_index][col + w_e_index]["column"] == 72:
+            #         # breakpoint()
+            # except Exception:
+            #     pass
             # Before actually moving water, we first need to find out how much water can actually move.
             # This try/except block happens in all non-lid cases, and determines how much water can move from the
             # central cell to the neighbour cell. If the cell is at a boundary, and the neighbour cell is outside of the domain,
@@ -732,9 +739,13 @@ def move_to_neighbours(
                 return water_out
             # if handle_invalid_neighbour_cell returns -1, then don't flow to this particular
             # (invalid) cell, but there may be a neighbour that *is* valid
-            elif water_out == -1:
+            elif water_out == -1 and idx != len(biggest_neighbours) - 1:
                 continue
-
+            # If we get to the end and all possible neighbours have been exhausted, then simply
+            # return 0 so we don't do anything. This fixes a bug where if no valid neighbours are found, then
+            # an extremely large amount of water is moved.
+            elif water_out == -1:
+                return 0
             # Determine the neighbour and create a temporary version of it to hold info while we move
             # to/from other cells
             if 0 <= row + n_s_index < len(grid) and 0 <= col + w_e_index < len(grid[0]):
@@ -773,7 +784,10 @@ def move_to_neighbours(
             else:  # If no ice lens, then no water should be able to move as
                 # it should preferentially percolate downwards.
                 raise ValueError("This should not be happening...")
-
+    # if (temporary_cell["water"] < 0).any():
+    #     breakpoint()
+    # elif temporary_neighbour["water"].any() < 0:
+    #     breakpoint()
     return 0
 
 
@@ -844,7 +858,6 @@ def move_water(
     for row in prange(max_grid_row):
         for col in range(max_grid_col):
             cell = grid[row][col]
-
             update_water_level(cell)
             total_water += np.sum(cell["water"]) + cell["lake_depth"]
 
@@ -932,6 +945,7 @@ def move_water(
             # tolerance, we can accept it as noise, else an error is raised.
             tol = -1E-8
             if (cell["water"] < tol).any():
+                # breakpoint()
                 raise ValueError("cell.water is negative")
             elif (cell["water"] < 0).any():
                 set_to_zeros = np.where(cell["water"] < 0)
