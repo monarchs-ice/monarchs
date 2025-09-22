@@ -85,7 +85,7 @@ def virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
     if cell["virtual_lid_temperature"] < 273.15:  # further freezing of the virtual lid
         if new_boundary_change < 0:
-            if new_boundary_change < cell["lake_depth"]:
+            if (new_boundary_change * cell["rho_ice"] / cell["rho_water"]) < cell["lake_depth"]:
                 old_depth_grid = np.linspace(
                     0, cell["lake_depth"], cell["vert_grid_lake"]
                 )

@@ -158,6 +158,15 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                             cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
                         )
 
+                    # if virtual lid freezes the entire lake (possible if lateral movement),
+                    # then combine (virtual) lid and lake profiles.
+                    if (
+                            cell["lake_depth"] <= 1E-5 or
+                            np.any(cell['lake_temperature'][cell['lake_temperature'] > 273.15])
+                            is False
+                    ):
+                        lid_functions.combine_lid_firn(cell)
+
             elif cell["lake"] and cell["lid"]:
                 if lid_development_toggle:
                     cell["v_lid"] = False  # turn virtual lid off if full lid present

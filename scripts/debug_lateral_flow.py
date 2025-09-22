@@ -19,7 +19,7 @@ file_fmt = "netcdf"
 
 dtype = get_spec(500, 20, 20)
 grid, _, _, _ = reload_from_dump(path, dtype)
-
+breakpoint()
 move_water(
     grid,
     row_amount,
