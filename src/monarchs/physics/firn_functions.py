@@ -91,7 +91,7 @@ def firn_column(
     # and regrid the column to account for the height change that occurs due to melting.
     # breakpoint()
     if (root[0] > 273.15) and success:
-        print('Root0 = ', root[0])
+        # print('Root0 = ', root[0])
 
         # root[0] = 285
         # print('Forced root[0] to 285 for testing purposes - testing sensitivity to heat equation solver')
@@ -110,7 +110,7 @@ def firn_column(
             height_change = calc_height_change(
                 cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, root
             )
-            print('Height change = ', height_change)
+            # print('Height change = ', height_change)
 
             if np.isnan(height_change):
                 raise ValueError("Height change is NaN - likely due to unrealistic meteorological data.")
@@ -208,7 +208,7 @@ def calc_height_change(cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, s
             k_sfc * dtdz) / (
                        cell['rho_ice'] * (cell['Sfrac'][0] * L_fus)) * timestep
     # dHdt = 0.01
-    print('dHdt = ', dHdt)
+    # print('dHdt = ', dHdt)
     cell["firn_boundary_change"] += dHdt
 
     # dHdt = 0.01

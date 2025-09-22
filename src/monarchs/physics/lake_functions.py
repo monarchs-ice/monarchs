@@ -362,8 +362,8 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             cell["lake_boundary_change"] += boundary_change
             # Regrid the firn column to account for the change in boundary (which is
             # subtracted from the firn and added to the lake in this subroutine)
-            print('Lake melting firn, boundary change = ', boundary_change)
-            print('Fl = ', Fl, 'kdTdz = ', kdTdz)
+            # print('Lake melting firn, boundary change = ', boundary_change)
+            # print('Fl = ', Fl, 'kdTdz = ', kdTdz)
 
             firn_functions.regrid_after_melt(cell, boundary_change, lake=True)
             # print('New firn depth = ', cell['firn_depth'])

@@ -70,7 +70,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         raise ValueError("NaN in firn temperature")
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
-        print('firn_boundary_change = ', cell['firn_boundary_change'])
+        # print('firn_boundary_change = ', cell['firn_boundary_change'])
         if cell["lake_depth"] == 0:
             cell["lake"] = False
         if cell["lid_depth"] == 0:
@@ -105,7 +105,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 )
 
         elif cell["exposed_water"]:
-            print('Exposed water present')
+            #print('Exposed water present')
             args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
             x = cell["firn_temperature"]
 
