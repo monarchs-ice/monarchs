@@ -316,7 +316,6 @@ def calc_available_water_lake(cell, water_frac, split, neighbour_cell, outflow=F
     if cell["lake_depth"] < water_to_move * (split + 1):
         water_to_move = float(cell["lake_depth"] / (split + 1))
     if water_to_move < 0:
-        breakpoint()
         raise ValueError("Water to move from lake is less than 0")
     return water_to_move, 0, 0, 0
 
