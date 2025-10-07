@@ -1,0 +1,14 @@
+API Reference
+=============
+
+This page contains auto-generated API reference documentation [#f1]_.
+
+.. toctree::
+   :titlesonly:
+
+   /autoapi/solver_nb/index
+   /autoapi/heateqn_nb/index
+   /autoapi/extract_args/index
+   /autoapi/loop_over_grid/index
+
+.. [#f1] Created with `sphinx-autoapi <https://github.com/readthedocs/sphinx-autoapi>`_

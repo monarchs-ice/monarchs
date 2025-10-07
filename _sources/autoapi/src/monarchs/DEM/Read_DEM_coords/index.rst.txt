@@ -1,0 +1,27 @@
+src.monarchs.DEM.Read_DEM_coords
+================================
+
+.. py:module:: src.monarchs.DEM.Read_DEM_coords
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   src.monarchs.DEM.Read_DEM_coords.gt
+   src.monarchs.DEM.Read_DEM_coords.heights
+   src.monarchs.DEM.Read_DEM_coords.tiffname
+
+
+Module Contents
+---------------
+
+.. py:data:: gt
+
+.. py:data:: heights
+
+.. py:data:: tiffname
+   :value: '38_12_32m_v2.0_dem.tif'
+
+

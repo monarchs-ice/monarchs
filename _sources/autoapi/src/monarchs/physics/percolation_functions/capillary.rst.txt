@@ -1,0 +1,14 @@
+src.monarchs.physics.percolation_functions.capillary
+====================================================
+
+.. py:function:: src.monarchs.physics.percolation_functions.capillary(cell, v_lev)
+
+   Calculate the amount of water left behind due to capillary effects.
+   For more information, see Ligtenberg et al. (2011), The Cryosphere, doi:10.5194/tc-5-809-2011.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **v_lev** (*int*) -- Vertical level of cell that we are looking at to determine the capillary effect for.
+
+   :returns: **capillary_remain** -- Amount of water (in units of liquid fraction) that is left in the cell.
+   :rtype: float
+

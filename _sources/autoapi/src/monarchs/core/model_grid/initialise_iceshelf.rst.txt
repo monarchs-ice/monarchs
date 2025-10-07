@@ -1,0 +1,12 @@
+src.monarchs.core.model_grid.initialise_iceshelf
+================================================
+
+.. py:function:: src.monarchs.core.model_grid.initialise_iceshelf(num_rows, num_cols, vert_grid, vert_grid_lake, vert_grid_lid, dtype, x, y, firn_depth, rho, firn_temperature, Sfrac=np.array([np.nan]), Lfrac=np.array([np.nan]), meltflag=np.array([np.nan]), saturation=np.array([np.nan]), lake_depth=0, lake_temperature=np.array([np.nan]), lid_depth=0, lid_temperature=np.array([np.nan]), melt=False, exposed_water=False, lake=False, v_lid=False, lid=False, water_level=0, water=np.array([np.nan]), ice_lens=False, ice_lens_depth=999, has_had_lid=False, lid_sfc_melt=0, lid_melt_count=0, melt_hours=0, exposed_water_refreeze_counter=0, virtual_lid_temperature=273.15, total_melt=0.0, valid_cells=True, lat=0, lon=0, numba=False, size_dx=1000, size_dy=1000)
+
+   Initialize a NumPy structured array representing the ice shelf.
+
+   :Parameters: **All parameters correspond to the attributes specified in get_spec() below.**
+
+   :returns: **iceshelf** -- A NumPy structured array initialized with the provided parameters.
+   :rtype: np.ndarray
+

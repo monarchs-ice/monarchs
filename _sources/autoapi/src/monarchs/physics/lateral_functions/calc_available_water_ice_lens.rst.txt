@@ -1,0 +1,13 @@
+src.monarchs.physics.lateral_functions.calc_available_water_ice_lens
+====================================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.calc_available_water_ice_lens(cell, water_frac, split, neighbour_cell, outflow=False)
+
+   Determine the amount of water that can be moved from one cell to the next.
+
+   :Parameters: * **cell**
+                * **water_frac**
+                * **split**
+                * **neighbour_cell**
+                * **outflow**
+

@@ -1,0 +1,43 @@
+src.monarchs.physics.solver
+===========================
+
+.. py:module:: src.monarchs.physics.solver
+
+.. autoapi-nested-parse::
+
+   This module contains functions used to solve the various heat/surface energy balance equations,
+   using the Scipy.optimize.fsolve implementation.
+   This is rather unwieldy, but allows us to select a solver conditionally, and do so both in the main model code
+   using the relevant flag in ``model_setup.py``, but also in our test suite.
+   This is in part a tradeoff between usability of the model, and code clarity. This approach was chosen to maximise
+   usability, so that the different solvers can be generated according to the value of a single Boolean.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/physics/solver/firn_heateqn_solver
+   /autoapi/src/monarchs/physics/solver/lake_development_eqn
+   /autoapi/src/monarchs/physics/solver/lake_formation_eqn
+   /autoapi/src/monarchs/physics/solver/lake_solver
+   /autoapi/src/monarchs/physics/solver/lid_heateqn_solver
+   /autoapi/src/monarchs/physics/solver/lid_seb_solver
+   /autoapi/src/monarchs/physics/solver/sfc_energy_lid
+   /autoapi/src/monarchs/physics/solver/sfc_energy_virtual_lid
+
+.. autoapisummary::
+
+   src.monarchs.physics.solver.firn_heateqn_solver
+   src.monarchs.physics.solver.lake_development_eqn
+   src.monarchs.physics.solver.lake_formation_eqn
+   src.monarchs.physics.solver.lake_solver
+   src.monarchs.physics.solver.lid_heateqn_solver
+   src.monarchs.physics.solver.lid_seb_solver
+   src.monarchs.physics.solver.sfc_energy_lid
+   src.monarchs.physics.solver.sfc_energy_virtual_lid
+
+

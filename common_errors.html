@@ -1,0 +1,163 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Common errors and debugging &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Making changes to MONARCHS" href="making_changes.html" />
+    <link rel="prev" title="model_setup variable reference" href="model_setup_reference.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Common errors and debugging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#common-errors">Common errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#debugging">Debugging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Common errors and debugging</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/common_errors.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="common-errors-and-debugging">
+<h1>Common errors and debugging<a class="headerlink" href="#common-errors-and-debugging" title="Link to this heading"></a></h1>
+<section id="common-errors">
+<h2>Common errors<a class="headerlink" href="#common-errors" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">PermissionError</span></code> : typically appears when you have two model runs in progress at the same time that are using the
+same netCDF file for the input/output steps. Ensure that a) you only have one MONARCHS process running on a particular
+set of files and b) that if running multiple runs at the same time your filepaths are correct. It can also occur if you
+have the netCDF file open for e.g. plotting data.</p>
+<p>You can try setting the environment variable <code class="docutils literal notranslate"><span class="pre">HDF5_USE_FILE_LOCKING=FALSE</span></code> (using <code class="docutils literal notranslate"><span class="pre">export</span></code> on Linux or <code class="docutils literal notranslate"><span class="pre">set</span></code> on Windows)
+and try again to see if this resolves the issue. This is however not recommended for doing anything other than debugging
+since you may have two processes writing to the same NetCDF file in this case.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ValueError</span></code> : can happen if the initial conditions are ill-posed. Typically, this is because enough firn has melted
+that the amount of melt occurring in a timestep is higher than the vertical resolution. While MONARCHS has ways of
+handling this, if the firn depth is small then this can cause the column to melt very quickly.
+It can also arise if the solid or liquid fraction in a cell goes above 1. It may be worth setting <code class="docutils literal notranslate"><span class="pre">firn_min_height</span></code>
+to a higher value in the model setup script, and using <code class="docutils literal notranslate"><span class="pre">min_height_handler</span> <span class="pre">=</span> <span class="pre">'extend'</span></code> to ensure that the model
+minimum firn height is not too small.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ImportError</span></code> : One of the required modules is missing. If this is <code class="docutils literal notranslate"><span class="pre">NumbaMinpack</span></code>, then likely your system does not have
+<code class="docutils literal notranslate"><span class="pre">CMake</span></code> and a compatible Fortran compiler installed. You can still run the model however using <code class="docutils literal notranslate"><span class="pre">use_numba</span> <span class="pre">=</span> <span class="pre">False</span></code>,
+in which case this <code class="docutils literal notranslate"><span class="pre">ImportError</span></code> should disappear. If you are running with <code class="docutils literal notranslate"><span class="pre">use_numba</span> <span class="pre">=</span> <span class="pre">False</span></code> and still get
+<code class="docutils literal notranslate"><span class="pre">ImportError</span></code> on NumbaMinpack, please submit an Issue on GitHub..</p>
+<p>It may also occur when trying to load in a DEM.</p>
+</section>
+<section id="debugging">
+<h2>Debugging<a class="headerlink" href="#debugging" title="Link to this heading"></a></h2>
+<p>When using the Python debugger, you need to ensure that you run with <code class="docutils literal notranslate"><span class="pre">use_numba</span> <span class="pre">=</span> <span class="pre">False</span></code> and <code class="docutils literal notranslate"><span class="pre">parallel</span> <span class="pre">==</span> <span class="pre">False</span></code>.
+I like to take advantage of the fact that the model setup script is a Python script and add in an extra variable
+<code class="docutils literal notranslate"><span class="pre">debug_mode</span></code>, which when set to <code class="docutils literal notranslate"><span class="pre">True</span></code> sets via an <code class="docutils literal notranslate"><span class="pre">if</span></code> block  <code class="docutils literal notranslate"><span class="pre">use_numba</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel</span></code>, <code class="docutils literal notranslate"><span class="pre">use_mpi</span></code> and
+<code class="docutils literal notranslate"><span class="pre">reload_from_dump</span></code> to <code class="docutils literal notranslate"><span class="pre">False</span></code>/<code class="docutils literal notranslate"><span class="pre">False</span></code>/<code class="docutils literal notranslate"><span class="pre">False</span></code>/<code class="docutils literal notranslate"><span class="pre">True</span></code> respectively , so that I can speedily load in the
+state immediately before the model crashes and run it in a debugger to diagnose the problem.</p>
+<p>If an error happens during the lateral movement step, and you don’t want to run the entire single-column phase in
+serial so that you can debug the lateral bit that happens at the end, you can add the <code class="docutils literal notranslate"><span class="pre">dump_data_pre_lateral_movement</span></code>
+flag and set it to <code class="docutils literal notranslate"><span class="pre">True</span></code> in <code class="docutils literal notranslate"><span class="pre">model_setup</span></code>. This will create a dump file directly after the single column physics
+finishes, rather than at the end of the model day.</p>
+<p>A possible workflow if you see a lateral movement error might be to:
+-   restart the run in parallel with <code class="docutils literal notranslate"><span class="pre">dump_data_pre_lateral_movement</span> <span class="pre">=</span> <span class="pre">True</span></code>
+-   wait for it to finish, then re-run in serial with a debugger loading in from this dump file, ensuring that
+<code class="docutils literal notranslate"><span class="pre">single_column_toggle</span></code> is set to <code class="docutils literal notranslate"><span class="pre">False</span></code> so the model goes straight to the lateral bit you want to debug.
+<code class="docutils literal notranslate"><span class="pre">scripts/debug_lateral_flow.py</span></code> shows an example of this, where a
+dump file is loaded in and the lateral movement step is run outside of MONARCHS, which allows for quick debugging.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="model_setup_reference.html" class="btn btn-neutral float-left" title="model_setup variable reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="making_changes.html" class="btn btn-neutral float-right" title="Making changes to MONARCHS" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

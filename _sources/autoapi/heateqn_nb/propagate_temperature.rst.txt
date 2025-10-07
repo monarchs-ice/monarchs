@@ -1,0 +1,4 @@
+heateqn_nb.propagate_temperature
+================================
+
+.. py:function:: heateqn_nb.propagate_temperature(cell, dz, dt, T_bc_top, N=10)

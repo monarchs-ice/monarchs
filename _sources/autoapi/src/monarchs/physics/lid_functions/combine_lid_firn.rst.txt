@@ -1,0 +1,12 @@
+src.monarchs.physics.lid_functions.combine_lid_firn
+===================================================
+
+.. py:function:: src.monarchs.physics.lid_functions.combine_lid_firn(cell)
+
+   Combines the lid and firn profiles into a single column when the lake is completely frozen.
+   This avoids overwriting fixed-length arrays by creating new arrays for the combined profiles.
+
+   :Parameters: **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+
+   :rtype: None (amends cell inplace)
+

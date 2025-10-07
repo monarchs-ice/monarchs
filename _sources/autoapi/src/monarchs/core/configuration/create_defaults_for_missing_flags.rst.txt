@@ -1,0 +1,19 @@
+src.monarchs.core.configuration.create_defaults_for_missing_flags
+=================================================================
+
+.. py:function:: src.monarchs.core.configuration.create_defaults_for_missing_flags(model_setup)
+
+   Prevent the model from crashing out if certain flags are not specified in the model_setup file.
+   This will not prevent the code from stopping if key information is not provided (e.g. a DEM GeoTIFF file or
+   a NumPy array of firn column depth matching the chosen grid size, or a netCDF of input meteorological data).
+   It is intended to ensure that the code runs even if the setup file does not contain every possible argument.
+   (for example, not having flags that don't affect the model physics such as <met_dem_diagnostic_plots> set,
+   or likewise the debugging toggles such as `firn_heat_toggle`).
+
+   You can also amend this function to set defaults for certain variables, e.g. the default surface density
+   `rho_sfc` = 500 as defined below.
+
+   :Parameters: **model_setup - loaded in model setup file (see <load_in_model_setup>)**
+
+   :rtype: None
+

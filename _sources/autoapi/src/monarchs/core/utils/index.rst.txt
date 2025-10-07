@@ -1,0 +1,41 @@
+src.monarchs.core.utils
+=======================
+
+.. py:module:: src.monarchs.core.utils
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/core/utils/add_edge_water
+   /autoapi/src/monarchs/core/utils/add_random_water
+   /autoapi/src/monarchs/core/utils/calc_grid_mass
+   /autoapi/src/monarchs/core/utils/calc_mass_sum
+   /autoapi/src/monarchs/core/utils/check_correct
+   /autoapi/src/monarchs/core/utils/check_energy_conservation
+   /autoapi/src/monarchs/core/utils/check_grid_correctness
+   /autoapi/src/monarchs/core/utils/do_not_jit
+   /autoapi/src/monarchs/core/utils/find_nearest
+   /autoapi/src/monarchs/core/utils/get_2d_grid
+   /autoapi/src/monarchs/core/utils/memory_tracker
+   /autoapi/src/monarchs/core/utils/spinup
+
+.. autoapisummary::
+
+   src.monarchs.core.utils.add_edge_water
+   src.monarchs.core.utils.add_random_water
+   src.monarchs.core.utils.calc_grid_mass
+   src.monarchs.core.utils.calc_mass_sum
+   src.monarchs.core.utils.check_correct
+   src.monarchs.core.utils.check_energy_conservation
+   src.monarchs.core.utils.check_grid_correctness
+   src.monarchs.core.utils.do_not_jit
+   src.monarchs.core.utils.find_nearest
+   src.monarchs.core.utils.get_2d_grid
+   src.monarchs.core.utils.memory_tracker
+   src.monarchs.core.utils.spinup
+
+

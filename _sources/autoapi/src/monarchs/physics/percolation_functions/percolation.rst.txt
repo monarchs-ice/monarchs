@@ -1,0 +1,27 @@
+src.monarchs.physics.percolation_functions.percolation
+======================================================
+
+.. py:function:: src.monarchs.physics.percolation_functions.percolation(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=True)
+
+   Main function to handle percolation of water within the firn column.
+   This percolation is performed from the bottom up, i.e. we iterate from the end of the
+   firn column (i.e. the deepest point). We find the lowest point with meltwater, then
+   iterate back toward the end of the firn column to move it down. We then continue the
+   search upward, repeating the same process as we go. At each point during the
+   percolation step, some water is refrozen due to the firn temperature being sub-zero,
+   and some water is left behind due to capillary effects.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **timestep** (*int*) -- Amount of time in seconds for each timestep. [s]
+                * **lateral_refreeze_flag** (*bool, optional*) -- We can run the percolation at the end of a lateral movement step. If we do this, we don't
+                  want to trigger the refreezing as this has already occurred in the single-column calculations,
+                  and we would get more refreezing than expected.
+                  This flag controls this behaviour - it should be False unless being called from
+                  <lateral_functions.move_water>.
+                  Default False.
+                * **perc_time_toggle** (*bool, optional*) -- Run with the calculation of the percolation time if True, or else it can be disabled for
+                  testing (in which case water can percolate freely during the whole timestep).
+                  Default True. Defined in model setup script.
+
+   :rtype: None (amends Cell inplace)
+

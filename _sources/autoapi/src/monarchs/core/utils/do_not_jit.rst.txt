@@ -1,0 +1,10 @@
+src.monarchs.core.utils.do_not_jit
+==================================
+
+.. py:function:: src.monarchs.core.utils.do_not_jit(function)
+
+   An empty function used to decorate functions that we do not wish to jit-compile.
+   :Parameters: **function - function to be decorated**
+
+   :rtype: wrapped function
+

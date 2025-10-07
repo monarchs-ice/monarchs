@@ -1,0 +1,32 @@
+src.monarchs.DEM.create_DEM_planar_test_case
+============================================
+
+.. py:module:: src.monarchs.DEM.create_DEM_planar_test_case
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   src.monarchs.DEM.create_DEM_planar_test_case.h
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/DEM/create_DEM_planar_test_case/export_planar_DEM
+
+.. autoapisummary::
+
+   src.monarchs.DEM.create_DEM_planar_test_case.export_planar_DEM
+
+
+Module Contents
+---------------
+
+.. py:data:: h
+

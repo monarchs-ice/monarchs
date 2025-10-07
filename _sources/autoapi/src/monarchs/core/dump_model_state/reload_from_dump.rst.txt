@@ -1,0 +1,16 @@
+src.monarchs.core.dump_model_state.reload_from_dump
+===================================================
+
+.. py:function:: src.monarchs.core.dump_model_state.reload_from_dump(fname, dtype, keys='all')
+
+   Loads the netCDF file containing the model state into a NumPy structured array.
+
+   :Parameters: * **fname** (*str*) -- Filename to load data from.
+                * **dtype** (*np.dtype*) -- The dtype of the structured array to load the data into.
+                * **keys** (*list or str, optional*) -- List of keys to load from the netCDF file. If "all", all keys will be loaded.
+
+   :returns: * **grid** (*np.ndarray*) -- NumPy structured array with data loaded from the netCDF file.
+             * **met_start_idx** (*int*) -- Starting index for meteorological data.
+             * **met_end_idx** (*int*) -- Ending index for meteorological data.
+             * **iteration** (*int*) -- Iteration (day) to continue running the model from.
+

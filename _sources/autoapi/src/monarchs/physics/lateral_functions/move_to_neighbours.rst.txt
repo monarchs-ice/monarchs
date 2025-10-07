@@ -1,0 +1,25 @@
+src.monarchs.physics.lateral_functions.move_to_neighbours
+=========================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.move_to_neighbours(grid, temp_grid, biggest_neighbours, col, row, split, catchment_outflow, biggest_height_difference, timestep, flow_into_land=False, flow_speed_scaling=1.0, outflow_proportion=1.0)
+
+   Moves water from the central cell (grid[i][j]) to the neighbours with the lowest water level.
+   The specific neighbour is associated with an index [i + m][j + n] with m, n = [-1, 0, 1].
+   e.g. SW neighbour is associated with the m = +1, n = -1.
+   How the movement is handled is dependent on the features of the cell and its neighbour.
+   Called in <move_water>.
+
+   :Parameters: * **grid** (*numpy structured array*) -- Model grid representing the ice shelf.
+                * **biggest_neighbours** (*List*) -- List of the largest neighbour cells calculated from find_biggest_neighbour
+                * **i** (*int*) -- current row index
+                * **j** (*int*) -- current column index
+                * **biggest_height_difference** (*float*) -- largest difference in water level between the central cell and its neighbours. Used in `water_fraction`.
+                * **split** (*int*) -- Number determining whether water is split between two or more neighbour grid cells, if there are cells of
+                  equal water_level
+
+   :rtype: None (amends instance of grid passed into it)
+
+   :raises ValueError: If model reaches a state that should not be able to occur, then raise this error.
+       This can occur if the lake depth goes below 0, or if there is water to move in a grid cell where water
+       should not be able to move from (i.e. no lake or ice lens)
+

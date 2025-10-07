@@ -1,0 +1,155 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.monarchs.physics.firn_functions.firn_column &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../structure.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src.monarchs.physics.firn_functions.firn_column</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/src/monarchs/physics/firn_functions/firn_column.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="src-monarchs-physics-firn-functions-firn-column">
+<h1>src.monarchs.physics.firn_functions.firn_column<a class="headerlink" href="#src-monarchs-physics-firn-functions-firn-column" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.monarchs.physics.firn_functions.firn_column">
+<span class="sig-prename descclassname"><span class="pre">src.monarchs.physics.firn_functions.</span></span><span class="sig-name descname"><span class="pre">firn_column</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">LW_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SW_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_air</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_air</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_dp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toggle_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prescribed_height_change</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.monarchs.physics.firn_functions.firn_column" title="Link to this definition"></a></dt>
+<dd><p>Perform the various processes applied to the firn each timestep where we don’t have exposed water at the surface.</p>
+<p>The logic works as follows:
+Solve heat equation for firn</p>
+<p>If surface temperature is above melting point of water
+(i,e melting takes place):</p>
+<ul class="simple">
+<li><p>Determine the height change as a result of the melting</p></li>
+<li><p>Regrid everything to take account for this deformation</p></li>
+<li><p>Re-solve heat equation, now with fixed surface temperature</p></li>
+<li><p>Calculate the amount of water added to the surface as a result of melt</p></li>
+<li><p>Percolate that water down, taking into account any lids or lakes that may have formed.</p></li>
+</ul>
+<p>Otherwise:
+- Update cell temperature and continue.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell</strong> (<em>numpy structured array</em>) – Element of the model grid we are operating on.</p></li>
+<li><p><strong>dt</strong> (<em>int</em>) – Number of seconds in the current timestep [s]</p></li>
+<li><p><strong>dz</strong> (<em>float</em>) – Height of each vertical point in the cell. [m]</p></li>
+<li><p><strong>LW_in</strong> (<em>float</em>) – Downwelling longwave radiation at the current timestep. [W m^-2]</p></li>
+<li><p><strong>SW_in</strong> (<em>float</em>) – Downwelling shortwave radiation at the current timestep. [W m^-2]</p></li>
+<li><p><strong>T_air</strong> (<em>float</em>) – Surface air temperature at the current timestep. [K]</p></li>
+<li><p><strong>p_air</strong> (<em>float</em>) – Surface air pressure at the current timestep. [Pa]</p></li>
+<li><p><strong>T_dp</strong> (<em>float</em>) – Dewpoint temperature of the air at the surface at the current timestep. [K]</p></li>
+<li><p><strong>wind</strong> (<em>float</em>) – Wind speed at the surface at the current timestep. [m s^-1]</p></li>
+<li><p><strong>toggle_dict</strong> (<em>dict</em>) – Dictionary containing some switches that affect the running of the model.</p></li>
+<li><p><strong>prescribed_height_change</strong> (<em>float, optional</em>) – For testing purposes, it can be useful to set a prescribed height change to force the firn to lose height
+regardless of the meteorological conditions, with the corresponding increase in water. [m]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None (amends cell inplace)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+src.monarchs.core.driver.setup_toggle_dict
+==========================================
+
+.. py:function:: src.monarchs.core.driver.setup_toggle_dict(model_setup)
+
+   Set up a dictionary of switches to determine the running of the model.
+   These are accessed by each thread, so we need to set up a new object to hold these
+   else we will run into errors. Additionally, the ModelSetup class is not a jitclass
+   (and cannot be dynamically set to be one), so will not work with Numba.
+   We therefore need a numba.typed.Dict object in this instance.
+
+   :Parameters: **model_setup**
+

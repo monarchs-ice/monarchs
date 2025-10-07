@@ -1,0 +1,4 @@
+src.monarchs.physics.lateral_functions.get_neighbour_water_levels
+=================================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row)

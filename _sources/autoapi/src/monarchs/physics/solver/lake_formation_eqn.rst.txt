@@ -1,0 +1,15 @@
+src.monarchs.physics.solver.lake_formation_eqn
+==============================================
+
+.. py:function:: src.monarchs.physics.solver.lake_formation_eqn(x, args)
+
+   Scipy-compatible form of the lake formation version of the surface temperature equation.
+   Called in get_lake_solver.
+
+   :Parameters: * **x** (*array_like, float, dimension(vert_grid_lake)*) -- Initial estimate of the lake temperature. [K]
+                * **args** (*array_like*) -- Array of input arguments to be extracted into the relevant variables
+                  (firn_depth, vert_grid, Q, k, and T1).
+
+   :returns: **output** -- Estimate of the surface lake temperature [K].
+   :rtype: float
+

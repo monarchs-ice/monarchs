@@ -1,0 +1,8 @@
+src.monarchs.core.utils.memory_tracker
+======================================
+
+.. py:function:: src.monarchs.core.utils.memory_tracker(label='')
+
+   Decorator to measure memory usage before and after a function call.
+   Prints the difference in MB.
+

@@ -1,0 +1,15 @@
+src.monarchs.DEM.load_DEM.generate_diagnostic_plots
+===================================================
+
+.. py:function:: src.monarchs.DEM.load_DEM.generate_diagnostic_plots(lons, lats, heights, newlons, newlats, newheights, new_heights_interpolated)
+
+   Diagnostics for the DEM interpolation process.
+
+   :Parameters: * **lons**
+                * **lats**
+                * **heights**
+                * **newlons**
+                * **newlats**
+                * **newheights**
+                * **new_heights_interpolated**
+

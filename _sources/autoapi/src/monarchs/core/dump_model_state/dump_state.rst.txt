@@ -1,0 +1,22 @@
+src.monarchs.core.dump_model_state.dump_state
+=============================================
+
+.. py:function:: src.monarchs.core.dump_model_state.dump_state(fname, grid, met_start_idx, met_end_idx)
+
+   MONARCHS can sometimes crash, or throw an error. This function allows for the model state to be
+   saved into a file (name determined by <model_setup.reload_file>). This allows for restarting
+   of the code from this saved state, which can be useful either to keep progress in the event of an error outside
+   of MONARCHS' control, or to debug the cause of an error (e.g. by switching Numba and parallelisation off).
+   Called by <main>, if the relevant flag is set in <model_setup.py>.
+
+   :Parameters: * **fname** (*str*) -- Filename we wish to save our data into.
+                * **grid** (*numpy structured array*) -- Model grid containing our ice shelf.
+                * **met_start_idx** (*int*) -- Index used to determine where in our grid of meteorological data we want to start from if we were
+                  to restart the model.
+                * **met_end_idx** (*int*) -- As met_start_idx, but the ending index. These together create a slice across the current iteration,
+                  so we can continue from where we left off. These will be updated then in <main>.
+
+   :rtype: None
+
+   :Yields: *netCDF file with filename <fname>.*
+

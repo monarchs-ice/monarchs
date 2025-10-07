@@ -1,0 +1,172 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced users &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Advanced users</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/advanced.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="advanced-users">
+<h1>Advanced users<a class="headerlink" href="#advanced-users" title="Link to this heading"></a></h1>
+<section id="optimised-performance-using-numba-the-use-numba-flag">
+<h2>Optimised performance using Numba (the <code class="docutils literal notranslate"><span class="pre">use_numba</span></code> flag)<a class="headerlink" href="#optimised-performance-using-numba-the-use-numba-flag" title="Link to this heading"></a></h2>
+</section>
+</section>
+<section id="tl-dr-should-i-set-use-numba-to-true-or-false">
+<h1>tl;dr - should I set <code class="docutils literal notranslate"><span class="pre">use_numba</span></code> to True or False?<a class="headerlink" href="#tl-dr-should-i-set-use-numba-to-true-or-false" title="Link to this heading"></a></h1>
+<p>If performance is important (e.g. if running on HPC), set it to <code class="docutils literal notranslate"><span class="pre">True</span></code>. Otherwise, you are OK without.</p>
+<p>If you need to debug your run, then keep <code class="docutils literal notranslate"><span class="pre">use_numba</span></code> <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</section>
+<section id="why-numba">
+<h1>Why Numba?<a class="headerlink" href="#why-numba" title="Link to this heading"></a></h1>
+<p>MONARCHS is written in Python, due to its ease of use, portability, suitability for use on Windows, Mac and Linux, and
+myriad other reasons. However, one of the drawbacks of Python is that it is slow, compared to low-level languages
+such as C and Fortran. A compromise is to make use of Numba, a just-in-time compiler for Python. This significantly
+bridges the performance gap between these languages, at the cost of somewhat more complex code.</p>
+<p>In many cases, this is “free”. However, since we need to use <code class="docutils literal notranslate"><span class="pre">hybrd</span></code> from MINPACK to solve the heat equation, and the standard
+Python implmentation is not <code class="docutils literal notranslate"><span class="pre">Numba</span></code> compatible (<code class="docutils literal notranslate"><span class="pre">scipy.optimize.fsolve</span></code>), we instead make use of <code class="docutils literal notranslate"><span class="pre">NumbaMinpack</span></code>, a
+Python library that calls MINPACK from a compiled Fortran source using Numba’s <code class="docutils literal notranslate"><span class="pre">ctypes</span></code> compatability. This makes the
+resulting source code a little more complex.</p>
+<p>Numba also has great support for parallel Python via OpenMP, which we use in MONARCHS. Since the single-column physics
+does not affect other columns, this approach is very efficient; resulting in speedups to the overall runtime of ~50x
+or more for long runs.</p>
+</section>
+<section id="what-are-the-drawbacks">
+<h1>What are the drawbacks?<a class="headerlink" href="#what-are-the-drawbacks" title="Link to this heading"></a></h1>
+<p>Since the code is compiled before running, for small runs
+(e.g. single column over fewer than 1000 timesteps), this overhead will dominate the runtime, in which case it may
+be prudent to keep <code class="docutils literal notranslate"><span class="pre">use_numba</span></code> <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<p>This makes code development more complex since Numba requires strict static typing, and only supports a subset of
+inbuilt Python and <code class="docutils literal notranslate"><span class="pre">numpy</span></code> functions. Important libraries such as <code class="docutils literal notranslate"><span class="pre">scipy</span></code> are not yet supported. The code has been
+written to try and hide away most of this where possible, but some design choices were made during the development
+of MONARCHS that are inelegant or un-Pythonic, to accommodate the use of Numba.</p>
+<p>In this vein, feedback or suggestions on how to improve the readability of the MONARCHS source code are appreciated.</p>
+<p>Additionally, Numba code is significantly harder to debug, since it doesn’t use the normal Python stack trace.
+A compromise here is to initially run your code with Numba, ensuring that the model :doc:<code class="docutils literal notranslate"><span class="pre">dumping</span> <span class="pre">flags</span> <span class="pre">&lt;model_setup_reference&gt;</span></code>
+are enabled, and then after the code crashes, run the model from this dump with <code class="docutils literal notranslate"><span class="pre">parallel</span> <span class="pre">=</span> <span class="pre">False</span></code> and
+<code class="docutils literal notranslate"><span class="pre">use_numba</span> <span class="pre">=</span> <span class="pre">False</span></code> in your runscript to debug.</p>
+</section>
+<section id="what-parts-of-the-code-are-actually-different-if-using-numba">
+<h1>What parts of the code are actually different if using Numba?<a class="headerlink" href="#what-parts-of-the-code-are-actually-different-if-using-numba" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">timestep_loop</span></code> and all functions called by <code class="docutils literal notranslate"><span class="pre">timestep_loop</span></code> or deeper are called by Numba’s <code class="docutils literal notranslate"><span class="pre">jit</span></code> function,
+equivalent to decorating them using the <code class="docutils literal notranslate"><span class="pre">&#64;jit</span></code> decorator. This is controlled by the <code class="docutils literal notranslate"><span class="pre">jit_modules</span></code> function
+in <code class="docutils literal notranslate"><span class="pre">monarchs.core.configuration</span></code>.</p></li>
+<li><p>Different versions of the firn heat equation, lake surface energy balance, and lid heat equation/surface energy balance
+solver functions are selected. This is because of the different input formatting requirements of the Scipy and Numba
+implementations. In the non-Numba implementation, these are solved using <code class="docutils literal notranslate"><span class="pre">scipy.optimize.fsolve</span></code>. In the Numba
+implementation, an external library <code class="docutils literal notranslate"><span class="pre">NumbaMinpack</span></code> (developed by Nicholas Wogan) is used to call the Fortran
+MINPACK library’s <code class="docutils literal notranslate"><span class="pre">hybrd</span></code> function. In future, this will use a dedicated fork of this library built into MONARCHS,
+to ensure that it is maintained.</p></li>
+</ul>
+</section>
+<section id="are-there-any-differences-between-the-two-versions">
+<h1>Are there any differences between the two versions?<a class="headerlink" href="#are-there-any-differences-between-the-two-versions" title="Link to this heading"></a></h1>
+<p>The model flow and algorithms are exactly the same in the non-Numba and Numba versions. However, there may be some
+small differences in the numerics, which can evolve over time. In general, the output of the two versions is extremely
+close, with no significant divergence observed over multi-year runs.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

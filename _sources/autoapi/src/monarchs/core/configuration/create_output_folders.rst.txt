@@ -1,0 +1,7 @@
+src.monarchs.core.configuration.create_output_folders
+=====================================================
+
+.. py:function:: src.monarchs.core.configuration.create_output_folders(model_setup)
+
+   Create the output folders for the model output, meteorological data and dump files, if they do not already exist.
+

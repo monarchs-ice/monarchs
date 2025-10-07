@@ -1,0 +1,187 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>solver_nb.args_array &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="solver_nb.firn_heateqn_solver" href="firn_heateqn_solver.html" />
+    <link rel="prev" title="solver_nb" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../structure.html">Code structure</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">solver_nb</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="index.html#attributes">Attributes</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html#functions">Functions</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">solver_nb.args_array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="firn_heateqn_solver.html">solver_nb.firn_heateqn_solver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lake_development_eqn.html">solver_nb.lake_development_eqn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lake_formation_eqn.html">solver_nb.lake_formation_eqn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lake_solver.html">solver_nb.lake_solver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lid_heateqn_solver.html">solver_nb.lid_heateqn_solver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lid_seb_solver.html">solver_nb.lid_seb_solver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sfc_energy_lid.html">solver_nb.sfc_energy_lid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sfc_energy_virtual_lid.html">solver_nb.sfc_energy_virtual_lid</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#module-contents">Module Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../heateqn_nb/index.html">heateqn_nb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../extract_args/index.html">extract_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../loop_over_grid/index.html">loop_over_grid</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="index.html">solver_nb</a></li>
+      <li class="breadcrumb-item active">solver_nb.args_array</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/autoapi/solver_nb/args_array.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="solver-nb-args-array">
+<h1>solver_nb.args_array<a class="headerlink" href="#solver-nb-args-array" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="solver_nb.args_array">
+<span class="sig-prename descclassname"><span class="pre">solver_nb.</span></span><span class="sig-name descname"><span class="pre">args_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">LW_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SW_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_air</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_air</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_dp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Tsfc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">273.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Sfrac_lid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.array([np.nan])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_lid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_sfc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#solver_nb.args_array" title="Link to this definition"></a></dt>
+<dd><p>Convert the variables from an instance of the IceShelf class into the
+format required to run NumbaMinpack.hybrd, a root finder written in Fortran
+compatible with Numba jitted functions. This should result
+in some speedup compared to using scipy’s equivalent function fsolve.</p>
+<p>We need to convert any non-arrays into 1d arrays with one element to
+concatenate them into this vector, hence the “np.array([var])” syntax. This
+is because Numba is compiled rather than interpreted; the code expects to
+see arrays rather than floats and cannot infer types like regular Python.</p>
+<p>Called whenever the various heat equation implemenations are used,
+notably in heateqn, heateqn_lid and heateqn_fixedsfc, which are in turn called by the relevant solver functions
+(see get_firn_heateqn_solver, get_lid_solvers).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell</strong> (<em>core.iceshelf_class.IceShelf</em>) – IceShelf object containing the relevant information on the temperature, etc. of the firn column</p></li>
+<li><p><strong>dt</strong> (<em>int</em>) – timestep in seconds [s]</p></li>
+<li><p><strong>dz</strong> (<em>float</em>) – size of each vertical grid cell [m]</p></li>
+<li><p><strong>LW_in</strong> (<em>array_like, float, dimension(cell.vert_grid)</em>) – Surface downwelling longwave radiation [W m^-2]</p></li>
+<li><p><strong>SW_in</strong> (<em>array_like, float, dimension(cell.vert_grid)</em>) – Surface downwelling shortwave radiation [W m^-2]</p></li>
+<li><p><strong>T_air</strong> (<em>array_like, float, dimension(cell.vert_grid)</em>) – Surface air temperature [K]</p></li>
+<li><p><strong>p_air</strong> (<em>array_like, float, dimension(cell.vert_grid)</em>) – Surface air pressure [Pa]</p></li>
+<li><p><strong>T_dp</strong> (<em>array_like, float, dimension(cell.vert_grid)</em>) – Dewpoint temperature [K]</p></li>
+<li><p><strong>wind</strong> (<em>array_like, float, dimension(cell.vert_grid)</em>) – Wind speed [m s^-1]</p></li>
+<li><p><strong>fixed_sfc</strong> (<em>bool, optional</em>) – Boolean flag to determine whether to use the fixed surface heat equation.</p></li>
+<li><p><strong>Tsfc</strong> (<em>float, optional</em>) – Surface temperature to fix the surface of the firn column to, if applicable (i.e. if using fixed_sfc=True)</p></li>
+<li><p><strong>lid</strong> (<em>bool, optional</em>) – Boolean flag determining whether we want the lid heat equation solver.</p></li>
+<li><p><strong>Sfrac_lid</strong> (<em>array_like, float, optional, dimension(cell.vert_grid)</em>) – Solid fraction of the frozen lid, if applicable. Default to np.array([np.nan]), as array type,
+and not used in non-lid cases.</p></li>
+<li><p><strong>k_lid</strong> (<em>float, optional</em>) – thermal conducitvity of the frozen lid, if applicable. Default np.nan, as not used in non-lid cases.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>args</strong> – Numpy array containing the arguments we want to pass into the heat equation solver.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array_like</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="solver_nb" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="firn_heateqn_solver.html" class="btn btn-neutral float-right" title="solver_nb.firn_heateqn_solver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+heateqn_nb.heateqn_lid
+======================
+
+.. py:function:: heateqn_nb.heateqn_lid(x, output, args)
+
+   Heat equation solver function for a frozen lid. To be passed into NumbaMinpack's hybrd solver.
+
+   :Parameters: * **x** (*array_like, float64, dimension(core.iceshelf_class.IceShelf.vert_grid_lid)*) -- Starting estimate for the roots of the PDE we are trying to solve.
+                  This is by default cell.firn_temperature.
+                * **output** (*array_like, float64, dimension(core.iceshelf_class.IceShelf.vert_grid_lid)*) -- Output array, i.e. the values of x such that F(x) = 0.
+                  This array is handled automatically by the solver, so does not need
+                  to be initialised and explicitly entered as an argument.
+                * **args** (*array_like*) -- Vector describing arguments to the system of equations being solved.
+                  This comprises many of the attributes of an IceShelf instance, and
+                  some physical variables such as specific humidity, wind etc.
+                  See extract_args_lid for more details.
+
+   :rtype: None (output is handled by the solver)
+

@@ -1,0 +1,16 @@
+src.monarchs.core.utils.check_correct
+=====================================
+
+.. py:function:: src.monarchs.core.utils.check_correct(cell)
+
+   Sanity checking to ensure model is still in a physically correct state. This ensures things such as the
+   solid and liquid fraction being below 1 and less than 0 within a grid cell, firn depth and lake depth being
+   non-negative, etc.
+
+   :Parameters: **cell** (*numpy structured array*) -- Element of the model grid we want to check.
+
+   :rtype: None
+
+   :raises ValueError: If any of the conditions are met, raise ValueError as the model has reached an unphysical state.
+       See the code body for details.
+

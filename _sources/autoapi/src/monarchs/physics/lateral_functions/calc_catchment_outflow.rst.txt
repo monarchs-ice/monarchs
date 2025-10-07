@@ -1,0 +1,13 @@
+src.monarchs.physics.lateral_functions.calc_catchment_outflow
+=============================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.calc_catchment_outflow(cell, temporary_cell, water_frac, split, outflow_proportion=1.0)
+
+   Calculate the amount of water that can be moved from a cell to the land
+   (i.e. outside of the model domain).
+
+   :Parameters: * **cell**
+                * **temporary_cell**
+                * **water_frac**
+                * **split**
+

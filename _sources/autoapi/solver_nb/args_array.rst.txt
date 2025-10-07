@@ -1,0 +1,38 @@
+solver_nb.args_array
+====================
+
+.. py:function:: solver_nb.args_array(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, Tsfc=273.15, lid=False, Sfrac_lid=np.array([np.nan]), k_lid=np.nan, fixed_sfc=True, N=50)
+
+   Convert the variables from an instance of the IceShelf class into the
+   format required to run NumbaMinpack.hybrd, a root finder written in Fortran
+   compatible with Numba jitted functions. This should result
+   in some speedup compared to using scipy's equivalent function fsolve.
+
+   We need to convert any non-arrays into 1d arrays with one element to
+   concatenate them into this vector, hence the "np.array([var])" syntax. This
+   is because Numba is compiled rather than interpreted; the code expects to
+   see arrays rather than floats and cannot infer types like regular Python.
+
+   Called whenever the various heat equation implemenations are used,
+   notably in heateqn, heateqn_lid and heateqn_fixedsfc, which are in turn called by the relevant solver functions
+   (see get_firn_heateqn_solver, get_lid_solvers).
+
+   :Parameters: * **cell** (*core.iceshelf_class.IceShelf*) -- IceShelf object containing the relevant information on the temperature, etc. of the firn column
+                * **dt** (*int*) -- timestep in seconds [s]
+                * **dz** (*float*) -- size of each vertical grid cell [m]
+                * **LW_in** (*array_like, float, dimension(cell.vert_grid)*) -- Surface downwelling longwave radiation [W m^-2]
+                * **SW_in** (*array_like, float, dimension(cell.vert_grid)*) -- Surface downwelling shortwave radiation [W m^-2]
+                * **T_air** (*array_like, float, dimension(cell.vert_grid)*) -- Surface air temperature [K]
+                * **p_air** (*array_like, float, dimension(cell.vert_grid)*) -- Surface air pressure [Pa]
+                * **T_dp** (*array_like, float, dimension(cell.vert_grid)*) -- Dewpoint temperature [K]
+                * **wind** (*array_like, float, dimension(cell.vert_grid)*) -- Wind speed [m s^-1]
+                * **fixed_sfc** (*bool, optional*) -- Boolean flag to determine whether to use the fixed surface heat equation.
+                * **Tsfc** (*float, optional*) -- Surface temperature to fix the surface of the firn column to, if applicable (i.e. if using fixed_sfc=True)
+                * **lid** (*bool, optional*) -- Boolean flag determining whether we want the lid heat equation solver.
+                * **Sfrac_lid** (*array_like, float, optional, dimension(cell.vert_grid)*) -- Solid fraction of the frozen lid, if applicable. Default to np.array([np.nan]), as array type,
+                  and not used in non-lid cases.
+                * **k_lid** (*float, optional*) -- thermal conducitvity of the frozen lid, if applicable. Default np.nan, as not used in non-lid cases.
+
+   :returns: **args** -- Numpy array containing the arguments we want to pass into the heat equation solver.
+   :rtype: array_like
+

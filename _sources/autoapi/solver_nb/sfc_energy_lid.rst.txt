@@ -1,0 +1,9 @@
+solver_nb.sfc_energy_lid
+========================
+
+.. py:function:: solver_nb.sfc_energy_lid(x, output, args)
+
+   :Parameters: * **x**
+                * **output**
+                * **args**
+

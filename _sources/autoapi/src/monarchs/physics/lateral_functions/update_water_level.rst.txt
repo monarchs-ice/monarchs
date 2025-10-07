@@ -1,0 +1,17 @@
+src.monarchs.physics.lateral_functions.update_water_level
+=========================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.update_water_level(cell)
+
+   Determine the water level of a single cell, so we can determine where water flows laterally to and from.
+   This is determined by the presence of lakes, lids or ice lenses within the firn column.
+   If there is no lake, lid or ice lens, then the entire grid cell is free for water to move into it.
+   If there is no lake or lid, but there is an ice lens then the water level is the level of the highest point
+   at which we have saturated firn.
+   If a cell has a lake, but no lid, then the water level is the height of that lake.
+   Finally, if we have a lid, we set the water level to be arbitrarily high, as we are not currently
+   interested in water flow from a frozen lid as it is too complicated to model.
+   Called in <move_water>.
+
+   :Parameters: **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+

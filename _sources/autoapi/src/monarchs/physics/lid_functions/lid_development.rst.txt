@@ -1,0 +1,25 @@
+src.monarchs.physics.lid_functions.lid_development
+==================================================
+
+.. py:function:: src.monarchs.physics.lid_functions.lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind)
+
+   Once a permanent lid forms, it can refreeze the lake below. This function calculates this refreezing, as well as the
+   surface energy balance and heat transfer through the lid, and adjusts the lid depth and lake depth accordingly.
+   Once the lid refreezes the entire lake below, then we need to combine the frozen lid and the firn to make one
+   singular profile.
+   The model only enters this state once the lid depth exceeds 0.1 m. Before this, the lid is evolved using
+   virtual_lid.
+
+   Called in timestep_loop.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **dt** (*int*) -- Number of seconds in the timestep, very like 3600 (i.e. 1h) [s]
+                * **LW_in** (*float*) -- Incoming longwave radiation. [W m^-2].
+                * **SW_in** (*float*) -- Incoming shortwave (solar) radiation. [W m^-2].
+                * **T_air** (*float*) -- Surface-layer air temperature. [K].
+                * **p_air** (*float*) -- Surface-layer air pressure. [hPa].
+                * **T_dp** (*float*) -- Dew-point temperature at the surface. [K]
+                * **wind** (*float*) -- Wind speed. [m s^-1].
+
+   :rtype: None (amends cell inplace)
+

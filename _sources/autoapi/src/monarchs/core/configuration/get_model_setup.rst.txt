@@ -1,0 +1,4 @@
+src.monarchs.core.configuration.get_model_setup
+===============================================
+
+.. py:function:: src.monarchs.core.configuration.get_model_setup(model_setup_path)

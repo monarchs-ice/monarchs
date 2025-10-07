@@ -1,0 +1,16 @@
+src.monarchs.physics.lake_functions.turbulent_mixing
+====================================================
+
+.. py:function:: src.monarchs.physics.lake_functions.turbulent_mixing(cell, SW_in, dt)
+
+   The lake has a temperature profile governed by its boundary conditions - 0 degrees at the firn-lake boundary,
+   and driven by the surface energy balance at the surface. The lake is turbulent, meaning there is a significant
+   amount of mixing, causing the temperature profile to even out.
+   Called by lake_development.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **SW_in** (*float*) -- Downwelling shortwave radiation. [W m^-2]
+                * **dt** (*int*) -- Number of seconds in the current timestep. [s]
+
+   :rtype: None (amends cell inplace).
+

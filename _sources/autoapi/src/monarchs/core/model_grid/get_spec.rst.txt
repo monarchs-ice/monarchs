@@ -1,0 +1,16 @@
+src.monarchs.core.model_grid.get_spec
+=====================================
+
+.. py:function:: src.monarchs.core.model_grid.get_spec(vert_grid_size, vert_grid_lid, vert_grid_lake)
+
+   Define the structured array dtype for the model grid, with explicit sizes for dimensions.
+
+   :Parameters: * **num_rows** (*int*) -- Number of rows in the grid.
+                * **num_cols** (*int*) -- Number of columns in the grid.
+                * **vert_grid_size** (*int*) -- Number of vertical grid points in the firn column.
+                * **vert_grid_lid** (*int*) -- Number of vertical grid points in the frozen lid.
+                * **vert_grid_lake** (*int*) -- Number of vertical grid points in the lake.
+
+   :returns: **dtype** -- Structured array dtype for the model grid.
+   :rtype: np.dtype
+

@@ -1,0 +1,11 @@
+src.monarchs.DEM.load_DEM.interpolate_DEM
+=========================================
+
+.. py:function:: src.monarchs.DEM.load_DEM.interpolate_DEM(heights, num_points)
+
+   :Parameters: * **heights** (*array_like, float, dimension(lat, long)*) -- Array of heights from the DEM, creating a heightmap of the area we want to interpolate to our model space.
+                * **num_points** (*int*) -- Number of points we want to interpolate the DEM onto. This currently just works for square grids, i.e.
+                  row_amount == col_amount.
+
+   :rtype: interp((X, Y)) - DEM interpolated onto the regular grid defined by num_points.
+

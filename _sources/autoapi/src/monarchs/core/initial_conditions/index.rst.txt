@@ -1,0 +1,32 @@
+src.monarchs.core.initial_conditions
+====================================
+
+.. py:module:: src.monarchs.core.initial_conditions
+
+.. autoapi-nested-parse::
+
+   Functions used by run_MONARCHS.py to convert a model runscript (default model_setup.py) to the format actually used
+   by MONARCHS. This includes setting up the initial firn profile information, loading in meteorological data and
+   interpolating it, and loading in/interpolating the digital elevation model (DEM) if applicable.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/core/initial_conditions/check_for_isolated_cells
+   /autoapi/src/monarchs/core/initial_conditions/create_model_grid
+   /autoapi/src/monarchs/core/initial_conditions/initialise_firn_profile
+   /autoapi/src/monarchs/core/initial_conditions/rho_init_emp
+
+.. autoapisummary::
+
+   src.monarchs.core.initial_conditions.check_for_isolated_cells
+   src.monarchs.core.initial_conditions.create_model_grid
+   src.monarchs.core.initial_conditions.initialise_firn_profile
+   src.monarchs.core.initial_conditions.rho_init_emp
+
+

@@ -1,0 +1,22 @@
+src.monarchs.physics.lateral_functions.move_water
+=================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.move_water(grid, max_grid_col, max_grid_row, timestep, catchment_outflow=True, lateral_movement_percolation_toggle=True, flow_into_land=False, flow_speed_scaling=1.0, outflow_proportion=1.0)
+
+   Loop over our grid and determine which cells water is allowed to move from/to, then perform this movement
+   simultaneously. This is the main function used to perform the water movement, and calls the previously
+   defined functions.
+
+   :Parameters: * **grid** (*List, or numba.typed.List*) -- Grid of IceShelf objects
+                * **max_grid_row** (*int*) -- Number of grid rows
+                * **max_grid_col** (*int*) -- Number of grid columns
+                * **timestep** (*int*) -- Time taken for the lateral movement to occur. This is typically 24 hours, i.e. 3600 * 24 seconds. [s]
+                * **lateral_movement_percolation_toggle** (*bool, optional*) -- Boolean flag to determine whether to perform a percolation step after we do
+                  lateral water, to ensure that water is where it should be in the firn column.
+
+   :returns: **grid**
+   :rtype: amended version of the IceShelf grid with water having moved laterally
+
+   :raises ValueError: If water has appeared out of nowhere, then the algorithm is not working correctly and the code should stop.
+       This should not occur, so please get in touch with the developers, so we can source and fix the issue.
+

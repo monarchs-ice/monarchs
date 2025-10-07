@@ -1,0 +1,29 @@
+src.monarchs.physics.lid_functions.virtual_lid
+==============================================
+
+.. py:function:: src.monarchs.physics.lid_functions.virtual_lid(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind)
+
+   When a lake undergoes freezing from the top due to the surface conditions, a lid forms. However, the depth of this
+   lid can oscillate significantly during the initial stages of formation, including disappearing entirely. To
+   model this, we assume that the model is in a "virtual lid" state while the lid depth is less than 0.1 m.
+   This function tracks the development of this virtual lid, and switches the model into a non-lid state if it
+   melts entirely, or into a true lid state if the lid depth exceeds the 0.1 m depth threshold.
+
+   This virtual lid, unlike the "true" lid, has a single value for its temperature (cell.v_lid_temperature), rather
+   than a vertical profile. The function handles freezing and melting of this virtual lid from the top and bottom.
+
+   As with many other functions, this operates on a single column.
+
+   Called in timestep_loop.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **dt** (*int*) -- Number of seconds in the timestep, very like 3600 (i.e. 1h) [s]
+                * **LW_in** (*float*) -- Incoming longwave radiation. [W m^-2].
+                * **SW_in** (*float*) -- Incoming shortwave (solar) radiation. [W m^-2].
+                * **T_air** (*float*) -- Surface-layer air temperature. [K].
+                * **p_air** (*float*) -- Surface-layer air pressure. [hPa].
+                * **T_dp** (*float*) -- Dew-point temperature at the surface. [K]
+                * **wind** (*float*) -- Wind speed. [m s^-1].
+
+   :rtype: None (amends cell inplace)
+

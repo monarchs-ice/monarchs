@@ -1,0 +1,17 @@
+src.monarchs.physics.lateral_functions.water_fraction
+=====================================================
+
+.. py:function:: src.monarchs.physics.lateral_functions.water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0)
+
+   Determine the fraction of water that is allowed to move through the solid firn, dependent on its density.
+   Called in <move_water>.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **m** (*float*) -- difference in heights between this cell and the cell the water is moving to
+                * **timestep** (*int*) -- time in which the water can move - default 3600 (set by user in runscript) [s]
+                * **direction** (*str*) -- direction of the water flow - used to determine the "cell size", as these can be non-square.
+
+   :returns: **water_frac** -- Fraction of the total water that is allowed to move. Either a single number if a lake is present,
+             or a Numpy array of length cell.vert_grid if not. M is biggest height difference
+   :rtype: np.ndarray or float
+

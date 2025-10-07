@@ -1,0 +1,52 @@
+src.monarchs.physics.lateral_functions
+======================================
+
+.. py:module:: src.monarchs.physics.lateral_functions
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   src.monarchs.physics.lateral_functions.prange
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/physics/lateral_functions/calc_available_water_ice_lens
+   /autoapi/src/monarchs/physics/lateral_functions/calc_available_water_lake
+   /autoapi/src/monarchs/physics/lateral_functions/calc_catchment_outflow
+   /autoapi/src/monarchs/physics/lateral_functions/find_biggest_neighbour
+   /autoapi/src/monarchs/physics/lateral_functions/get_neighbour_water_levels
+   /autoapi/src/monarchs/physics/lateral_functions/move_from_ice_lens
+   /autoapi/src/monarchs/physics/lateral_functions/move_from_lake
+   /autoapi/src/monarchs/physics/lateral_functions/move_to_neighbours
+   /autoapi/src/monarchs/physics/lateral_functions/move_water
+   /autoapi/src/monarchs/physics/lateral_functions/update_water_level
+   /autoapi/src/monarchs/physics/lateral_functions/water_fraction
+
+.. autoapisummary::
+
+   src.monarchs.physics.lateral_functions.calc_available_water_ice_lens
+   src.monarchs.physics.lateral_functions.calc_available_water_lake
+   src.monarchs.physics.lateral_functions.calc_catchment_outflow
+   src.monarchs.physics.lateral_functions.find_biggest_neighbour
+   src.monarchs.physics.lateral_functions.get_neighbour_water_levels
+   src.monarchs.physics.lateral_functions.move_from_ice_lens
+   src.monarchs.physics.lateral_functions.move_from_lake
+   src.monarchs.physics.lateral_functions.move_to_neighbours
+   src.monarchs.physics.lateral_functions.move_water
+   src.monarchs.physics.lateral_functions.update_water_level
+   src.monarchs.physics.lateral_functions.water_fraction
+
+
+Module Contents
+---------------
+
+.. py:data:: prange
+

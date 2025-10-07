@@ -1,0 +1,7 @@
+src.monarchs.core.driver.get_num_cores
+======================================
+
+.. py:function:: src.monarchs.core.driver.get_num_cores(model_setup)
+
+   :Parameters: **model_setup**
+

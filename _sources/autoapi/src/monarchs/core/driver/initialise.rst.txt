@@ -1,0 +1,4 @@
+src.monarchs.core.driver.initialise
+===================================
+
+.. py:function:: src.monarchs.core.driver.initialise(model_setup)

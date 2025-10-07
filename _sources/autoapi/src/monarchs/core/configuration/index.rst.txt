@@ -1,0 +1,42 @@
+src.monarchs.core.configuration
+===============================
+
+.. py:module:: src.monarchs.core.configuration
+
+
+Classes
+-------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/core/configuration/ModelSetup
+
+.. autoapisummary::
+
+   src.monarchs.core.configuration.ModelSetup
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/core/configuration/create_defaults_for_missing_flags
+   /autoapi/src/monarchs/core/configuration/create_output_folders
+   /autoapi/src/monarchs/core/configuration/get_model_setup
+   /autoapi/src/monarchs/core/configuration/handle_incompatible_flags
+   /autoapi/src/monarchs/core/configuration/jit_modules
+   /autoapi/src/monarchs/core/configuration/parse_args
+
+.. autoapisummary::
+
+   src.monarchs.core.configuration.create_defaults_for_missing_flags
+   src.monarchs.core.configuration.create_output_folders
+   src.monarchs.core.configuration.get_model_setup
+   src.monarchs.core.configuration.handle_incompatible_flags
+   src.monarchs.core.configuration.jit_modules
+   src.monarchs.core.configuration.parse_args
+
+

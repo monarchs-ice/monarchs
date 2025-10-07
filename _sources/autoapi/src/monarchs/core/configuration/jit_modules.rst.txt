@@ -1,0 +1,23 @@
+src.monarchs.core.configuration.jit_modules
+===========================================
+
+.. py:function:: src.monarchs.core.configuration.jit_modules()
+
+   If using Numba, then we need to apply the `numba.jit` decorator to several functions
+   in `physics` and `core'.
+   This function handles this process, by loading in the modules and using `setattr`
+   to overwrite the initial implementation with the Numba-compatible
+   versions, either by applying the `jit` decorator, or in the case where the source code
+   differs between the Numba and non-Numba versions, by overwriting the pure-Python
+   version with the Numba-compatible one.
+
+   This is only called when `use_numba` is `True`, so the import only happens if needed
+   (important for if the user does not have Numba installed).
+
+   This function was designed this way (as opposed to applying jit to each function in its
+   own module locally) so that we only need to import `monarchs.core.configuration`
+   once; in `monarchs.core.driver`. This allows us to run in parallel with `multiprocessing`,
+   as otherwise each thread would try and load in the configuration file with null arguments,
+   whenever importing the physics functions (which needed to know whether `use_numba` was `True`)
+   which was causing an error.
+

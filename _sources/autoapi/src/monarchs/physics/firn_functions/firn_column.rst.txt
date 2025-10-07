@@ -1,0 +1,37 @@
+src.monarchs.physics.firn_functions.firn_column
+===============================================
+
+.. py:function:: src.monarchs.physics.firn_functions.firn_column(cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict, prescribed_height_change=False)
+
+   Perform the various processes applied to the firn each timestep where we don't have exposed water at the surface.
+
+   The logic works as follows:
+   Solve heat equation for firn
+
+   If surface temperature is above melting point of water
+   (i,e melting takes place):
+
+   - Determine the height change as a result of the melting
+   - Regrid everything to take account for this deformation
+   - Re-solve heat equation, now with fixed surface temperature
+   - Calculate the amount of water added to the surface as a result of melt
+   - Percolate that water down, taking into account any lids or lakes that may have formed.
+
+   Otherwise:
+   - Update cell temperature and continue.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **dt** (*int*) -- Number of seconds in the current timestep [s]
+                * **dz** (*float*) -- Height of each vertical point in the cell. [m]
+                * **LW_in** (*float*) -- Downwelling longwave radiation at the current timestep. [W m^-2]
+                * **SW_in** (*float*) -- Downwelling shortwave radiation at the current timestep. [W m^-2]
+                * **T_air** (*float*) -- Surface air temperature at the current timestep. [K]
+                * **p_air** (*float*) -- Surface air pressure at the current timestep. [Pa]
+                * **T_dp** (*float*) -- Dewpoint temperature of the air at the surface at the current timestep. [K]
+                * **wind** (*float*) -- Wind speed at the surface at the current timestep. [m s^-1]
+                * **toggle_dict** (*dict*) -- Dictionary containing some switches that affect the running of the model.
+                * **prescribed_height_change** (*float, optional*) -- For testing purposes, it can be useful to set a prescribed height change to force the firn to lose height
+                  regardless of the meteorological conditions, with the corresponding increase in water. [m]
+
+   :rtype: None (amends cell inplace)
+

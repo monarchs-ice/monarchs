@@ -1,0 +1,27 @@
+src.monarchs.physics.lake_functions
+===================================
+
+.. py:module:: src.monarchs.physics.lake_functions
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/src/monarchs/physics/lake_functions/lake_development
+   /autoapi/src/monarchs/physics/lake_functions/lake_formation
+   /autoapi/src/monarchs/physics/lake_functions/sfc_energy_lake
+   /autoapi/src/monarchs/physics/lake_functions/sfc_energy_lake_formation
+   /autoapi/src/monarchs/physics/lake_functions/turbulent_mixing
+
+.. autoapisummary::
+
+   src.monarchs.physics.lake_functions.lake_development
+   src.monarchs.physics.lake_functions.lake_formation
+   src.monarchs.physics.lake_functions.sfc_energy_lake
+   src.monarchs.physics.lake_functions.sfc_energy_lake_formation
+   src.monarchs.physics.lake_functions.turbulent_mixing
+
+

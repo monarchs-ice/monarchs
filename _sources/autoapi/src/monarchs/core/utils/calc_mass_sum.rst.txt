@@ -1,0 +1,16 @@
+src.monarchs.core.utils.calc_mass_sum
+=====================================
+
+.. py:function:: src.monarchs.core.utils.calc_mass_sum(cell)
+
+   Calculate the total mass in the grid cell in its current state.
+   This is the sum of the firn column mass, the mass in the frozen lake, and the mass in the lid or virtual lid.
+   This is in arbitrary units, since it is calculating the columnar mass independent of the lateral grid size, but is
+   useful for consistency checking, i.e. ensuring the model does not gain or lose mass outside the known mechanisms
+   (snowfall and losing water out of the catchment area laterally).
+
+   :Parameters: **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+
+   :returns: **total_mass** -- Amount of mass in the system, in arbitrary units.
+   :rtype: float
+

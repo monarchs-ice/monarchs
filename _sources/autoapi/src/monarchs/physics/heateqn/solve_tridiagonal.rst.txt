@@ -1,0 +1,10 @@
+src.monarchs.physics.heateqn.solve_tridiagonal
+==============================================
+
+.. py:function:: src.monarchs.physics.heateqn.solve_tridiagonal(a, b, c, d)
+
+   a: sub-diagonal (len n-1), A[i, i-1]
+   b: main diagonal (len n), A[i, i]
+   c: super-diagonal (len n-1), A[i, i+1]
+   d: RHS (len n)
+

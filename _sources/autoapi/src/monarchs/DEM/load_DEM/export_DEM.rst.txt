@@ -1,0 +1,45 @@
+src.monarchs.DEM.load_DEM.export_DEM
+====================================
+
+.. py:function:: src.monarchs.DEM.load_DEM.export_DEM(tiffname, num_points=50, top_right=False, top_left=False, bottom_right=False, bottom_left=False, diagnostic_plots=False, all_outputs=False, return_lats=True, input_crs=3031)
+
+   Load in a DEM from a GeoTIFF file, and turn it into an elevation map in the form of a Numpy array.
+   This can optionally be done using a bounding box, to restrict the output to a specific region of the DEM.
+   Since our DEM is in polar stereographic coordinates, this bounding box is not "nice". Therefore, we need to
+   specify the corner coordinates of the bounding box rather than just a max/min lat/long.
+
+   :Parameters: * **tiffname** (*str*) -- Name of the geoTIFF file that you wish to load in.
+                * **num_points** (*int, optional*) -- Number of points to interpolate the DEM onto. Currently only supports square grids as output.
+                  Default 50.
+                * **top_right** (*bool or array_like, optional, dimension([lat, long])*) -- Latitude/longitude of the top right of the rectangle
+                  to be used as the bounding box to extract the part of the DEM we want.
+                  Default False
+                * **top_left** (*bool or array_like, optional, dimension([lat, long])*) -- Latitude/longitude of the top left of the rectangle
+                  to be used as the bounding box to extract the part of the DEM we want.
+                  Default False.
+                * **bottom_right** (*bool or array_like, optional, dimension([lat, long])*) -- Latitude/longitude of the bottom right of the rectangle
+                  to be used as the bounding box to extract the part of the DEM we want.
+                  Default False.
+                * **bottom_left** (*bool or array_like, optional, dimension([lat, long])*) -- Latitude/longitude of the bottom left of the rectangle
+                  to be used as the bounding box to extract the part of the DEM we want.
+                  Default False.
+                * **diagnostic_plots** (*bool, optional*) -- Flag that triggers whether to generate plots of the output for testing.
+                  Default False.
+                * **all_outputs** (*bool, optional, optional*) -- Flag to determine whether to output intermediate points in the process, for testing. Default False, as we
+                  only need the zoomed and interpolated elevation map.
+                  Default False.
+
+   :returns: * **new_heights_interpolated** (*array_like, float, dimension(lat, long)*) -- Array containing the zoomed and interpolated elevation map. This is the main output of the function.
+             * **heights** (*array_like, float, dimension(lat, long), optional*) -- Array containing the elevation data from the model, either within the bounding box or the whole grid.
+               Only output when all_outputs is True.
+             * **lat_array** (*array_like, float, dimension(y)*) -- Array containing the latitude coordinates of the elevation data.
+               Only output when all_outputs is True.
+             * **lon_array** (*array_like, float, dimension(x)*) -- Array containing the longitude coordinates of the elevation data.
+               Only output when all_outputs is True.
+             * **new_heights** (*array_like, float, dimension(lat, long), optional*) -- Heights after applying scipy.ndimage.zoom, but before interpolation.
+               Only output when all_outputs is True.
+             * **newlons** (*array_like, float, dimension(x)*) -- Array containing the latitude coordinates of the elevation data after applying scipy.ndimage.zoom.
+               Only output when all_outputs is True.
+             * **newlats** (*array_like, float, dimension(y)*) -- Array containing the longitude coordinates of the elevation data after applying scipy.ndimage.zoom.
+               Only output when all_outputs is True.
+

@@ -1,0 +1,11 @@
+src.monarchs.core.configuration.handle_incompatible_flags
+=========================================================
+
+.. py:function:: src.monarchs.core.configuration.handle_incompatible_flags(model_setup)
+
+   Handle incompatible model flags that could cause issues with the code.
+   This mostly consists of generating errors that the user should check for. This is one of many reasons why
+   long model runs should be run in a test queue first to ensure that the setup is correct.
+
+   :rtype: None
+

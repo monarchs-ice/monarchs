@@ -1,0 +1,16 @@
+src.monarchs.physics.lake_functions.sfc_energy_lake
+===================================================
+
+.. py:function:: src.monarchs.physics.lake_functions.sfc_energy_lake(J, Q, cell)
+
+   Calculate the surface energy balance for the lake, after it has already formed.
+   Called by lake_solver, which is in turn called by either lake_formation, or lake_development.
+
+   :Parameters: * **J** (*float*) -- Turbulent heat flux factor, equal to 1.907 E-5. [m s^-1 K^-(1/3)]
+                  See Buzzard (2017), pp. 43 for details.
+                * **Q** (*float*) -- Surface energy flux, calculated via surface_fluxes.sfc_flux.  [W m^-2]
+                * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+
+   :returns: **lake_surf_temp** -- Surface temperature of the lake. [K]
+   :rtype: float
+

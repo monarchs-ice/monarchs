@@ -1,0 +1,13 @@
+src.monarchs.core.utils.calc_grid_mass
+======================================
+
+.. py:function:: src.monarchs.core.utils.calc_grid_mass(grid)
+
+   Calculate the total mass inside the grid, to check for mass conservation.
+   Only do this for valid cells, since invalid cells will have constant mass as no physics is run on them.
+
+   :Parameters: **grid** (*List, or numba.typed.List*) -- the model grid
+
+   :returns: **total_mass** -- Total mass of the whole grid, in arbitrary units.
+   :rtype: float
+

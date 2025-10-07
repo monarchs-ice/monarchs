@@ -1,0 +1,18 @@
+src.monarchs.physics.firn_functions.regrid_after_melt
+=====================================================
+
+.. py:function:: src.monarchs.physics.firn_functions.regrid_after_melt(cell, height_change, lake=False)
+
+   After melting occurs, subtract the amount of melting from the firn height, convert it into meltwater,
+   and interpolate the entire column to the new vertical profile accounting for this height change.
+   This meltwater is either converted into surface liquid water fraction, or if there is a lake, into lake height.
+
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **height_change** (*float*) -- Change in the firn height as a result of melting. [m]
+                * **lake** (*bool, optional*) -- Flag to determine whether a lake is present or not. This is contained here so that we can re-use the bulk
+                  of this algorithm, but with some small changes to reflect the different situation that occurs when a lake is
+                  present.
+
+   :rtype: None
+

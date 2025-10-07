@@ -1,0 +1,20 @@
+src.monarchs.DEM
+================
+
+.. py:module:: src.monarchs.DEM
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/src/monarchs/DEM/RBIS_DEM/index
+   /autoapi/src/monarchs/DEM/Read_DEM_coords/index
+   /autoapi/src/monarchs/DEM/create_DEM_GaussianTestCase/index
+   /autoapi/src/monarchs/DEM/create_DEM_planar_test_case/index
+   /autoapi/src/monarchs/DEM/interpolation_test/index
+   /autoapi/src/monarchs/DEM/load_DEM/index
+
+
