@@ -2,6 +2,54 @@
 Making changes to MONARCHS
 ====================================
 
+Code style guidelines
+*******************************
+These guidelines are intended to keep the codebase as consistent as possible, and to make it easier for others to read your code. They are there as a developer aid;
+not as a barrier to contribution - so if your code is not compliant please feel free to PR it anyway, and we can help you make it work.
+
+When making changes to the ``monarchs`` source (inside ``src/monarchs``), please try and adhere to the following:
+- Follow PEP8 guidelines where possible. We *strongly* recommend using the `black <https://black.readthedocs.io/en/stable/>`_  auto-formatter to ensure that your code is PEP8 compliant.
+The GitHub Actions runner checks this, and will fail if the code does not adhere to the standards if trying to PR into ``main``. You can check that your code is compliant by running
+
+    ```bash
+    python -m black src/monarchs --check --line-length=79 --preview --enable-unstable-feature string_processing
+    ```
+
+from the ``monarchs`` root directory, or do the same thing without ``--check`` to automatically reformat.
+Any scripts outside of ``src/monarchs`` do not need to be compliant.
+
+- Add docstrings to any new functions you write, following the format used in existing functions.
+- Add comments to your code where appropriate, especially if the code is complex or not self-explanatory.
+- Ensure that these comments are above the line you are commenting on, and not at the end of the line, unless the comment
+is a) very short and b) is referring to a scalar rather than an array. This is because ``black`` will make this harder to read otherwise.
+For example:
+
+    ```python
+
+    """Compliant"""
+
+    # Do some complex function
+
+    def complex_function(x):
+        ...
+
+    x = x + 1  # Increment x by 1  --- fine, as commenting a scalar
+
+    # Set x to next array element
+
+    x = array[i + 1]
+
+    """Not compliant"""
+
+    x = array[i + 1]  # Set x to next array element
+
+    # would become
+
+    x = array[
+            i
+            ] + 1  # Increment x by 1
+
+    ```
 Adding new diagnostics or physics
 **********************************
 
@@ -41,3 +89,8 @@ Using other modules (e.g. ``scipy``) is not supported by Numba, and therefore th
 If your function is included within any of the existing ``physics`` modules (with the exception of ``heateqn`` and ``solver``), or within ``utils`` or ``timestep`` in ``core``, then provided that it fits the Numba specifications, Numba support should be
 automatic, i.e. MONARCHS will automatically try and jit the function. If you add a function that you specifically do not want to apply Numba decoration to (e.g. the code is not called by other Numba code and contains incompatible code),
 you can ensure that this step is avoided using the ``do_not_jit`` decorator in ``core.utils``.
+
+If your function is in a new module (e.g. ``monarchs/source/physics/new_physics_routines.py``, you should add your module
+name to ``module_list`` in ``jit_modules`` in ``monarchs.core.configuration`` (and import it in the line above).
+This ensures that the Numba decoratior is applied to all functions in your module automatically. If any are non-compatible,
+you can use the ``do_not_jit`` decorator as above, or add them to ``ignore_list`` in the same file.
