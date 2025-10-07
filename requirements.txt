@@ -5,7 +5,7 @@ pathos==0.3.2
 # optional requirement for loading in ERA5 climatology data
 netCDF4==1.6.5
 # optional requirements for loading in DEM data
-Pillow==10.2.0
+Pillow==10.3.0
 imagecodecs
 # optional requirement for outputting model progress
 h5py==3.11.0
@@ -19,3 +19,4 @@ pyproj
 rioxarray
 
 dask
+
