@@ -15,7 +15,7 @@ def test_perc_time():
     cell["rho_water"] = 1000
     cell["firn_depth"] = 35
     cell["vert_grid"] = 500
-    test_1 = percolation_functions.perc_time(cell, v_lev)
+    test_1 = percolation.perc_time(cell, v_lev)
     cell["vert_grid"] = 1000
-    test_2 = percolation_functions.perc_time(cell, v_lev)
+    test_2 = percolation.perc_time(cell, v_lev)
     assert test_2 == 0.5 * test_1  # more layers, shorter time per layer

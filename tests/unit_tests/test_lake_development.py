@@ -24,7 +24,7 @@ def test_lake_development():
     )  # Initial liquid fraction
     cell["rho"] = cell["Sfrac"] * 917 + cell["Lfrac"] * 1000  # Density profile
 
-    lake_functions.lake_development(
+    lake.lake_development(
         cell, dt, LW_surf, SW_surf, T_air, p_air, T_dp, wind
     )
     print(cell["lake_depth"])
@@ -41,7 +41,7 @@ def test_lake_development():
         np.ones(cell["vert_grid"]) * 0.25
     )  # Initial liquid fraction
     cell["rho"] = cell["Sfrac"] * 917 + cell["Lfrac"] * 1000  # Density profile
-    lake_functions.lake_development(
+    lake.lake_development(
         cell, dt, LW_surf, SW_surf, T_air, p_air, T_dp, wind
     )
     print(cell["lake_depth"])

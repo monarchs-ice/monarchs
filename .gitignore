@@ -28,6 +28,6 @@ examples/*/output/
 *.ipynb
 *.zip
 examples/sarah_test_case/
-tests/resolution_benchmarking/
+validation/resolution_benchmarking/
 output/
 validation/
