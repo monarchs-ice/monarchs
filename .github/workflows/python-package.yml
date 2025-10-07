@@ -37,11 +37,13 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python -m pip install -e .
     - name: Format with black
+      working-directory: ./monarchs
       run: |
         # Reformat the code with black
         black src/monarchs --check --line-length=79 --preview --enable-unstable-feature string_processing .
 
     - name: Lint with flake8
+      working-directory: ./monarchs
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 src/monarchs --count --select=E9,F63,F7,F82 --show-source --statistics
