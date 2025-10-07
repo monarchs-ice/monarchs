@@ -319,7 +319,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     cell["vertical_profile"] = np.linspace(0, cell["firn_depth"], cell["vert_grid"])
     # don't clip top layer as may have meltwater we want to percolate later
     cell['Lfrac'][1:] = np.clip(cell['Lfrac'][1:], 0, 1)
-
+    cell['Sfrac'] = np.clip(cell['Sfrac'], 0, 1)
     try:
         assert abs(new_mass - original_mass) < 1 * 10**-2
     except Exception:

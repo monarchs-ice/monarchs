@@ -44,7 +44,7 @@ numba = [
 ]
 
 [project.scripts]
-monarchs = 'run_MONARCHS:monarchs'
+monarchs = 'monarchs.run_MONARCHS:run_from_cli'
 
 [project.urls]
 Repository = "https://github.com/monarchs-ice/MONARCHS"

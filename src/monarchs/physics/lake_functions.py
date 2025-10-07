@@ -311,11 +311,9 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell["lake_temperature"][0] = sfc_energy_lake(J, Q, cell)
         # when 10 cm - switch to a real lid
         if cell["lake_temperature"][0] < 273.15:
-
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15
             cell["v_lid"] = True
-
         if cell["lake_temperature"][0] > 300:
             print(f"lake_temp = {cell['lake_temperature'][0]}")
             raise ValueError("Lake too warm!")
@@ -327,8 +325,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             k_ice[i] = 1000 * (
                 1.017 * 10**-4 + 1.695 * 10**-6 * cell["firn_temperature"][i]
             )
-            if cell["firn_temperature"][i] > 273.15000001:
-                raise ValueError("Firn temperature > 273.15")
+
         else:
             k_ice[i] = 1000 * (
                 2.24 * 10**-3

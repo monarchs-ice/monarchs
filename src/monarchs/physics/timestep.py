@@ -70,13 +70,18 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         raise ValueError("NaN in firn temperature")
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
-        # print('firn_boundary_change = ', cell['firn_boundary_change'])
-        if cell["lake_depth"] == 0:
+        if cell["lake_depth"] <= 0 and cell['lake']:
             cell["lake"] = False
-        if cell["lid_depth"] == 0:
+            cell["lake_depth"] = 0
+        if cell["lid_depth"] <= 0 and cell['lid']:
             cell["lid"] = False
-        if cell["v_lid_depth"] == 0:
+            cell["lid_depth"] = 0
+        if cell["v_lid_depth"] <= 0 and cell['v_lid']:
+            print('Setting virtual lid to False at start of timestep')
             cell["v_lid"] = False
+            cell["v_lid_depth"] = 0
+
+
         dz = cell["firn_depth"] / cell["vert_grid"]
         if snowfall_toggle:
             cell["rho"] = (
@@ -186,9 +191,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
                 if (
                     cell["lake_depth"] <= 1E-5 or
-                        np.any(cell['lake_temperature'][cell['lake_temperature'] > 273.15])
-                        is False
-                ):
+                        (np.any(cell['lake_temperature'][cell['lake_temperature'] > 273.15])
+                        is False) or (cell['lid_melt_count'] > 24)
+                        ):
                     lid_functions.combine_lid_firn(cell)
 
         # If we have Sfrac + Lfrac > 1, we need to ensure that Lfrac is adjusted accordingly.

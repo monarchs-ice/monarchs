@@ -1,7 +1,7 @@
 from monarchs.core.driver import monarchs
 
 
-def cli_entry(return_grid=False):
+def run_from_cli(return_grid=False):
     """
     Command line entry point for running the MONARCHS model.
     """
@@ -10,4 +10,4 @@ def cli_entry(return_grid=False):
         return grid
 
 if __name__ == "__main__":
-    cli_entry()
+   run_from_cli()

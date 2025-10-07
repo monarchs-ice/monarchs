@@ -29,3 +29,5 @@ examples/*/output/
 *.zip
 examples/sarah_test_case/
 tests/resolution_benchmarking/
+output/
+validation/
