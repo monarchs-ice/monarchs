@@ -23,21 +23,25 @@ def combine_lid_firn(cell):
     -------
     None (amends cell inplace)
     """
+    breakpoint()
     original_mass = utils.calc_mass_sum(cell)
     print(
         "Combining lid and firn to create one profile..., column ="
         f" {cell['column']}, row = {cell['row']}"
     )
-    cell["lid_depth"] = (
-        cell["v_lid_depth"]
-        + cell["lid_depth"]
-        + cell["lake_depth"] * cell["rho_water"] / cell["rho_ice"]
-    )
+
+    if cell["v_lid"]:
+        cell["lid_depth"] = cell["v_lid_depth"]
+    # Create a deep copy of the original lid depth - used later
+    orig_lid_depth = cell["lid_depth"] + 0
+    # For calculating new vertical profile - add virtual lid and lake depth
+    # to that of the lid.
 
     # Create new arrays for the combined profiles
     new_vert_grid = cell["vert_grid"]
     new_depth_grid = np.linspace(
-        0, cell["firn_depth"] + cell["lid_depth"], new_vert_grid
+        0, cell["firn_depth"] + cell["lake_depth"] + cell["lid_depth"],
+        new_vert_grid
     )
 
     # If we have a lake, and we are combining the lid and lake profiles,
@@ -90,8 +94,8 @@ def combine_lid_firn(cell):
         ),
     )
 
-    sfrac_new = mass_conserving_profile(cell, var="Sfrac")
-    lfrac_new = mass_conserving_profile(cell, var="Lfrac")
+    sfrac_new = mass_conserving_profile(cell, orig_lid_depth, var="Sfrac")
+    lfrac_new = mass_conserving_profile(cell, orig_lid_depth, var="Lfrac")
 
     # Determine which parts of the new profile are saturated.
     percolation.calc_saturation(cell, cell["vert_grid"] - 1)
@@ -104,16 +108,15 @@ def combine_lid_firn(cell):
     cell["Lfrac"] = lfrac_new
     cell["Sfrac"] = sfrac_new
     cell["meltflag"] = new_meltflag
-    cell["firn_depth"] += cell["lid_depth"]
+    # recall lid depth already accounts for lake depth here
+    cell["firn_depth"] += cell["lid_depth"] + cell["lake_depth"]
     cell["vertical_profile"] = new_depth_grid
     # Recalculate saturation based on new Sfrac and Lfrac
-    percolation.calc_saturation(cell, cell["vert_grid"] - 1)
     # Reset lake/lid-related properties
     cell["lid_depth"] = 0
     cell["v_lid"] = False
     cell["lid"] = False
     cell["lake"] = False
-
     cell["ice_lens"] = True
     cell["ice_lens_depth"] = 0
     cell["exposed_water"] = False
@@ -128,6 +131,10 @@ def combine_lid_firn(cell):
     cell["lid_melt_count"] = 0
     cell["lake_depth"] = 0.0
     cell["lid_sfc_melt"] = 0.0
+    cell["lake_refreeze_counter"] = 0
+
+    percolation.calc_saturation(cell, cell["vert_grid"] - 1)
+
     print("Saturation at point 0 = ", cell["saturation"][0])
     print("Lfrac at point 0 = ", cell["Lfrac"][0])
     print("Sfrac at point 0 = ", cell["Sfrac"][0])
@@ -137,21 +144,28 @@ def combine_lid_firn(cell):
     try:
         assert abs(new_mass - original_mass) < original_mass / 1000
     except Exception:
+        breakpoint()
         print(f"new mass = {new_mass}, original mass = {original_mass}")
         raise Exception
     pass
 
 
-def mass_conserving_profile(cell, var="Sfrac"):
+def mass_conserving_profile(cell, orig_lid_depth, var="Sfrac"):
+    breakpoint()
     lid_dz = np.full(
-        cell["vert_grid_lid"], cell["lid_depth"] / cell["vert_grid_lid"]
+        cell["vert_grid_lid"], orig_lid_depth / cell["vert_grid_lid"]
+    )
+    lake_dz = np.full(
+        cell["vert_grid_lake"], cell["lake_depth"] / cell["vert_grid_lake"]
     )
     if var == "Sfrac":
-        var_lid = np.ones(cell["vert_grid_lid"])
+        var_lid = np.concatenate((np.ones(cell["vert_grid_lid"]),
+                                  np.zeros(cell["vert_grid_lake"])))
         rho = cell["rho_ice"]
 
     else:
-        var_lid = np.zeros(cell["vert_grid_lid"])
+        var_lid = np.concatenate((np.zeros(cell["vert_grid_lid"]),
+                                  np.ones(cell["vert_grid_lake"])))
         rho = cell["rho_water"]
 
     column_dz = np.full(
@@ -160,8 +174,8 @@ def mass_conserving_profile(cell, var="Sfrac"):
     var_column = cell[var]
 
     # Combine into full profile
-    dz_full = np.concatenate((lid_dz, column_dz))
-    sfrac_full = np.concatenate((var_lid, var_column))
+    dz_full = np.concatenate((lid_dz, lake_dz, column_dz))
+    var_full = np.concatenate((var_lid, var_column))
 
     # Depth edges of full profile (top at 0)
     z_edges_full = np.concatenate((np.array([0]), np.cumsum(dz_full)))
@@ -173,8 +187,8 @@ def mass_conserving_profile(cell, var="Sfrac"):
     dz_new = np.full(num_layers_new, total_depth / num_layers_new)
     z_edges_new = np.linspace(0, total_depth, num_layers_new + 1)
 
-    # Solid mass per layer in old grid
-    mass_old = sfrac_full * dz_full * rho
+    # Solid mass per layer in old grid for the given variable
+    mass_old = var_full * dz_full * rho
 
     # Create mass function to integrate
     mass_profile = np.zeros_like(z_edges_full)
@@ -183,10 +197,10 @@ def mass_conserving_profile(cell, var="Sfrac"):
     # Interpolate cumulative mass to new layer edges
     mass_interp_edges = np.interp(z_edges_new, z_edges_full, mass_profile)
 
-    # New solid mass per layer
+    # New solid/liquid mass per layer
     mass_new = np.diff(mass_interp_edges)
 
-    # Recover new solid fraction
+    # Recover new solid/liquid fraction
     var_new = mass_new / (dz_new * rho)
 
     return np.clip(var_new, 0, 1)

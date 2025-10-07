@@ -193,6 +193,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                             cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
                         )
 
+
                     # if virtual lid freezes the entire lake (possible if
                     # lateral movement), then combine (virtual) lid and
                     # lake profiles.
@@ -232,6 +233,24 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         T_dp,
                         wind,
                     )
+                # If we have any of the following:
+                #    very small lake depth
+                #    any points in the lake below freezing
+                #    The whole lake is below a threshold temperature
+                # then we say that the lake is frozen, and combine it
+                # with the lid and firn to create a singular profile again.
+                # first determine if the lake temperature is below freezing.
+                # If so, count.
+                # If the count goes above 48 (48h of freezing), then freeze
+                # the whole lake.
+                if (cell["lake_temperature"] < 273.155).all():
+                    cell["lake_refreeze_counter"] += 1
+                else:
+                    cell["lake_refreeze_counter"] = 0
+                if cell["lake_refreeze_counter"] > 47:
+                    print('Lake has been very cold for two full diurnal cycles'
+                          '- freezing...')
+                    reset_column.combine_lid_firn(cell)
 
                 if (
                     cell["lake_depth"] <= 1e-5
@@ -287,6 +306,12 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         cell["vertical_profile"] = np.linspace(
             0, cell["firn_depth"], cell["vert_grid"]
         )
+
+    # If firn depth goes below 10, then we now consider this cell to be
+    # invalid.
+    if cell["firn_depth"] < 10:
+        print("Firn depth below 10 m - setting cell to invalid")
+        cell["valid_cell"] = False
 
     cell["day"] += 1
 

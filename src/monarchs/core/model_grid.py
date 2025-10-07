@@ -156,6 +156,8 @@ def initialise_iceshelf(
     iceshelf["firn_boundary_change"] = 0
     iceshelf["lake_boundary_change"] = 0
     iceshelf["lid_boundary_change"] = 0
+    iceshelf["lake_refreeze_counter"] = 0
+
     return iceshelf
 
 
@@ -242,6 +244,7 @@ def get_spec(vert_grid_size, vert_grid_lid, vert_grid_lake):
             ("firn_boundary_change", np.float64),
             ("lake_boundary_change", np.float64),
             ("lid_boundary_change", np.float64),
+            ("lake_refreeze_counter", np.int32),
         ]
     )
     return dtype

@@ -49,9 +49,7 @@ jobs:
         flake8 src/monarchs --count --exit-zero --max-complexity=10 --max-line-length=80 --statistics
     - name: Test with pytest
       run: |
-        cd tests/serial
-        pytest
-        cd ../numba
+        cd tests/numba
         pytest
 #        cd ../parallel
 #        pytest

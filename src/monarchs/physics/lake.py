@@ -247,7 +247,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     # Check for conservation of mass
     new_mass = utils.calc_mass_sum(cell)
     assert abs(original_mass - new_mass) < 1.5 * 10**-7
-    if old_T_sfc >= 273.15 and Q > 0:  # melting occurring at the surface
+    if old_T_sfc > 273.15 and Q > 0:  # melting occurring at the surface
         kdTdz = (
             (cell["firn_temperature"][0] - cell["firn_temperature"][1])
             * abs(k[0])
@@ -297,9 +297,7 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
                 cell["Sfrac"][0] = 1
                 print("Sfrac > 1 in exposed water refreeze")
 
-            # We can use our snowfall algorithm here as it effectively does
-            # the same thing (adds to the top of the firn), with a density
-            # instead of 917 (density of ice)
+
 
     cell["vertical_profile"] = np.linspace(
         0, cell["firn_depth"], cell["vert_grid"]

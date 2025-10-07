@@ -733,8 +733,8 @@ def handle_edge_cases(
     if (
         row + n_s_index == -1
         or col + w_e_index == -1
-        or row + n_s_index == len(grid)
-        or col + w_e_index == len(grid[0])
+        or row + n_s_index >= len(grid)
+        or col + w_e_index >= len(grid[0])
     ):
         # edge case handling - since Python handles "-1" as
         # a valid index this will impose periodic boundary conditions rather
@@ -753,7 +753,7 @@ def handle_edge_cases(
                 split,
                 outflow_proportion=outflow_proportion,
             )
-            return water_out
+            return water_out, True
         else:
             raise ValueError(
                 "Issue with lateral movement - trying to move to a"
@@ -761,7 +761,7 @@ def handle_edge_cases(
                 " enabled"
             )
     else:
-        return 0
+        return 0, False
 
 
 def handle_invalid_neighbour_cell(
@@ -799,13 +799,14 @@ def handle_invalid_neighbour_cell(
     """
     # If the neighbour cell is invalid, we aren't interested in flowing water
     # into it...
-    if (
-        not grid[row + n_s_index][col + w_e_index]["valid_cell"]
-        and not flow_into_land
-    ):
-        # return -1 to indicate that we want to `continue` the loop in
-        # move_water rather than return out
-        return -1
+    if row + n_s_index >= len(grid) and col + w_e_index >= len(grid[0]):
+        if (
+            not grid[row + n_s_index][col + w_e_index]["valid_cell"]
+            and not flow_into_land
+        ):
+            # return 0 and False to indicate that we want to `continue` the
+            # loop in move_water rather than return out
+            return 0, False
 
     # ...unless water can flow into the land (i.e. through crevices etc.) - in
     # which case run the catchment outflow algorithm, then return out of the
@@ -823,21 +824,12 @@ def handle_invalid_neighbour_cell(
         )
         if water_out > 0:
             print(f"Moved {float(water_out)} units of water into the land")
-            return water_out
-        if temporary_cell["lake_depth"] < 0:
-            print(
-                "temporary_cell['lake_depth'] ="
-                f" {temporary_cell['lake_depth']}, col = {col}, row = {row}"
-            )
-            print(
-                f"split = {split}, water_frac = {water_frac}, cell.lake_depth"
-                f" = {cell['lake_depth']}"
-            )
+            return water_out, False
         else:
-            return -1
+            return 0, False
 
     else:
-        return 0
+        return 0, True
 
 
 def move_to_neighbours(
@@ -932,12 +924,10 @@ def move_to_neighbours(
 
             # Before actually moving water, we first need to find out how much
             # water can actually move.
-            # This try/except block happens in all non-lid cases, and
-            # determines how much water can move from the central cell to the
-            # neighbour cell. If the cell is at a boundary, and the neighbour
+            # If the cell is at a boundary, and the neighbour
             # cell is outside of the domain, then we don't want to move water
             # unless catchment_outflow is True.
-            water_out = handle_edge_cases(
+            water_out, edge_flag = handle_edge_cases(
                 grid,
                 cell,
                 temporary_cell,
@@ -953,12 +943,12 @@ def move_to_neighbours(
             # If we returned water from handle_edge_cases, water will not move
             # further so we return this amount to move_water.
             # This amount will always be positive.
-            if water_out > 0:
+            if edge_flag:
                 return water_out
             # Also check that neighbour_cell is actually a valid cell.
             # If it isn't, then we don't want to move water to it,
             # unless flow_into_land is True.
-            water_out += handle_invalid_neighbour_cell(
+            land_water_out, invalid_flag = handle_invalid_neighbour_cell(
                 grid,
                 cell,
                 temporary_cell,
@@ -971,7 +961,8 @@ def move_to_neighbours(
                 water_frac,
                 outflow_proportion,
             )
-            if water_out > 0:
+            water_out += land_water_out
+            if invalid_flag:
                 return water_out
             # if handle_invalid_neighbour_cell returns -1, then don't flow to
             # this particular (invalid) cell, but there may be a neighbour
@@ -1137,6 +1128,7 @@ def move_water(
             # temporary cell specification
             temp_grid[row, col]["lake_depth"] = cell["lake_depth"]
             temp_grid[row, col]["lake"] = cell["lake"]
+            temp_grid[row, col]["valid_cell"] = cell["valid_cell"]
             # need to explicitly loop rather than using array syntax
             # else it will create a shallow copy, and explicit loops are better
             # for Numba anyway
