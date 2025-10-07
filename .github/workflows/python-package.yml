@@ -40,7 +40,7 @@ jobs:
       working-directory: ./monarchs
       run: |
         # Reformat the code with black
-        black src/monarchs --check --line-length=79 --preview --enable-unstable-feature string_processing .
+        black src/monarchs --check --line-length=79 --preview --enable-unstable-feature string_processing
 
     - name: Lint with flake8
       run: |
