@@ -23,7 +23,6 @@ def combine_lid_firn(cell):
     -------
     None (amends cell inplace)
     """
-    breakpoint()
     original_mass = utils.calc_mass_sum(cell)
     print(
         "Combining lid and firn to create one profile..., column ="
@@ -144,14 +143,12 @@ def combine_lid_firn(cell):
     try:
         assert abs(new_mass - original_mass) < original_mass / 1000
     except Exception:
-        breakpoint()
         print(f"new mass = {new_mass}, original mass = {original_mass}")
         raise Exception
     pass
 
 
 def mass_conserving_profile(cell, orig_lid_depth, var="Sfrac"):
-    breakpoint()
     lid_dz = np.full(
         cell["vert_grid_lid"], orig_lid_depth / cell["vert_grid_lid"]
     )
