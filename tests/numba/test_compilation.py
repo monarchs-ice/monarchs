@@ -6,11 +6,17 @@ def run(model_setup):
     from monarchs.core import initial_conditions, setup_met_data
 
     T_firn, rho, firn_depth, valid_cells, dx, dy = (
-        initial_conditions.initialise_firn_profile(model_setup, diagnostic_plots=False)
+        initial_conditions.initialise_firn_profile(
+            model_setup, diagnostic_plots=False
+        )
     )
 
-    lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
-    lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
+    lat_array = (
+        np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
+    )
+    lon_array = (
+        np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
+    )
     # Set up meteorological data and return the path to the grid actually used by MONARCHS
     setup_met_data.setup_era5(model_setup, lat_array, lon_array)
     # Initialise the model grid.

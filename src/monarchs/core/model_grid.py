@@ -74,7 +74,9 @@ def initialise_iceshelf(
     iceshelf["rho_lid"] = 917.0 * np.ones((num_rows, num_cols, vert_grid_lid))
     iceshelf["firn_temperature"] = firn_temperature
     if np.isnan(Sfrac).all():
-        iceshelf["Sfrac"] = np.ones((num_rows, num_cols, vert_grid)) * rho / 917
+        iceshelf["Sfrac"] = (
+            np.ones((num_rows, num_cols, vert_grid)) * rho / 917
+        )
     else:
         iceshelf["Sfrac"][:] = Sfrac
     if np.isnan(Lfrac).all():
@@ -115,7 +117,9 @@ def initialise_iceshelf(
     else:
         iceshelf["water"][:] = water
     iceshelf["melt_hours"][:] = melt_hours
-    iceshelf["exposed_water_refreeze_counter"][:] = exposed_water_refreeze_counter
+    iceshelf["exposed_water_refreeze_counter"][
+        :
+    ] = exposed_water_refreeze_counter
     iceshelf["lid_sfc_melt"][:] = lid_sfc_melt
     iceshelf["melt"][:] = melt
     iceshelf["exposed_water"][:] = exposed_water
@@ -146,16 +150,19 @@ def initialise_iceshelf(
     iceshelf["numba"][:] = numba
     iceshelf["size_dx"][:] = size_dx
     iceshelf["size_dy"][:] = size_dy
-    iceshelf["water_direction"] = np.zeros((num_rows, num_cols, 8))  # 8 possible directions
+    iceshelf["water_direction"] = np.zeros(
+        (num_rows, num_cols, 8)
+    )  # 8 possible directions
     iceshelf["firn_boundary_change"] = 0
     iceshelf["lake_boundary_change"] = 0
     iceshelf["lid_boundary_change"] = 0
     return iceshelf
 
 
-def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
+def get_spec(vert_grid_size, vert_grid_lid, vert_grid_lake):
     """
-    Define the structured array dtype for the model grid, with explicit sizes for dimensions.
+    Define the structured array dtype for the model grid, with explicit sizes
+    for dimensions.
 
     Parameters
     ----------

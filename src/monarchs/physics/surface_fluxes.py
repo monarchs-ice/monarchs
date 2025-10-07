@@ -1,3 +1,7 @@
+"""
+TODO - module-level docstring
+"""
+
 import numpy as np
 
 
@@ -16,8 +20,8 @@ def sfc_flux(
     xsurf,
 ):
     """
-    Calculate the surface heat flux from the input shortwave and longwave fluxes
-    and latent/sensible heat fluxes.
+    Calculate the surface heat flux from the input shortwave and longwave
+    fluxes and latent/sensible heat fluxes.
 
     Parameters
     ----------
@@ -101,9 +105,9 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
                     -539 + 20000 * np.exp(3.6 * h)
                 )  # lake albedo
             else:
-                alpha = 0.6   # saturated firn albedo
+                alpha = 0.6  # saturated firn albedo
         else:
-            alpha = 0.6   # wet snow albedo
+            alpha = 0.6  # wet snow albedo
     else:
         alpha = 0.867  # dry snow albedo
     return alpha
@@ -134,29 +138,43 @@ def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
     Fsens : float
          Sensible heat flux.   [W m^-2].
 
-    Documentation on how the saturation vapour pressure is calculated can be found in Section 12 of
-    https://www.ecmwf.int/sites/default/files/elibrary/2021/20198-ifs-documentation-cy47r3-part-vi-physical-processes.pdf
+    Documentation on how the saturation vapour pressure is calculated can be
+    found in Section 12 of
+    https://www.ecmwf.int/sites/default/files/elibrary/2021/20198-ifs-
+    documentation-cy47r3-part-vi-physical-processes.pdf
 
     =======
     """
-    g = 9.8   # Gravity
+    # Gravity
+    g = 9.8
     b = 20
-    dz = 10   # Height windspeed is measured at
+    # Height windspeed is measured at
+    dz = 10
     CT0 = 1.3 * 10**-3
     c = 1961 * b * CT0
-    R_dry = 287.0597  # J kg−1 K−1 From section 12 of documentation in docstring
-    R_sat = 461.5250  # J kg−1 K−1
-    a1 = 611.21  # Pa
-    T_0 = 273.16  # K
-    a3 = 17.502  # This and a4 set to over water values as dewpoint temp being used (following ERA-5 documentation)
-    a4 = 32.19  # K
-    # Calculate the saturation vapour pressure at the dewpoint temperature (i.e. the vapour pressure at the real temp)
+    # J kg−1 K−1 From section 12 of documentation in docstring
+    R_dry = 287.0597
+    # J kg−1 K−1
+    R_sat = 461.5250
+    # Pa
+    a1 = 611.21
+    # K
+    T_0 = 273.16
+    # This and a4 set to over water values as dewpoint temp being
+    # used (following ERA-5 documentation)
+    a3 = 17.502
+    # K
+    a4 = 32.19
+    # Calculate the saturation vapour pressure at the dewpoint temperature
+    # (i.e. the vapour pressure at the real temp)
     e_sat = a1 * np.exp(a3 * (T_dp - T_0) / (T_dp - a4))
     # Alternative form for testing - Clausius-Clapeyron over ice
     # e_sat = a1 * np.exp(22.587 * (T_dp - T_0) / (T_dp + 0.7))
-    s_hum = (R_dry / R_sat) * e_sat / (p_air - (e_sat * (1 - (R_dry / R_sat))))  # this is in kg/kg I think?
+    # this is in kg/kg I think?
+    s_hum = (R_dry / R_sat) * e_sat / (p_air - (e_sat * (1 - (R_dry / R_sat))))
+    # Richardson number
     if wind == 0:
-        Ri = 0   # Richardson number
+        Ri = 0
     else:
         Ri = g * (T_air - T_sfc) * dz / (T_air * wind**2)
     if Ri < 0:

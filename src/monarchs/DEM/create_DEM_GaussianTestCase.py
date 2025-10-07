@@ -5,17 +5,21 @@ from scipy.interpolate import RegularGridInterpolator
 
 def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
     """
-    Generate a Gaussian elevation map with two lakes in the upper left and bottom right corners.
-    The output is normalised between 0 and 1, so scale it by some factor to obtain a realistic firn depth.
+    Generate a Gaussian elevation map with two lakes in the upper left and
+    bottom right corners.
+    The output is normalised between 0 and 1, so scale it by some factor to
+    obtain a realistic firn depth.
 
     Parameters
     ----------
     num_points : float, optional
-        Number of points to generate for our grid. Set this to the amount of points in the x and y
-        directions of your model grid. Currently only works for square grids.
+        Number of points to generate for our grid. Set this to the amount of
+        points in the x and y directions of your model grid.
+        Currently only works for square grids.
         Default 20.
     diagnostic_plots : bool, optional
-        Flag to determine whether to generate some figures to visualise the elevation map.
+        Flag to determine whether to generate some figures to visualise the
+        elevation map.
         Default False.
 
     Returns
@@ -41,8 +45,10 @@ def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
     heights[1, 1] = 0.5
     heights[8, 8] = 0.5
     scale = len(heights) / num_points
+
     def interpolate_DEM(heights, scale):
-        """Interpolate the DEM from the original Gaussian to the scale that we want"""
+        """Interpolate the DEM from the original Gaussian to the scale that we
+        want"""
         x = np.linspace(0, 1, len(heights))
         y = np.linspace(0, 1, len(np.transpose(heights)))
         interp = RegularGridInterpolator(
@@ -54,7 +60,9 @@ def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
         return interp((X, Y))
 
     interpolated_heights = interpolate_DEM(heights, scale)
-    interpolated_heights = (interpolated_heights + interpolated_heights[::-1, ::-1]) / 2
+    interpolated_heights = (
+        interpolated_heights + interpolated_heights[::-1, ::-1]
+    ) / 2
     if diagnostic_plots:
         fig = plt.figure(figsize=(4, 2))
         plt.imshow(interpolated_heights, vmin=0, vmax=1)

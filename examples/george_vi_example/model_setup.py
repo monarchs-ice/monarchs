@@ -38,9 +38,13 @@ input_crs = 3031  # Coordinate reference system of the input data
 """
 Timestepping parameters
 """
-num_days = 365  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = (
+    365  # number of days to run the model for (assuming t_steps = 24 below)
+)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
+lateral_timestep = (
+    3600 * t_steps_per_day
+)  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -119,7 +123,9 @@ Model initial conditions (density/temperature profiles)
     rho_sfc: float
         Initial surface density used to calculate the profile if using `rho_init` = 'default'.
 """
-rho_init = "default"  # Initial density, use 'default' to use empirical formula for initial density profile
+rho_init = (  # Initial density, use 'default' to use empirical formula for initial density profile
+    "default"
+)
 T_init = "default"  # Initial temperature profile.
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 
@@ -209,9 +215,11 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
     "water_level",
-    "water_direction"
+    "water_direction",
 )
-output_filepath = "output/george_VI_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = (  # Filename for model output, including file extension (.nc for netCDF).
+    "output/george_VI_output.nc"
+)
 output_grid_size = 40  # Size of interpolated output
 output_timestep = 2
 """
@@ -232,8 +240,12 @@ Dumping and reloading parameters
         state from file at the path determined by <reload_filepath>.
 """
 dump_data = True
-dump_filepath = "output/george_vi_dump.nc"  # Filename of our previously dumped state
-reload_from_dump = False  # Flag to determine whether to reload the state or not
+dump_filepath = (  # Filename of our previously dumped state
+    "output/george_vi_dump.nc"
+)
+reload_from_dump = (
+    False  # Flag to determine whether to reload the state or not
+)
 dump_format = "NETCDF4"
 
 """
@@ -255,9 +267,7 @@ All of these default to True.
 """
 snowfall_toggle = True
 firn_column_toggle = True
-firn_heat_toggle = (
-    True  # if firn_column_toggle is False, this just triggers during lake formation
-)
+firn_heat_toggle = True  # if firn_column_toggle is False, this just triggers during lake formation
 lake_development_toggle = True  # also triggers lake formation
 lid_development_toggle = True  # also triggers lid formation
 lateral_movement_toggle = True
@@ -266,10 +276,14 @@ densification_toggle = False
 percolation_toggle = True  # only works if firn_column_toggle also True
 perc_time_toggle = True  # Determines if percolation occurs over timescales,
 # or all water can percolate until it can no longer move
-catchment_outflow = True  # Determines if water on the edge of the catchment area will
+catchment_outflow = (
+    True  # Determines if water on the edge of the catchment area will
+)
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
-flow_into_land = True  # Determines if water will flow into land cells at local minima
+flow_into_land = (
+    True  # Determines if water will flow into land cells at local minima
+)
 dump_data_pre_lateral_movement = True
 """
 Other flags for doing tests - e.g. adding water from outside catchment area
@@ -278,7 +292,9 @@ simulated_water_toggle = False  # 0.001  # False if off, otherwise float
 if simulated_water_toggle:
     print("model_setup: Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = False  # True for testing low resolution heat equation runs
+heateqn_res_toggle = (
+    False  # True for testing low resolution heat equation runs
+)
 
 met_dem_diagnostic_plots = False
 dem_diagnostic_plots = False
@@ -289,25 +305,25 @@ if __name__ == "__main__":
 
     grid = monarchs()
 
-
     from matplotlib import pyplot as plt
 
     from monarchs.core.utils import get_2d_grid
+
     plt.figure()
     for i in range(len(grid)):
         for j in range(len(grid[0])):
-            if grid[i][j]['lid']:
-                grid[i][j]['water_level'] = 0
+            if grid[i][j]["lid"]:
+                grid[i][j]["water_level"] = 0
 
-    plt.imshow(get_2d_grid(grid, 'water_level'))
-    plt.title('water_level')
+    plt.imshow(get_2d_grid(grid, "water_level"))
+    plt.title("water_level")
     plt.figure()
-    plt.imshow(get_2d_grid(grid, 'lake_depth'))
-    plt.title('Lake depth')
+    plt.imshow(get_2d_grid(grid, "lake_depth"))
+    plt.title("Lake depth")
 
     import sys
 
-    sys.path.append('../../scripts')
+    sys.path.append("../../scripts")
     import flow_plot as fp
 
     flow_plot = fp.flow_plot
@@ -320,14 +336,12 @@ if __name__ == "__main__":
 
     def make_fd_plot(a, idx=0):
         fig, ax = plt.subplots()
-        ax.imshow(a.variables['water_level'][idx], vmax=100, animated=True)
+        ax.imshow(a.variables["water_level"][idx], vmax=100, animated=True)
         return fig, ax
-
 
     def make_both(a, idx=0):
         fig, ax = make_fd_plot(a, idx=idx)
         flow_plot(a, netcdf=True, index=idx, fig=fig, ax=ax)
-
 
     make_both(a, idx=30)
     a.close()

@@ -12,7 +12,10 @@ class AttributeReplacer(ast.NodeTransformer):
                 slice=ast.Index(value=ast.Str(s=node.attr)),
                 ctx=node.ctx,
             )
-        elif isinstance(node.value, ast.Name) and node.value.id == "neighbour_cell":
+        elif (
+            isinstance(node.value, ast.Name)
+            and node.value.id == "neighbour_cell"
+        ):
             return ast.Subscript(
                 value=node.value,
                 slice=ast.Index(value=ast.Str(s=node.attr)),

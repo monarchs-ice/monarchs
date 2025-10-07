@@ -1,13 +1,23 @@
 """
 Model timestepping module.
-core.timestep_loop handles all the 1D calculations, by first checking the current
-state of the column, then running firn_column and lake/lid functions accordingly.
+core.timestep_loop handles all the 1D calculations, by first checking the
+current state of the column, then running firn_column and lake/lid functions
+accordingly.
 """
 
 import numpy as np
-from monarchs.physics import snow_accumulation
-from monarchs.physics import firn_functions, lake_functions, solver, lid_functions, percolation_functions
+from monarchs.physics import (
+    firn_column,
+    lake,
+    solver,
+    lid,
+    percolation,
+    virtual_lid,
+    snow_accumulation,
+    reset_column,
+)
 from monarchs.core import utils
+
 
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """
@@ -40,8 +50,10 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             Surface wind speed. [m s^-1]
 
     toggle_dict : dict
-        A dictionary containing toggles that determine whether certain features are enabled.
+        A dictionary containing toggles that determine whether certain features
+        are enabled.
         Values are the following:
+        TODO - fill
 
     Returns
     -------
@@ -60,8 +72,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     if not cell["valid_cell"]:
         return cell
 
-    # track evolution of firn, lake and lid over time. We do this for each day, so it
-    # resets at the start of the model day.
+    # track evolution of firn, lake and lid over time. We do this for each day,
+    # so it resets at the start of the model day.
     cell["firn_boundary_change"] = 0
     cell["lake_boundary_change"] = 0
     cell["lid_boundary_change"] = 0
@@ -70,58 +82,75 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         raise ValueError("NaN in firn temperature")
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
-        if cell["lake_depth"] <= 0 and cell['lake']:
+        if cell["lake_depth"] <= 0 and cell["lake"]:
             cell["lake"] = False
             cell["lake_depth"] = 0
-        if cell["lid_depth"] <= 0 and cell['lid']:
+        if cell["lid_depth"] <= 0 and cell["lid"]:
             cell["lid"] = False
             cell["lid_depth"] = 0
-        if cell["v_lid_depth"] <= 0 and cell['v_lid']:
-            print('Setting virtual lid to False at start of timestep')
+        if cell["v_lid_depth"] <= 0 and cell["v_lid"]:
+            print("Setting virtual lid to False at start of timestep")
             cell["v_lid"] = False
             cell["v_lid_depth"] = 0
-
 
         dz = cell["firn_depth"] / cell["vert_grid"]
         if snowfall_toggle:
             cell["rho"] = (
-                cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+                cell["Sfrac"] * cell["rho_ice"]
+                + cell["Lfrac"] * cell["rho_water"]
             )
 
             snow_accumulation.snowfall(
-                cell, met_data['snowfall'][t_step], met_data['snow_dens'][t_step], 273.15
+                cell,
+                met_data["snowfall"][t_step],
+                met_data["snow_dens"][t_step],
+                273.15,
             )
-        SW_in = met_data['SW_down'][t_step]
-        LW_in = met_data['LW_down'][t_step]
-        wind = met_data['wind'][t_step]
-        T_dp = met_data['dew_point_temperature'][t_step]
-        T_air = met_data['temperature'][t_step]
-        p_air = met_data['surf_pressure'][t_step]
+        SW_in = met_data["SW_down"][t_step]
+        LW_in = met_data["LW_down"][t_step]
+        wind = met_data["wind"][t_step]
+        T_dp = met_data["dew_point_temperature"][t_step]
+        T_air = met_data["temperature"][t_step]
+        p_air = met_data["surf_pressure"][t_step]
 
         """
-        # Two main paths - either no exposed water, in which case the dry firn evolves, or we have exposed water,
-        # in which case there are further branches depending on whether lakes or lids have formed yet.
+        Two main paths - either no exposed water, in which case the dry firn
+        evolves, or we have exposed water,
+        in which case there are further branches depending on whether lakes
+        or lids have formed yet.
         """
 
         if not cell["exposed_water"]:
             if firn_column_toggle:
-                firn_functions.firn_column(
-                    cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, toggle_dict
+                firn_column.firn_column(
+                    cell,
+                    dt,
+                    dz,
+                    LW_in,
+                    SW_in,
+                    T_air,
+                    p_air,
+                    T_dp,
+                    wind,
+                    toggle_dict,
                 )
 
         elif cell["exposed_water"]:
-            #print('Exposed water present')
+            # print('Exposed water present')
             args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
             x = cell["firn_temperature"]
 
             if firn_heat_toggle:
                 sol, fvec, success, info = solver.firn_heateqn_solver(
-                    x, args, fixed_sfc=True, solver_method='hybr'
+                    x, args, fixed_sfc=True, solver_method="hybr"
                 )
                 if success:
                     cell["firn_temperature"] = sol
                 else:
-                    print("Warning - solver failed to converge - lake development")
+                    print(
+                        "Warning - solver failed to converge - lake"
+                        " development"
+                    )
                     print(x)
                     print(cell["lake"])
                     print(cell["lid"])
@@ -131,7 +160,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     print(cell["firn_temperature"])
 
             cell["rho"] = (
-                cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+                cell["Sfrac"] * cell["rho_ice"]
+                + cell["Lfrac"] * cell["rho_water"]
             )
             if (
                 cell["lake"]
@@ -147,35 +177,42 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
             if not cell["lake"]:
                 if lake_development_toggle:
-                    lake_functions.lake_formation(
+                    lake.lake_formation(
                         cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
                     )
 
             elif cell["lake"] and not cell["lid"]:
                 if lake_development_toggle:
-                    lake_functions.lake_development(
+                    lake.lake_development(
                         cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
                     )
 
                 if cell["v_lid"]:
                     if lid_development_toggle:
-                        lid_functions.virtual_lid(
+                        virtual_lid.virtual_lid_development(
                             cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
                         )
 
-                    # if virtual lid freezes the entire lake (possible if lateral movement),
-                    # then combine (virtual) lid and lake profiles.
+                    # if virtual lid freezes the entire lake (possible if
+                    # lateral movement), then combine (virtual) lid and
+                    # lake profiles.
                     if (
-                            cell["lake_depth"] <= 1E-5 or
-                            np.any(cell['lake_temperature'][cell['lake_temperature'] > 273.15])
-                            is False
+                        cell["lake_depth"] <= 1e-5
+                        or np.any(
+                            cell["lake_temperature"][
+                                cell["lake_temperature"] > 273.15
+                            ]
+                        )
+                        is False
                     ):
-                        lid_functions.combine_lid_firn(cell)
+                        reset_column.combine_lid_firn(cell)
 
             elif cell["lake"] and cell["lid"]:
                 if lid_development_toggle:
-                    cell["v_lid"] = False  # turn virtual lid off if full lid present
-                    Fu = lake_functions.lake_development(
+                    cell["v_lid"] = (
+                        False  # turn virtual lid off if full lid present
+                    )
+                    lake.lake_development(
                         cell,
                         dt,
                         LW_in,
@@ -185,32 +222,57 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         T_dp,
                         wind,
                     )
-                    lid_functions.lid_development(
-                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, Fu
+                    lid.lid_development(
+                        cell,
+                        dt,
+                        LW_in,
+                        SW_in,
+                        T_air,
+                        p_air,
+                        T_dp,
+                        wind,
                     )
 
                 if (
-                    cell["lake_depth"] <= 1E-5 or
-                        (np.any(cell['lake_temperature'][cell['lake_temperature'] > 273.15])
-                        is False) or (cell['lid_melt_count'] > 24)
-                        ):
-                    lid_functions.combine_lid_firn(cell)
+                    cell["lake_depth"] <= 1e-5
+                    or (
+                        np.any(
+                            cell["lake_temperature"][
+                                cell["lake_temperature"] > 273.15
+                            ]
+                        )
+                        is False
+                    )
+                    or (cell["lid_melt_count"] > 24)
+                ):
+                    reset_column.combine_lid_firn(cell)
 
-        # If we have Sfrac + Lfrac > 1, we need to ensure that Lfrac is adjusted accordingly.
-        # We can do this via calc_saturation, which is used to similar effect in the percolation step.
+        # If we have Sfrac + Lfrac > 1, we need to ensure that Lfrac is
+        # adjusted accordingly.
+        # We can do this via calc_saturation, which is used to similar effect
+        # in the percolation step.
         if np.any(cell["Lfrac"] + cell["Sfrac"] > 1):
-            # Get the lowest point at which the column is saturated, and use this as the starting point
-            # for the saturation algorithm. Then find the other points that are saturated and
-            # perform the same calculation here also.
+            # Get the lowest point at which the column is saturated, and use
+            # this as the starting point for the saturation algorithm.
+            # Then find the other points that are saturated and perform the
+            # same calculation here also.
             saturation_points = np.where(cell["Lfrac"] + cell["Sfrac"] > 1)
             for saturation_point in saturation_points[::-1][0]:
-                percolation_functions.calc_saturation(cell, saturation_point, end=True)
-            # Check again. We however will tolerate any instances where the solid + liquid fraction
-            # goes above 1 (unless Sfrac is above 1). This is because for small grid spacings,
-            # a layer may become saturated as a result of the regridding. Instead of hacking it into
-            # an adjacent cell, we just let it percolate in the next timestep.
-            if np.any(cell["Lfrac"][1:] + cell["Sfrac"][1:] > 1) and cell['Sfrac'][0] <= 1:
-                raise ValueError('Lfrac + Sfrac > 1 after regridding, after saturation calculation.')
+                percolation.calc_saturation(cell, saturation_point, end=True)
+            # Check again. We however will tolerate any instances where the
+            # solid + liquid fraction goes above 1 (unless Sfrac is above 1).
+            # This is because for small grid spacings, a layer may become
+            # saturated as a result of the regridding.
+            # Instead of hacking it into an adjacent cell, we just let it
+            # percolate in the next timestep.
+            if (
+                np.any(cell["Lfrac"][1:] + cell["Sfrac"][1:] > 1)
+                and cell["Sfrac"][0] <= 1
+            ):
+                raise ValueError(
+                    "Lfrac + Sfrac > 1 after regridding, after saturation"
+                    " calculation."
+                )
 
         if not ignore_errors:
             utils.check_correct(cell)
@@ -220,9 +282,11 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         )
 
         cell["t_step"] += 1
-        # Update vertical profile to ensure we account for any firn depth changes
-        cell["vertical_profile"] = np.linspace(0, cell["firn_depth"], cell["vert_grid"])
-
+        # Update vertical profile to ensure we account for any firn depth
+        # changes
+        cell["vertical_profile"] = np.linspace(
+            0, cell["firn_depth"], cell["vert_grid"]
+        )
 
     cell["day"] += 1
 

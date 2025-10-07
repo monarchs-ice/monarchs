@@ -1,7 +1,5 @@
 """
-Created on Tue May  9 17:04:04 2023
-
-@author: sglsb6
+TODO - module-level docstring, densification
 """
 
 import numpy as np
@@ -10,10 +8,12 @@ from monarchs.core import utils
 
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
-    Adds snowfall to surface of model and regrids model to incorporate it. This snow is added to the firn or lake
-    depth, depending on the current state of the cell.
+    Adds snowfall to surface of model and regrids model to incorporate it.
+    This snow is added to the firn or lake depth, depending on the current
+    state of the cell.
     Called in <timestep_loop>.
-    TODO - what happens if we have a lid? Gets added to top and we just regrid as normal.
+    TODO - what happens if we have a lid? Gets added to top and we just
+     regrid as normal.
 
     Parameters
     ----------
@@ -22,9 +22,11 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     snow_depth : float
         Depth of the snow, read in from the meteorological data input [m]
     snow_rho : float
-        Snow density, either read in from the meteorological data input, or assumed 300 [kg m^-3]
+        Snow density, either read in from the meteorological data input,
+        or assumed 300 [kg m^-3]
     snow_T : float
-        Snow temperature, either read in from meterological data input, or assumed 273.15 [K]
+        Snow temperature, either read in from meterological data input,
+        or assumed 273.15 [K]
 
     Returns
     -------
@@ -36,8 +38,10 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
         else:
             original_mass = utils.calc_mass_sum(cell)
 
-            # Set temperature just below freezing if it is somehow above 0 degrees, which it shouldn't be
-            # if we don't do this, we can run into errors when solving the heat equation later
+            # Set temperature just below freezing if it is somehow above 0
+            # degrees, which it shouldn't be
+            # if we don't do this, we can run into errors when solving the
+            # heat equation later
             if snow_T > 273.15:
                 snow_T = 273.149
             # track pre-snow dz and firn depth
@@ -53,7 +57,8 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             sfrac_hold = np.zeros(np.shape(cell["Sfrac"]))
             lfrac_hold = np.zeros(np.shape(cell["Lfrac"]))
             T_hold = np.zeros(np.shape(cell["firn_temperature"]))
-            # Scale temperature in the top layer to account for the fact that we have added snow
+            # Scale temperature in the top layer to account for the fact
+            # that we have added snow
             weight1 = dz_old * (
                 cell["Sfrac"][0] * cell["rho_ice"]
                 + cell["Lfrac"][0] * cell["rho_water"]
@@ -67,7 +72,8 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             weight2 = dz_old
 
             cell["Sfrac"][0] = (
-                weight1 * (snow_rho / cell["rho_ice"]) + weight2 * cell["Sfrac"][0]
+                weight1 * (snow_rho / cell["rho_ice"])
+                + weight2 * cell["Sfrac"][0]
             ) / (weight1 + weight2)
 
             # error handling
@@ -89,11 +95,14 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
                 print(np.where(cell["Sfrac"] > 1.001))
                 raise ValueError("Sfrac before snow > 1")
 
-            # Calculate the new profile as a weighted average of the proportion of the new cell that was made up by the old
+            # Calculate the new profile as a weighted average of the proportion
+            # of the new cell that was made up by the old
             # cells.
             for i in range(1, len(cell["Sfrac"])):
                 weight_1 = (
-                    cell["firn_depth"] - i * dz_new - (old_firn_depth - i * dz_old)
+                    cell["firn_depth"]
+                    - i * dz_new
+                    - (old_firn_depth - i * dz_old)
                 )  # new top of upper layer - bottom of old upper layer
                 weight_2 = (
                     old_firn_depth
@@ -101,10 +110,12 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
                     - (cell["firn_depth"] - (i + 1) * dz_new)
                 )  # old bottom of upper layer - new bottom of upper layer
                 lfrac_hold[i] = (
-                    cell["Lfrac"][i - 1] * weight_1 + cell["Lfrac"][i] * weight_2
+                    cell["Lfrac"][i - 1] * weight_1
+                    + cell["Lfrac"][i] * weight_2
                 ) / (weight_1 + weight_2)
                 sfrac_hold[i] = (
-                    cell["Sfrac"][i - 1] * weight_1 + cell["Sfrac"][i] * weight_2
+                    cell["Sfrac"][i - 1] * weight_1
+                    + cell["Sfrac"][i] * weight_2
                 ) / (weight_1 + weight_2)
                 T_hold[i] = (
                     cell["firn_temperature"][i - 1] * weight_1
@@ -134,7 +145,10 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             cell["Lfrac"] = lfrac_hold
             cell["firn_temperature"] = T_hold
             assert (
-                abs(utils.calc_mass_sum(cell) - (original_mass + snow_depth * snow_rho))
+                abs(
+                    utils.calc_mass_sum(cell)
+                    - (original_mass + snow_depth * snow_rho)
+                )
                 < 1.5 * 10**-7
             )
 
@@ -154,15 +168,22 @@ def densification(cell, t_steps_per_day):
     -------
 
     """
-    dt = 1 / (8 * t_steps_per_day * 365)   # change per timestep
-    g = 9.81  # acceleration due to gravity [m s^-2]
-    ec = 60  # values used in Arthern et al.
-    eg = 42.4  # values used in Arthern et al.
-    R = 8.3144598  # gas constant
+    # change per timestep
+    dt = 1 / (8 * t_steps_per_day * 365)
+    # acceleration due to gravity [m s^-2]
+    g = 9.81
+    # values used in Arthern et al.
+    ec = 60
+    eg = 42.4
+    # gas constant
+    R = 8.3144598
     T_av = 264.56010894609415
     e = np.exp(-ec / (R * cell["firn_temperature"][0]) + eg / (R * T_av))
-    cell["rho"] = cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
-    b = 0.4953 * (1000 / 350)   # total annual accumulation - TODO taken direct from MATLAB, need to calc
+    cell["rho"] = (
+        cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+    )
+    # total annual accumulation - TODO taken direct from MATLAB, need to calc
+    b = 0.4953 * (1000 / 350)
     for i in range(cell["vert_grid"]):
         if cell["rho"][i] > cell["rho_ice"]:
             cell["rho"][i] = cell["rho_ice"]

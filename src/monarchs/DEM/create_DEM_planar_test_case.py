@@ -5,17 +5,21 @@ from scipy.interpolate import RegularGridInterpolator
 
 def export_planar_DEM(num_points=20, diagnostic_plots=False):
     """
-    Generate an elevation map that goes from a maximum on the LHS to a minimum on the RHS.
-    The output is normalised between 0 and 1, so scale it by some factor to obtain a realistic firn depth.
+    Generate an elevation map that goes from a maximum on the LHS to a minimum
+    on the RHS.
+    The output is normalised between 0 and 1, so scale it by some factor to
+    obtain a realistic firn depth.
 
     Parameters
     ----------
     num_points : float, optional
-        Number of points to generate for our grid. Set this to the amount of points in the x and y
-        directions of your model grid. Currently only works for square grids.
+        Number of points to generate for our grid. Set this to the amount of
+        points in the x and y directions of your model grid. Currently only
+        works for square grids.
         Default 20.
     diagnostic_plots : bool, optional
-        Flag to determine whether to generate some figures to visualise the elevation map.
+        Flag to determine whether to generate some figures to visualise the
+        elevation map.
         Default False.
 
     Returns
@@ -25,19 +29,17 @@ def export_planar_DEM(num_points=20, diagnostic_plots=False):
 
     """
 
-
-
     x = y = np.linspace(-1, 1, 10)
 
     # As with the Gaussian DEM - generate a heights array
     heights = np.zeros((len(x), len(y)), dtype=np.float64)
     for i in range(len(heights)):
-        heights[:, i] = (len(heights) - i)/len(heights)
+        heights[:, i] = (len(heights) - i) / len(heights)
     scale = len(heights) / num_points
 
-
     def interpolate_DEM(heights, scale):
-        """Interpolate the DEM from the original Gaussian to the scale that we want"""
+        """Interpolate the DEM from the original Gaussian to the scale that we
+        want"""
         x = np.linspace(0, 1, len(heights))
         y = np.linspace(0, 1, len(np.transpose(heights)))
         interp = RegularGridInterpolator(

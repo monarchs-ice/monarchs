@@ -1,3 +1,7 @@
+"""
+TODO - docstrings, module-level docstring
+"""
+
 import numpy as np
 from netCDF4 import Dataset
 from monarchs.core.utils import get_2d_grid
@@ -29,7 +33,9 @@ def setup_output(
             vert_grid_size = grid["vert_grid"][0][0]
         data.createDimension("vert_grid", size=vert_grid_size)
         data.createDimension("vert_grid_lid", size=grid["vert_grid_lid"][0][0])
-        data.createDimension("vert_grid_lake", size=grid["vert_grid_lake"][0][0])
+        data.createDimension(
+            "vert_grid_lake", size=grid["vert_grid_lake"][0][0]
+        )
         data.createDimension("direction", size=8)
         for key in vars_loop:
             var = get_2d_grid(grid, key, index="all")
@@ -47,11 +53,17 @@ def setup_output(
                     var_write = data.createVariable(
                         key, dtype, ("time", "x", "y", "direction")
                     )
-                elif "lake" in key and "lake_depth" not in key and key not in dims:
+                elif (
+                    "lake" in key
+                    and "lake_depth" not in key
+                    and key not in dims
+                ):
                     var_write = data.createVariable(
                         key, dtype, ("time", "x", "y", "vert_grid_lake")
                     )
-                elif "lid" in key and "lid_depth" not in key and key not in dims:
+                elif (
+                    "lid" in key and "lid_depth" not in key and key not in dims
+                ):
                     var_write = data.createVariable(
                         key, dtype, ("time", "x", "y", "vert_grid_lid")
                     )
@@ -68,7 +80,9 @@ def setup_output(
                             for j in range(len(grid["firn_depth"][i])):
                                 new_var[i][j] = np.interp(
                                     np.linspace(
-                                        0, grid["firn_depth"][i][j], vert_grid_size
+                                        0,
+                                        grid["firn_depth"][i][j],
+                                        vert_grid_size,
                                     ),
                                     np.linspace(
                                         0,
@@ -98,9 +112,7 @@ def interpolate_model_output(grid, vert_grid_size, var):
     for i in range(len(grid["firn_depth"])):
         for j in range(len(grid["firn_depth"][i])):
             new_var[i][j] = np.interp(
-                np.linspace(
-                    0, grid["firn_depth"][i][j], vert_grid_size
-                ),
+                np.linspace(0, grid["firn_depth"][i][j], vert_grid_size),
                 np.linspace(
                     0, grid["firn_depth"][i][j], grid["vert_grid"][i][j]
                 ),
@@ -108,6 +120,7 @@ def interpolate_model_output(grid, vert_grid_size, var):
             )
     var = new_var
     return var
+
 
 def update_model_output(
     fname,
@@ -130,7 +143,6 @@ def update_model_output(
         index = iteration
     else:
         index = iteration * 24 + t_step
-
 
     with Dataset(fname, clobber=True, mode="a") as data:
         for key in vars_to_save:

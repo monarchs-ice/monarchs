@@ -38,11 +38,14 @@ for folder in folders:
         lon_dim = f1.dimensions["longitude"]
         # Create the new file. First we get the year from the time after epoch (1/1/1970)
         year = int(
-            f1["valid_time"][len(f1["valid_time"]) / 2] // (60 * 60 * 24 * 365.25)
+            f1["valid_time"][len(f1["valid_time"]) / 2]
+            // (60 * 60 * 24 * 365.25)
             + 1970
         )
         print("Year = ", year)
-        new_file = Dataset(output_dir + "/era5_" + str(year) + ".nc", "w", clobber=True)
+        new_file = Dataset(
+            output_dir + "/era5_" + str(year) + ".nc", "w", clobber=True
+        )
         # Create the dimensions
         new_file.createDimension("valid_time", None)
         new_file.createDimension("latitude", len(lat_dim))
@@ -50,8 +53,12 @@ for folder in folders:
         # Get the variables from each file
         all_variables = {}
         # Append all of the keys together to get a list of all the variables
-        all_variables = [(name, variable) for name, variable in f1.variables.items()]
-        all_variables += [(name, variable) for name, variable in f2.variables.items()]
+        all_variables = [
+            (name, variable) for name, variable in f1.variables.items()
+        ]
+        all_variables += [
+            (name, variable) for name, variable in f2.variables.items()
+        ]
         # Get the variables from f1 and f2 and write them (with their metadata) into the
         # new file
         for name, variable in all_variables:
@@ -60,7 +67,9 @@ for folder in folders:
             new_var = new_file.createVariable(
                 name, variable.datatype, variable.dimensions
             )
-            new_var.setncatts({k: variable.getncattr(k) for k in variable.ncattrs()})
+            new_var.setncatts(
+                {k: variable.getncattr(k) for k in variable.ncattrs()}
+            )
         # Write the actual data
         for name, variable in all_variables:
             new_file[name][:] = variable[:]

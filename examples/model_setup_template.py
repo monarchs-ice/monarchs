@@ -29,7 +29,9 @@ Spatial parameters
 """
 col_amount = 50  # Number of columns in your model grid, looking from top-down.
 row_amount = 50  # Number of rows in your model grid, looking from top-down.
-lat_grid_size = "dem"  # size of each lateral grid cell in m - can either be a number or 'dem' to calculate
+lat_grid_size = (  # size of each lateral grid cell in m - can either be a number or 'dem' to calculate
+    "dem"
+)
 # x and y grid sizes from the DEM itself.
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -49,7 +51,9 @@ bbox_top_right = [
 bbox_bottom_left = [
     (-66.289, -64.68)
 ]  # bounding box bottom left coordinates, [(lat, long)]
-bbox_top_left = [(-66.04, -63.42)]  # bounding box top left coordinates, [(lat, long)]
+bbox_top_left = [
+    (-66.04, -63.42)
+]  # bounding box top left coordinates, [(lat, long)]
 bbox_bottom_right = [
     (-66.778, -64.099)
 ]  # bounding box bottom right coordinates, [(lat, long)]
@@ -57,9 +61,13 @@ bbox_bottom_right = [
 """
 Timestepping parameters
 """
-num_days = 1000  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = (
+    1000  # number of days to run the model for (assuming t_steps = 24 below)
+)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
+lateral_timestep = (
+    3600 * t_steps_per_day
+)  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -143,7 +151,9 @@ Model initial conditions (density/temperature profiles)
     rho_sfc: float
         Initial surface density used to calculate the profile if using `rho_init` = 'default'.
 """
-rho_init = "default"  # Initial density, use 'default' to use empirical formula for initial density profile
+rho_init = (  # Initial density, use 'default' to use empirical formula for initial density profile
+    "default"
+)
 T_init = "default"  # Initial temperature profile.
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 
@@ -233,7 +243,9 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "../MONARCHS_runs/sample_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = (  # Filename for model output, including file extension (.nc for netCDF).
+    "../MONARCHS_runs/sample_output.nc"
+)
 output_grid_size = 200  # Size of interpolated output
 output_timestep = 1
 """
@@ -254,11 +266,15 @@ Dumping and reloading parameters
         state from file at the path determined by <reload_filepath>.
 """
 dump_data = True
-dump_filepath = (
-    "../MONARCHS_runs/progress_df.nc"  # Filename of our previously dumped state
+dump_filepath = (  # Filename of our previously dumped state
+    "../MONARCHS_runs/progress_df.nc"
 )
-reload_from_dump = False  # Flag to determine whether to reload the state or not
-dump_format = "NETCDF4"  # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
+reload_from_dump = (
+    False  # Flag to determine whether to reload the state or not
+)
+dump_format = (  # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
+    "NETCDF4"
+)
 dump_timestep = 1
 """
 Computing and numerical parameters
@@ -279,9 +295,7 @@ All of these default to True.
 """
 snowfall_toggle = True
 firn_column_toggle = True
-firn_heat_toggle = (
-    True  # if firn_column_toggle is False, this just triggers during lake formation
-)
+firn_heat_toggle = True  # if firn_column_toggle is False, this just triggers during lake formation
 lake_development_toggle = True  # also triggers lake formation
 lid_development_toggle = True  # also triggers lid formation
 lateral_movement_toggle = True
@@ -290,10 +304,14 @@ densification_toggle = False
 percolation_toggle = True  # only works if firn_column_toggle also True
 perc_time_toggle = True  # Determines if percolation occurs over timescales,
 # or all water can percolate until it can no longer move
-catchment_outflow = False  # Determines if water on the edge of the catchment area will
+catchment_outflow = (
+    False  # Determines if water on the edge of the catchment area will
+)
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
-flow_into_land = False  # Determines if water will flow into land cells at local minima
+flow_into_land = (
+    False  # Determines if water will flow into land cells at local minima
+)
 """
 Other flags for doing tests - e.g. adding water from outside catchment area
 """
@@ -301,7 +319,9 @@ simulated_water_toggle = False  # 0.001  # False if off, otherwise float
 if simulated_water_toggle:
     print("model_setup: Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = False  # True for testing low resolution heat equation runs
+heateqn_res_toggle = (
+    False  # True for testing low resolution heat equation runs
+)
 
 met_dem_diagnostic_plots = False
 radiation_forcing_factor = 1

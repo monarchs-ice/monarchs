@@ -1,13 +1,20 @@
+"""
+TODO - module-level docstring, other docstrings
+"""
+
 import argparse
 import warnings
 import os
 import numpy as np
 
+
 def parse_args():
     """
-    Parse input. Most things are controlled by `model_setup.py`; the only input here is (optionally) the location
-    (as a filepath, so including the filename) of that setup file.
+    Parse input. Most things are controlled by `model_setup.py`; the only input
+    here is (optionally) the location (as a filepath, so including the
+    filename) of that setup file.
     """
+    func_name = "monarchs.core.configuration.parse_args"
     run_dir = os.getcwd().replace("\\", "/")
     warning_flag = False
     if "PYTEST_CURRENT_TEST" in os.environ:
@@ -20,23 +27,33 @@ def parse_args():
         else:
             warning_flag = True
         if not warning_flag:
-            print("\nmonarchs.core.configuration.parse_args:")
+            print(f"\n{func_name}:")
             print(
-                f"Setting runscript to {runscript} since MONARCHS has identified this as a unit test"
+                f"Setting runscript to {runscript} since MONARCHS has"
+                " identified this as a unit test"
             )
             return runscript
         else:
             warnings.warn(
-                "Unrecognised test case. This warning occurs if you are trying to run a unit test from the wrong place, MONARCHS will try and continue using the input arguments you specified, but if running an incorrectly-setup test case will fail."
+                "Unrecognised test case. This warning occurs if you are trying"
+                " to run a unit test from the wrong place, MONARCHS will try"
+                " and continue using the input arguments you specified, but if"
+                " running an incorrectly-setup test case will fail."
             )
     parser = argparse.ArgumentParser(
         prog="MONARCHS",
-        description="A model of ice shelf development, written by Sammie Buzzard, Jon Elsey and Alex Robel.",
+        description=(
+            "A model of ice shelf development, written by Sammie Buzzard, Jon"
+            " Elsey and Alex Robel."
+        ),
     )
     parser.add_argument(
         "--input_path",
         "-i",
-        help="Absolute or relative path to an input file, in the format of <model_setup.py>",
+        help=(
+            "Absolute or relative path to an input file, in the format of"
+            " <model_setup.py>"
+        ),
         default="model_setup.py",
         required=False,
     )
@@ -47,7 +64,8 @@ def parse_args():
 
 def create_output_folders(model_setup):
     """
-    Create the output folders for the model output, meteorological data and dump files, if they do not already exist.
+    Create the output folders for the model output, meteorological data and
+    dump files, if they do not already exist.
     """
     if not os.path.exists(model_setup.output_filepath.rsplit("/", 1)[0]):
         os.makedirs(model_setup.output_filepath.rsplit("/", 1)[0])
@@ -60,8 +78,9 @@ def create_output_folders(model_setup):
 def handle_incompatible_flags(model_setup):
     """
     Handle incompatible model flags that could cause issues with the code.
-    This mostly consists of generating errors that the user should check for. This is one of many reasons why
-    long model runs should be run in a test queue first to ensure that the setup is correct.
+    This mostly consists of generating errors that the user should check for.
+    This is one of many reasons why long model runs should be run in a test
+    queue first to ensure that the setup is correct.
 
     Parameters
     ----------
@@ -73,31 +92,48 @@ def handle_incompatible_flags(model_setup):
     Raises
     ------
     """
+    func_name = "monarchs.core.configuration.handle_incompatible_flags"
     print("\n")
-    if hasattr(model_setup, "lat_bounds") and not hasattr(model_setup, "DEM_path"):
+    if hasattr(model_setup, "lat_bounds") and not hasattr(
+        model_setup, "DEM_path"
+    ):
         if model_setup.lat_bounds.lower() == "dem":
             raise ValueError(
-                f'monarchs.core.configuration.handle_incompatible_flags(): You must provide a DEM file using the "DEM_path" argument to use DEM lat/long bounds.'
+                f"{func_name}: You"
+                ' must provide a DEM file using the "DEM_path" argument to'
+                " use DEM lat/long bounds."
             )
     dump_attrs = ["dump_data", "reload_from_dump"]
     for attr in dump_attrs:
-        if hasattr(model_setup, attr) and not hasattr(model_setup, "dump_filepath"):
+        if hasattr(model_setup, attr) and not hasattr(
+            model_setup, "dump_filepath"
+        ):
             if getattr(model_setup, attr) is True:
                 raise NameError(
-                    f"monarchs.core.configuration.handle_incompatible_flags(): <{attr}> is specified but <dump_filepath> is empty - please specify in model_setup a filepath to write the dump into via the <dump_filepath> attribute."
+                    f"{func_name}:"
+                    f" <{attr}> is specified but <dump_filepath> is empty -"
+                    " please specify in model_setup a filepath to write the"
+                    " dump into via the <dump_filepath> attribute."
                 )
     save_attrs = ["save_output"]
     for attr in dump_attrs:
-        if hasattr(model_setup, attr) and not hasattr(model_setup, "output_filepath"):
+        if hasattr(model_setup, attr) and not hasattr(
+            model_setup, "output_filepath"
+        ):
             if getattr(model_setup, attr) is True:
                 raise NameError(
-                    f"monarchs.core.configuration.handle_incompatible_flags(): <{attr}> is specified but <output_filepath> is empty - please specify in model_setup a filepath to write the saved data into via the <output_filepath> attribute."
+                    f"{func_name}:"
+                    f" <{attr}> is specified but <output_filepath> is empty -"
+                    " please specify in model_setup a filepath to write the"
+                    " saved data into via the <output_filepath> attribute."
                 )
     dump_formats = ["NETCDF4", "pickle"]
     if hasattr(model_setup, "dump_format"):
         if model_setup.dump_format not in dump_formats:
             raise ValueError(
-                f"monarchs.core.configuration.handle_incompatible_flags(): dump_format must be one of {dump_formats}, not {model_setup.dump_format}"
+                f"{func_name}:"
+                f" dump_format must be one of {dump_formats}, not"
+                f" {model_setup.dump_format}"
             )
         if (
             model_setup.dump_format == "pickle"
@@ -105,29 +141,52 @@ def handle_incompatible_flags(model_setup):
             and model_setup.use_numba
         ):
             raise ValueError(
-                f"monarchs.core.configuration.handle_incompatible_flags(): dump_format is set to `'pickle'` but use_numba is `True`. This is not supported since Numba jitclasses are not picklable"
+                f"{func_name}:"
+                " dump_format is set to `'pickle'` but use_numba is `True`."
+                " This is not supported since Numba jitclasses are not"
+                " picklable"
             )
-    valid_solvers = ["hybr", "df-sane", "brentq", "lm", "trust-ncg", "broyden1"]
-    if hasattr(model_setup, "solver") and model_setup.solver not in valid_solvers:
+    valid_solvers = [
+        "hybr",
+        "df-sane",
+        "brentq",
+        "lm",
+        "trust-ncg",
+        "broyden1",
+    ]
+    if (
+        hasattr(model_setup, "solver")
+        and model_setup.solver not in valid_solvers
+    ):
         raise ValueError(
-            f"monarchs.core.configuration.handle_incompatible_flags(): solver must be one of {valid_solvers}, not {model_setup.solver}"
+            f"m{func_name}:"
+            f" solver must be one of {valid_solvers}, not {model_setup.solver}"
         )
-    if hasattr(model_setup, "outflow_proportion") and model_setup.outflow_proportion > 1.0:
+    if (
+        hasattr(model_setup, "outflow_proportion")
+        and model_setup.outflow_proportion > 1.0
+    ):
         raise ValueError(
-            f"monarchs.core.configuration.handle_incompatible_flags(): outflow_proportion must be <= 1.0, not {model_setup.outflow_proportion}"
+            f"{func_name}:"
+            " outflow_proportion must be <= 1.0, not"
+            f" {model_setup.outflow_proportion}"
         )
+
 
 def create_defaults_for_missing_flags(model_setup):
     """
-    Prevent the model from crashing out if certain flags are not specified in the model_setup file.
-    This will not prevent the code from stopping if key information is not provided (e.g. a DEM GeoTIFF file or
-    a NumPy array of firn column depth matching the chosen grid size, or a netCDF of input meteorological data).
-    It is intended to ensure that the code runs even if the setup file does not contain every possible argument.
-    (for example, not having flags that don't affect the model physics such as <met_dem_diagnostic_plots> set,
+    Prevent the model from crashing out if certain flags are not specified in
+    the model_setup file.
+    This will not prevent the code from stopping if key information is not
+    provided (e.g. a DEM GeoTIFF file or a NumPy array of firn column depth
+    matching the chosen grid size, or a netCDF of input meteorological data).
+    It is intended to ensure that the code runs even if the setup file does not
+    contain every possible argument. (for example, not having flags that don't
+    affect the model physics such as <met_dem_diagnostic_plots> set,
     or likewise the debugging toggles such as `firn_heat_toggle`).
 
-    You can also amend this function to set defaults for certain variables, e.g. the default surface density
-    `rho_sfc` = 500 as defined below.
+    You can also amend this function to set defaults for certain variables,
+    e.g. the default surface density `rho_sfc` = 500 as defined below.
 
     Args
     -------
@@ -137,6 +196,7 @@ def create_defaults_for_missing_flags(model_setup):
     -------
     None
     """
+    func_name = "monarchs.core.configuration.create_defaults_for_missing_flags"
     optional_args_to_true = [
         "lake_development_toggle",
         "lid_development_toggle",
@@ -177,27 +237,35 @@ def create_defaults_for_missing_flags(model_setup):
         if not hasattr(model_setup, attr):
             setattr(model_setup, attr, True)
             print(
-                f"monarchs.core.configuration.create_defaults_for_missing_flags: Setting missing model_setup attribute <{attr}> to default value True"
+                f"{func_name}"
+                f" Setting missing model_setup attribute <{attr}> to default"
+                " value True"
             )
     for attr in optional_args_to_false:
         if not hasattr(model_setup, attr):
             setattr(model_setup, attr, False)
             print(
-                f"monarchs.core.configuration.create_defaults_for_missing_flags: Setting missing model_setup attribute <{attr}> to default value False"
+                f"{func_name}"
+                f" Setting missing model_setup attribute <{attr}> to default"
+                " value False"
             )
     inits = ["rho_init", "T_init"]
     for attr in inits:
         if not hasattr(model_setup, attr):
             setattr(model_setup, attr, "default")
             print(
-                f'monarchs.core.configuration.create_defaults_for_missing_flags: Setting missing model_setup attribute <{attr}> to default value "default"'
+                f"{func_name}"
+                f" Setting missing model_setup attribute <{attr}> to default"
+                ' value "default"'
             )
     bounds = ["latmax", "latmin", "lonmax", "lonmin"]
     for attr in bounds:
         if not hasattr(model_setup, attr):
             setattr(model_setup, attr, np.nan)
             print(
-                f"monarchs.core.configuration.create_defaults_for_missing_flags: Setting missing model_setup attribute <{attr}> to default value np.nan"
+                f"{func_name}"
+                f" Setting missing model_setup attribute <{attr}> to default"
+                " value np.nan"
             )
     vardict = {}
     vardict["output_grid_size"] = model_setup.vertical_points_firn
@@ -229,16 +297,27 @@ def create_defaults_for_missing_flags(model_setup):
     vardict["input_crs"] = 3031
     vardict["cores"] = "all"
     vardict["solver"] = "hybr"
-    vardict['dask_scheduler'] = 'processes'  # set to 'distributed' if using HPC across multiple nodes
-    vardict['flow_speed_scaling'] = 1.0
-    vardict['outflow_proportion'] = 1.0
+    vardict["dask_scheduler"] = (
+        "processes"  # set to 'distributed' if using HPC across multiple nodes
+    )
+    vardict["flow_speed_scaling"] = 1.0
+    vardict["outflow_proportion"] = 1.0
     if hasattr(model_setup, "met_input_filepath"):
         vardict["met_data_source"] = "ERA5"
-    elif hasattr(model_setup, "met_data") and isinstance(model_setup.met_data, dict):
+    elif hasattr(model_setup, "met_data") and isinstance(
+        model_setup.met_data, dict
+    ):
         vardict["met_data_source"] = "user_defined"
     else:
         raise ValueError(
-            "monarchs.core.configuration.create_defaults_for_missing_flags: No meteorological data source was detected. Either specify input data as an ERA5-formatnetCDF file, or as a ``dict`` of user-defined data in model_setup.py. See ``examples/1D_test_case/model_setup.py`` for an example of user-defined data, or ``examples/10x10_gaussian_threelake/model_setup.py`` for an example of ERA5 data."
+            f"{func_name}:"
+            " No meteorological data source was detected. Either specify"
+            " input data as an ERA5-formatnetCDF file, or as a ``dict`` of"
+            " user-defined data in model_setup.py. See"
+            " ``examples/1D_test_case/model_setup.py`` for an example of"
+            " user-defined data, or"
+            " ``examples/10x10_gaussian_threelake/model_setup.py`` for an"
+            " example of ERA5 data."
         )
     special_keys = ["lateral_timestep"]
     for key in vardict.keys():
@@ -246,17 +325,23 @@ def create_defaults_for_missing_flags(model_setup):
             setattr(model_setup, key, vardict[key])
             if key not in special_keys:
                 print(
-                    f"monarchs.core.configuration.create_defaults_for_missing_flags: Setting missing model_setup attribute <{key}> to default value <{vardict[key]}>"
+                    f"{func_name}"
+                    f" Setting missing model_setup attribute <{key}> to"
+                    f" default value <{vardict[key]}>"
                 )
             elif key == "lateral_timestep":
                 print(
-                    f"monarchs.core.configuration.create_defaults_for_missing_flags: Setting missing model_setup attribute <{key}> to default value model_setup.t_steps_per_day * 3600"
+                    f"{func_name}"
+                    f" Setting missing model_setup attribute <{key}> to"
+                    " default value model_setup.t_steps_per_day * 3600"
                 )
     if hasattr(model_setup, "DEM_path"):
         if not hasattr(model_setup, "lat_grid_size"):
             setattr(model_setup, "lat_grid_size", "dem")
             print(
-                f"monarchs.core.configuration.create_defaults_for_missing_flags: Setting missing model_setup attribute <lat_grid_size> to default value 'dem' since a valid DEMwas provided."
+                f"{func_name}"
+                " Setting missing model_setup attribute <lat_grid_size> to"
+                " default value 'dem' since a valid DEMwas provided."
             )
 
 
@@ -268,7 +353,10 @@ class ModelSetup:
                 script_content = file.read()
         except FileNotFoundError:
             raise FileNotFoundError(
-                f"monarchs.core.configuration: Path to runscript ({script_path}) not found. Please either run from a directory containing a valid model_setup.py, or pass the -i flag with a valid runscript path."
+                "monarchs.core.configuration: Path to runscript"
+                f" ({script_path}) not found. Please either run from a"
+                " directory containing a valid model_setup.py, or pass the -i"
+                " flag with a valid runscript path."
             )
         local_vars = {}
         exec(script_content, {}, local_vars)
@@ -276,32 +364,42 @@ class ModelSetup:
             setattr(self, var_name, var_value)
 
 
-
 def jit_modules(fastmath=False):
     """
-    If using Numba, then we need to apply the `numba.jit` decorator to several functions
-    in `physics` and `core'.
-    This function handles this process, by loading in the modules and using `setattr`
-    to overwrite the initial implementation with the Numba-compatible
-    versions, either by applying the `jit` decorator, or in the case where the source code
-    differs between the Numba and non-Numba versions, by overwriting the pure-Python
-    version with the Numba-compatible one.
+    If using Numba, then we need to apply the `numba.jit` decorator to several
+    functions in `physics` and `core`.
+    This function handles this process, by loading in the modules and using
+    `setattr` to overwrite the initial implementation with the Numba-compatible
+    versions, either by applying the `jit` decorator, or in the case where the
+    source code differs between the Numba and non-Numba versions,
+    by overwriting the pure-Python version with the Numba-compatible one.
 
-    This is only called when `use_numba` is `True`, so the import only happens if needed
-    (important for if the user does not have Numba installed).
+    This is only called when `use_numba` is `True`, so the import only happens
+    if needed (important for if the user does not have Numba installed).
 
-    This function was designed this way (as opposed to applying jit to each function in its
-    own module locally) so that we only need to import `monarchs.core.configuration`
-    once; in `monarchs.core.driver`. This allows us to run in parallel with `multiprocessing`,
-    as otherwise each thread would try and load in the configuration file with null arguments,
-    whenever importing the physics functions (which needed to know whether `use_numba` was `True`)
-    which was causing an error.
+    This function was designed this way (as opposed to applying jit to each
+    function in its own module locally) so that we only need to import
+    `monarchs.core.configuration` once; in `monarchs.core.driver`.
+    This allows us to run in parallel with `multiprocessing`, as otherwise each
+    thread would try and load in the configuration file with null arguments,
+    whenever importing the physics functions (which needed to know whether
+    `use_numba` was `True`) which was causing an error.
     """
     from numba import njit
     from inspect import getmembers, isfunction
 
-    from monarchs.physics import percolation_functions, lid_functions, surface_fluxes, lake_functions, firn_functions
-    from monarchs.physics import timestep, snow_accumulation, lateral_functions
+    from monarchs.physics import (
+        percolation,
+        lid,
+        surface_fluxes,
+        lake,
+        firn_column,
+        timestep,
+        snow_accumulation,
+        lateral_movement,
+        virtual_lid,
+        reset_column,
+    )
     from monarchs.core import model_output, utils
 
     # modules to search from when applying jit
@@ -309,28 +407,38 @@ def jit_modules(fastmath=False):
         utils,
         snow_accumulation,
         surface_fluxes,
-        lake_functions,
-        lid_functions,
-        percolation_functions,
-        firn_functions,
+        lake,
+        lid,
+        virtual_lid,
+        percolation,
+        firn_column,
         model_output,
         timestep,
-        lateral_functions,
+        lateral_movement,
+        reset_column,
     ]
 
     # Set up a list of modules to not apply njit to.
-    # If a piece of code is refusing to compile, and you can't get it to debug, add it to here.
-    ignore_list = ['setup_output', 'update_model_output',  # netCDF output functions, we only want to hit interpolation
-                   'get_2d_grid', 'memory_tracker', 'do_not_jit', 'wraps'
-                  ]  # other builtins/decorators
+    # If a piece of code is refusing to compile, and you can't get it to debug,
+    # add it to here.
+    ignore_list = [
+        "setup_output",
+        "update_model_output",  # we only want to hit interpolation
+        "get_2d_grid",
+        "memory_tracker",
+        "do_not_jit",
+        "wraps",
+    ]  # other builtins/decorators
 
     for module in module_list:
         functions_list = getmembers(module, isfunction)
 
         for name, function in functions_list:
-            # Ignore functions that are imported, are in our ignore list, or have the __wrapped__ attribute
+            # Ignore functions that are imported, are in our ignore list,
+            # or have the __wrapped__ attribute
             # if function.__module__ != module.__name__:
-            #     print(f"Skipping {name} because it belongs to {function.__module__}, not {module.__name__}")
+            #     print(f"Skipping {name} because it belongs to
+            #     {function.__module__}, not {module.__name__}")
             #     continue
 
             if name in ignore_list:
@@ -338,24 +446,30 @@ def jit_modules(fastmath=False):
             if hasattr(function, "__wrapped__") or name.startswith("__"):
                 continue
             print(f"Applying Numba jit decorator to {module.__name__}.{name}")
-            jitted_function = njit(function, fastmath=fastmath, debug=False, cache=True)
+            jitted_function = njit(
+                function, fastmath=fastmath, debug=False, cache=True
+            )
             setattr(module, name, jitted_function)
-
 
     from monarchs.physics import solver
     from monarchs.physics.Numba import solver_nb as numba_solver
-    # relax the isfunction stipulation for `numba_solver` since it is mostly jitted functions
-    # (which are `<CPUDispatcher>` objects rather than `<function>` objects
+
+    # relax the isfunction stipulation for `numba_solver` since it is mostly
+    # jitted functions (which are `<CPUDispatcher>` objects rather than
+    # `<function>` objects
     jit_functions_list = getmembers(numba_solver)
     for name, jitfunc in jit_functions_list:
         # ignore builtins - which we did not filter out with getmembers
-        if not name.startswith('__'):
-            print(f'Setting {solver.__name__}.{name} to the equivalent Numba-compatible version')
+        if not name.startswith("__"):
+            print(
+                f"Setting {solver.__name__}.{name} to the equivalent"
+                " Numba-compatible version"
+            )
             setattr(solver, name, jitfunc)
 
 
-
 def get_model_setup(model_setup_path):
+    """Load in the model setup from the specified path,
+    and return an instance of the ModelSetup class."""
     model_setup = ModelSetup(model_setup_path)
     return model_setup
-

@@ -4,7 +4,8 @@ from functools import wraps
 
 def do_not_jit(function):
     """
-    An empty function used to decorate functions that we do not wish to jit-compile.
+    An empty function used to decorate functions that we do not wish to
+    jit-compile.
     Parameters
     ----------
     function - function to be decorated
@@ -22,11 +23,10 @@ def do_not_jit(function):
     return wrapper
 
 
-
 def get_2d_grid(grid, attr, index=False):
     """
-    Helper function to get a printout of a variable from the model grid, at a user-specified index.
-    objects.
+    Helper function to get a printout of a variable from the model grid,
+    at a user-specified index.
 
     Parameters
     ----------
@@ -77,7 +77,8 @@ def find_nearest(a, a0):
 def calc_grid_mass(grid):
     """
     Calculate the total mass inside the grid, to check for mass conservation.
-    Only do this for valid cells, since invalid cells will have constant mass as no physics is run on them.
+    Only do this for valid cells, since invalid cells will have constant mass
+    as no physics is run on them.
 
     Parameters
     ----------
@@ -99,8 +100,9 @@ def calc_grid_mass(grid):
 
 def check_correct(cell):
     """
-    Sanity checking to ensure model is still in a physically correct state. This ensures things such as the
-    solid and liquid fraction being below 1 and less than 0 within a grid cell, firn depth and lake depth being
+    Sanity checking to ensure model is still in a physically correct state.
+    This ensures things such as the solid and liquid fraction being below 1
+    and less than 0 within a grid cell, firn depth and lake depth being
     non-negative, etc.
 
     Parameters
@@ -115,10 +117,12 @@ def check_correct(cell):
     Raises
     ------
     ValueError
-        If any of the conditions are met, raise ValueError as the model has reached an unphysical state.
+        If any of the conditions are met, raise ValueError as the model has
+        reached an unphysical state.
         See the code body for details.
     """
-    if cell["lake_depth"] < -1E-12:  # account for rounding errors
+    func_name = "monarchs.core.utils.check_correct"
+    if cell["lake_depth"] < -1e-12:  # account for rounding errors
         print(f"monarchs.core.utils.check_correct: ")
         print("Lake depth = ", cell["lake_depth"])
         raise ValueError("Lake depth must not be negative \n")
@@ -135,33 +139,27 @@ def check_correct(cell):
             cell["firn_depth"],
             "\n",
         )
-        raise ValueError(f"monarchs.core.utils.check_correct: All firn has melted.")
+        raise ValueError(f"{func_name}: All firn has melted.")
     if np.any(cell["Sfrac"][cell["Sfrac"] < -0.01]) or np.any(
         cell["Sfrac"][cell["Sfrac"] > 1.01]
     ):
         print(
-            f"""{np.max(cell['Sfrac'])} at level {np.where((cell['Sfrac'] > 1) | (cell['Sfrac'] < 0))}, x = {cell['column']}, y = {cell['row']}
+            f"""{np.max(cell['Sfrac'])} at level
+            {np.where((cell['Sfrac'] > 1) | (cell['Sfrac'] < 0))},
+             x = {cell['column']}, y = {cell['row']}
 """
         )
         print("Minimum Sfrac = ", np.min(cell["Sfrac"]))
         raise ValueError(
-            f"""monarchs.core.utils.check_correct: Solid fraction must be between 0 and 1 
+            f"""{func_name}: Solid fraction must be between 0 and 1
 """
         )
-    # if np.any(cell["Lfrac"][cell["Lfrac"] < -0.01]) or np.any(
-    #     cell["Lfrac"][cell["Lfrac"] > 1.01]
-    # ):
-    #     print(np.max(cell["Lfrac"]))
-    #     print(np.min(cell["Lfrac"]))
-    #     print(np.where(cell["Lfrac"] < -0.01))
-    #     print(cell["Lfrac"])
-    #     raise ValueError(
-    #         f"monarchs.core.utils.check_correct: Lfrac error - either above 1 or below 0"
-    #     )
 
-    # Set total to look at all but the top layer. The top layer can sometimes become oversaturated, but this is allowed
-    # provided that meltflag is True for that cell (i.e. the water will percolate in the next timestep).
-    # This can sometimes occur due to the regridding, particularly for small cell spacing.
+    # Set total to look at all but the top layer. The top layer can sometimes
+    # become oversaturated, but this is allowed provided that meltflag is True
+    # for that cell (i.e. the water will percolate in the next timestep).
+    # This can sometimes occur due to the regridding, particularly for small
+    # cell spacing.
     total = cell["Lfrac"][1:] + cell["Sfrac"][1:]
     if np.any(total > 1.01):
         print(f"monarchs.core.utils.check_correct: ")
@@ -170,13 +168,15 @@ def check_correct(cell):
         print("Lfrac :", cell["Lfrac"][np.where(total > 1)])
         print(
             "Sfrac + Lfrac:",
-            cell["Lfrac"][np.where(total > 1)] + cell["Sfrac"][np.where(total > 1)],
+            cell["Lfrac"][np.where(total > 1)]
+            + cell["Sfrac"][np.where(total > 1)],
         )
         raise ValueError(
-            f"monarchs.core.utils.check_correct: Sum of liquid and solid fraction must be less than 1"
+            f"monarchs.core.utils.check_correct: Sum of liquid and solid"
+            f" fraction must be less than 1"
         )
-    if cell['Sfrac'][0] + cell['Lfrac'][0] > 1.01 and not cell['meltflag'][0]:
-        total_top = cell['Sfrac'][0] + cell['Lfrac'][0]
+    if cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and not cell["meltflag"][0]:
+        total_top = cell["Sfrac"][0] + cell["Lfrac"][0]
         print(f"monarchs.core.utils.check_correct: ")
         print(f"{total_top} at level 0 \n")
         print("Sfrac :", cell["Sfrac"][0])
@@ -186,16 +186,22 @@ def check_correct(cell):
             cell["Lfrac"][0] + cell["Sfrac"][0],
         )
         raise ValueError(
-            f"monarchs.core.utils.check_correct: Sum of liquid and solid fraction in top layer must be less than 1 "
-            f"unless meltflag is True (i.e. water will percolate at start of next timestep)"
+            f"monarchs.core.utils.check_correct: Sum of liquid and solid"
+            f" fraction in top layer must be less than 1 unless meltflag is"
+            f" True (i.e. water will percolate at start of next timestep)"
         )
-    elif cell['Sfrac'][0] + cell['Lfrac'][0] > 1.01 and cell['meltflag'][0]:
-        print('Warning - top layer oversaturated but meltflag is True - water will percolate at start of next timestep.')
-        print('Lfrac = ', cell['Lfrac'][0], ', Sfrac = ', cell['Sfrac'][0])
+    elif cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and cell["meltflag"][0]:
+        print(
+            "Warning - top layer oversaturated but meltflag is True - water"
+            " will percolate at start of next timestep."
+        )
+        print("Lfrac = ", cell["Lfrac"][0], ", Sfrac = ", cell["Sfrac"][0])
+
+
 def check_grid_correctness(grid):
     """
-    Wraps check_correct for each cell in the grid. We do this in a separate function so that we can wrap it
-    with numba.njit and speed things up.
+    Wraps check_correct for each cell in the grid. We do this in a separate
+    function so that we can wrap it with numba.njit and speed things up.
 
     Parameters
     ----------
@@ -211,13 +217,17 @@ def check_grid_correctness(grid):
         for j in range(len(grid[0])):
             check_correct(grid[i][j])
 
+
 def calc_mass_sum(cell):
     """
     Calculate the total mass in the grid cell in its current state.
-    This is the sum of the firn column mass, the mass in the frozen lake, and the mass in the lid or virtual lid.
-    This is in arbitrary units, since it is calculating the columnar mass independent of the lateral grid size, but is
-    useful for consistency checking, i.e. ensuring the model does not gain or lose mass outside the known mechanisms
-    (snowfall and losing water out of the catchment area laterally).
+    This is the sum of the firn column mass, the mass in the frozen lake, and
+    the mass in the lid or virtual lid.
+    This is in arbitrary units, since it is calculating the columnar mass
+    independent of the lateral grid size, but is useful for consistency
+    checking, i.e. ensuring the model does not gain or lose mass outside the
+    known mechanisms (snowfall and losing water out of the catchment area
+    laterally).
 
     Parameters
     ----------
@@ -231,10 +241,14 @@ def calc_mass_sum(cell):
     """
     total_mass = (
         np.sum(
-            cell["Sfrac"] * cell["rho_ice"] * (cell["firn_depth"] / cell["vert_grid"])
+            cell["Sfrac"]
+            * cell["rho_ice"]
+            * (cell["firn_depth"] / cell["vert_grid"])
         )
         + np.sum(
-            cell["Lfrac"] * cell["rho_water"] * (cell["firn_depth"] / cell["vert_grid"])
+            cell["Lfrac"]
+            * cell["rho_water"]
+            * (cell["firn_depth"] / cell["vert_grid"])
         )
         + cell["lake_depth"] * cell["rho_water"]
         + cell["lid_depth"] * cell["rho_ice"]
@@ -304,14 +318,17 @@ def check_energy_conservation(grid):
         for j in range(len(grid[0])):
             cell = grid[i][j]
             if cell["valid_cell"]:
-                cp_ice = 1000 * (7.16 * 10**-3 * cell["firn_temperature"] + 0.138)
+                cp_ice = 1000 * (
+                    7.16 * 10**-3 * cell["firn_temperature"] + 0.138
+                )
                 cp = (
                     cell["cp_water"] * cell["Lfrac"]
                     + 1004 * (1 - cell["Sfrac"] - cell["Lfrac"])
                     + cp_ice * cell["Sfrac"]
                 )
                 cell["rho"] = (
-                    cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+                    cell["Sfrac"] * cell["rho_ice"]
+                    + cell["Lfrac"] * cell["rho_water"]
                 )
                 energy += cell["rho"] * cell["firn_temperature"] * cp
     print("Total energy = ", np.sum(energy))
@@ -319,7 +336,8 @@ def check_energy_conservation(grid):
 
 def spinup(cell, x, args):
     """
-    Attempt to force the model into a solvable state if the initial conditions are unsuitable.
+    Attempt to force the model into a solvable state if the initial conditions
+    are unsuitable.
     TODO - This is a definite work in progress. Need to update this further.
 
     Parameters
@@ -337,17 +355,23 @@ def spinup(cell, x, args):
     Raises
     ------
     ValueError
-        If solution does not converge, then rather than attempting to continue it raises an error. The user should
-        re-consider their initial conditions in this case.
+        If solution does not converge, then rather than attempting to continue
+        it raises an error. The user should re-consider their initial
+        conditions in this case.
     """
+
 
 try:
     import psutil
     import functools
     import os
 except ImportError:
-    print('monarchs.core.utils: psutil module not found. Memory profiling will not be available. To suppress this warning, '
-          'install psutil with "python -m pip install psutil".')
+    print(
+        "monarchs.core.utils: psutil module not found. Memory profiling will"
+        " not be available. To suppress this warning, install psutil with"
+        ' "python -m pip install psutil".'
+    )
+
 
 def memory_tracker(label=""):
     """
@@ -368,5 +392,7 @@ def memory_tracker(label=""):
             print(f"[{label}] Memory after:  {mem_after:.2f} MB")
             print(f"[{label}] Memory delta:  {mem_after - mem_before:.2f} MB")
             return result
+
         return wrapper
+
     return decorator

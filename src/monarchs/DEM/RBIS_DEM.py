@@ -1,8 +1,9 @@
-tiffname = "RBIS_GTDX_45m.tif"
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 from PIL.TiffTags import TAGS
+
+tiffname = "RBIS_GTDX_45m.tif"
 
 im = Image.open(tiffname)
 DEM_grid = np.array(im)

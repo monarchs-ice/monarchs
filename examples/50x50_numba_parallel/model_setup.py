@@ -42,9 +42,13 @@ longmin = np.nan  # Minimum longitude to use in our DEM and met data files.
 """
 Timestepping parameters
 """
-num_days = 20  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = (
+    20  # number of days to run the model for (assuming t_steps = 24 below)
+)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
+lateral_timestep = (
+    3600 * t_steps_per_day
+)  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -59,7 +63,9 @@ firn_min_height = 15
 max_height_handler = "filter"
 min_height_handler = "extend"
 
-rho_init = "default"  # Initial density, use 'default' to use empirical formula for initial density profile
+rho_init = (  # Initial density, use 'default' to use empirical formula for initial density profile
+    "default"
+)
 T_init = "default"  # Initial temperature profile.
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 
@@ -89,13 +95,17 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "output/50x50_numba_example_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = (  # Filename for model output, including file extension (.nc for netCDF).
+    "output/50x50_numba_example_output.nc"
+)
 output_grid_size = 400  # Size of interpolated output
 dump_data = True
-dump_filepath = (
-    "output/50x50_numba_example_dump.nc"  # Filename of our previously dumped state
+dump_filepath = (  # Filename of our previously dumped state
+    "output/50x50_numba_example_dump.nc"
 )
-reload_from_dump = False  # Flag to determine whether to reload the state or not
+reload_from_dump = (
+    False  # Flag to determine whether to reload the state or not
+)
 
 """
 Computing and numerical parameters

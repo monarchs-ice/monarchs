@@ -3,7 +3,7 @@ import numpy as np
 
 def test_catchment_outflow():
     from iceshelf_testclass import IceShelf
-    from monarchs.physics.lateral_functions import move_water
+    from monarchs.physics.lateral_movement import move_water
     from monarchs.core.utils import get_2d_grid
 
     lake_depths = np.array([[0.8, 10, 0.8], [0.8, 5, 0.8]]).T

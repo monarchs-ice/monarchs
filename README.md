@@ -1,7 +1,7 @@
 # MONARCHS
 
 [![DOI](https://zenodo.org/badge/890500319.svg)](https://doi.org/10.5281/zenodo.14217406)
-
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 MOdel of aNtARtic iCe shelf Hydrology and Stability 
 
 Code associated with the ice shelf surface hydrology model MONARCHS. Please check out the documentation at the

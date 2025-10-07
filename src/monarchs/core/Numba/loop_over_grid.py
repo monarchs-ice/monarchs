@@ -3,6 +3,7 @@ from numba import prange
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
 
+
 def loop_over_grid_numba(
     row_amount,
     col_amount,
@@ -39,11 +40,12 @@ def loop_over_grid_numba(
     t_steps_per_day: int
         Number of timesteps to run each day.
     toggle_dict : dict
-        Dictionary of toggle switches to be fed into MONARCHS, that determine certain
-        things about the model (such as whether to run certain physical processes).
+        Dictionary of toggle switches to be fed into MONARCHS, that determine
+        certain things about the model (such as whether to run certain
+        physical processes).
     parallel, use_mpi:
-        Dummy arguments so that we can overload the regular loop_over_grid with this
-        Numba implementation, since these are needed there.
+        Dummy arguments so that we can overload the regular loop_over_grid
+        with this Numba implementation, since these are needed there.
     ncores:
         Number of cores to use. Default 'all', in which case it will use
         numba.config.NUMBA_DEFAULT_NUM_THREADS threads (i.e. all of them that
@@ -53,9 +55,9 @@ def loop_over_grid_numba(
     Returns
     -------
     None. The function amends the instance of <grid> passed to it.
-          No need to reshape flat_grid back into np.shape(grid), as each element
-          of flat_grid is a pointer to each element of grid, i.e. operating on
-          flat_grid changes the corresponding element of grid
+          No need to reshape flat_grid back into np.shape(grid), as each
+          element of flat_grid is a pointer to each element of grid, i.e.
+          operating on flat_grid changes the corresponding element of grid
     """
     if isinstance(ncores, int):
         nthreads = ncores
@@ -63,11 +65,13 @@ def loop_over_grid_numba(
         nthreads = numba.config.NUMBA_DEFAULT_NUM_THREADS
 
     numba.set_num_threads(nthreads)
-    # append everything to a new 1D instance of a Numba typed list, flatten, and loop over that.
+    # append everything to a new 1D instance of a Numba typed list, flatten,
+    # and loop over that.
     flat_grid = grid.flatten()
-    # met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass the 24 timesteps
-    # met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
-
+    # met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass
+    # the 24 timesteps
+    # move the first axis to the last axis
+    # met_data_grid = np.moveaxis(met_data_grid, 0, -1)
 
     for i in prange(row_amount * col_amount):
 
@@ -78,4 +82,4 @@ def loop_over_grid_numba(
             t_steps_per_day,
             toggle_dict,
         )
-    return np.reshape(flat_grid, (row_amount, col_amount))   # reshape
+    return np.reshape(flat_grid, (row_amount, col_amount))  # reshape

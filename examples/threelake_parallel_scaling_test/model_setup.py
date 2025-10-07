@@ -21,7 +21,9 @@ Spatial parameters
 """
 row_amount = 50  # Number of rows in your model grid, looking from top-down.
 col_amount = 50  # Number of columns in your model grid, looking from top-down.
-lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
+lat_grid_size = (
+    1000  # size of each lateral grid cell in m - possible to automate
+)
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake
@@ -32,9 +34,13 @@ vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 """
 Timestepping parameters
 """
-num_days = 10  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = (
+    10  # number of days to run the model for (assuming t_steps = 24 below)
+)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
+lateral_timestep = (
+    3600 * t_steps_per_day
+)  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -43,7 +49,9 @@ DEM/firn profile parameters
 """
 
 firn_depth = 35 * cgt.export_gaussian_DEM(row_amount, diagnostic_plots=False)
-rho_init = "default"  # Initial density, use 'default' to use empirical formula for initial density profile
+rho_init = (  # Initial density, use 'default' to use empirical formula for initial density profile
+    "default"
+)
 T_init = "default"  # Initial temperature profile.
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 firn_max_height = 100
@@ -73,7 +81,9 @@ met_data["temperature"] = np.append(
 met_data["pressure"] = 1000 * np.ones(
     num_days * t_steps_per_day
 )  # Surface-layer air pressure. [hPa].
-met_data["wind"] = 5 * np.ones(num_days * t_steps_per_day)  # Wind speed. [m s^-1].
+met_data["wind"] = 5 * np.ones(
+    num_days * t_steps_per_day
+)  # Wind speed. [m s^-1].
 met_data["snowfall"] = 0 * np.ones(
     num_days * t_steps_per_day
 )  # Snowfall rate. [m s^-1].
@@ -104,14 +114,20 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
     "water_level",
-    "water_direction"
+    "water_direction",
 )
-output_filepath = "output/gaussian_threelake_example_output_new.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = (  # Filename for model output, including file extension (.nc for netCDF).
+    "output/gaussian_threelake_example_output_new.nc"
+)
 # output_grid_size = 400  # Size of array outputs for each column (e.g. firn depth). Commented out for this example.
 # output_timestep = 1  # How often to save output, in days. Commented out for this example.
 dump_data = True
-dump_filepath = "output/gaussian_threelake_example_dump.nc"  # Filename of our previously dumped state
-reload_from_dump = False  # Flag to determine whether to reload the state or not
+dump_filepath = (  # Filename of our previously dumped state
+    "output/gaussian_threelake_example_dump.nc"
+)
+reload_from_dump = (
+    False  # Flag to determine whether to reload the state or not
+)
 
 """
 Computing and numerical parameters
@@ -130,7 +146,9 @@ solver = "hybr"
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
 All of these default to True.
 """
-catchment_outflow = False  # Determines if water on the edge of the catchment area will
+catchment_outflow = (
+    False  # Determines if water on the edge of the catchment area will
+)
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
 flow_into_land = False  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
@@ -147,6 +165,7 @@ if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
     from monarchs.core.utils import get_2d_grid
+
     profile = False
     if profile:
         import cProfile
@@ -160,9 +179,9 @@ if __name__ == "__main__":
             "result_container['grid'] = run_target()",
             globals(),
             locals(),
-            filename="profile_output.prof"
+            filename="profile_output.prof",
         )
-        grid = result_container['grid']
+        grid = result_container["grid"]
     else:
         grid = monarchs()
 

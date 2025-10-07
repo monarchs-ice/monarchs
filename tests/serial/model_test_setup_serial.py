@@ -12,7 +12,9 @@ Spatial parameters
 """
 row_amount = 1  # Number of rows in your model grid, looking from top-down.
 col_amount = 1  # Number of columns in your model grid, looking from top-down.
-lat_grid_size = 2000  # size of each lateral grid cell in m - possible to automate
+lat_grid_size = (
+    2000  # size of each lateral grid cell in m - possible to automate
+)
 # TODO - calc based on DEM automatically
 # lat_grid_size = 'dem'
 vertical_points_firn = 400  # Number of vertical grid cells
@@ -23,9 +25,7 @@ vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 # Set to a number if you want to manually specify a bounding box.
 # lat_bounds = 'dem'
 
-num_days = (
-    5  # number of days to run the model for (assuming t_steps_per_day = 24 below)
-)
+num_days = 5  # number of days to run the model for (assuming t_steps_per_day = 24 below)
 
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = (
@@ -42,7 +42,9 @@ met_output_filepath = "parallel_test_met_data.nc"
 
 save_output = False
 dump_data = False
-reload_from_dump = False  # Flag to determine whether to reload the state or not
+reload_from_dump = (
+    False  # Flag to determine whether to reload the state or not
+)
 
 """
 Computing and numerical parameters
@@ -55,7 +57,9 @@ use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a 
 # this switch and use_numba both True.
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = "all"  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+cores = (  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+    "all"
+)
 
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
@@ -63,9 +67,7 @@ All of these default to True.
 """
 snowfall_toggle = True
 firn_column_toggle = True
-firn_heat_toggle = (
-    True  # if firn_column_toggle is False, this just triggers during lake formation
-)
+firn_heat_toggle = True  # if firn_column_toggle is False, this just triggers during lake formation
 lake_development_toggle = True  # also triggers lake formation
 lid_development_toggle = True  # also triggers lid formation
 lateral_movement_toggle = True
@@ -74,7 +76,9 @@ densification_toggle = False
 percolation_toggle = True  # only works if firn_column_toggle also True
 perc_time_toggle = True  # Determines if percolation occurs over timescales,
 # or all water can percolate until it can no longer move
-catchment_outflow = False  # Determines if water on the edge of the catchment area will
+catchment_outflow = (
+    False  # Determines if water on the edge of the catchment area will
+)
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
 """
@@ -84,7 +88,9 @@ simulated_water_toggle = False  # 0.001  # False if off, otherwise float
 if simulated_water_toggle:
     print("Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = False  # True for testing low resolution heat equation runs
+heateqn_res_toggle = (
+    False  # True for testing low resolution heat equation runs
+)
 
 met_dem_diagnostic_plots = True
 radiation_forcing_factor = 1.6

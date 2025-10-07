@@ -5,7 +5,9 @@ import matplotlib
 from matplotlib.animation import ArtistAnimation
 
 matplotlib.use("TkAgg")
-dumppath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc"
+dumppath = (
+    r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc"
+)
 diagpath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\model_output.nc"
 
 
@@ -53,4 +55,3 @@ for i in range(len(lid_depth)):
 ani = ArtistAnimation(fig, ims, interval=200, blit=True, repeat_delay=1000)
 ani.save("lid_depth.gif", writer="imagemagick")
 diagnostic_data.close()
-

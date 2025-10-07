@@ -17,8 +17,12 @@ import numpy as np
 
 
 matplotlib.use("TkAgg")
-dumppath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\progress.nc"
-diagpath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\model_output.nc"
+dumppath = (
+    r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\progress.nc"
+)
+diagpath = (
+    r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_new\model_output.nc"
+)
 # dumppath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc'
 # diagpath = r'C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\model_output.nc'
 # dumppath = '../examples/10x10_gaussian_threelake/output/gaussian_threelake_example_dump.nc'
@@ -100,12 +104,16 @@ print(proj_string)
 
 # Project from EPSG:4326 → EPSG:3031
 crs_cartopy_proj = CRS.from_proj4(proj_string)
-transformer = Transformer.from_crs("EPSG:4326", crs_cartopy_proj, always_xy=True)
+transformer = Transformer.from_crs(
+    "EPSG:4326", crs_cartopy_proj, always_xy=True
+)
 x, y = transformer.transform(lons, lats)  # still 2D, same shape
 x_big, y_big = transformer.transform(lon_big, lat_big)  # still 2D, same shape
 xmin, xmax, ymin, ymax = x_big.min(), x_big.max(), y_big.min(), y_big.max()
 # Transform back as a sanity check
-transformer = Transformer.from_crs(crs_cartopy_proj, "EPSG:4326", always_xy=True)
+transformer = Transformer.from_crs(
+    crs_cartopy_proj, "EPSG:4326", always_xy=True
+)
 lon2, lat2 = transformer.transform(x, y)  # still 2D, same shape
 
 # start date is 2010-01-01
@@ -172,7 +180,13 @@ def plot_on_map(x, y, mask_array, labelstr="Moussavi", vmax=False):
     # Plot the data using pcolormesh
     if vmax:
         mesh = ax.pcolormesh(
-            x, y, mask_array, cmap="Blues", shading="auto", transform=None, vmax=vmax
+            x,
+            y,
+            mask_array,
+            cmap="Blues",
+            shading="auto",
+            transform=None,
+            vmax=vmax,
         )
     else:
         mesh = ax.pcolormesh(

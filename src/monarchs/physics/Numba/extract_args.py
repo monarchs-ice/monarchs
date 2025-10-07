@@ -1,3 +1,7 @@
+"""
+TODO - module-level docstring
+"""
+
 import numpy as np
 from numba import jit
 
