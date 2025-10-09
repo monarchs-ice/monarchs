@@ -34,7 +34,7 @@ def get_2d_grid(grid, attr, index=False):
         the model grid
     attr : str
         the attribute you want to print out, e.g:
-        get_2d_grid(grid, 'firn_depth') will print out the firn depth
+        get_2d_grid(grid, "firn_depth") will print out the firn depth
         for each point on the grid at index <index>
     index : int, optional
         the index (i.e. height) at which you want to print out.
@@ -144,9 +144,9 @@ def check_correct(cell):
         cell["Sfrac"][cell["Sfrac"] > 1.01]
     ):
         print(
-            f"""{np.max(cell['Sfrac'])} at level
-            {np.where((cell['Sfrac'] > 1) | (cell['Sfrac'] < 0))},
-             x = {cell['column']}, y = {cell['row']}
+            f"""{np.max(cell["Sfrac"])} at level
+            {np.where((cell["Sfrac"] > 1) | (cell["Sfrac"] < 0))},
+             x = {cell["column"]}, y = {cell["row"]}
 """
         )
         print("Minimum Sfrac = ", np.min(cell["Sfrac"]))
@@ -369,7 +369,7 @@ except ImportError:
     print(
         "monarchs.core.utils: psutil module not found. Memory profiling will"
         " not be available. To suppress this warning, install psutil with"
-        ' "python -m pip install psutil".'
+        " 'python -m pip install psutil'."
     )
 
 

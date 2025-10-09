@@ -17,6 +17,7 @@ def parse_args():
     func_name = "monarchs.core.configuration.parse_args"
     run_dir = os.getcwd().replace("\\", "/")
     warning_flag = False
+    runscript = ''
     if "PYTEST_CURRENT_TEST" in os.environ:
         if "numba" in run_dir.split("/")[-1]:
             runscript = "model_test_setup_numba.py"
@@ -33,13 +34,13 @@ def parse_args():
                 " identified this as a unit test"
             )
             return runscript
-        else:
-            warnings.warn(
-                "Unrecognised test case. This warning occurs if you are trying"
-                " to run a unit test from the wrong place, MONARCHS will try"
-                " and continue using the input arguments you specified, but if"
-                " running an incorrectly-setup test case will fail."
-            )
+
+        warnings.warn(
+            "Unrecognised test case. This warning occurs if you are trying"
+            " to run a unit test from the wrong place, MONARCHS will try"
+            " and continue using the input arguments you specified, but if"
+            " running an incorrectly-setup test case will fail."
+        )
     parser = argparse.ArgumentParser(
         prog="MONARCHS",
         description=(
@@ -57,7 +58,7 @@ def parse_args():
         default="model_setup.py",
         required=False,
     )
-    args, unknown = parser.parse_known_args()
+    args, _ = parser.parse_known_args()
     model_setup_path = args.input_path
     return model_setup_path
 
@@ -115,7 +116,6 @@ def handle_incompatible_flags(model_setup):
                     " please specify in model_setup a filepath to write the"
                     " dump into via the <dump_filepath> attribute."
                 )
-    save_attrs = ["save_output"]
     for attr in dump_attrs:
         if hasattr(model_setup, attr) and not hasattr(
             model_setup, "output_filepath"
@@ -146,6 +146,23 @@ def handle_incompatible_flags(model_setup):
                 " This is not supported since Numba jitclasses are not"
                 " picklable"
             )
+
+def handle_invalid_values(model_setup):
+    """
+    Handle cases where model attributes are set to values that will cause
+    the model to fail.
+
+    Parameters
+    ----------
+    model_setup - load_model_setup.ModelSetup instance
+        Loaded in model setup file (see <load_in_model_setup>)
+
+    Returns
+    -------
+    None
+
+    """
+    func_name = "monarchs.core.configuration.handle_invalid_values"
     valid_solvers = [
         "hybr",
         "df-sane",
@@ -256,7 +273,7 @@ def create_defaults_for_missing_flags(model_setup):
             print(
                 f"{func_name}"
                 f" Setting missing model_setup attribute <{attr}> to default"
-                ' value "default"'
+                " value default"
             )
     bounds = ["latmax", "latmin", "lonmax", "lonmin"]
     for attr in bounds:
@@ -298,7 +315,7 @@ def create_defaults_for_missing_flags(model_setup):
     vardict["cores"] = "all"
     vardict["solver"] = "hybr"
     vardict["dask_scheduler"] = (
-        "processes"  # set to 'distributed' if using HPC across multiple nodes
+        "processes"  # set to "distributed" if using HPC across multiple nodes
     )
     vardict["flow_speed_scaling"] = 1.0
     vardict["outflow_proportion"] = 1.0
@@ -320,14 +337,14 @@ def create_defaults_for_missing_flags(model_setup):
             " example of ERA5 data."
         )
     special_keys = ["lateral_timestep"]
-    for key in vardict.keys():
+    for key, value in vardict.items():
         if not hasattr(model_setup, key):
-            setattr(model_setup, key, vardict[key])
+            setattr(model_setup, key, value)
             if key not in special_keys:
                 print(
                     f"{func_name}"
                     f" Setting missing model_setup attribute <{key}> to"
-                    f" default value <{vardict[key]}>"
+                    f" default value <{value}>"
                 )
             elif key == "lateral_timestep":
                 print(
@@ -345,23 +362,6 @@ def create_defaults_for_missing_flags(model_setup):
             )
 
 
-class ModelSetup:
-
-    def __init__(self, script_path):
-        try:
-            with open(script_path, "r") as file:
-                script_content = file.read()
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                "monarchs.core.configuration: Path to runscript"
-                f" ({script_path}) not found. Please either run from a"
-                " directory containing a valid model_setup.py, or pass the -i"
-                " flag with a valid runscript path."
-            )
-        local_vars = {}
-        exec(script_content, {}, local_vars)
-        for var_name, var_value in local_vars.items():
-            setattr(self, var_name, var_value)
 
 
 def jit_modules(fastmath=False):
@@ -468,8 +468,4 @@ def jit_modules(fastmath=False):
             setattr(solver, name, jitfunc)
 
 
-def get_model_setup(model_setup_path):
-    """Load in the model setup from the specified path,
-    and return an instance of the ModelSetup class."""
-    model_setup = ModelSetup(model_setup_path)
-    return model_setup
+

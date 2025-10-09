@@ -1,3 +1,11 @@
+"""
+Main MONARCHS execution script. Invoked via the command line with
+
+`monarchs -i <filepath>
+
+where <filepath> is the path to a model setup script.
+"""
+
 from monarchs.core.driver import monarchs
 
 
@@ -8,6 +16,7 @@ def run_from_cli(return_grid=False):
     grid = monarchs()
     if return_grid:
         return grid
+    return None
 
 
 if __name__ == "__main__":

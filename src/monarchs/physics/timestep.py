@@ -136,12 +136,12 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 )
 
         elif cell["exposed_water"]:
-            # print('Exposed water present')
+            # print("Exposed water present")
             args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
             x = cell["firn_temperature"]
 
             if firn_heat_toggle:
-                sol, fvec, success, info = solver.firn_heateqn_solver(
+                sol, fvec, success, info = solver.solve_firn_heateqn(
                     x, args, fixed_sfc=True, solver_method="hybr"
                 )
                 if success:
@@ -243,13 +243,13 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 # If so, count.
                 # If the count goes above 48 (48h of freezing), then freeze
                 # the whole lake.
-                if (cell["lake_temperature"] < 273.155).all():
+                if (cell["lake_temperature"] <= 273.15).all():
                     cell["lake_refreeze_counter"] += 1
                 else:
                     cell["lake_refreeze_counter"] = 0
-                if cell["lake_refreeze_counter"] > 47:
-                    print('Lake has been very cold for two full diurnal cycles'
-                          '- freezing...')
+                if cell["lake_refreeze_counter"] > 23:
+                    print("Lake has been very cold for two full diurnal cycles"
+                          "- freezing...")
                     reset_column.combine_lid_firn(cell)
 
                 if (
@@ -285,9 +285,10 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             # Instead of hacking it into an adjacent cell, we just let it
             # percolate in the next timestep.
             if (
-                np.any(cell["Lfrac"][1:] + cell["Sfrac"][1:] > 1)
+                np.any(cell["Lfrac"][1:] + cell["Sfrac"][1:] > 1.00000000001)
                 and cell["Sfrac"][0] <= 1
             ):
+                breakpoint()
                 raise ValueError(
                     "Lfrac + Sfrac > 1 after regridding, after saturation"
                     " calculation."

@@ -26,7 +26,7 @@ def combine_lid_firn(cell):
     original_mass = utils.calc_mass_sum(cell)
     print(
         "Combining lid and firn to create one profile..., column ="
-        f" {cell['column']}, row = {cell['row']}"
+        f" {cell["column"]}, row = {cell["row"]}"
     )
 
     if cell["v_lid"]:

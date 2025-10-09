@@ -22,6 +22,7 @@ import numpy as np
 import pathos
 from netCDF4 import Dataset
 from monarchs.core import configuration, initial_conditions, setup_met_data
+from monarchs.core.load_model_setup import get_model_setup
 from monarchs.core.dump_model_state import dump_state, reload_from_dump
 from monarchs.core.model_output import setup_output, update_model_output
 from monarchs.core.utils import (
@@ -685,13 +686,14 @@ def monarchs():
             model_setup_path = "model_setup.py"
     else:
         model_setup_path = configuration.parse_args()
-    model_setup = configuration.get_model_setup(model_setup_path)
+    model_setup = get_model_setup(model_setup_path)
 
     if hasattr(model_setup, "use_numba") and model_setup.use_numba:
         configuration.jit_modules()
 
     configuration.create_output_folders(model_setup)
     configuration.handle_incompatible_flags(model_setup)
+    configuration.handle_invalid_values(model_setup)
     configuration.create_defaults_for_missing_flags(model_setup)
     grid = initialise(model_setup)
     grid = main(model_setup, grid)

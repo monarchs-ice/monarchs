@@ -4,7 +4,7 @@ TODO - Module docstring, PEP8 compliance for comments
 
 import numpy as np
 from monarchs.core.utils import find_nearest
-from monarchs.physics.percolation import percolation, calc_saturation
+from monarchs.physics.percolation import percolate, calc_saturation
 from numba.typed import Dict
 from numba import types
 
@@ -1236,7 +1236,7 @@ def move_water(
                 # the water fills out the available pore space.
                 if lateral_movement_percolation_toggle:
                     # assume the percolation happens within 1 hour.
-                    percolation(cell, 3600, lateral_refreeze_flag=True)
+                    percolate(cell, 3600, lateral_refreeze_flag=True)
                     # Perform an extra saturation calculation so we don't
                     # end up with unphysical liquid fraction
                     for k in np.arange(cell["vert_grid"])[::-1]:

@@ -1,5 +1,5 @@
 """
-Functions used by run_MONARCHS.py to convert a model runscript
+Functions used by run_monarchs.py to convert a model runscript
 (default model_setup.py) to the format actually usedb y MONARCHS.
 This includes setting up the initial firn profile information,
 loading in meteorological data and interpolating it, and loading

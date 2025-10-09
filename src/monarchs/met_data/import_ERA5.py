@@ -62,10 +62,10 @@ def ERA5_to_variables(
             raise ValueError(
                 "monarchs.met_data.import_ERA5.ERA5_to_variables: End index"
                 f" {end_index} is greater than the length of the data"
-                f" available ({len(ERA5_data.variables['time'])} timesteps) in"
+                f" available ({len(ERA5_data.variables["time"])} timesteps) in"
                 " the input netCDF file. Please check your input data is"
                 " large enough, or adjust your chosen number of days to"
-                " compensate'."
+                " compensate."
             )
 
     var_dict["long"] = ERA5_data.variables["longitude"][:]
@@ -79,7 +79,7 @@ def ERA5_to_variables(
             ]
         except KeyError:
             raise KeyError(
-                'Time variable "time" or "valid_time" not found in the input'
+                "Time variable 'time' or 'valid_time' not found in the input"
                 " ERA5 netCDF. Check your input data,or amend"
                 " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
                 " key that is in your data."
@@ -108,7 +108,7 @@ def ERA5_to_variables(
             )
         except KeyError:
             raise KeyError(
-                'Pressure variable "sp" or "msl" not found in the input ERA5'
+                "Pressure variable 'sp' or 'msl' not found in the input ERA5"
                 " netCDF. Check your input data,or amend"
                 " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
                 " key that is in your data."

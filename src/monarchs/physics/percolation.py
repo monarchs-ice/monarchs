@@ -26,7 +26,7 @@ def calc_liquid_mass(cell):
     )
 
 
-def percolation(
+def percolate(
     cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=True
 ):
     """
@@ -63,19 +63,14 @@ def percolation(
     -------
     None (amends Cell inplace)
     """
-    # print('meltflag = ', cell["meltflag"][:50])
-    # print('Lfrac = ', cell["Lfrac"][:50])
-    # print('Saturation = ', cell["saturation"][:50])
     dz = cell["firn_depth"] / cell["vert_grid"]
-    # v_lev = 0 at surface, cell['vert_grid'] at bottom
+    # v_lev = 0 at surface, cell["vert_grid"] at bottom
     for point in range(0, len(cell["firn_temperature"])):
         v_lev = len(cell["firn_temperature"]) - (point + 1)
         # starts search for flagged cells from bottom
 
         if cell["meltflag"][v_lev] and cell["Lfrac"][v_lev] != 0:
             time_remaining = timestep
-            # print('Beginning percolation algorithm, level = ', v_lev,
-            # 'time_remaining = ', time_remaining)
 
             while time_remaining > 0:
                 # If calling percolation for the purpose of calculating the

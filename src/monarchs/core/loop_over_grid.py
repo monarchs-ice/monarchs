@@ -87,7 +87,7 @@ def loop_over_grid(
         Flag to determine whether to use MPI for parallelisation.
         Default False.
     ncores : int or str
-        Number of cores to use if running in parallel. If 'all',
+        Number of cores to use if running in parallel. If "all",
         all available cores will be used.
     use_dask : bool, optional
         Flag to determine whether to use Dask for parallelism.

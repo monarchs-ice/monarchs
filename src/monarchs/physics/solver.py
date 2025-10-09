@@ -14,7 +14,7 @@ from scipy.optimize import fsolve, root
 from monarchs.physics import heateqn
 
 
-def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
+def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
     """
     scipy.optimize.fsolve-compatible solver function to be used within the
     model. Solves physics.heateqn.
@@ -72,7 +72,6 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         mesg = "Fixed surface temperature"
         T_tri = heateqn.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T = np.concatenate((np.array([273.15]), T_tri))
-        # print('T fixed sfc = ', T)
     else:
         # Run the top 2% of the column in the root-finding algorithm.
         N = int(np.floor(cell["vert_grid"] * 0.02))
@@ -84,17 +83,16 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         if N < 100:
             N = 100
         # N=3
-        # N = cell['vert_grid']
+        # N = cell["vert_grid"]
         x = x[:N]
         x = np.asarray(x)
-        # print('x = ', x[:10])
 
         # An experiment. I want here to set a "minimum" dz for the heat
         # equation. The hope is that I can do this rather inexpensively.
         # The idea is that if the top layer is very thin, then the temperature
         # gradient is better-resolved, so this should help reduce the model's
         # sensitivity to the vertical grid spacing.
-        # if cell['firn_depth'] / cell['vert_grid'] > 0.001:
+        # if cell["firn_depth"] / cell["vert_grid"] > 0.001:
         #     # Interpolate the top N layers to a minimum dz of 1mm,
         #     just for the purposes of this calculation.
         #     dz = 0.01  # 10mm
@@ -104,12 +102,12 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         #     We want to find the first 5cm.
         #     Use ceiling so we always round up, so we always encapsulate the
         #     new grid.
-        #     N_top = int(np.ceil(dz * new_N / (cell['firn_depth'] /
-        #     cell['vert_grid'])))
+        #     N_top = int(np.ceil(dz * new_N / (cell["firn_depth"] /
+        #     cell["vert_grid"])))
         #     # We need to interpolate the top N layers to a new grid with this
         #     dz.
         #     new_z = np.linspace(0, dz * (new_N - 1), new_N)
-        #     old_z = np.linspace(0, cell['firn_depth'] / cell['vert_grid'] *
+        #     old_z = np.linspace(0, cell["firn_depth"] / cell["vert_grid"] *
         #     (N_top - 1), N_top)
         #     x = x[:N_top]
         #     x = np.interp(new_z, old_z, x)
@@ -147,13 +145,13 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         if not soldict.success:
             print(
                 "Root-finding for surface temperature failed - returning"
-                f" original guess. row = {cell['row']}, col = {cell['column']}"
+                f" original guess. row = {cell["row"]}, col = {cell["column"]}"
             )
 
         if N == cell["vert_grid"]:
             return soldict.x, soldict.success, soldict.message, soldict.success
 
-        # if cell['firn_depth'] / cell['vert_grid'] > 0.001:
+        # if cell["firn_depth"] / cell["vert_grid"] > 0.001:
         #     # We now need to interpolate the solution back to the original
         #     grid spacing.
         #     sol = np.interp(old_z, new_z, soldict.x)

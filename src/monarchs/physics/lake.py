@@ -85,6 +85,30 @@ def sfc_energy_lake_formation(T_air, Q, k, cell):
     old_surf_temp = solver.lake_solver(x, args, formation=True)[0][0]
     return old_surf_temp
 
+def freeze_pre_lake(cell):
+    """
+    TODO - this needs to properly regrid the column
+    TODO - since we can have tiny lakes freezing after
+    TODO - a lid is combined into the firn (meaning
+    TODO - that we have Sfrac = 1 at the surface)
+    """
+
+    print("Refreezing tiny lake")
+    breakpoint()
+    cell["exposed_water"] = False
+    cell["exposed_water_refreeze_counter"] = 0
+    dHdt = cell["lake_depth"] * cell["rho_water"] / cell["rho_ice"]
+    cell["lake_depth"] = 0
+    cell["firn_depth"] += dHdt
+    cell["Sfrac"][0] += (
+            cell["Lfrac"][0] * cell["rho_water"] / cell["rho_ice"]
+    )  # freeze all water in top layer
+    cell["Lfrac"][0] = 0
+    # expansion of this water can cause Sfrac to be > 1, but the volume
+    # will be so small that it should not matter.
+    if cell["Sfrac"][0] > 1:
+        cell["Sfrac"][0] = 1
+        print("Sfrac > 1 in exposed water refreeze")
 
 def turbulent_mixing(cell, SW_in, dt):
     """
@@ -278,33 +302,18 @@ def lake_formation(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     else:
         cell["exposed_water_refreeze_counter"] += 1
         if (
-            cell["exposed_water_refreeze_counter"] > 48
-            and cell["lake_depth"] < 0.1
+                cell["exposed_water_refreeze_counter"] > 48
+                and cell["lake_depth"] < 0.1
         ):
-            print("Refreezing tiny lake")
-            cell["exposed_water"] = False
-            cell["exposed_water_refreeze_counter"] = 0
-            dHdt = cell["lake_depth"] * cell["rho_water"] / cell["rho_ice"]
-            cell["lake_depth"] = 0
-            cell["firn_depth"] += dHdt
-            cell["Sfrac"][0] += (
-                cell["Lfrac"][0] * cell["rho_water"] / cell["rho_ice"]
-            )  # freeze all water in top layer
-            cell["Lfrac"][0] = 0
-            # expansion of this water can cause Sfrac to be > 1, but the volume
-            # will be so small that it should not matter.
-            if cell["Sfrac"][0] > 1:
-                cell["Sfrac"][0] = 1
-                print("Sfrac > 1 in exposed water refreeze")
-
-
+            #freeze_pre_lake(cell)
+            pass
 
     cell["vertical_profile"] = np.linspace(
         0, cell["firn_depth"], cell["vert_grid"]
     )
     x = cell["firn_temperature"]
     args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
-    root, fvec, success, info = solver.firn_heateqn_solver(
+    root, fvec, success, info = solver.solve_firn_heateqn(
         x, args, fixed_sfc=True, solver_method="hybr"
     )
     if success:
@@ -373,7 +382,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             cell["lake_temperature"][0] = 273.15
             cell["v_lid"] = True
         if cell["lake_temperature"][0] > 300:
-            print(f"lake_temp = {cell['lake_temperature'][0]}")
+            print(f"lake_temp = {cell["lake_temperature"][0]}")
             raise ValueError("Lake too warm!")
     # Calculate cp and k for firn below lake (note:orig also calculated if
     # T > 273.15 but shouldn't be possible here)
@@ -432,11 +441,9 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             # Regrid the firn column to account for the change in boundary
             # (which is subtracted from the firn and added to the lake in
             # this subroutine)
-            # print('Lake melting firn, boundary change = ', boundary_change)
-            # print('Fl = ', Fl, 'kdTdz = ', kdTdz)
 
             firn_column.regrid_after_melt(cell, boundary_change, lake=True)
-            # print('New firn depth = ', cell['firn_depth'])
+            # print('New firn depth = ', cell["firn_depth"])
             # Set end=False since we only care about the top cell, and in this
             # case we want to put this water into the lake.
             percolation.calc_saturation(cell, 0)
@@ -472,7 +479,7 @@ def lake_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
     x = cell["firn_temperature"]
     dz = cell["firn_depth"] / cell["vert_grid"]
     args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
-    root, fvec, success, info = solver.firn_heateqn_solver(
+    root, fvec, success, info = solver.solve_firn_heateqn(
         x, args, fixed_sfc=True, solver_method="hybr"
     )
     if success:

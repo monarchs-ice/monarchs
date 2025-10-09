@@ -126,7 +126,6 @@ def export_DEM(
     from pyproj import CRS, Transformer
     from scipy.ndimage import zoom
 
-    # print(f'Box boundary = {input_raster.tif_bBox_converted}')
     input_raster = rioxarray.open_rasterio(tiffname).rio.reproject("EPSG:3031")
     # Get the lat/long coordinates of the DEM
 

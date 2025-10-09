@@ -86,11 +86,11 @@ def firn_column(
     # to solve the heat equation, we need to pack the arguments into a
     # single vector.
     args = [cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind]
-    # Hard-coding 'hybr' as the MINPACK solver method, as other methods are not
+    # Hard-coding "hybr" as the MINPACK solver method, as other methods are not
     # supported by the Numba cfunc.
     # If you are running with Scipy, you could consider changing this or adding
     # it as a namelist parameter.
-    root, fvec, success, info = solver.firn_heateqn_solver(
+    root, fvec, success, info = solver.solve_firn_heateqn(
         x, args, fixed_sfc=False, solver_method="hybr"
     )
 
@@ -100,15 +100,9 @@ def firn_column(
     # recalculate the firn column temperature and regrid the column to account
     # for the height change that occurs due to melting.
     if (root[0] > 273.15) and success:
-        # print('Root0 = ', root[0])
-
-        # root[0] = 285
-        # print('Forced root[0] to 285 for testing purposes -
-        # testing sensitivity to heat equation solver')
-
         dz = cell["firn_depth"] / cell["vert_grid"]
         args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
-        root_fs, fvec, success_fixedsfc, info = solver.firn_heateqn_solver(
+        root_fs, fvec, success_fixedsfc, info = solver.solve_firn_heateqn(
             x, args, fixed_sfc=True, solver_method="hybr"
         )
         # if *this* solver works, then update the firn temperature and regrid
@@ -120,7 +114,6 @@ def firn_column(
             height_change = calc_height_change(
                 cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, root
             )
-            # print('Height change = ', height_change)
 
             if np.isnan(height_change):
                 raise ValueError(
@@ -144,7 +137,7 @@ def firn_column(
     # Run the percolation algorithm to ensure that any meltwater moves down the
     # column (refreezing as it goes).
     if percolation_toggle:
-        percolation.percolation(cell, dt, perc_time_toggle=perc_time_toggle)
+        percolation.percolate(cell, dt, perc_time_toggle=perc_time_toggle)
 
     # Update density to reflect newly calculated solid/liquid fractions
     cell["rho"] = (
@@ -253,8 +246,6 @@ def calc_height_change(
         / (cell["rho_ice"] * (cell["Sfrac"][0] * L_fus))
         * timestep
     )
-    # dHdt = 0.01
-    # print('dHdt = ', dHdt)
     cell["firn_boundary_change"] += dHdt
 
     # dHdt = 0.01
@@ -339,7 +330,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     # Determine the original column mass for later.
     original_column_mass = original_mass - meltwater_mass
 
-    # to conserve mass we need meltwater_mass = new_height * cell['rho_water']
+    # to conserve mass we need meltwater_mass = new_height * cell["rho_water"]
     meltwater_height = meltwater_mass / cell["rho_water"]
     # but we now need to convert that into a liquid fraction. we do this by
     # fitting this new meltwater height into the top level of the column
@@ -361,7 +352,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     scaled_lfrac = cell["Lfrac"] * volume_ratio
     cell["Lfrac"] = scaled_lfrac
     dz_new = new_depth / cell["vert_grid"]
-    new_mass = utils.calc_mass_sum(cell)
     # We need our interpolation to conserve mass.
     # Therefore, we may need to scale Sfrac and LFrac to compensate.
 
@@ -375,16 +365,26 @@ def regrid_after_melt(cell, height_change, lake=False):
                 cell["firn_depth"] / cell["vert_grid"]
             )
             cell["Lfrac"][0] = 1 - cell["Sfrac"][0]
-
+        # If we end up with cells in the firn column that have unphysical
+        # liquid + solid fraction, ensure that the water is moved up
+        # the column. This can happen e.g. if a lake and lid are combined
+        # with the firn column and we end up with entirely liquid or
+        # solid parts of the firn column as the model evolves.
+        if np.any((cell["Lfrac"] + cell["Sfrac"]) > 1):
+            v_levs = np.where((cell["Lfrac"] + cell["Sfrac"]) > 1)[0]
+            lev = v_levs[-1]
+            percolation.calc_saturation(cell, lev, end=True)
     cell["vertical_profile"] = np.linspace(
         0, cell["firn_depth"], cell["vert_grid"]
     )
+
     # don't clip top layer as may have meltwater we want to percolate later
-    cell["Lfrac"][1:] = np.clip(cell["Lfrac"][1:], 0, 1)
-    cell["Sfrac"] = np.clip(cell["Sfrac"], 0, 1)
+    new_mass = utils.calc_mass_sum(cell)
+
     try:
         assert abs(new_mass - original_mass) < 1 * 10**-2
     except Exception:
+        breakpoint()
         print(new_mass)
         print(original_mass)
         raise AssertionError

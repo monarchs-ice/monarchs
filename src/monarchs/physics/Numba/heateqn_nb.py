@@ -271,7 +271,6 @@ def heateqn_lid(x, output, args):
         wind,
     ) = extract_args.extract_args_lid(args)
 
-    # print('here')
     # k_ice = (1000 * 2.24 * 0.001 + 5.975 * 0.000001 *
     # (273.15 - cell.lid_temperature) ** 1.156)
     # k = cell.Sfrac_lid * k_ice + (1 - cell.Sfrac_lid - cell.Lfrac_lid)

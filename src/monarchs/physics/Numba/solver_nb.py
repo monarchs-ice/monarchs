@@ -51,7 +51,6 @@ def args_array(
     Called whenever the various heat equation implemenations are used,
     notably in heateqn, heateqn_lid and heateqn_fixedsfc, which are in turn
     called by the relevant solver functions
-    (see get_firn_heateqn_solver, get_lid_solvers).
 
     Parameters
     ----------
@@ -153,7 +152,7 @@ def args_array(
 
 
 @jit(nopython=True, fastmath=False)
-def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
+def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
     """
     Numba-compatible solver function to be used within the model.
     Solves physics.Numba.heateqn.
@@ -243,7 +242,6 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         T_fixed = hnb.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T[0] = 273.15
         T[1:] = T_fixed[:]
-        # print('T fixed sfc = ', T)
     else:
         sol, fvec, success, info = hybrd(heq, x, args)
         # sol = np.around(sol, decimals=8)
@@ -254,7 +252,6 @@ def firn_heateqn_solver(x, args, fixed_sfc=False, solver_method="hybr"):
         T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
         T[:N] = sol
         T[N:] = T_tri[:]
-        # print('T free = ', T)
 
     T = np.around(T, decimals=8)
     # print('Sol0 = ', sol[0])

@@ -30,7 +30,7 @@ def setup_era5(model_setup, lat_array=False, lon_array=False):
     else:
         raise ValueError(
             f"monarchs.core.initial_conditions.setup_era5: met_timestep should"
-            f' be an integer, "hourly", "three_hourly" or "daily". See'
+            f" be an integer, 'hourly', 'three_hourly' or 'daily'. See"
             f" documentation for model_setup.met_timestep for details."
         )
 
