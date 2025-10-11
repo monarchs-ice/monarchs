@@ -1,9 +1,16 @@
+"""
+Sets up a test case using a planar DEM that slopes from a maximum to a minimum
+from left to right.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
+from monarchs.dem_utils.create_dem_gaussian_test_case import (
+    interpolate_func_to_dem,
+)
 
 
-def export_planar_DEM(num_points=20, diagnostic_plots=False):
+def export_planar_dem(num_points=20, diagnostic_plots=False):
     """
     Generate an elevation map that goes from a maximum on the LHS to a minimum
     on the RHS.
@@ -31,29 +38,15 @@ def export_planar_DEM(num_points=20, diagnostic_plots=False):
 
     x = y = np.linspace(-1, 1, 10)
 
-    # As with the Gaussian DEM - generate a heights array
+    # As with the Gaussian dem_utils - generate a heights array
     heights = np.zeros((len(x), len(y)), dtype=np.float64)
     for i in range(len(heights)):
         heights[:, i] = (len(heights) - i) / len(heights)
     scale = len(heights) / num_points
 
-    def interpolate_DEM(heights, scale):
-        """Interpolate the DEM from the original Gaussian to the scale that we
-        want"""
-        x = np.linspace(0, 1, len(heights))
-        y = np.linspace(0, 1, len(np.transpose(heights)))
-        interp = RegularGridInterpolator(
-            (x, y), heights, bounds_error=False, fill_value=None
-        )
-        xx = np.linspace(0, 1, int(len(heights) / scale))
-        yy = np.linspace(0, 1, int(len(np.transpose(heights)) / scale))
-
-        X, Y = np.meshgrid(xx, yy, indexing="ij")
-        return interp((X, Y))
-
-    interpolated_heights = interpolate_DEM(heights, scale)
+    interpolated_heights = interpolate_func_to_dem(heights, scale)
     if diagnostic_plots:
-        fig = plt.figure(figsize=(4, 2))
+        plt.figure(figsize=(4, 2))
         plt.imshow(interpolated_heights, vmin=0, vmax=1)
         plt.set_cmap("Reds")
         cbar = plt.colorbar()
@@ -63,7 +56,4 @@ def export_planar_DEM(num_points=20, diagnostic_plots=False):
 
 
 if __name__ == "__main__":
-    """
-    Run the script to generate a test case DEM and plot it up.
-    """
-    h = export_planar_DEM(num_points=20, diagnostic_plots=True)
+    h = export_planar_dem(num_points=20, diagnostic_plots=True)

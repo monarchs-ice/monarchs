@@ -2,9 +2,11 @@
 Module containing functions relating to the firn column. Some physics is
 contained in percolation.py.
 
-TODO - flesh out module-level docstring
 """
 
+# for Numba compatibility - need to use broad exceptions, not specific ones
+# pylint: disable=broad-exception-raised, raise-missing-from
+# TODO - flesh out module-level docstring
 import numpy as np
 from monarchs.physics import percolation
 from monarchs.physics import surface_fluxes
@@ -16,11 +18,11 @@ def firn_column(
     cell,
     dt,
     dz,
-    LW_in,
-    SW_in,
-    T_air,
+    lw_in,
+    sw_in,
+    air_temp,
     p_air,
-    T_dp,
+    dew_point_temperature,
     wind,
     toggle_dict,
 ):
@@ -52,15 +54,15 @@ def firn_column(
         Number of seconds in the current timestep [s]
     dz : float
         Height of each vertical point in the cell. [m]
-    LW_in : float
+    lw_in : float
         Downwelling longwave radiation at the current timestep. [W m^-2]
-    SW_in : float
+    sw_in : float
         Downwelling shortwave radiation at the current timestep. [W m^-2]
-    T_air : float
+    air_temp : float
         Surface air temperature at the current timestep. [K]
     p_air : float
         Surface air pressure at the current timestep. [Pa]
-    T_dp : float
+    dew_point_temperature : float
         Dewpoint temperature of the air at the surface at the current
         timestep. [K]
     wind : float
@@ -85,12 +87,22 @@ def firn_column(
     # to pass these variables into the solver. Since we are using a Numba cfunc
     # to solve the heat equation, we need to pack the arguments into a
     # single vector.
-    args = [cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind]
+    args = [
+        cell,
+        dt,
+        dz,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+    ]
     # Hard-coding "hybr" as the MINPACK solver method, as other methods are not
     # supported by the Numba cfunc.
     # If you are running with Scipy, you could consider changing this or adding
     # it as a namelist parameter.
-    root, fvec, success, info = solver.solve_firn_heateqn(
+    root, _, success, _ = solver.solve_firn_heateqn(
         x, args, fixed_sfc=False, solver_method="hybr"
     )
 
@@ -101,8 +113,18 @@ def firn_column(
     # for the height change that occurs due to melting.
     if (root[0] > 273.15) and success:
         dz = cell["firn_depth"] / cell["vert_grid"]
-        args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
-        root_fs, fvec, success_fixedsfc, info = solver.solve_firn_heateqn(
+        args = (
+            cell,
+            dt,
+            dz,
+            lw_in,
+            sw_in,
+            air_temp,
+            p_air,
+            dew_point_temperature,
+            wind,
+        )
+        root_fs, _, success_fixedsfc, _ = solver.solve_firn_heateqn(
             x, args, fixed_sfc=True, solver_method="hybr"
         )
         # if *this* solver works, then update the firn temperature and regrid
@@ -112,7 +134,15 @@ def firn_column(
             cell["meltflag"][0] = 1
             cell["melt"] = True
             height_change = calc_height_change(
-                cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind, root
+                cell,
+                dt,
+                lw_in,
+                sw_in,
+                air_temp,
+                p_air,
+                dew_point_temperature,
+                wind,
+                root,
             )
 
             if np.isnan(height_change):
@@ -151,7 +181,15 @@ def firn_column(
 
 
 def calc_height_change(
-    cell, timestep, LW_in, SW_in, T_air, p_air, T_dp, wind, surf_T
+    cell,
+    timestep,
+    lw_in,
+    sw_in,
+    air_temp,
+    p_air,
+    dew_point_temperature,
+    wind,
+    surface_temp,
 ):
     """
     Determine the amount of firn height change that arises due to melting.
@@ -162,15 +200,15 @@ def calc_height_change(
         Element of the model grid we are operating on.
     timestep : float
         Number of seconds in each timestep. [s]
-    LW_in : float
+    lw_in : float
         Downwelling longwave radiation at the current timestep. [W m^-2]
-    SW_in : float
+    sw_in : float
         Downwelling shortwave radiation at the current timestep. [W m^-2]
-    T_air : float
+    air_temp : float
         Surface air temperature at the current timestep. [K]
     p_air : float
         Surface air pressure at the current timestep. [Pa]
-    T_dp : float
+    dew_point_temperature : float
         Dewpoint temperature of the air at the surface at the current
         timestep. [K]
     wind : float
@@ -214,13 +252,13 @@ def calc_height_change(
         cell["lid"],
         cell["lake"],
         cell["lake_depth"],
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
-        surf_T[0],
+        surface_temp[0],
     )
 
     # Strictly speaking, since the MONARCHS grid is defined from the surface
@@ -257,7 +295,6 @@ def calc_height_change(
             " a numerical error"
         )
     elif np.isnan(dHdt):
-        pass
         print("...")
         raise ValueError("Height change during melt is NaN")
     return dHdt
@@ -296,7 +333,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     new_depth = old_depth - height_change
     cell["firn_depth"] = new_depth
     original_sfrac = np.copy(cell["Sfrac"])
-    original_lfrac = np.copy(cell["Lfrac"])
     # we want to conserve the *bottom* of the grid, not the top. So the correct
     # way to interpolate is to use depth as a coordinate not height, with the
     # new top boundary being the lowered surface and the final depth being the
@@ -327,8 +363,6 @@ def regrid_after_melt(cell, height_change, lake=False):
         sfrac_weight = original_sfrac[0]
 
     meltwater_mass = height_change * cell["rho_ice"] * sfrac_weight
-    # Determine the original column mass for later.
-    original_column_mass = original_mass - meltwater_mass
 
     # to conserve mass we need meltwater_mass = new_height * cell["rho_water"]
     meltwater_height = meltwater_mass / cell["rho_water"]
@@ -339,7 +373,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     cell["Lfrac"][0] += meltwater
 
     new_sfrac = conservative_regrid(old_edges, cell["Sfrac"], new_edges)
-    new_lfrac = conservative_regrid(old_edges, cell["Lfrac"], new_edges)
     cell["firn_temperature"] = conservative_regrid(
         old_edges, cell["firn_temperature"], new_edges
     )
@@ -351,7 +384,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     volume_ratio = old_depth / new_depth
     scaled_lfrac = cell["Lfrac"] * volume_ratio
     cell["Lfrac"] = scaled_lfrac
-    dz_new = new_depth / cell["vert_grid"]
     # We need our interpolation to conserve mass.
     # Therefore, we may need to scale Sfrac and LFrac to compensate.
 
@@ -360,7 +392,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     if lake:
         if cell["Lfrac"][0] + cell["Sfrac"][0] > 1:
             excess_water = cell["Lfrac"][0] + cell["Sfrac"][0] - 1
-            # print('excess water = ', excess_water)
             cell["lake_depth"] += excess_water * (
                 cell["firn_depth"] / cell["vert_grid"]
             )
@@ -384,7 +415,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     try:
         assert abs(new_mass - original_mass) < 1 * 10**-2
     except Exception:
-        breakpoint()
         print(new_mass)
         print(original_mass)
         raise AssertionError
@@ -397,7 +427,6 @@ def interp_nb(x_vals, x, y):
     used throughout the code without needing to change every instance.
     Named interp_nb as this function also has Numba compatibility in its
     default form.
-    TODO - possibly redundant now?
 
     Parameters
     ----------
@@ -413,6 +442,7 @@ def interp_nb(x_vals, x, y):
     res : array_like
         values from y, interpolated onto our new grid of x_vals
     """
+    #     TODO - possibly redundant now?
     res = np.interp(x_vals, x, y)
     return res
 

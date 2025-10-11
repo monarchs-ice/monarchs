@@ -8,7 +8,7 @@ outputs (i.e. ones that are useful scientifically, rather than everything
 
 import os
 import numpy as np
-from netCDF4 import Dataset
+from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from monarchs.core.utils import get_2d_grid
 
 

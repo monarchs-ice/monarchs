@@ -1,7 +1,6 @@
-"""
-TODO - module-level docstring, flesh out other docstrings
-"""
+""" """
 
+# TODO - module-level docstring, flesh out other docstrings
 import numpy as np
 from monarchs.physics.surface_fluxes import sfc_flux
 
@@ -24,11 +23,11 @@ def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
 def heateqn(
     x,
     cell,
-    LW_in,
-    SW_in,
-    T_air,
+    lw_in,
+    sw_in,
+    air_temp,
     p_air,
-    T_dp,
+    dew_point_temperature,
     wind,
     dz,
     dt,
@@ -43,11 +42,11 @@ def heateqn(
         cell["lid"],
         cell["lake"],
         cell["lake_depth"],
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         x[0],
     )
@@ -189,7 +188,18 @@ def solve_tridiagonal(a, b, c, d):
 
 
 def heateqn_lid(
-    x, cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind, k_lid, Sfrac_lid
+    x,
+    cell,
+    dt,
+    dz,
+    lw_in,
+    sw_in,
+    air_temp,
+    p_air,
+    dew_point_temperature,
+    wind,
+    k_lid,
+    Sfrac_lid,
 ):
     """
     Solve the heat equation for the frozen lid, similarly to the calculation
@@ -205,15 +215,15 @@ def heateqn_lid(
         timestep duration [s]
     dz : float
         height of a single vertical layer of the frozen lid [m]
-    LW_in : float
+    lw_in : float
         Incoming longwave radiation at the current timestep [W m^-2]
-    SW_in : float
+    sw_in : float
         Incoming shortwave radiation at the current timestep [W m^-2]
-    T_air : float
+    air_temp : float
         Air temperature [K]
     p_air : float
         Surface pressure [Pa]
-    T_dp : float
+    dew_point_temperature : float
         Dewpoint temperature [K]
     wind : float
         Wind speed [m s^-1]
@@ -239,11 +249,11 @@ def heateqn_lid(
         cell["lid"],
         cell["lake"],
         cell["lake_depth"],
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         x[0],
     )

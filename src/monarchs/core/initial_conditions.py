@@ -3,32 +3,32 @@ Functions used by run_monarchs.py to convert a model runscript
 (default model_setup.py) to the format actually usedb y MONARCHS.
 This includes setting up the initial firn profile information,
 loading in meteorological data and interpolating it, and loading
-in/interpolating the digital elevation model (DEM) if applicable.
+in/interpolating the digital elevation model (dem_utils) if applicable.
 
-TODO - further refactor initialise_firn_profile, docstrings
 """
 
+# TODO - further refactor initialise_firn_profile, docstrings
 import numpy as np
-from monarchs.DEM.load_DEM import export_DEM
+from monarchs.dem_utils.load_dem import export_DEM
 from monarchs.core.model_grid import initialise_iceshelf, get_spec
 
 
 def initialise_firn_profile(model_setup, diagnostic_plots=False):
     """
-    DEM/initial firn profile
-    TODO - docstring
-    TODO - This function has grown rather complex - perhaps abstract out.
+    dem_utils/initial firn profile
+
     """
+    #     TODO - docstring
+    #     TODO - This function has grown rather complex - perhaps abstract out.
     func_name = "monarchs.core.initial_conditions.initialise_firn_profile"
-    print(
-        f"monarchs.core.initial_conditions.initialise_firn_profile: Setting up"
-        f" firn profile"
-    )
+
+    # some dummy values that may be returned later
+    lat_array = 0
+    lon_array = 0
+
+    print(f"{func_name}: Setting up firn profile")
     if hasattr(model_setup, "DEM_path"):
-        print(
-            "monarchs.core.initial_conditions.initialise_firn_profile: Reading"
-            " in firn depth from DEM"
-        )
+        print(f"{func_name}: Reading in firn depth from dem_utils")
 
         firn_depth, lat_array, lon_array, dx, dy = export_DEM(
             model_setup.DEM_path,
@@ -47,7 +47,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     else:
         raise ValueError(
             f"{func_name}:"
-            " Neither a path to a DEM or a firn depth profile exists. Please"
+            " Neither a path to a dem_utils or a firn depth profile exists. Please"
             " specify this in your model configuration file."
         )
     valid_cells = np.ones(
@@ -71,7 +71,10 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     firn_depth_under_35_flag = False
     if hasattr(model_setup, "firn_min_height"):
         if model_setup.min_height_handler == "clip":
-            firn_depth = np.clip(firn_depth, model_setup.firn_min_height)
+
+            firn_depth = np.clip(
+                firn_depth, a_min=model_setup.firn_min_height, a_max=None
+            )
         elif model_setup.min_height_handler == "filter":
             valid_cells[np.where(firn_depth < model_setup.firn_min_height)] = (
                 False
@@ -135,34 +138,39 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                         )[::-1]
 
     if hasattr(model_setup, "T_init") and model_setup.rho_init != "default":
-        T = model_setup.T_init
+        temperature = model_setup.T_init
     else:
-        T_init = np.linspace(253.15, 263.15, model_setup.vertical_points_firn)[
+        t_init = np.linspace(253.15, 263.15, model_setup.vertical_points_firn)[
             ::-1
         ]
-        T = np.zeros(
+        temperature = np.zeros(
             (
                 model_setup.row_amount,
                 model_setup.col_amount,
                 model_setup.vertical_points_firn,
             )
         )
-        T[:][:] = T_init
+        temperature[:][:] = t_init
         if not hasattr(model_setup, "T_init"):
             print(f"{func_name}: ")
             print(
                 "T_init not specified in run configuration file - using"
                 " default profile (linear 260->240 K top to bottom"
             )
-    print("\n")
-    if (
-        hasattr(model_setup, "DEM_path")
-        and hasattr(model_setup, "lat_bounds")
-        and model_setup.lat_bounds == "dem"
-    ):
-        return T, rho, firn_depth, valid_cells, lat_array, lon_array, dx, dy
-    else:
-        return T, rho, firn_depth, valid_cells, dx, dy
+
+    # else return null values for the lat/long arrays which aren't used
+    # pylint: disable=duplicate-code
+    return (
+        temperature,
+        rho,
+        firn_depth,
+        valid_cells,
+        dx,
+        dy,
+        lat_array,
+        lon_array,
+    )
+    # pylint: enable=duplicate-code
 
 
 def check_for_isolated_cells(valid_cells):
@@ -170,30 +178,44 @@ def check_for_isolated_cells(valid_cells):
     Ensure that cells aren't isolated - e.g. a cell in the middle of the
     land doesn't pointlessly run any physics when it can't flow laterally.
     """
+    # relative coordinates of all the adjacent cells
+    adjustments = (
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, -1),
+        (0, 0),
+        (0, 1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
+    )
     for i in range(len(valid_cells)):
         for j in range(len(valid_cells[0])):
+            # only process currently valid cells
             if valid_cells[i, j]:
+                # Initialise all cells to 1 (i.e. assume all are valid)
                 neighbours = np.ones((3, 3))
-                adjustments = (
-                    (-1, -1),
-                    (-1, 0),
-                    (-1, 1),
-                    (0, -1),
-                    (0, 0),
-                    (0, 1),
-                    (1, -1),
-                    (1, 0),
-                    (1, 1),
-                )
+                # Check all cells and adjust values to be not 1 if they
+                # match some criterion that marks them as invalid
                 for adj in adjustments:
+                    # check if we are at the edge of the grid
                     try:
+                        # if the neighbour is beyond the edge, set to -999
                         if i + adj[0] < 0 or j + adj[1] < 0:
                             neighbours[adj[0] + 1, adj[1] + 1] = -999
+                        # if the neighbour is invalid, set to 0
                         elif not valid_cells[i + adj[0], j + adj[1]]:
                             neighbours[adj[0] + 1, adj[1] + 1] = 0
+                    # if the cell is out of bounds, then set to -999 as off
+                    # edge of the grid
                     except IndexError:
                         neighbours[adj[0] + 1, adj[1] + 1] = -999
+                # centre cell gets marked with a 2 so we don't do anything
+                # with it by accident
                 neighbours[1, 1] = 2
+                # if there are no valid neighbours, mark this cell as invalid
+                # and move on
                 if not np.any(neighbours == 1) and not np.any(
                     neighbours == -999
                 ):
@@ -227,6 +249,9 @@ def rho_init_emp(z, rho_sfc, z_t):
     return rho
 
 
+# This function sets up the entire model grid, and splitting it up reduces
+# readability significantly, so we disable the pylint warnings here.
+# pylint: disable=too-many-arguments, too-many-locals, too-many-statements
 def create_model_grid(
     row_amount,
     col_amount,
@@ -236,8 +261,8 @@ def create_model_grid(
     vert_grid_lid,
     rho,
     firn_temperature,
-    Sfrac=np.array([np.nan]),
-    Lfrac=np.array([np.nan]),
+    sfrac=np.array([np.nan]),
+    lfrac=np.array([np.nan]),
     meltflag=np.array([np.nan]),
     saturation=np.array([np.nan]),
     lake_depth=0.0,
@@ -286,8 +311,8 @@ def create_model_grid(
         firn_depth,
         rho,
         firn_temperature,
-        Sfrac=Sfrac,
-        Lfrac=Lfrac,
+        sfrac=sfrac,
+        lfrac=lfrac,
         meltflag=meltflag,
         saturation=saturation,
         lake_depth=lake_depth,

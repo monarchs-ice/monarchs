@@ -1,9 +1,15 @@
-import numba
-from numba import prange
+"""
+This module overloads core.loop_over_grid with a Numba implementation,
+which parallelises the loop over the grid using Numba's prange.
+"""
+
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
+import numba
+from numba import prange
 
 
+# disable unused-argument as this is to make the overloading work
 def loop_over_grid_numba(
     row_amount,
     col_amount,
@@ -12,11 +18,8 @@ def loop_over_grid_numba(
     met_data,
     t_steps_per_day,
     toggle_dict,
-    parallel=False,
-    use_mpi=False,
     ncores="all",
-    dask_scheduler=None,
-    client=None,
+    **kwargs,  # pylint: disable=unused-argument
 ):
     """
     This function wraps timestep_loop, allowing for it to be
@@ -62,17 +65,24 @@ def loop_over_grid_numba(
     if isinstance(ncores, int):
         nthreads = ncores
     else:
-        nthreads = numba.config.NUMBA_DEFAULT_NUM_THREADS
+        # disable pylint warnings as Numba is compiled and the linter
+        # cannot see its members
+
+        nthreads = (
+            numba.config.NUMBA_DEFAULT_NUM_THREADS  # pylint: disable=no-member
+        )
 
     numba.set_num_threads(nthreads)
     # append everything to a new 1D instance of a Numba typed list, flatten,
     # and loop over that.
     flat_grid = grid.flatten()
-    # met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass
-    # the 24 timesteps
-    # move the first axis to the last axis
-    # met_data_grid = np.moveaxis(met_data_grid, 0, -1)
 
+    # disable linting for prange not being an iterable as it is
+    # when running with use_numba=True as it is decorated with
+    # jit in driver.py at runtime (this lets us determine whether
+    # the user wants to run in parallel or not, e.g. if running
+    # on a shared machine without a scheduler)
+    # pylint: disable=not-an-iterable
     for i in prange(row_amount * col_amount):
 
         timestep_loop(

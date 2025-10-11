@@ -1,3 +1,8 @@
+"""
+Sets up the Numpy structured array used to hold meteorological data for the
+model run.
+"""
+
 import numpy as np
 
 
@@ -8,8 +13,8 @@ def initialise_met_data(
     wind,
     surf_pressure,
     dew_point_temperature,
-    LW_down,
-    SW_down,
+    lw_down,
+    sw_down,
     latitude,
     longitude,
     num_rows,
@@ -50,10 +55,10 @@ def initialise_met_data(
     dewpoint_temperature :  array_like, float, dimension(time)
         Array of dewpoint temperature as a function of row index, column
         index and time [K]
-    LW_down : array_like, float, dimension(time)
+    lw_down : array_like, float, dimension(time)
         Array of downwelling longwave radiation as a function of row index,
         column index and time [W m^-2]
-    SW_down : array_like, float, dimension(time)
+    sw_down : array_like, float, dimension(time)
         Array of downwelling shortwave radiation as a function of row index,
         column index and time [W m^-2]
 
@@ -69,15 +74,16 @@ def initialise_met_data(
     metdata["wind"] = wind
     metdata["surf_pressure"] = surf_pressure
     metdata["dew_point_temperature"] = dew_point_temperature
-    metdata["LW_down"] = LW_down
-    metdata["SW_down"] = SW_down
+    metdata["LW_down"] = lw_down
+    metdata["SW_down"] = sw_down
     metdata["snow_dens"] = snow_dens
     metdata["lat"] = latitude
     metdata["lon"] = longitude
     return metdata
 
 
-def get_spec(t_steps_per_day):
+def get_spec():
+    """Possible variables and dtypes for the met data structured array."""
     dtype = np.dtype(
         [
             ("snowfall", np.float64),

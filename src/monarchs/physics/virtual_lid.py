@@ -1,14 +1,17 @@
-"""
-TODO - module-level docstring, other docstrings
-"""
+""" """
 
+# disable pylint warnings for broad exceptions as they are needed with Numba
+# pylint: disable=broad-exception-raised
+# TODO - module-level docstring, other docstrings
 import numpy as np
 from monarchs.physics import surface_fluxes
 from monarchs.physics import solver
 from monarchs.core import utils
 
 
-def virtual_lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
+def virtual_lid_development(
+    cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
+):
     """
     When a lake undergoes freezing from the top due to the surface conditions,
     a lid forms. However, the depth of this lid can oscillate significantly
@@ -34,15 +37,15 @@ def virtual_lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         Element of the model grid we are operating on.
     dt : int
         Number of seconds in the timestep, very like 3600 (i.e. 1h) [s]
-    LW_in : float
+    lw_in : float
         Incoming longwave radiation. [W m^-2].
-    SW_in : float
+    sw_in : float
         Incoming shortwave (solar) radiation. [W m^-2].
-    T_air : float
+    air_temp : float
         Surface-layer air temperature. [K].
     p_air : float
         Surface-layer air pressure. [hPa].
-    T_dp : float
+    dew_point_temperature : float
         Dew-point temperature at the surface. [K]
     wind : float
         Wind speed. [m s^-1].
@@ -60,11 +63,11 @@ def virtual_lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell["lid"],
         cell["lake"],
         cell["lake_depth"],
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         x[0],
     )
@@ -92,7 +95,7 @@ def virtual_lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         x, args, v_lid=True
     )[0][0]
 
-    # JE TODO - are we missing Fu from here also?
+    # TODO - are we missing Fu from here also?
     kdTdz = (
         (cell["virtual_lid_temperature"] - cell["lake_temperature"][1])
         * abs(cell["k_water"])
@@ -134,7 +137,7 @@ def virtual_lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
 
 
 def update_virtual_lid_temperature(
-    cell, LW_in, SW_in, T_air, p_air, T_dp, wind
+    cell, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
 ):
     x = np.array([cell["virtual_lid_temperature"]])
     Q = surface_fluxes.sfc_flux(
@@ -143,17 +146,16 @@ def update_virtual_lid_temperature(
         cell["lid"],
         cell["lake"],
         cell["lake_depth"],
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         x[0],
     )
     k_v_lid = 1000 * (
-        2.24e-3
-        + 5.975e-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
+        2.24e-3 + 5.975e-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
     )
     args = np.array(
         [

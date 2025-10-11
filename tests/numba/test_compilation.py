@@ -18,7 +18,7 @@ def run(model_setup):
         np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
     )
     # Set up meteorological data and return the path to the grid actually used by MONARCHS
-    setup_met_data.setup_era5(model_setup, lat_array, lon_array)
+    setup_met_data.met_data_from_era5(model_setup, lat_array, lon_array)
     # Initialise the model grid.
     grid = initial_conditions.create_model_grid(
         model_setup.row_amount,
@@ -47,5 +47,6 @@ def test_numba_compilation():
 
     model_setup = configuration.model_setup
     configuration.handle_incompatible_flags(model_setup)
+    configuration.handle_invalid_values(model_setup)
     configuration.create_defaults_for_missing_flags(model_setup)
     run(model_setup)

@@ -12,26 +12,35 @@ main then calls the lateral movement functions, and handles saving the data,
 both in terms of the model state (also known as a "dump"), and the
 variables that the user wants to track over time.
 
-TODO - docstrings
 """
+
+# TODO - docstrings
 
 import os
 import sys
 import time
+import pickle
+import warnings
 import numpy as np
 import pathos
-from netCDF4 import Dataset
+from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from monarchs.core import configuration, initial_conditions, setup_met_data
 from monarchs.core.load_model_setup import get_model_setup
 from monarchs.core.dump_model_state import dump_state, reload_from_dump
+from monarchs.core.model_grid import get_spec as get_iceshelf_spec
 from monarchs.core.model_output import setup_output, update_model_output
 from monarchs.core.utils import (
     get_2d_grid,
     calc_grid_mass,
     check_grid_correctness,
+    get_num_cores,
 )
 from monarchs.met_data.met_data_grid import initialise_met_data, get_spec
 from monarchs.physics import lateral_movement
+
+# dummy init value for Dask client which may be used later - this needs to be
+# global
+CLIENT = None
 
 
 def setup_toggle_dict(model_setup):
@@ -52,29 +61,29 @@ def setup_toggle_dict(model_setup):
 
     """
 
-    toggle_dict = {}
-
-    toggle_dict["parallel"] = model_setup.parallel
-    toggle_dict["use_numba"] = model_setup.use_numba
-    toggle_dict["snowfall_toggle"] = model_setup.snowfall_toggle
-    toggle_dict["firn_column_toggle"] = model_setup.firn_column_toggle
-    toggle_dict["firn_heat_toggle"] = model_setup.firn_heat_toggle
-    toggle_dict["lake_development_toggle"] = (
-        model_setup.lake_development_toggle
-    )
-    toggle_dict["lid_development_toggle"] = model_setup.lid_development_toggle
-    toggle_dict["percolation_toggle"] = model_setup.percolation_toggle
-    toggle_dict["spinup"] = model_setup.spinup
-    toggle_dict["perc_time_toggle"] = model_setup.perc_time_toggle
-    toggle_dict["densification_toggle"] = model_setup.densification_toggle
-    toggle_dict["ignore_errors"] = model_setup.ignore_errors
-    toggle_dict["use_mpi"] = model_setup.use_mpi
+    toggle_dict = {
+        "parallel": model_setup.parallel,
+        "use_numba": model_setup.use_numba,
+        "snowfall_toggle": model_setup.snowfall_toggle,
+        "firn_column_toggle": model_setup.firn_column_toggle,
+        "firn_heat_toggle": model_setup.firn_heat_toggle,
+        "lake_development_toggle": model_setup.lake_development_toggle,
+        "lid_development_toggle": model_setup.lid_development_toggle,
+        "percolation_toggle": model_setup.percolation_toggle,
+        "spinup": model_setup.spinup,
+        "perc_time_toggle": model_setup.perc_time_toggle,
+        "densification_toggle": model_setup.densification_toggle,
+        "ignore_errors": model_setup.ignore_errors,
+        "use_mpi": model_setup.use_mpi,
+    }
 
     if model_setup.use_numba:
         # in this case we need to convert to a Numba typed dict
+        # pylint: disable=import-outside-toplevel
         from numba import types
-        from numba.typed import Dict
+        from numba.typed import Dict  # pylint: disable=no-name-in-module
 
+        # pylint: enable=import-outside-toplevel
         num_dict = Dict.empty(
             key_type=types.unicode_type,
             value_type=types.boolean,
@@ -89,7 +98,6 @@ def setup_toggle_dict(model_setup):
 def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
     """
     Determine if the model needs to re-initialise parameters from a dump file.
-    TODO - add support for reloading from pickle
 
     Parameters
     ----------
@@ -102,15 +110,15 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
     -------
 
     """
+    # TODO - add support for reloading from pickle
+
     if hasattr(model_setup, "dump_filepath"):
         reload_name = model_setup.dump_filepath
     else:
         reload_name = ""
-    import warnings
 
     if model_setup.reload_from_dump:
         print("Reloading state from dump...")
-        from monarchs.core.model_grid import get_spec as get_iceshelf_spec
 
         if not os.path.exists(reload_name):
             first_iteration = 0
@@ -141,7 +149,6 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
     else:
         first_iteration = 0
         reload_dump_success = False
-        grid = grid
     return (
         grid,
         met_start_idx,
@@ -152,42 +159,20 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
 
 
 def get_snow_sum(met_data_grid, grid, met_start_idx, met_end_idx, snow_added):
+    """
+    Work out how much snow has been added to the model over the last day, and
+    add it to the total amount of snow already added.
+    """
     for i in range(len(grid)):
         for j in range(len(grid[0])):
             if grid["valid_cell"][i, j]:
                 snow_array = (
                     met_data_grid["snow_dens"][met_start_idx:met_end_idx, i, j]
-                    * met_data_grid["snowfall"][
-                        met_start_idx:met_end_idx, i, j
-                    ]
+                    * met_data_grid["snowfall"][met_start_idx:met_end_idx, i, j]
                 )
 
                 snow_added += np.sum(snow_array)
     return snow_added
-
-
-def get_num_cores(model_setup):
-    """
-
-    Parameters
-    ----------
-    model_setup
-
-    Returns
-    -------
-
-    """
-    if model_setup.cores in ["all", False] and model_setup.parallel:
-        if not model_setup.use_mpi:
-            cores = pathos.helpers.cpu_count()
-        else:
-            cores = pathos.helpers.cpu_count()
-        print(f"Using all cores - {pathos.helpers.cpu_count()} detected")
-    elif not model_setup.parallel:
-        cores = 1
-    else:
-        cores = model_setup.cores
-    return cores
 
 
 def update_met_conditions(
@@ -211,7 +196,7 @@ def update_met_conditions(
         if start:
             met_start_idx = met_start_idx % met_data_len
 
-        met_data_dtype = get_spec(t_steps_per_day=model_setup.t_steps_per_day)
+        met_data_dtype = get_spec()
         met_data_grid = initialise_met_data(
             met_data.variables["snowfall"][met_start_idx:met_end_idx].data,
             met_data.variables["snow_dens"][met_start_idx:met_end_idx].data,
@@ -236,7 +221,7 @@ def update_met_conditions(
         )
 
         for key in met_data.variables.keys():
-            if key != "cell_latitude" and key != "cell_longitude":
+            if key not in ("cell_latitude", "cell_longitude"):
                 if met_end_idx > len(met_data[key]):
                     raise IndexError(
                         "monarchs.core.driver.main: met_end_idx > days *"
@@ -248,9 +233,15 @@ def update_met_conditions(
 
 
 def check_firn_met_consistency(grid, met_data_grid):
+    """
+    Check visually that the meteorological data input is mapped to the
+    dem_utils input.
+    """
+    # pylint: disable=import-outside-toplevel
     from matplotlib import pyplot as plt
     from cartopy import crs as ccrs
 
+    # pylint: enable=import-outside-toplevel
     projection = ccrs.PlateCarree()
     fig1 = plt.figure()
     ax1 = fig1.add_subplot(211, projection=projection)
@@ -385,6 +376,9 @@ def main(model_setup, grid):
         Model grid at the end of the run.
 
     """
+    # TODO - split main up into a few different helper functions. Possibly
+    # move some of the functions from above into utils also, or a new
+    # module entirely.
 
     # If running in parallel across multiple nodes, then we first set up the
     # dask Client object
@@ -394,16 +388,25 @@ def main(model_setup, grid):
         and not model_setup.use_numba
     ):
         print("Setting up Dask Client object...")
+        # only import dask.distributed if we need it, which only happens once.
+        # to improve portability, this avoids requiring dask.distributed to be
+        # installed for the model to run. this is desirable, so remove
+        # pylint check. also, Client exists within dask.distributed, but
+        # the linter cannot see it, so disable that check also
+        # pylint: disable=import-outside-toplevel, no-name-in-module
         from dask.distributed import Client
 
-        global client
-        client = Client()
-    else:
-        client = None  # else set up a dummy client to pass
+        # pylint: enable=import-outside-toplevel, no-name-in-module
+        # make client global so we don't need to pass it around depending on
+        # whether we use dask or not.
+        # pylint: disable=global-statement
+        global CLIENT
+        # pylint: enable=global-statement
+        CLIENT = Client()
 
+    # pylint: disable=import-outside-toplevel
     if model_setup.use_numba:
         from numba import jit
-
         from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
         from numba import set_num_threads
 
@@ -417,6 +420,8 @@ def main(model_setup, grid):
         )
     else:
         from monarchs.core.loop_over_grid import loop_over_grid
+    # pylint: enable=import-outside-toplevel
+
     tic = time.perf_counter()
     met_start_idx = 0
     met_end_idx = model_setup.t_steps_per_day
@@ -468,19 +473,6 @@ def main(model_setup, grid):
     dt = 3600
 
     for day in time_loop:
-        from numba.core.registry import CPUDispatcher
-        import gc
-
-        def count_dispatchers():
-            count = 0
-            for obj in gc.get_objects():
-                try:
-                    if isinstance(obj, CPUDispatcher):
-                        count += 1
-                except ReferenceError:
-                    continue  # The object was already garbage collected
-            return count
-
         timestep_start = time.perf_counter()
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")
@@ -501,16 +493,13 @@ def main(model_setup, grid):
                 model_setup.t_steps_per_day,
                 toggle_dict,
                 parallel=model_setup.parallel,
-                use_mpi=model_setup.use_mpi,
                 ncores=cores,
                 dask_scheduler=model_setup.dask_scheduler,
-                client=client,
+                client=CLIENT,
             )
 
         print("Single-column physics finished")
-        print(
-            f"Single column physics time: {time.perf_counter() - start:.2f}s"
-        )
+        print(f"Single column physics time: {time.perf_counter() - start:.2f}s")
         start_serial = time.perf_counter()
         if model_setup.dump_data_pre_lateral_movement:
             if model_setup.dump_format == "NETCDF4":
@@ -518,11 +507,8 @@ def main(model_setup, grid):
                     model_setup.dump_filepath, grid, met_start_idx, met_end_idx
                 )
             elif model_setup.dump_format == "pickle":
-                import pickle
-
-                outfile = open(model_setup.dump_filepath, "wb")
-                pickle.dump(grid, outfile)
-                outfile.close()
+                with open(model_setup.dump_filepath, "wb") as outfile:
+                    pickle.dump(grid, outfile)
 
         lat_start = time.perf_counter()
         if model_setup.lateral_movement_toggle:
@@ -580,11 +566,8 @@ def main(model_setup, grid):
                     model_setup.dump_filepath, grid, met_start_idx, met_end_idx
                 )
             elif model_setup.dump_format == "pickle":
-                import pickle
-
-                outfile = open(model_setup.dump_filepath, "wb")
-                pickle.dump(grid, outfile)
-                outfile.close()
+                with open(model_setup.dump_filepath, "wb") as outfile:
+                    pickle.dump(grid, outfile)
             print(
                 f"Dumping model state time: {time.perf_counter() - start:.2f}s"
             )
@@ -598,9 +581,7 @@ def main(model_setup, grid):
                 vars_to_save=model_setup.vars_to_save,
                 vert_grid_size=output_grid_size,
             )
-        print(
-            f"Updating model output time: {time.perf_counter() - start:.2f}s"
-        )
+        print(f"Updating model output time: {time.perf_counter() - start:.2f}s")
         print(f"Serial time total: {time.perf_counter() - start_serial:.2f}s")
         print(
             f"Total time for day {day + 1}:"
@@ -612,26 +593,32 @@ def main(model_setup, grid):
     return grid
 
 
-def initialise(model_setup):
+def initialise_model_data(model_setup):
+    """
+    Wrapper function that calls various initialisation functions to set up
+    MONARCHS.
+    """
 
+    # Load in the initial firn profile, either from a whole dem_utils, or a
+    # user-defined subset
     if (
         hasattr(model_setup, "lat_bounds")
         and model_setup.lat_bounds.lower() == "dem"
     ):
         (
-            T_firn,
+            firn_temperature,
             rho,
             firn_depth,
             valid_cells,
-            lat_array,
-            lon_array,
             dx,
             dy,
+            lat_array,
+            lon_array,
         ) = initial_conditions.initialise_firn_profile(
             model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
         )
     else:
-        T_firn, rho, firn_depth, valid_cells, dx, dy = (
+        firn_temperature, rho, firn_depth, valid_cells, dx, dy, _, _ = (
             initial_conditions.initialise_firn_profile(
                 model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
             )
@@ -643,6 +630,8 @@ def initialise(model_setup):
             np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
         )
 
+    # Set up meteorological data, from either ERA5-format input ("ERA5") or
+    # user-defined values from their model configuration ("user_defined")
     if model_setup.met_data_source == "ERA5":
         if model_setup.load_precalculated_met_data:
             print(
@@ -650,10 +639,11 @@ def initialise(model_setup):
                 " MONARCHS format met data"
             )
         else:
-            setup_met_data.setup_era5(model_setup, lat_array, lon_array)
+            setup_met_data.met_data_from_era5(model_setup, lat_array, lon_array)
     elif model_setup.met_data_source == "user_defined":
         setup_met_data.prescribed_met_data(model_setup)
 
+    # Write all of the initial ice shelf values into the model grid
     grid = initial_conditions.create_model_grid(
         model_setup.row_amount,
         model_setup.col_amount,
@@ -662,7 +652,7 @@ def initialise(model_setup):
         model_setup.vertical_points_lake,
         model_setup.vertical_points_lid,
         rho,
-        T_firn,
+        firn_temperature,
         use_numba=model_setup.use_numba,
         valid_cells=valid_cells,
         lats=lat_array,
@@ -674,27 +664,49 @@ def initialise(model_setup):
 
 
 def monarchs():
+    """
+    Main function for running MONARCHS.
+    This works a level above initialise, which handles the initial setup
+    of the model configuration (as opposed to initialising the model data).
+    """
+
+    # Check the environment to see if we have MPI enabled.
     if os.environ.get("MONARCHS_MPI", None) is not None:
         mpi = True
         print("Setting MPI to True")
     else:
         mpi = False
+    # If so, we need to get the model setup path from the environment
+    # variable rather than loading it in, as it will otherwise attempt
+    # to do so for every single MPI process.
+    # TODO - obviate the need for this by making it run on proc 0 only
     if mpi:
         if os.environ.get("MONARCHS_MODEL_SETUP_PATH") is not None:
             model_setup_path = os.environ.get("MONARCHS_MODEL_SETUP_PATH")
         else:
             model_setup_path = "model_setup.py"
+    # If not using MPI, just parse the input arguments and
+    # load in the model setup path
     else:
         model_setup_path = configuration.parse_args()
     model_setup = get_model_setup(model_setup_path)
 
+    # If we are using Numba optimisation, we need to ensure that
+    # all physics functions are JIT-compiled before we start the model run.
+    # use_numba may or may not be a model_setup attribute, so ignore
+    # the linter errors here as it is entirely optional
+    # pylint: disable=no-member
     if hasattr(model_setup, "use_numba") and model_setup.use_numba:
         configuration.jit_modules()
+    # pylint: enable=no-member
 
+    # Model configuration steps
     configuration.create_output_folders(model_setup)
     configuration.handle_incompatible_flags(model_setup)
     configuration.handle_invalid_values(model_setup)
     configuration.create_defaults_for_missing_flags(model_setup)
-    grid = initialise(model_setup)
+
+    # Set up the data, then run the model physics.
+    grid = initialise_model_data(model_setup)
     grid = main(model_setup, grid)
     return grid

@@ -14,11 +14,11 @@ def setup_test():
         cell,
         dt,
         dz,
-        met_data["LW_in"],
-        met_data["SW_in"],
-        met_data["T_air"],
+        met_data["lw_in"],
+        met_data["sw_in"],
+        met_data["air_temp"],
         met_data["p_air"],
-        met_data["T_dp"],
+        met_data["dew_point_temperature"],
         met_data["wind"],
     )
 
@@ -51,12 +51,12 @@ def test_solver():
 def test_solver_fixedsfc():
     """Test to ensure solver function gives the same result in Numba and non-Numba cases, assuming fixed surface"""
     # cell, x, args = setup_test()
-    # from monarchs.core.choose_solver import get_firn_heateqn_solver
+    # from monarchs.core.choose_solver import get_solve_firn_heateqn
     #
-    # solver_numba = get_firn_heateqn_solver(True)
+    # solver_numba = get_solve_firn_heateqn(True)
     # root_numba, fvec, success, info = solver_numba(x, args, fixed_sfc=True)
     # print(success)
-    # solver = get_firn_heateqn_solver(False)
+    # solver = get_solve_firn_heateqn(False)
     # root, infodict, ier, mesg = solver(x, args, fixed_sfc=True)
     # print(ier)
     # if ier == info and success == True:
@@ -85,11 +85,11 @@ def test_fluxes():
         cell.lid,
         cell.lake,
         cell.lake_depth,
-        met_data["LW_in"],
-        met_data["SW_in"],
-        met_data["T_air"],
+        met_data["lw_in"],
+        met_data["sw_in"],
+        met_data["air_temp"],
         met_data["p_air"],
-        met_data["T_dp"],
+        met_data["dew_point_temperature"],
         met_data["wind"],
         x[0],
     )

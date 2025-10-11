@@ -1,7 +1,7 @@
-"""
-TODO - module-level docstring, other docstrings
-"""
+""" """
 
+# TODO - module-level docstring, other docstrings
+from inspect import getmembers, isfunction
 import argparse
 import warnings
 import os
@@ -17,7 +17,7 @@ def parse_args():
     func_name = "monarchs.core.configuration.parse_args"
     run_dir = os.getcwd().replace("\\", "/")
     warning_flag = False
-    runscript = ''
+    runscript = ""
     if "PYTEST_CURRENT_TEST" in os.environ:
         if "numba" in run_dir.split("/")[-1]:
             runscript = "model_test_setup_numba.py"
@@ -101,8 +101,8 @@ def handle_incompatible_flags(model_setup):
         if model_setup.lat_bounds.lower() == "dem":
             raise ValueError(
                 f"{func_name}: You"
-                ' must provide a DEM file using the "DEM_path" argument to'
-                " use DEM lat/long bounds."
+                ' must provide a dem_utils file using the "DEM_path" argument to'
+                " use dem_utils lat/long bounds."
             )
     dump_attrs = ["dump_data", "reload_from_dump"]
     for attr in dump_attrs:
@@ -146,6 +146,7 @@ def handle_incompatible_flags(model_setup):
                 " This is not supported since Numba jitclasses are not"
                 " picklable"
             )
+
 
 def handle_invalid_values(model_setup):
     """
@@ -195,7 +196,7 @@ def create_defaults_for_missing_flags(model_setup):
     Prevent the model from crashing out if certain flags are not specified in
     the model_setup file.
     This will not prevent the code from stopping if key information is not
-    provided (e.g. a DEM GeoTIFF file or a NumPy array of firn column depth
+    provided (e.g. a dem_utils GeoTIFF file or a NumPy array of firn column depth
     matching the chosen grid size, or a netCDF of input meteorological data).
     It is intended to ensure that the code runs even if the setup file does not
     contain every possible argument. (for example, not having flags that don't
@@ -362,8 +363,6 @@ def create_defaults_for_missing_flags(model_setup):
             )
 
 
-
-
 def jit_modules(fastmath=False):
     """
     If using Numba, then we need to apply the `numba.jit` decorator to several
@@ -385,9 +384,8 @@ def jit_modules(fastmath=False):
     whenever importing the physics functions (which needed to know whether
     `use_numba` was `True`) which was causing an error.
     """
+    # pylint: disable=import-outside-toplevel
     from numba import njit
-    from inspect import getmembers, isfunction
-
     from monarchs.physics import (
         percolation,
         lid,
@@ -401,6 +399,10 @@ def jit_modules(fastmath=False):
         reset_column,
     )
     from monarchs.core import model_output, utils
+    from monarchs.physics import solver
+    from monarchs.physics.Numba import solver_nb as numba_solver
+
+    # pylint: enable=import-outside-toplevel
 
     # modules to search from when applying jit
     module_list = [
@@ -451,9 +453,6 @@ def jit_modules(fastmath=False):
             )
             setattr(module, name, jitted_function)
 
-    from monarchs.physics import solver
-    from monarchs.physics.Numba import solver_nb as numba_solver
-
     # relax the isfunction stipulation for `numba_solver` since it is mostly
     # jitted functions (which are `<CPUDispatcher>` objects rather than
     # `<function>` objects
@@ -466,6 +465,3 @@ def jit_modules(fastmath=False):
                 " Numba-compatible version"
             )
             setattr(solver, name, jitfunc)
-
-
-

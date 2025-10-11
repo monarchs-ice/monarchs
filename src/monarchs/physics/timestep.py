@@ -31,29 +31,46 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     dt : int32
         Time for each timestep <t_steps_per_day>. [s]
 
-
     met_data : numpy structured array
         Element of the met data grid. Contains thermodynamic variables, which
         are listed as follows:
 
-        LW_in : int32 or float64
+        lw_in : int32 or float64
             Incoming broadband longwave radiation [W m^-2].
-        SW_in : int32 or float64
+        sw_in : int32 or float64
              Incoming broadband shortwave radiation [W m^-2].
-        T_air : int32 or float64
+        air_temp : int32 or float64
             Air temperature [K].
         p_air : int32 or float64
             Surface pressure [hPa].
-        T_dp : int32 or float64
+        dew_point_temperature : int32 or float64
             Dew-point temperature [K]
         wind : int32 or float64
             Surface wind speed. [m s^-1]
 
+    t_steps_per_day : int
+        Number of timesteps in a model day. Typically 24 (i.e. 1h timesteps).
+
     toggle_dict : dict
         A dictionary containing toggles that determine whether certain features
-        are enabled.
+        are enabled. Most of these are debug settings, and are intended to
+        be True for normal model operation.
         Values are the following:
-        TODO - fill
+            parallel: determines whether the model is run with more than one
+                core.
+            use_numba: determines whether numba is used for optimisation.
+            snowfall_toggle: determines whether snowfall is enabled.
+            firn_column_toggle: determines whether firn column evolution is
+                enabled.
+            firn_heat_toggle: determines whether the firn heat equation is
+                solved.
+            lake_development_toggle: determines whether lake formation and
+                development is enabled.
+            lid_development_toggle: determines whether lid formation and
+                development is enabled.
+            ignore_errors: determines whether to ignore errors in the model
+                (e.g. Sfrac + Lfrac > 1, negative firn depths etc.)
+
 
     Returns
     -------
@@ -106,11 +123,11 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 met_data["snow_dens"][t_step],
                 273.15,
             )
-        SW_in = met_data["SW_down"][t_step]
-        LW_in = met_data["LW_down"][t_step]
+        sw_in = met_data["SW_down"][t_step]
+        lw_in = met_data["LW_down"][t_step]
         wind = met_data["wind"][t_step]
-        T_dp = met_data["dew_point_temperature"][t_step]
-        T_air = met_data["temperature"][t_step]
+        dew_point_temperature = met_data["dew_point_temperature"][t_step]
+        air_temp = met_data["temperature"][t_step]
         p_air = met_data["surf_pressure"][t_step]
 
         """
@@ -126,18 +143,28 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     cell,
                     dt,
                     dz,
-                    LW_in,
-                    SW_in,
-                    T_air,
+                    lw_in,
+                    sw_in,
+                    air_temp,
                     p_air,
-                    T_dp,
+                    dew_point_temperature,
                     wind,
                     toggle_dict,
                 )
 
         elif cell["exposed_water"]:
             # print("Exposed water present")
-            args = cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind
+            args = (
+                cell,
+                dt,
+                dz,
+                lw_in,
+                sw_in,
+                air_temp,
+                p_air,
+                dew_point_temperature,
+                wind,
+            )
             x = cell["firn_temperature"]
 
             if firn_heat_toggle:
@@ -178,21 +205,41 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             if not cell["lake"]:
                 if lake_development_toggle:
                     lake.lake_formation(
-                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
+                        cell,
+                        dt,
+                        lw_in,
+                        sw_in,
+                        air_temp,
+                        p_air,
+                        dew_point_temperature,
+                        wind,
                     )
 
             elif cell["lake"] and not cell["lid"]:
                 if lake_development_toggle:
                     lake.lake_development(
-                        cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
+                        cell,
+                        dt,
+                        lw_in,
+                        sw_in,
+                        air_temp,
+                        p_air,
+                        dew_point_temperature,
+                        wind,
                     )
 
                 if cell["v_lid"]:
                     if lid_development_toggle:
                         virtual_lid.virtual_lid_development(
-                            cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind
+                            cell,
+                            dt,
+                            lw_in,
+                            sw_in,
+                            air_temp,
+                            p_air,
+                            dew_point_temperature,
+                            wind,
                         )
-
 
                     # if virtual lid freezes the entire lake (possible if
                     # lateral movement), then combine (virtual) lid and
@@ -216,21 +263,21 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     lake.lake_development(
                         cell,
                         dt,
-                        LW_in,
-                        SW_in,
-                        T_air,
+                        lw_in,
+                        sw_in,
+                        air_temp,
                         p_air,
-                        T_dp,
+                        dew_point_temperature,
                         wind,
                     )
                     lid.lid_development(
                         cell,
                         dt,
-                        LW_in,
-                        SW_in,
-                        T_air,
+                        lw_in,
+                        sw_in,
+                        air_temp,
                         p_air,
-                        T_dp,
+                        dew_point_temperature,
                         wind,
                     )
                 # If we have any of the following:
@@ -248,8 +295,10 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 else:
                     cell["lake_refreeze_counter"] = 0
                 if cell["lake_refreeze_counter"] > 23:
-                    print("Lake has been very cold for two full diurnal cycles"
-                          "- freezing...")
+                    print(
+                        "Lake has been very cold for two full diurnal cycles"
+                        "- freezing..."
+                    )
                     reset_column.combine_lid_firn(cell)
 
                 if (
@@ -288,7 +337,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 np.any(cell["Lfrac"][1:] + cell["Sfrac"][1:] > 1.00000000001)
                 and cell["Sfrac"][0] <= 1
             ):
-                breakpoint()
                 raise ValueError(
                     "Lfrac + Sfrac > 1 after regridding, after saturation"
                     " calculation."

@@ -1,9 +1,14 @@
+"""
+Sets up a test case using a Gaussian elevation map with two lakes in the
+upper left and bottom right corners.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 
-def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
+def export_gaussian_dem(num_points=20, diagnostic_plots=False):
     """
     Generate a Gaussian elevation map with two lakes in the upper left and
     bottom right corners.
@@ -29,7 +34,7 @@ def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
 
     """
 
-    def Gaussian(x, y):
+    def gaussian(x, y):
         mu_x = mu_y = 0
         sigma = 0.3
         height = (
@@ -41,30 +46,17 @@ def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
 
     x = y = np.linspace(-1, 1, 10)
     x1, y1 = np.meshgrid(x, y)
-    heights = Gaussian(x1, y1)
+    heights = gaussian(x1, y1)
     heights[1, 1] = 0.5
     heights[8, 8] = 0.5
     scale = len(heights) / num_points
 
-    def interpolate_DEM(heights, scale):
-        """Interpolate the DEM from the original Gaussian to the scale that we
-        want"""
-        x = np.linspace(0, 1, len(heights))
-        y = np.linspace(0, 1, len(np.transpose(heights)))
-        interp = RegularGridInterpolator(
-            (x, y), heights, bounds_error=False, fill_value=None
-        )
-        xx = np.linspace(0, 1, int(len(heights) / scale))
-        yy = np.linspace(0, 1, int(len(np.transpose(heights)) / scale))
-        X, Y = np.meshgrid(xx, yy, indexing="ij")
-        return interp((X, Y))
-
-    interpolated_heights = interpolate_DEM(heights, scale)
+    interpolated_heights = interpolate_func_to_dem(heights, scale)
     interpolated_heights = (
         interpolated_heights + interpolated_heights[::-1, ::-1]
     ) / 2
     if diagnostic_plots:
-        fig = plt.figure(figsize=(4, 2))
+        plt.figure(figsize=(4, 2))
         plt.imshow(interpolated_heights, vmin=0, vmax=1)
         plt.set_cmap("Reds")
         cbar = plt.colorbar()
@@ -74,8 +66,19 @@ def export_gaussian_DEM(num_points=20, diagnostic_plots=False):
     return np.clip(interpolated_heights, 0, 1)
 
 
+def interpolate_func_to_dem(heights, scale):
+    """Interpolate the dem_utils from the original Gaussian to the scale that we
+    want"""
+    x = np.linspace(0, 1, len(heights))
+    y = np.linspace(0, 1, len(np.transpose(heights)))
+    interp = RegularGridInterpolator(
+        (x, y), heights, bounds_error=False, fill_value=None
+    )
+    xx = np.linspace(0, 1, int(len(heights) / scale))
+    yy = np.linspace(0, 1, int(len(np.transpose(heights)) / scale))
+    x_all, y_all = np.meshgrid(xx, yy, indexing="ij")
+    return interp((x_all, y_all))
+
+
 if __name__ == "__main__":
-    """
-    Run the script to generate a test case DEM and plot it up.
-    """
-    h = export_gaussian_DEM(num_points=10, diagnostic_plots=True)
+    h = export_gaussian_dem(num_points=10, diagnostic_plots=True)

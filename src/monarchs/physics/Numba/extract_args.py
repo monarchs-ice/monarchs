@@ -1,7 +1,6 @@
-"""
-TODO - module-level docstring
-"""
+""" """
 
+# TODO - module-level docstring
 import numpy as np
 from numba import jit
 
@@ -51,15 +50,15 @@ def extract_args_firn(args):
      Flag which indicates whether there is a lake present.
     lake_depth : float64
      Depth of the lake (in vertical points?)
-    LW_in : float64
+    lw_in : float64
      Incoming longwave radiation. [W m^-2].
-    SW_in : float64
+    sw_in : float64
      Incoming shortwave (solar) radiation. [W m^-2].
-    T_air : float64
+    air_temp : float64
      Surface-layer air temperature. [K].
     p_air : float64
      Surface-layer air pressure. [hPa].
-    T_dp : float64
+    dew_point_temperature : float64
      Dew-point temperature. [K].
     wind : float64
      Wind speed. [m s^-1].
@@ -100,11 +99,11 @@ def extract_args_firn(args):
     lid = bool(np.round(args[arrind + 8]))
     lake = bool(np.round(args[arrind + 9]))
     lake_depth = args[arrind + 10]
-    LW_in = args[arrind + 11]
-    SW_in = args[arrind + 12]
-    T_air = args[arrind + 13]
+    lw_in = args[arrind + 11]
+    sw_in = args[arrind + 12]
+    air_temp = args[arrind + 13]
     p_air = args[arrind + 14]
-    T_dp = args[arrind + 15]
+    dew_point_temperature = args[arrind + 15]
     wind = args[arrind + 16]
 
     return (
@@ -122,11 +121,11 @@ def extract_args_firn(args):
         lid,
         lake,
         lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
     )
 
@@ -174,15 +173,15 @@ def extract_args_lid(args):
         Flag which indicates whether there is a lake present.
     lake_depth : float64
         Depth of the lake (in vertical points?)
-    LW_in : float64
+    lw_in : float64
         Incoming longwave radiation. [W m^-2].
-    SW_in : float64
+    sw_in : float64
         Incoming shortwave (solar) radiation. [W m^-2].
-    T_air : float64
+    air_temp : float64
         Surface-layer air temperature. [K].
     p_air : float64
         Surface-layer air pressure. [hPa].
-    T_dp : float64
+    dew_point_temperature : float64
         Dew-point temperature. [K].
     wind : float64
         Wind speed. [m s^-1].
@@ -219,11 +218,11 @@ def extract_args_lid(args):
     lid = bool(np.round(args[arrind + 7]))
     lake = bool(np.round(args[arrind + 8]))
     lake_depth = args[arrind + 9]
-    LW_in = args[arrind + 10]
-    SW_in = args[arrind + 11]
-    T_air = args[arrind + 12]
+    lw_in = args[arrind + 10]
+    sw_in = args[arrind + 11]
+    air_temp = args[arrind + 12]
     p_air = args[arrind + 13]
-    T_dp = args[arrind + 14]
+    dew_point_temperature = args[arrind + 14]
     wind = args[arrind + 15]
 
     return (
@@ -239,11 +238,11 @@ def extract_args_lid(args):
         lid,
         lake,
         lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
     )
 

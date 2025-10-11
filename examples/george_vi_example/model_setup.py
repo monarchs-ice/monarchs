@@ -20,7 +20,7 @@ vertical_points_firn = 500  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
-# Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
+# Latitude/longitude. Set to 'dem' to use the boundaries from the dem_utils itself if using. Set np.nan to ignore entirely.
 lat_bounds = "dem"
 # bbox_top_right = [
 #     -71.7, -67.78
@@ -49,10 +49,10 @@ lateral_timestep = (
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
 """
-DEM/initial firn profile
+dem_utils/initial firn profile
 
     DEM_path : str
-        Path to a digital elevation model (DEM) to be read in by MONARCHS.
+        Path to a digital elevation model (dem_utils) to be read in by MONARCHS.
         This will be read in by MONARCHS according to its filetype, and 
         interpolated to size(<row_amount>, <col_amount>).
         If using a relative import, it is a relative import from the folder you are running
@@ -60,15 +60,15 @@ DEM/initial firn profile
 
     firn_depth : float, or array_like, float, dimension(<row_amount, <col_amount>)
         Initial depth of the firn columns making up the MONARCHS model grid.
-        If a valid DEM path is specified, then this is overridden by the DEM. Use this only if you want to manually
-        specify your own DEM path. Specify as either a number or an array. 
+        If a valid dem_utils path is specified, then this is overridden by the dem_utils. Use this only if you want to manually
+        specify your own dem_utils path. Specify as either a number or an array. 
         If a number is specified, this number is assumed as the firn depth across the whole grid.
         If an array is specified, this should be an array of dimension(<row_amount>, <col_amount>), 
         i.e. the firn depth is user-specified across the whole grid. This is likely the safest option if you want to
         pre-process your firn profile, or don't trust MONARCHS to interpolate it to your desired model grid for you.
 
     firn_max_height : float
-        Maximum height that your firn column can be at. Use this if you're loading in a DEM which has large height
+        Maximum height that your firn column can be at. Use this if you're loading in a dem_utils which has large height
         ranges. 
     firn_min_height : float
         Minimum height that we consider to be "firn". Anything below this we consider to be solid ice, which affects
@@ -84,9 +84,9 @@ DEM/initial firn profile
 
 """
 data_dir = "../.."
-DEM_path = f"{data_dir}/DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
+DEM_path = f"{data_dir}/dem_utils/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
 
-# firn_depth - by default overridden by the presence of a valid DEM
+# firn_depth - by default overridden by the presence of a valid dem_utils
 firn_max_height = 100
 firn_min_height = 35
 max_height_handler = "filter"
@@ -136,7 +136,6 @@ Meteorological parameters and input
          At the moment, only ERA5 format (in netCDF) is supported. 
          If this is a relative filepath, then you should ensure that is relative to the folder in which
          you are running MONARCHS from, not the source code directory.
-         # TODO - write full list of variable names that can be read into MONARCHS
 
     met_start_index : int
         If specified, start reading the data from <met_input> at this index. Useful if you e.g. have a met data file
@@ -163,6 +162,7 @@ Meteorological parameters and input
         This file can be large if running for large domains and timescales. Therefore,this setting is useful 
         for those who e.g. want to save this file into scratch space rather than locally.
 """
+# TODO - write full list of variable names that can be read into MONARCHS
 
 # met_input_filepath = "data/ERA5_new_dem_fixed.nc"
 met_input_filepath = f"{data_dir}/data/ERA5_small.nc"
@@ -185,13 +185,11 @@ Model output
         Note that this is separate from dumping, where only a snapshot of the current iteration is saved. It is not 
         possible to restart MONARCHS from the output defined here. See the documentation on dumping and reload
         parameters for information on how to enable restarting MONARCHS.
-        # TODO - hyperlink to documentation on dumping
 
     vars_to_save : tuple, str
         Default ('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth', 'lake', 'lid', 'v_lid').
         Tuple containing the names of the variables that we wish to save during the evolution of MONARCHS over time.
         See <model_grid.py> for details on the full list of variables that <vars_to_save> accepts.
-        # TODO - flag so that if var in vars to save not in model_grid, flag this and either exit or write a warning
 
     output_filepath : str
         Path to the file that you want to save output into, including file extension. 
@@ -202,6 +200,9 @@ Model output
         actual model calculations, in which case the results are interpolated to this grid size. Useful to reduce the 
         size of output files, which can be large.
 """
+# TODO - hyperlink to documentation on dumping
+# TODO - flag so that if var in vars to save not in model_grid, flag this and either exit or write a warning
+
 save_output = True
 vars_to_save = (
     "firn_temperature",
@@ -231,7 +232,6 @@ Dumping and reloading parameters
         If this is True, then you also need to specify <reload_filename>. Note that dumping the model state is separate
         to setting model output - this only dumps a snapshot of the model in its current state, needed to restart the 
         model. If you desire output over time, see the section on model output.
-        # TODO - hyperlink to model output doc 
     dump_filepath : str
         File path to dump the current model state into at the end of each timestep, 
         for use if <dump_data> or <reload_from_dump> are True. 
@@ -239,6 +239,8 @@ Dumping and reloading parameters
         Flag to determine whether we want to reload from a dump (see <dump_data> for details). If True, reload model
         state from file at the path determined by <reload_filepath>.
 """
+# TODO - hyperlink to model output doc
+
 dump_data = True
 dump_filepath = (  # Filename of our previously dumped state
     "output/george_vi_dump.nc"

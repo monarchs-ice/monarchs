@@ -1,12 +1,14 @@
-"""
-TODO - Module docstring, PEP8 compliance for comments
-"""
+""" """
 
+# TODO - Module docstring, PEP8 compliance for comments, function docstrings
+# disable pylint warnings for broad exceptions as they are needed with Numba
+# pylint: disable=broad-exception-raised
 import numpy as np
-from monarchs.core.utils import find_nearest
-from monarchs.physics.percolation import percolate, calc_saturation
 from numba.typed import Dict
 from numba import types
+from monarchs.core.utils import find_nearest
+from monarchs.physics.percolation import percolate, calc_saturation
+
 
 try:
     from numba import prange
@@ -53,9 +55,7 @@ def update_water_level(cell):
 
             # We find the water level by the topmost bit of saturated firn
             # above the ice lens.
-            if not np.any(
-                cell["saturation"][: cell["ice_lens_depth"] + 1] > 0
-            ):
+            if not np.any(cell["saturation"][: cell["ice_lens_depth"] + 1] > 0):
                 top_saturation_depth = cell["ice_lens_depth"]
             else:
                 top_saturation_depth = np.argmax(
@@ -73,25 +73,19 @@ def update_water_level(cell):
         # cell.water is only used for the lateral movement. So we first need to
         # update it based on Lfrac,
         # which is used in the rest of MONARCHS.
-        cell["water"] = cell["Lfrac"] * (
-            cell["firn_depth"] / cell["vert_grid"]
-        )
+        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
 
     # Add lake depth into water for the purposes of moving it around if a lake
     # is present.
     elif cell["lake"] and not cell["lid"]:
         cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
         # Determine the water level from the water on top + the firn depth.
-        cell["water"] = cell["Lfrac"] * (
-            cell["firn_depth"] / cell["vert_grid"]
-        )
+        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
 
     elif cell["lake_depth"] > 0.1 and not cell["lid"]:
         # Same again - account for a bug where lake switch doesn't activate
         cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
-        cell["water"] = cell["Lfrac"] * (
-            cell["firn_depth"] / cell["vert_grid"]
-        )
+        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
         cell["water"][0] += cell.lake_depth
 
     elif cell["lid"]:
@@ -99,9 +93,7 @@ def update_water_level(cell):
         cell["water_level"] = (
             cell["lid_depth"] + cell["firn_depth"] + cell["lake_depth"]
         )
-        cell["water"] = cell["Lfrac"] * (
-            cell["firn_depth"] / cell["vert_grid"]
-        )
+        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
 
 
 def get_neighbour_water_levels(
@@ -332,11 +324,11 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     else:
         raise ValueError("Direction not recognised")
     # TODO - should cell_size be divided by 2? Since water is moving from the
-    # TODO - centre of the cell. But if we consider that it is moving from
-    # TODO - centre to centre, is probably fine assuming size of adjacent cells
-    # TODO - is the same, but could implement a fix at some point.
+    #      - centre of the cell. But if we consider that it is moving from
+    #      - centre to centre, is probably fine assuming size of adjacent cells
+    #      - is the same, but could implement a fix at some point.
 
-    Big_pi = -2.53 * 10**-10  # hydraulic permeability (m^2)
+    big_pi = -2.53 * 10**-10  # hydraulic permeability (m^2)
     eta = 1.787 * 10**-3  # viscosity(Pa/s)
     cell["rho"] = (
         cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
@@ -354,7 +346,7 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     else:
         cell_density = cell["rho"]
         u = (
-            Big_pi / eta * (m / cell_size) * cell_density * -9.8
+            big_pi / eta * (m / cell_size) * cell_density * -9.8
         )  # flow speed (m/s)
         water_frac = u * timestep / cell_size
         water_frac[np.where(water_frac > 1)] = 1
@@ -535,28 +527,22 @@ def calc_catchment_outflow(
                 # account for rounding errors
                 if temporary_cell["lake_depth"] < -1e-12:
                     raise ValueError("Lake depth has gone below 0")
-                else:
-                    temporary_cell["lake_depth"] = 0
+                temporary_cell["lake_depth"] = 0
     # otherwise, loop through the column and remove water from it,
     # going from the top.
     else:
         water_out = 0
-        try:
-            for _l in range(0, cell["ice_lens_depth"] + 1):
-                if cell["water"][_l] > water_to_move:
-                    temporary_cell["water"][_l] -= water_to_move
-                    temporary_cell["saturation"][_l] = 0
-                    water_out += water_to_move
-                    water_to_move = 0
-                else:
-                    water_to_move -= cell["water"][_l]
-                    water_out += cell["water"][_l]
-                    temporary_cell["water"][_l] -= cell["water"][_l]
-        except Exception:
-            print(_l)
-            print(water_out)
-            print(cell["ice_lens_depth"])
-            raise Exception
+        for _l in range(0, cell["ice_lens_depth"] + 1):
+            if cell["water"][_l] > water_to_move:
+                temporary_cell["water"][_l] -= water_to_move
+                temporary_cell["saturation"][_l] = 0
+                water_out += water_to_move
+                water_to_move = 0
+            else:
+                water_to_move -= cell["water"][_l]
+                water_out += cell["water"][_l]
+                temporary_cell["water"][_l] -= cell["water"][_l]
+
     return water_out
 
 
@@ -642,12 +628,12 @@ def move_from_ice_lens(
     water_to_move,
 ):
     # TODO | Rather than using water level, we actually need to account for
-    # TODO | the available pore space.
-    # TODO | This will be something along the lines of calculating
-    # TODO | 1 - Sfrac - Lfrac for the selected indices and weighting based on
-    # TODO | that, rather than just water_depth.
-    # TODO | Should normalise between different timesteps, so not a priority
-    # TODO | right now, but possible for future development.
+    #      | the available pore space.
+    #      | This will be something along the lines of calculating
+    #      | 1 - Sfrac - Lfrac for the selected indices and weighting based on
+    #      | that, rather than just water_depth.
+    #      | Should normalise between different timesteps, so not a priority
+    #      | right now, but possible for future development.
 
     # This is the most complicated case - moving from a cell with an ice lens
     # to a cell with or without an ice lens, and that has no lake.
@@ -754,12 +740,12 @@ def handle_edge_cases(
                 outflow_proportion=outflow_proportion,
             )
             return water_out, True
-        else:
-            raise ValueError(
-                "Issue with lateral movement - trying to move to a"
-                " non-existent grid cell and <catchment_outflow> is not"
-                " enabled"
-            )
+        # if catchment outflow not enabled:
+        raise ValueError(
+            "Issue with lateral movement - trying to move to a"
+            " non-existent grid cell and <catchment_outflow> is not"
+            " enabled"
+        )
     else:
         return 0, False
 
@@ -825,8 +811,8 @@ def handle_invalid_neighbour_cell(
         if water_out > 0:
             print(f"Moved {float(water_out)} units of water into the land")
             return water_out, False
-        else:
-            return 0, False
+
+        return 0, False
 
     else:
         return 0, True
@@ -967,7 +953,7 @@ def move_to_neighbours(
             # if handle_invalid_neighbour_cell returns -1, then don't flow to
             # this particular (invalid) cell, but there may be a neighbour
             # that *is* valid
-            elif water_out == -1 and idx != len(biggest_neighbours) - 1:
+            if water_out == -1 and idx != len(biggest_neighbours) - 1:
                 continue
             # If we get to the end and all possible neighbours have been
             # exhausted, then simply return 0 so we don't do anything.
@@ -1137,9 +1123,7 @@ def move_water(
                 temp_grid[row, col]["saturation"][level] = cell["saturation"][
                     level
                 ]
-                temp_grid[row, col]["meltflag"][level] = cell["meltflag"][
-                    level
-                ]
+                temp_grid[row, col]["meltflag"][level] = cell["meltflag"][level]
 
     # Now loop through the cells again, this time actually performing the
     # movement step. This and the prior loop cannot be merged, since the
@@ -1219,7 +1203,7 @@ def move_water(
             tol = -1e-8
             if (cell["water"] < tol).any():
                 raise ValueError("cell.water is negative")
-            elif (cell["water"] < 0).any():
+            if (cell["water"] < 0).any():
                 set_to_zeros = np.where(cell["water"] < 0)
                 cell["water"][set_to_zeros] = 0
 

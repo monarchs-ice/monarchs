@@ -1,7 +1,6 @@
-"""
-TODO - module-level docstring, densification
-"""
+""" """
 
+# TODO - module-level docstring, densification
 import numpy as np
 from monarchs.core import utils
 
@@ -12,8 +11,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     This snow is added to the firn or lake depth, depending on the current
     state of the cell.
     Called in <timestep_loop>.
-    TODO - what happens if we have a lid? Gets added to top and we just
-     regrid as normal.
+
 
     Parameters
     ----------
@@ -32,6 +30,8 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     -------
     None.
     """
+    #     TODO - what happens if we have a lid? Gets added to top and we just
+    #      regrid as normal.
     if snow_depth != 0:
         if cell["lake"]:  # if lake - add it to lake depth not firn
             cell["lake_depth"] += snow_depth * snow_rho / cell["rho_water"]
@@ -155,7 +155,6 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
 
 def densification(cell, t_steps_per_day):
     """
-    TODO - not important now, but implement for later.
 
     Parameters
     ----------
@@ -168,6 +167,7 @@ def densification(cell, t_steps_per_day):
     -------
 
     """
+    #     TODO - not important now, but implement for later.
     # change per timestep
     dt = 1 / (8 * t_steps_per_day * 365)
     # acceleration due to gravity [m s^-2]

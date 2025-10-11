@@ -1,7 +1,8 @@
-"""
-TODO - module-level docstring, other docstring
-"""
+""" """
 
+# TODO - module-level docstring, other docstring
+# disable pylint warnings for broad exceptions as they are needed with Numba
+# pylint: disable=broad-exception-raised, raise-missing-from
 import numpy as np
 from monarchs.physics import percolation
 from monarchs.core import utils
@@ -39,14 +40,14 @@ def combine_lid_firn(cell):
     # Create new arrays for the combined profiles
     new_vert_grid = cell["vert_grid"]
     new_depth_grid = np.linspace(
-        0, cell["firn_depth"] + cell["lake_depth"] + cell["lid_depth"],
-        new_vert_grid
+        0,
+        cell["firn_depth"] + cell["lake_depth"] + cell["lid_depth"],
+        new_vert_grid,
     )
 
     # If we have a lake, and we are combining the lid and lake profiles,
     # we need to ensure that the density of the lake is added to that of the
     # lid, accounting for the depths.
-    rho_lake = cell["rho_water"] * np.ones(cell["vert_grid_lake"])
 
     # Add lake depth to lid depth. If the lake has frozen, then this will
     # ensure that mass is conserved.
@@ -145,7 +146,6 @@ def combine_lid_firn(cell):
     except Exception:
         print(f"new mass = {new_mass}, original mass = {original_mass}")
         raise Exception
-    pass
 
 
 def mass_conserving_profile(cell, orig_lid_depth, var="Sfrac"):
@@ -156,13 +156,15 @@ def mass_conserving_profile(cell, orig_lid_depth, var="Sfrac"):
         cell["vert_grid_lake"], cell["lake_depth"] / cell["vert_grid_lake"]
     )
     if var == "Sfrac":
-        var_lid = np.concatenate((np.ones(cell["vert_grid_lid"]),
-                                  np.zeros(cell["vert_grid_lake"])))
+        var_lid = np.concatenate(
+            (np.ones(cell["vert_grid_lid"]), np.zeros(cell["vert_grid_lake"]))
+        )
         rho = cell["rho_ice"]
 
     else:
-        var_lid = np.concatenate((np.zeros(cell["vert_grid_lid"]),
-                                  np.ones(cell["vert_grid_lake"])))
+        var_lid = np.concatenate(
+            (np.zeros(cell["vert_grid_lid"]), np.ones(cell["vert_grid_lake"]))
+        )
         rho = cell["rho_water"]
 
     column_dz = np.full(

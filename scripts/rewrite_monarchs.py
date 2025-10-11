@@ -5,7 +5,7 @@ import astor
 class AttributeReplacer(ast.NodeTransformer):
 
     def visit_Attribute(self, node):
-        # Replace `cell.attr` with `cell['attr']`
+        # Replace `cell.attr` with `cell["attr"]`
         if isinstance(node.value, ast.Name) and node.value.id == "cell":
             return ast.Subscript(
                 value=node.value,

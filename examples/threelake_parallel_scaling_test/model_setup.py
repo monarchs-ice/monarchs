@@ -14,7 +14,7 @@ at monarchs-ice.github.io/monarchs/model_setup_reference.
 
 import os
 import numpy as np
-from monarchs.DEM import create_DEM_GaussianTestCase as cgt
+from monarchs.dem_utils import create_dem_gaussian_test_case as cgt
 
 """
 Spatial parameters
@@ -28,7 +28,7 @@ vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
-# Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
+# Latitude/longitude. Set to 'dem' to use the boundaries from the dem_utils itself if using. Set np.nan to ignore entirely.
 # Set to a number if you want to manually specify a bounding box.
 
 """
@@ -45,10 +45,10 @@ lateral_timestep = (
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
 """
-DEM/firn profile parameters
+dem_utils/firn profile parameters
 """
 
-firn_depth = 35 * cgt.export_gaussian_DEM(row_amount, diagnostic_plots=False)
+firn_depth = 35 * cgt.export_gaussian_dem(row_amount, diagnostic_plots=False)
 rho_init = (  # Initial density, use 'default' to use empirical formula for initial density profile
     "default"
 )
@@ -154,7 +154,7 @@ catchment_outflow = (
 flow_into_land = False  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
 lateral_movement_toggle = True
 
-# Just for this specific case - assert that the DEM is symmetric
+# Just for this specific case - assert that the dem_utils is symmetric
 import numpy.testing as npt
 
 npt.assert_array_equal(firn_depth, firn_depth[::-1, ::-1])

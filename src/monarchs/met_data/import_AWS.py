@@ -4,18 +4,21 @@ Import functions for various automatic weather station (ASW) data sets
 S Buzzard created, last updated 06/05/2021
 """
 
+# This hasn't been worked on and will not be unless there is a specific use case,
+# so for now skip linting
+# pylint: skip-file
 import numpy as np
 
 
 def import_AWS_LCIS(filepath):
     data = np.loadtxt(filepath, skiprows=1)
-    T_air = data[:, 4] + 273.15
+    air_temp = data[:, 4] + 273.15
     r_hum = data[:, 5] / data[:, 5]
     p_air = data[:, 6] / 10
     wind = data[:, 7]
-    SW_in = data[:, 11]
-    LW_in = data[:, 13]
-    return T_air, p_air, r_hum, wind, SW_in, LW_in
+    sw_in = data[:, 11]
+    lw_in = data[:, 13]
+    return air_temp, p_air, r_hum, wind, sw_in, lw_in
 
 
 def import_AWS_Wisc(aws, start_year, start_month, end_year, end_month):
@@ -72,6 +75,6 @@ def import_AWS_LCIS_BAS():
         "BAS_Rad_2009to10_hourly_edited_final.txt",
         skiprows=1,
     )
-    SW_in = data[:, 4]
+    sw_in = data[:, 4]
     LW = data[:, 6] - data[:, 8]
-    return SW_in, LW
+    return sw_in, LW

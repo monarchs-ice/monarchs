@@ -16,13 +16,13 @@ col_amount = 1  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = (
     2000  # size of each lateral grid cell in m - possible to automate
 )
-# TODO - calc based on DEM automatically
+# TODO - calc based on dem_utils automatically
 # lat_grid_size = 'dem'
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
-# Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
+# Latitude/longitude. Set to 'dem' to use the boundaries from the dem_utils itself if using. Set np.nan to ignore entirely.
 # Set to a number if you want to manually specify a bounding box.
 # lat_bounds = 'dem'
 

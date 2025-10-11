@@ -4,7 +4,10 @@ Making changes to MONARCHS
 
 Code style guidelines
 *******************************
-These guidelines are intended to keep the codebase as consistent as possible, and to make it easier for others to read your code. They are there as a developer aid;
+These guidelines are intended to keep the codebase as consistent as possible, and to make it easier for others to read your code.
+
+.. note::
+The guidelines are there as a developer aid;
 not as a barrier to contribution - so if your code is not compliant please feel free to PR it anyway, and we can help you make it work.
 
 When making changes to the ``monarchs`` source (inside ``src/monarchs``), please try and adhere to the following:
@@ -50,6 +53,12 @@ For example:
             ] + 1  # Increment x by 1
 
     ```
+
+- New functions added are in "active" tense, e.g. ``calculate_thing`` rather than ``thing_calculation``.
+
+- New variables in functions should be named either in ``snake_case`` (e.g. ``firn_temperature``, not ``T_firn``) or if corresponding to
+a physical quantity, using something close to its mathematical notation if appropriate (e.g. ``dTdz`` for the vertical temperature gradient).
+
 Adding new diagnostics or physics
 **********************************
 

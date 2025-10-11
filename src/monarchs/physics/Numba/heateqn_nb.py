@@ -9,9 +9,9 @@ These are kept separate as there is significantly more complexity required to
 get the inputs in the correct format for this version, and the requirement to
 not return anything (whereas scipy.optimize.fsolve requires a return value)
 
-TODO - docstrings, possibility of using numba.overload
 """
 
+# TODO - docstrings, possibility of using numba.overload
 import numpy as np
 from numba import cfunc, njit
 from NumbaMinpack import minpack_sig
@@ -165,11 +165,11 @@ def heateqn(x, output, args):
         lid,
         lake,
         lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
     ) = extract_args.extract_args_firn(args)
 
@@ -184,11 +184,11 @@ def heateqn(x, output, args):
         lid,
         lake,
         lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         x[0],
     )
@@ -204,9 +204,7 @@ def heateqn(x, output, args):
         output[idx] = (
             T[idx]
             - x[idx]
-            + dt
-            * (kappa[idx] / dz**2)
-            * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+            + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
         )
 
     output[N - 1] = (
@@ -263,11 +261,11 @@ def heateqn_lid(x, output, args):
         lid,
         lake,
         lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
     ) = extract_args.extract_args_lid(args)
 
@@ -288,11 +286,11 @@ def heateqn_lid(x, output, args):
         lid,
         lake,
         lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         x[0],
     )
@@ -302,9 +300,7 @@ def heateqn_lid(x, output, args):
         output[idx] = (
             lid_temperature[idx]
             - x[idx]
-            + dt
-            * (kappa[idx] / dz**2)
-            * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+            + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
         )
     # fix boundary temperature to 273.15
     output[-1] = x[vert_grid_lid - 1] - 273.15

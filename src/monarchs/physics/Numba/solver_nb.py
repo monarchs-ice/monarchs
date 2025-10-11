@@ -24,11 +24,11 @@ def args_array(
     cell,
     dt,
     dz,
-    LW_in,
-    SW_in,
-    T_air,
+    lw_in,
+    sw_in,
+    air_temp,
     p_air,
-    T_dp,
+    dew_point_temperature,
     wind,
     Tsfc=273.15,
     lid=False,
@@ -61,15 +61,15 @@ def args_array(
         timestep in seconds [s]
     dz : float
         size of each vertical grid cell [m]
-    LW_in : array_like, float, dimension(cell.vert_grid)
+    lw_in : array_like, float, dimension(cell.vert_grid)
         Surface downwelling longwave radiation [W m^-2]
-    SW_in : array_like, float, dimension(cell.vert_grid)
+    sw_in : array_like, float, dimension(cell.vert_grid)
         Surface downwelling shortwave radiation [W m^-2]
-    T_air : array_like, float, dimension(cell.vert_grid)
+    air_temp : array_like, float, dimension(cell.vert_grid)
         Surface air temperature [K]
     p_air : array_like, float, dimension(cell.vert_grid)
         Surface air pressure [Pa]
-    T_dp :  array_like, float, dimension(cell.vert_grid)
+    dew_point_temperature :  array_like, float, dimension(cell.vert_grid)
         Dewpoint temperature [K]
     wind : array_like, float, dimension(cell.vert_grid)
         Wind speed [m s^-1]
@@ -112,11 +112,11 @@ def args_array(
                 np.array([cell.lid]),
                 np.array([cell.lake]),
                 np.array([cell.lake_depth]),
-                np.array([LW_in]),
-                np.array([SW_in]),
-                np.array([T_air]),
+                np.array([lw_in]),
+                np.array([sw_in]),
+                np.array([air_temp]),
                 np.array([p_air]),
-                np.array([T_dp]),
+                np.array([dew_point_temperature]),
                 np.array([wind]),
             )
         )
@@ -139,11 +139,11 @@ def args_array(
                 np.array([cell.lid]),
                 np.array([cell.lake]),
                 np.array([cell.lake_depth]),
-                np.array([LW_in]),
-                np.array([SW_in]),
-                np.array([T_air]),
+                np.array([lw_in]),
+                np.array([sw_in]),
+                np.array([air_temp]),
                 np.array([p_air]),
-                np.array([T_dp]),
+                np.array([dew_point_temperature]),
                 np.array([wind]),
             )
         )
@@ -205,26 +205,26 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
 
     N = 50  # number of cells at top to use in hybrd implementation
     x = x[:N]
-    # cell, dt, dz, LW_in, SW_in, T_air, p_air, T_dp, wind = [arg for arg in
+    # cell, dt, dz, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind = [arg for arg in
     # args]
     cell = args[0]
     dt = args[1]
     dz = args[2]
-    LW_in = args[3]
-    SW_in = args[4]
-    T_air = args[5]
+    lw_in = args[3]
+    sw_in = args[4]
+    air_temp = args[5]
     p_air = args[6]
-    T_dp = args[7]
+    dew_point_temperature = args[7]
     wind = args[8]
     args = args_array(
         cell,
         dt,
         dz,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         fixed_sfc=fixed_sfc,
         N=N,
@@ -565,11 +565,11 @@ def lid_heateqn_solver(x, args):
     cell = args[0]
     dt = args[1]
     dz = args[2]
-    LW_in = args[3]
-    SW_in = args[4]
-    T_air = args[5]
+    lw_in = args[3]
+    sw_in = args[4]
+    air_temp = args[5]
     p_air = args[6]
-    T_dp = args[7]
+    dew_point_temperature = args[7]
     wind = args[8]
     Sfrac_lid = args[-2]
     k_lid = args[-1]
@@ -577,11 +577,11 @@ def lid_heateqn_solver(x, args):
         cell,
         dt,
         dz,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         lid=True,
         k_lid=k_lid,

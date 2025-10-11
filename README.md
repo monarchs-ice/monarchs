@@ -95,7 +95,7 @@ However you install the model, you can run MONARCHS using
 
 or 
 
-`python run_MONARCHS.py --input_path <path_to_runscript>`
+`python run_monarchs.py --input_path <path_to_runscript>`
 
 where `<path_to_runscript>` is the location of a file with the model running parameters as seen in `model_setup.py`.
 You can use `-i` as shorthand for `--input_path`. 
@@ -106,7 +106,7 @@ MONARCHS from. In general, it is recommended to use a separate runscript for eac
 
 
 ## Plotting output
-To plot output, you can do this yourself by adding your relevant plotting functionality to run_MONARCHS.py, 
+To plot output, you can do this yourself by adding your relevant plotting functionality to run_monarchs.py, 
 or there are some functions provided in `/plots` which can help you with this. This is WIP. Additionally, in `/scripts` 
 there is a script `debug_model_state` which is useful for loading in a snapshot of the model state and plotting it out,
 e.g. for looking for the presence of melt lakes quickly.

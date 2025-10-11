@@ -3,9 +3,9 @@ Grid-looping module. This either runs sequentially, or runs through in parallel
 (effectively like a collapsed OpenMP parallel do loop).
 """
 
+import time
 import numpy as np
 from monarchs.physics.timestep import timestep_loop
-import time
 from dask import delayed, compute
 
 
@@ -51,6 +51,11 @@ def chunk_grid(flat_grid, met_data_grid, chunk_size):
         )
 
 
+# Disable linting for no-else-return here. Given the way that this
+# function is structured, refactoring to avoid this makes it significantly
+# less clear. Readability may be improved with this pragma removed
+# if the function is split up.
+# pylint: disable=no-else-return,too-many-arguments
 def loop_over_grid(
     row_amount,
     col_amount,
@@ -60,7 +65,6 @@ def loop_over_grid(
     t_steps_per_day,
     toggle_dict,
     parallel=False,
-    use_mpi=False,
     ncores="all",
     dask_scheduler="processes",
     client=None,
@@ -77,21 +81,28 @@ def loop_over_grid(
         Number of columns in <grid>.
     grid : numpy structured array
         Model grid containing the ice shelf parameters.
+    dt : float
+        Timestep in seconds (usually 3600 * t_steps_per_day).
     met_data : numpy structured array
         Grid containing the met data associated with the model grid.
+    t_steps_per_day : int
+        Number of timesteps in a model iteration (usually 24)
+    toggle_dict : dict
+        Dictionary of toggles to turn model features on and off.
     parallel : bool, optional
         Flag to determine whether the model is to be run in parallel across
         multiple cores or not.
         Default False.
-    use_mpi : bool, optional
-        Flag to determine whether to use MPI for parallelisation.
-        Default False.
-    ncores : int or str
+    ncores : int or str, optional
         Number of cores to use if running in parallel. If "all",
         all available cores will be used.
-    use_dask : bool, optional
-        Flag to determine whether to use Dask for parallelism.
-        Default False.
+    dask_scheduler : str, optional
+        Dask scheduler to use. Options are "threads", "processes",
+        or "distributed".
+        Default "processes".
+    client : None, or dask.distributed.Client, optional
+        Dask client to use if using the "distributed" scheduler.
+        Default None.
 
     Returns
     -------

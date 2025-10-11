@@ -3,7 +3,9 @@ from monarchs.physics import surface_fluxes, solver
 from monarchs.core import utils
 
 
-def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
+def lid_development(
+    cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
+):
     """
     Once a permanent lid forms, it can refreeze the lake below. This function
     calculates this refreezing, as well as the surface energy balance and heat
@@ -21,15 +23,15 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         Element of the model grid we are operating on.
     dt : int
         Number of seconds in the timestep, very like 3600 (i.e. 1h) [s]
-    LW_in : float
+    lw_in : float
         Incoming longwave radiation. [W m^-2].
-    SW_in : float
+    sw_in : float
         Incoming shortwave (solar) radiation. [W m^-2].
-    T_air : float
+    air_temp : float
         Surface-layer air temperature. [K].
     p_air : float
         Surface-layer air pressure. [hPa].
-    T_dp : float
+    dew_point_temperature : float
         Dew-point temperature at the surface. [K]
     wind : float
         Wind speed. [m s^-1].
@@ -48,11 +50,11 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell["lid"],
         cell["lake"],
         cell["lake_depth"],
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         x[0],
     )
@@ -90,7 +92,7 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
             cell["lid_temperature"][0],
         ]
     )
-    x = np.array([float(T_air)])
+    x = np.array([float(air_temp)])
     cell["lid_temperature"][0] = solver.lid_seb_solver(x, args)[0][0]
     cell["lid_temperature"] = np.clip(cell["lid_temperature"], 0, 273.15)
 
@@ -110,11 +112,11 @@ def lid_development(cell, dt, LW_in, SW_in, T_air, p_air, T_dp, wind):
         cell,
         dt,
         dz,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         Sfrac_lid,
         k_lid,
@@ -212,12 +214,12 @@ def surface_melt(cell, dt, Q):
     cell["lid_temperature"][0] = 273.15
 
     # TODO - Currently we just *track* the amount of lid surface melt.
-    # TODO - But in reality, we don't actually do anything with this water,
-    # TODO - and the lid doesn't actually decrease in size.
-    # TODO - what is to be done about this? It could get v messy if it can
-    # TODO - melt/refreeze infinitely.
-    # TODO - track it for now, but don't add it as melt.
-    # TODO - This is long-term work for climate modelling.
+    #      - But in reality, we don't actually do anything with this water,
+    #      - and the lid doesn't actually decrease in size.
+    #      - what is to be done about this? It could get v messy if it can
+    #      - melt/refreeze infinitely.
+    #      - track it for now, but don't add it as melt.
+    #      - This is long-term work for climate modelling.
 
     new_mass = utils.calc_mass_sum(cell)
     assert abs(new_mass - original_mass) < 1.5 * 10**-7

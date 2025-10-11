@@ -37,5 +37,5 @@ echo Directory is `pwd`
 
 cd $MYPATH
 echo Start time is `date`
-singularity exec "/home/$USERNAME/monarchs_latest.sif python run_MONARCHS.py" -i "${RUNDIR}/${FILENAME}"
+singularity exec "/home/$USERNAME/monarchs_latest.sif python run_monarchs.py" -i "${RUNDIR}/${FILENAME}"
 echo End time is `date`

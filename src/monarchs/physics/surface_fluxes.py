@@ -1,7 +1,6 @@
-"""
-TODO - module-level docstring
-"""
+""" """
 
+# TODO - module-level docstring
 import numpy as np
 
 
@@ -11,11 +10,11 @@ def sfc_flux(
     lid,
     lake,
     lake_depth,
-    LW_in,
-    SW_in,
-    T_air,
+    lw_in,
+    sw_in,
+    air_temp,
     p_air,
-    T_dp,
+    dew_point_temperature,
     wind,
     xsurf,
 ):
@@ -39,15 +38,15 @@ def sfc_flux(
         determine surface albedo.
     lake_depth : float
         Depth of the lake (in vertical points?)
-    LW_in : float
+    lw_in : float
         Incoming longwave radiation. [W m^-2].
-    SW_in : float
+    sw_in : float
         Incoming shortwave (solar) radiation. [W m^-2].
-    T_air : float
+    air_temp : float
         Surface-layer air temperature. [K].
     p_air : float
         Surface-layer air pressure. [hPa].
-    T_dp : float
+    dew_point_temperature : float
         Dew-point temperature at the surface. [K]
     wind : float
         Wind speed. [m s^-1].
@@ -62,9 +61,11 @@ def sfc_flux(
     """
     # Positive going into ice shelf
     alpha = sfc_albedo(melt, exposed_water, lid, lake, lake_depth)
-    Flat, Fsens = bulk_fluxes(wind, T_air, xsurf, p_air, T_dp)
+    Flat, Fsens = bulk_fluxes(
+        wind, air_temp, xsurf, p_air, dew_point_temperature
+    )
     epsilon = 0.98  # emissivity
-    Q = epsilon * LW_in + (1 - alpha) * SW_in + Flat + Fsens
+    Q = epsilon * lw_in + (1 - alpha) * sw_in + Flat + Fsens
     return Q
 
 
@@ -73,7 +74,6 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
     Determine the effective surface albedo depending on the situation at the
     top of the ice shelf (i.e. is there exposed water, firn or snow etc.)
 
-    TODO - snow albedo, add later
 
     Parameters
     ----------
@@ -95,6 +95,7 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
         Effective surface albedo for shortwave radiation.
 
     """
+    #     TODO - snow albedo, add later
     if melt:
         if exposed_water:
             if lid:
@@ -113,7 +114,7 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
     return alpha
 
 
-def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
+def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature):
     """
     Calculate the latent and sensible heat fluxes given the wind speed and
     surface meteorology.
@@ -122,13 +123,13 @@ def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
     ----------
     wind : float
         Wind speed. [m s^-1].
-    T_air : float
+    air_temp : float
         Surface-layer air temperature. [K].
     T_sfc : float
         Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
     p_air : float
         Surface air pressure. [hPa]
-    T_dp : float
+    dew_point_temperature : float
         2m dewpoint temperature. [K]
 
     Returns
@@ -167,16 +168,18 @@ def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
     a4 = 32.19
     # Calculate the saturation vapour pressure at the dewpoint temperature
     # (i.e. the vapour pressure at the real temp)
-    e_sat = a1 * np.exp(a3 * (T_dp - T_0) / (T_dp - a4))
+    e_sat = a1 * np.exp(
+        a3 * (dew_point_temperature - T_0) / (dew_point_temperature - a4)
+    )
     # Alternative form for testing - Clausius-Clapeyron over ice
-    # e_sat = a1 * np.exp(22.587 * (T_dp - T_0) / (T_dp + 0.7))
+    # e_sat = a1 * np.exp(22.587 * (dew_point_temperature - T_0) / (dew_point_temperature + 0.7))
     # this is in kg/kg I think?
     s_hum = (R_dry / R_sat) * e_sat / (p_air - (e_sat * (1 - (R_dry / R_sat))))
     # Richardson number
     if wind == 0:
         Ri = 0
     else:
-        Ri = g * (T_air - T_sfc) * dz / (T_air * wind**2)
+        Ri = g * (air_temp - T_sfc) * dz / (air_temp * wind**2)
     if Ri < 0:
         CT = CT0 * (1 - 2 * b * Ri / (1 + c * abs(Ri) ** 0.5))
     else:
@@ -184,6 +187,6 @@ def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
     L = 2.501 * 10**6
     p_v = 2.53 * 10**8 * np.exp(-5420 / T_sfc)
     q_0 = 0.622 * p_v / (p_air - 0.378 * p_v)
-    Fsens = 1.275 * 1005 * CT * wind * (T_air - T_sfc)
+    Fsens = 1.275 * 1005 * CT * wind * (air_temp - T_sfc)
     Flat = 1.275 * L * CT * wind * (s_hum / 1000 - q_0)
     return Flat, Fsens

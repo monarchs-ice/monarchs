@@ -1,5 +1,16 @@
-import numpy as np
+"""
+Utilities module containing various helper functions or wrappers.
+"""
+
 from functools import wraps
+import numpy as np
+import pathos
+
+try:
+    from numba import prange
+except ImportError:
+    # fallback if numba is not installed
+    prange = range  # pylint: disable=invalid-name
 
 
 def do_not_jit(function):
@@ -49,23 +60,25 @@ def get_2d_grid(grid, attr, index=False):
     if not index:
         index = 0
     var = [None] * len(grid)
+
     if not isinstance(grid, np.ndarray):
-        for row in range(len(grid)):
-            var[row] = [None] * len(grid[0])
-            for col in range(len(grid[0])):
-                var[row][col] = getattr(grid[row][col], attr)
+        for row_idx, row in enumerate(grid):
+            var[row_idx] = [None] * len(row)
+            for col_idx, cell in enumerate(row):
+                var[row_idx][col_idx] = getattr(cell, attr)
+
     else:
-        for row in range(len(grid)):
-            var[row] = [None] * len(grid[0])
-            for col in range(len(grid[0])):
-                var[row][col] = grid[attr][row][col]
+        for row_idx, row in enumerate(grid):
+            var[row_idx] = [None] * len(row)
+            for col_idx, _ in enumerate(row):
+                var[row_idx][col_idx] = grid[attr][row_idx][col_idx]
     if index == "all":
         return np.array(var)
-    else:
-        try:
-            return np.array(var)[:, :, index]
-        except IndexError:
-            return np.array(var)[:, :]
+
+    try:
+        return np.array(var)[:, :, index]
+    except IndexError:
+        return np.array(var)[:, :]
 
 
 def find_nearest(a, a0):
@@ -90,9 +103,9 @@ def calc_grid_mass(grid):
         Total mass of the whole grid, in arbitrary units.
     """
     total_mass = 0
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            cell = grid[i][j]
+
+    for row in grid:
+        for cell in row:
             if cell["valid_cell"]:
                 total_mass += calc_mass_sum(cell)
     return total_mass
@@ -123,10 +136,10 @@ def check_correct(cell):
     """
     func_name = "monarchs.core.utils.check_correct"
     if cell["lake_depth"] < -1e-12:  # account for rounding errors
-        print(f"monarchs.core.utils.check_correct: ")
+        print(f"{func_name}: ")
         print("Lake depth = ", cell["lake_depth"])
         raise ValueError("Lake depth must not be negative \n")
-    elif cell["lake_depth"] < 0:
+    if cell["lake_depth"] < 0:
         cell["lake_depth"] = 0
 
     if cell["firn_depth"] < 0:
@@ -162,7 +175,7 @@ def check_correct(cell):
     # cell spacing.
     total = cell["Lfrac"][1:] + cell["Sfrac"][1:]
     if np.any(total > 1.01):
-        print(f"monarchs.core.utils.check_correct: ")
+        print(f"{func_name}: ")
         print(f"{np.max(total)} at level {np.where(total > 1)} \n")
         print("Sfrac :", cell["Sfrac"][np.where(total > 1)])
         print("Lfrac :", cell["Lfrac"][np.where(total > 1)])
@@ -172,12 +185,12 @@ def check_correct(cell):
             + cell["Sfrac"][np.where(total > 1)],
         )
         raise ValueError(
-            f"monarchs.core.utils.check_correct: Sum of liquid and solid"
-            f" fraction must be less than 1"
+            f"{func_name}: Sum of liquid and solid"
+            " fraction must be less than 1"
         )
     if cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and not cell["meltflag"][0]:
         total_top = cell["Sfrac"][0] + cell["Lfrac"][0]
-        print(f"monarchs.core.utils.check_correct: ")
+        print(f"{func_name}: ")
         print(f"{total_top} at level 0 \n")
         print("Sfrac :", cell["Sfrac"][0])
         print("Lfrac :", cell["Lfrac"][0])
@@ -186,11 +199,11 @@ def check_correct(cell):
             cell["Lfrac"][0] + cell["Sfrac"][0],
         )
         raise ValueError(
-            f"monarchs.core.utils.check_correct: Sum of liquid and solid"
-            f" fraction in top layer must be less than 1 unless meltflag is"
-            f" True (i.e. water will percolate at start of next timestep)"
+            f"{func_name}: Sum of liquid and solid"
+            " fraction in top layer must be less than 1 unless meltflag is"
+            " True (i.e. water will percolate at start of next timestep)"
         )
-    elif cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and cell["meltflag"][0]:
+    if cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and cell["meltflag"][0]:
         print(
             "Warning - top layer oversaturated but meltflag is True - water"
             " will percolate at start of next timestep."
@@ -211,9 +224,8 @@ def check_grid_correctness(grid):
     -------
 
     """
-    from numba import prange
 
-    for i in prange(len(grid)):
+    for i in prange(len(grid)):  # pylint: disable=not-an-iterable
         for j in range(len(grid[0])):
             check_correct(grid[i][j])
 
@@ -313,10 +325,11 @@ def add_edge_water(grid, max_grid_row, max_grid_col):
 
 
 def check_energy_conservation(grid):
+    """ """
+    #     TODO - WIP.
     energy = 0
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            cell = grid[i][j]
+    for row in grid:
+        for cell in row:
             if cell["valid_cell"]:
                 cp_ice = 1000 * (
                     7.16 * 10**-3 * cell["firn_temperature"] + 0.138
@@ -338,7 +351,6 @@ def spinup(cell, x, args):
     """
     Attempt to force the model into a solvable state if the initial conditions
     are unsuitable.
-    TODO - This is a definite work in progress. Need to update this further.
 
     Parameters
     ----------
@@ -359,6 +371,33 @@ def spinup(cell, x, args):
         it raises an error. The user should re-consider their initial
         conditions in this case.
     """
+    #     TODO - This is a work in progress. Need to update this further.
+    return cell, x, args
+
+
+def get_num_cores(model_setup):
+    """
+
+    Parameters
+    ----------
+    model_setup
+
+    Returns
+    -------
+
+    """
+    # TODO - docstring, possibly remove pathos dependency
+    if model_setup.cores in ["all", False] and model_setup.parallel:
+        if not model_setup.use_mpi:
+            cores = pathos.helpers.cpu_count()
+        else:
+            cores = pathos.helpers.cpu_count()
+        print(f"Using all cores - {pathos.helpers.cpu_count()} detected")
+    elif not model_setup.parallel:
+        cores = 1
+    else:
+        cores = model_setup.cores
+    return cores
 
 
 try:

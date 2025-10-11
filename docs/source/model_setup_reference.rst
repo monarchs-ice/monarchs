@@ -83,7 +83,7 @@ load the result in as an array.
         **If a valid DEM path is specified, then this is overridden by the DEM**. Use this only if you want to manually
         specify your own firn heights. Specify as either a number or an array.
 
-        For example, to generate a test Gaussian three-lake profile, one can import ``gaussian_testcase.export_gaussian_DEM``
+        For example, to generate a test Gaussian three-lake profile, one can import ``gaussian_testcase.export_gaussian_dem``
         from the ``10x10_gaussian_threelake`` example, and call it to generate a usable firn profile.
 
         If a number is specified, this number is assumed as the firn depth across the whole grid.

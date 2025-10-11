@@ -2,9 +2,9 @@
 Module containing functions relating to the percolation of water through the
 firn column.
 
-TODO - refactor/split up percolation, rename
 """
 
+# TODO - refactor/split up percolation, rename
 import numpy as np
 
 
@@ -377,7 +377,6 @@ def perc_time(cell, v_lev):
     This will determine how long the model has in practice to percolate water
     down through the current vertical level. This is calculated as the height
     of the vertical level divided by the speed of the flow.
-    # TODO - possibly add a reference and a DOI here.
 
     Parameters
     ----------
@@ -393,8 +392,10 @@ def perc_time(cell, v_lev):
         Amount of time that the water has left to percolate down the
         firn column. [s]
     """
+    # TODO - possibly add a reference and a DOI to docstring.
+
     # how long water takes to percolate through given cell
-    # if Lfrac is super small - just assume it all percolates - prevents divide
+    # if Lfrac is tiny - just assume it all percolates - prevents divide
     # by zero errors
     if cell["Lfrac"][v_lev] < 1e-10:
         p_time = 0

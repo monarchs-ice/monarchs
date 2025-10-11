@@ -6,18 +6,34 @@ configuration used by MONARCHS.
 import importlib.util
 import ast
 
+# List of safe imports that are allowed in a model setup script.
+SAFE_IMPORTS = {
+    "monarchs",
+    "numpy",
+    "netCDF4",
+    "math",
+    "matplotlib",
+    "scipy",
+    "datetime",
+    "pandas",
+}
+MODULE_NAME = "monarchs.core.load_model_setup"
+
+
 class ModelSetup:
     """
     Class to load in the model setup from a user-specified Python script.
     """
+
     def __init__(self, script_path):
         self.errors = []
         self.script_path = script_path
-        print(f'Loading model setup from {self.script_path}')
+        print(f"Loading model setup from {self.script_path}")
         # Run validation checks before we use importlib to load it in.
         self.validate_model_setup()
-        spec = importlib.util.spec_from_file_location("model_setup",
-                                                      self.script_path)
+        spec = importlib.util.spec_from_file_location(
+            "model_setup", self.script_path
+        )
         config_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(config_module)
 
@@ -32,33 +48,39 @@ class ModelSetup:
 
     def validate_model_setup(self):
         """
-        Run the validation checks. If any of them fail, print out all of the
+        Run the validation checks. If any of them fail, print out all the
         errors found for each.
         """
-        method_name = "monarchs.core.load_model_setup.ModelSetup.validate_model_setup"
+        method_name = (
+            "monarchs.core.load_model_setup.ModelSetup.validate_model_setup"
+        )
         self.check_file_exists()
         self.check_for_key_variables()
         self.check_for_unexpected_imports()
         if self.errors:
             error_message = "\n".join(self.errors)
-            raise ValueError(f"{method_name}: Errors found in model setup:\n"
-                                f"{error_message}")
-
+            raise ValueError(
+                f"{method_name}: Errors found in model setup:\n"
+                f"{error_message}"
+            )
 
     def check_file_exists(self):
         """Check to see whether the user-provided runscript works."""
-        method_name = "monarchs.core.load_model_setup.ModelSetup.check_file_exists"
+        method_name = (
+            "monarchs.core.load_model_setup.ModelSetup.check_file_exists"
+        )
         try:
-            with open(self.script_path, "r") as file:
+            with open(self.script_path, "r", encoding="utf-8") as file:
                 file.read()
         except FileNotFoundError:
-            self.errors.extend([
-                f"{method_name}: Path to runscript"
-                f" ({self.script_path}) not found. Please either run from a"
-                " directory containing a valid model_setup.py, or pass the -i"
-                " flag with a valid runscript path."
-            ])
-
+            self.errors.extend(
+                [
+                    f"{method_name}: Path to runscript"
+                    f" ({self.script_path}) not found. Please either run from a"
+                    " directory containing a valid model_setup.py, or pass the -i"
+                    " flag with a valid runscript path."
+                ]
+            )
 
     def check_for_key_variables(self):
         """
@@ -67,9 +89,11 @@ class ModelSetup:
         progressing if variables that are required to run are not present,
         and goes some way to preventing unexpected code from running.
         """
-        method_name = "monarchs.core.load_model_setup.ModelSetup.check_for_key_variables"
-        # List of variables that are required to be present in order for MONARCHS to
-        # accept the model setup script
+        method_name = (
+            "monarchs.core.load_model_setup.ModelSetup.check_for_key_variables"
+        )
+        # List of variables that are required to be present in order for
+        # MONARCHS to accept the model setup script
         required_vars = [
             "row_amount",
             "col_amount",
@@ -79,7 +103,7 @@ class ModelSetup:
             "num_days",
         ]
 
-        with open(self.script_path, "r") as f:
+        with open(self.script_path, "r", encoding="utf-8") as f:
             tree = ast.parse(f.read(), filename=self.script_path)
             read_vars = set()
             # Walk through the AST and find the Assignments.
@@ -96,13 +120,15 @@ class ModelSetup:
 
             missing_vars = set(required_vars) - read_vars
             if missing_vars:
-                self.errors.extend([
-                    f"{method_name}: The following required variables are"
-                    f" missing from the model setup script {self.script_path}:"
-                    f" {', '.join(missing_vars)}. Please check that "
-                    f"{self.script_path} is a valid MONARCHS configuration "
-                    f"script."
-                ])
+                self.errors.extend(
+                    [
+                        f"{method_name}: The following required variables are"
+                        f" missing from the model setup script {self.script_path}:"
+                        f" {', '.join(missing_vars)}. Please check that "
+                        f"{self.script_path} is a valid MONARCHS configuration "
+                        f"script."
+                    ]
+                )
 
     def check_for_unexpected_imports(self):
         """
@@ -114,12 +140,12 @@ class ModelSetup:
         If you are getting an error here due a module that you know is safe
         to execute, then add it to SAFE_IMPORTS below.
         """
-        method_name = ("monarchs.core.load_model_setup.ModelSetup."
-                       "check_for_unexpected_imports")
-        SAFE_IMPORTS = {"monarchs", "numpy", "netCDF4", "math",
-                        "matplotlib", "scipy", "datetime", "pandas"}
+        method_name = (
+            "monarchs.core.load_model_setup.ModelSetup."
+            "check_for_unexpected_imports"
+        )
 
-        with open(self.script_path, "r") as f:
+        with open(self.script_path, "r", encoding="utf-8") as f:
             tree = ast.parse(f.read(), filename=self.script_path)
         # Track whether we get any errors. If so, add an extra developer aid
         # message to tell people where they can add new safe imports.
@@ -130,30 +156,43 @@ class ModelSetup:
             if isinstance(node, ast.Import):
                 for node_name in node.names:
                     # look at just the top-level module
-                    if node_name.name.split('.')[0] not in SAFE_IMPORTS:
+                    if node_name.name.split(".")[0] not in SAFE_IMPORTS:
                         flag = True
-                        self.errors.extend([
-                            f"{method_name}: Unsafe import '{node_name.name}'"
-                            f" found in model setup script {self.script_path}."
-                        ])
+                        self.errors.extend(
+                            [
+                                f"{method_name}: Unsafe import '{node_name.name}'"
+                                f" found in model setup script {self.script_path}."
+                            ]
+                        )
             # Also look at ImportFrom nodes, and check whether the parent
             # is in SAFE_IMPORTS.
             elif isinstance(node, ast.ImportFrom):
-                parent_name = node.module.split('.')[0] if node.module else ""
+                parent_name = node.module.split(".")[0] if node.module else ""
                 if parent_name not in SAFE_IMPORTS:
                     self.errors.append(
                         f"{method_name}: Unsafe import from '{node.module}' found. "
                     )
                     flag = True
         if flag:
-            self.errors.extend([f"Only the following imports are allowed: "
-                                f"{', '.join(SAFE_IMPORTS)}."])
-            self.errors.extend([f"If you are confident that your configuration script "
-                                f"import(s) are safe, please add them to SAFE_IMPORTS "
-                                f"in {method_name}."])
+            self.errors.extend(
+                [
+                    f"Only the following imports are allowed: "
+                    f"{', '.join(SAFE_IMPORTS)}."
+                ]
+            )
+            self.errors.extend(
+                [
+                    f"If you are confident that your configuration script "
+                    f"import(s) are safe, please add them to SAFE_IMPORTS "
+                    f"in {MODULE_NAME}."
+                ]
+            )
+
 
 def get_model_setup(model_setup_path):
-    """Load in the model setup from the specified path,
-    and return an instance of the ModelSetup class."""
+    """
+    Load in the model setup from the specified path,
+    and return an instance of the ModelSetup class.
+    """
     model_setup = ModelSetup(model_setup_path)
     return model_setup

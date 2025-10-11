@@ -13,8 +13,8 @@ This file contains all of the necessary parameters required to run the model. Yo
       required variables is in the :ref:`Inputting meteorological data` section. This section also details how to use
       a dictionary if preferred over using ERA5 format netCDF.
 
-You can then run MONARCHS using python run_MONARCHS.py, if ``model_setup.py`` is located in the same folder as MONARCHS.
-Alternatively, you can pass a path to a model setup file as an argument, e.g. python run_MONARCHS.py
+You can then run MONARCHS using python run_monarchs.py, if ``model_setup.py`` is located in the same folder as MONARCHS.
+Alternatively, you can pass a path to a model setup file as an argument, e.g. python run_monarchs.py
 
 Setting up ``model_setup``
 ============================
@@ -36,11 +36,11 @@ whole model grid. In the latter, the data is gridded to the model grid.
 Making user-defined changes to the inputs
 =========================================
 It is possible to amend the input pipeline to force changes to certain variables if you want to run some tests.
-For example, to force the model temperature to a higher value, one could amend ``setup_era5_met_data``
+For example, to force the model temperature to a higher value, one could amend ``met_data_from_era5``
 in ``initial_conditions.py``, or to change the default temperature profile one could edit
 ``initialise_firn_profile`` in the same file.
 
-An example of this is shown in ``setup_era5_met_data``, where a toggle ``radiation_forcing_factor`` may be specified in the
+An example of this is shown in ``met_data_from_era5``, where a toggle ``radiation_forcing_factor`` may be specified in the
 runscript to adjust SW downwelling radiation by a multiplicative factor.
 
 Outputting data

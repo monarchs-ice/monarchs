@@ -58,11 +58,11 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
     cell = args[0]
     dt = args[1]
     dz = args[2]
-    LW_in = args[3]
-    SW_in = args[4]
-    T_air = args[5]
+    lw_in = args[3]
+    sw_in = args[4]
+    air_temp = args[5]
     p_air = args[6]
-    T_dp = args[7]
+    dew_point_temperature = args[7]
     wind = args[8]
 
     if fixed_sfc:
@@ -130,11 +130,11 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
             x,
             args=(
                 temp_cell,
-                LW_in,
-                SW_in,
-                T_air,
+                lw_in,
+                sw_in,
+                air_temp,
                 p_air,
-                T_dp,
+                dew_point_temperature,
                 wind,
                 dz,
                 dt,
@@ -435,11 +435,11 @@ def lid_heateqn_solver(x, args):
     cell = args[0]
     dt = args[1]
     dz = args[2]
-    LW_in = args[3]
-    SW_in = args[4]
-    T_air = args[5]
+    lw_in = args[3]
+    sw_in = args[4]
+    air_temp = args[5]
     p_air = args[6]
-    T_dp = args[7]
+    dew_point_temperature = args[7]
     wind = args[8]
     Sfrac_lid = args[-2]
     k_lid = args[-1]
@@ -447,11 +447,11 @@ def lid_heateqn_solver(x, args):
         cell,
         dt,
         dz,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         k_lid,
         Sfrac_lid,

@@ -8,9 +8,9 @@ def test_lake_development():
 
     LW_surf = 1200
     SW_surf = 1200
-    T_air = 267
+    air_temp = 267
     p_air = 1000
-    T_dp = 265
+    dew_point_temperature = 265
     wind = 5
     dt = 3600
     cell = setup_cell()
@@ -25,7 +25,7 @@ def test_lake_development():
     cell["rho"] = cell["Sfrac"] * 917 + cell["Lfrac"] * 1000  # Density profile
 
     lake.lake_development(
-        cell, dt, LW_surf, SW_surf, T_air, p_air, T_dp, wind
+        cell, dt, LW_surf, SW_surf, air_temp, p_air, dew_point_temperature, wind
     )
     print(cell["lake_depth"])
     lake_depth_lowres = cell["lake_depth"]
@@ -42,7 +42,7 @@ def test_lake_development():
     )  # Initial liquid fraction
     cell["rho"] = cell["Sfrac"] * 917 + cell["Lfrac"] * 1000  # Density profile
     lake.lake_development(
-        cell, dt, LW_surf, SW_surf, T_air, p_air, T_dp, wind
+        cell, dt, LW_surf, SW_surf, air_temp, p_air, dew_point_temperature, wind
     )
     print(cell["lake_depth"])
     lake_depth_highres = cell["lake_depth"]

@@ -1,7 +1,9 @@
 """
-TODO - docstrings, module-level docstring
+Functions to load in a real DEM from a GeoTIFF file, and interpolate it into the
+number of rows and columns the user wants to MONARCHS with.
 """
 
+# TODO - docstrings, module-level docstring
 # At the moment have a subset of RBIS, should work out how to do with masking)
 # out the non-ice shelf areas to put in MONARCHS
 # RBIS from Sophie
@@ -9,6 +11,7 @@ TODO - docstrings, module-level docstring
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 import rioxarray
+from pyproj import Geod, CRS, Transformer
 
 
 def interpolate_DEM(heights, num_points):
@@ -17,15 +20,15 @@ def interpolate_DEM(heights, num_points):
     Parameters
     ----------
     heights : array_like, float, dimension(lat, long)
-        Array of heights from the DEM, creating a heightmap of the area we want
+        Array of heights from the dem_utils, creating a heightmap of the area we want
          to interpolate to our model space.
     num_points : int
-        Number of points we want to interpolate the DEM onto. This currently
+        Number of points we want to interpolate the dem_utils onto. This currently
         just works for square grids, i.e. row_amount == col_amount.
 
     Returns
     -------
-    interp((X, Y)) - DEM interpolated onto the regular grid defined by
+    interp((X, Y)) - dem_utils interpolated onto the regular grid defined by
     num_points.
     """
     # new resolution is 1/scale
@@ -48,16 +51,14 @@ def export_DEM(
     bottom_right=False,
     bottom_left=False,
     diagnostic_plots=False,
-    all_outputs=False,
-    return_lats=True,
     input_crs=3031,  # Antarctic polar stereographic projection by default
 ):
     """
-    Load in a DEM from a GeoTIFF file, and turn it into an elevation map in the
+    Load in a dem_utils from a GeoTIFF file, and turn it into an elevation map in the
     form of a Numpy array.
     This can optionally be done using a bounding box, to restrict the output to
-    a specific region of the DEM.
-    Since our DEM is in polar stereographic coordinates, this bounding box is
+    a specific region of the dem_utils.
+    Since our dem_utils is in polar stereographic coordinates, this bounding box is
     not "nice". Therefore, we need to specify the corner coordinates of the
     bounding box rather than just a max/min lat/long.
 
@@ -66,25 +67,25 @@ def export_DEM(
     tiffname : str
         Name of the geoTIFF file that you wish to load in.
     num_points : int, optional
-        Number of points to interpolate the DEM onto. Currently only supports
+        Number of points to interpolate the dem_utils onto. Currently only supports
         square grids as output.
         Default 50.
 
     top_right : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the top right of the rectangle
-        to be used as the bounding box to extract the part of the DEM we want.
+        to be used as the bounding box to extract the part of the dem_utils we want.
         Default False
     top_left : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the top left of the rectangle
-        to be used as the bounding box to extract the part of the DEM we want.
+        to be used as the bounding box to extract the part of the dem_utils we want.
         Default False.
     bottom_right : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the bottom right of the rectangle
-        to be used as the bounding box to extract the part of the DEM we want.
+        to be used as the bounding box to extract the part of the dem_utils we want.
         Default False.
     bottom_left : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the bottom left of the rectangle
-        to be used as the bounding box to extract the part of the DEM we want.
+        to be used as the bounding box to extract the part of the dem_utils we want.
         Default False.
     diagnostic_plots : bool, optional
         Flag that triggers whether to generate plots of the output for testing.
@@ -123,11 +124,9 @@ def export_DEM(
         applying scipy.ndimage.zoom.
         Only output when all_outputs is True.
     """
-    from pyproj import CRS, Transformer
-    from scipy.ndimage import zoom
 
     input_raster = rioxarray.open_rasterio(tiffname).rio.reproject("EPSG:3031")
-    # Get the lat/long coordinates of the DEM
+    # Get the lat/long coordinates of the dem_utils
 
     transformer = Transformer.from_crs(
         input_crs, CRS.from_epsg(4326), always_xy=True
@@ -146,7 +145,6 @@ def export_DEM(
         val in [False, np.nan]
         for val in np.ravel([top_right, top_left, bottom_right, bottom_left])
     ):
-        custom_bbox = True
         projected_raster = input_raster.rio.reproject("EPSG:4326")
         # we need to transform our bounding box coordinates to the EPSG:3031
         # projection, then back again into lat/long.
@@ -188,7 +186,6 @@ def export_DEM(
             plt.title("reprojected")
     else:
         heights = input_raster.values[0]
-        custom_bbox = False
 
     # Remove NaN/overly negative values
     heights[heights < -10] = -10
@@ -196,7 +193,6 @@ def export_DEM(
     # speed up the interpolation step by first applying a zoom
     newlons = lon_array
     newlats = lat_array
-    new_heights = heights
     nans = np.where(np.isnan(heights))
     heights[nans] = 999
     new_heights_interpolated = interpolate_DEM(heights, num_points)
@@ -207,39 +203,11 @@ def export_DEM(
     else:
         dx, dy = np.array([[0]]), np.array([[0]])
 
-    if diagnostic_plots:
-        generate_diagnostic_plots(
-            lon_array,
-            lat_array,
-            heights,
-            newlons,
-            newlats,
-            new_heights,
-            new_heights_interpolated,
-        )
-
-    if all_outputs:
-        return (
-            heights,
-            lat_array,
-            lon_array,
-            new_heights,
-            new_heights_interpolated,
-            newlons,
-            newlats,
-            dx,
-            dy,
-        )  # , meta_dict
-    elif return_lats:
-        return new_heights_interpolated, lat_interp, lon_interp, dx, dy
-    else:
-        return new_heights_interpolated, dx, dy
-    # return new_heights_interpolated#, newlons, newlats
+    return new_heights_interpolated, lat_interp, lon_interp, dx, dy
 
 
 def get_xy_distance(latitudes, longitudes):
-    import numpy as np
-    from pyproj import Geod
+    """ """
 
     # Load the raster (already in EPSG:4326)
 
@@ -266,9 +234,7 @@ def get_xy_distance(latitudes, longitudes):
     ]
 
     # Convert dx/dy to full-sized arrays by padding (so they match raster size)
-    dy_metres = np.pad(
-        dy_metres, ((0, 0), (0, 1)), mode="edge"
-    )  # Pad last row
+    dy_metres = np.pad(dy_metres, ((0, 0), (0, 1)), mode="edge")  # Pad last row
     dx_metres = np.pad(
         dx_metres, ((0, 1), (0, 0)), mode="edge"
     )  # Pad last column
@@ -319,7 +285,7 @@ def bounding_box_diagnostic_plots(
     )
     ax1.coastlines()
     ax1.gridlines(draw_labels=True)
-    ax1.title.set_text("DEM height profile with subset")
+    ax1.title.set_text("dem_utils height profile with subset")
     cont = ax1.contourf(
         lon_subset,
         lat_subset,
@@ -340,7 +306,7 @@ def generate_diagnostic_plots(
     lons, lats, heights, newlons, newlats, newheights, new_heights_interpolated
 ):
     """
-    Diagnostics for the DEM interpolation process.
+    Diagnostics for the dem_utils interpolation process.
 
     Parameters
     ----------
@@ -362,9 +328,11 @@ def generate_diagnostic_plots(
     -------
 
     """
+    # pylint: disable=import-outside-toplevel
     import cartopy.crs as ccrs
     from matplotlib import pyplot as plt
 
+    # pylint: enable=import-outside-toplevel
     projection = ccrs.PlateCarree(central_longitude=0)
     cmap = "viridis"
     fig = plt.figure()
@@ -382,7 +350,7 @@ def generate_diagnostic_plots(
     # levels=bounds, vmin=0, vmax=50)
     ax1.coastlines()
     ax1.gridlines(draw_labels=True)
-    ax1.title.set_text("Initial DEM height profile")
+    ax1.title.set_text("Initial dem_utils height profile")
 
     ax2 = fig.add_subplot(212, projection=projection)
     cont2 = ax2.contourf(
@@ -402,10 +370,10 @@ def generate_diagnostic_plots(
     fig.colorbar(cont2, cax=cax)
 
     """
-    This figure shows the final result - the DEM on our chosen grid. Note that
+    This figure shows the final result - the dem_utils on our chosen grid. Note that
     if the aspect ratio  is different between the chosen grid and the size of
-    the initial DEM grid (accounting for your choice
-    of boundaries), then the final DEM will be stretched to compensate.
+    the initial dem_utils grid (accounting for your choice
+    of boundaries), then the final dem_utils will be stretched to compensate.
     """
     fig, ax3 = plt.subplots()
     cs = ax3.imshow(new_heights_interpolated, vmin=0, vmax=200)
@@ -415,60 +383,3 @@ def generate_diagnostic_plots(
     )
     cb = fig.colorbar(cs)
     plt.show()
-
-
-if __name__ == "__main__":
-    """
-    Run script directly to generate some test data and plot it up.
-    """
-    tiffname = "DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
-
-    (
-        heights,
-        lats,
-        lons,
-        newheights,
-        new_heights_interpolated,
-        newlons,
-        newlats,
-        dx,
-        dy,
-    ) = export_DEM(
-        tiffname,
-        num_points=50,
-        diagnostic_plots=False,
-        top_right=[
-            (-66.52, -62.814)
-        ],  # bounding box top right coordinates, [(lat, long)]
-        bottom_left=[
-            (-66.289, -64.68)
-        ],  # bounding box bottom left coordinates, [(lat, long)]
-        top_left=[
-            (-66.04, -63.42)
-        ],  # bounding box top left coordinates, [(lat, long)]
-        bottom_right=[
-            (-66.778, -64.099)
-        ],  # bounding box bottom right coordinates, [(lat, long)]
-        all_outputs=True,
-    )
-    # iheights, ilats, ilons = export_DEM(
-    #     tiffname,
-    #     num_points=50,
-    #     diagnostic_plots=False,
-    #     latmin=-72.15,
-    #     latmax=-71.55,
-    #     longmin=-68.28,
-    #     longmax=-67.1,
-    #     all_outputs=False,
-    # )
-    import matplotlib.pyplot as plt
-
-    generate_diagnostic_plots(
-        lons,
-        lats,
-        heights,
-        newlons,
-        newlats,
-        newheights,
-        new_heights_interpolated,
-    )
