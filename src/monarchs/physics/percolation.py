@@ -166,15 +166,23 @@ def calc_refreezing(cell, v_lev):
         unphysical state.
 
     """
+    # TODO - allow water to freeze if in a under-firn lake, but not expand.
+    # TODO - check that this doesnt violate mass conservation
     # Maximum allowable temperature change
     T_change_max = 273.15 - cell["firn_temperature"][v_lev]
     cp = 7.16 * cell["firn_temperature"][v_lev] + 138
     excess_water = 0
-    T_change_all = (
-        cell["Lfrac"][v_lev]
-        * cell["L_ice"]
-        * cell["rho_water"]
-        / (cell["rho_ice"] * cp * cell["Sfrac"][v_lev])
+
+    if cell['Sfrac'][v_lev] == 0:
+        T_change_all = 1000000  # for testing
+        # print('Refreezing with Sfrac = 0')
+    else:
+        T_change_all = (
+                cell["Lfrac"][v_lev]
+                * cell["L_ice"]
+                * cell["rho_water"]
+                / (cell["rho_ice"] * cp * cell["Sfrac"][v_lev])
+
     )  # T change if all water freezes
     Vol_Rfrz_Max = (
         (1 - cell["Sfrac"][v_lev])

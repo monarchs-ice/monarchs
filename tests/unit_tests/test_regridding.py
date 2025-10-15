@@ -1,5 +1,5 @@
 from setup_test_cell import setup_cell
-from monarchs.physics import firn_column
+from monarchs.physics import regrid_column
 import numpy as np
 
 
@@ -17,7 +17,7 @@ def test_regridding():
     cell["rho"] = cell["Sfrac"] * 917 + cell["Lfrac"] * 1000  # Density profile
     boundary_change = 0.001
 
-    firn_functions.regrid_after_melt(cell, boundary_change)
+    regrid_column.regrid_after_melt(cell, boundary_change)
     firn_depth_1 = cell["firn_depth"]
 
     cell = setup_cell()
@@ -32,7 +32,7 @@ def test_regridding():
     cell["rho"] = cell["Sfrac"] * 917 + cell["Lfrac"] * 1000  # Density profile
     boundary_change = 0.001
 
-    firn_column.regrid_after_melt(cell, boundary_change)
+    regrid_column.regrid_after_melt(cell, boundary_change)
     firn_depth_2 = cell["firn_depth"]
     print(firn_depth_1, firn_depth_2)
     assert firn_depth_2 == firn_depth_1

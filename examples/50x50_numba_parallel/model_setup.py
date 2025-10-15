@@ -16,10 +16,8 @@ version of MONARCHS, and is designed to be run on HPC systems or Linux servers w
 a large number of cores.
 """
 
-import os
 import numpy as np
 
-print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """

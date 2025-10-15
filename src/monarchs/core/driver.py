@@ -135,8 +135,8 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
                     reload_name,
                     get_iceshelf_spec(
                         model_setup.vertical_points_firn,
-                        model_setup.vertical_points_lid,
                         model_setup.vertical_points_lake,
+                        model_setup.vertical_points_lid,
                     ),
                 )
             )
@@ -471,7 +471,6 @@ def main(model_setup, grid):
     time_loop = range(first_iteration, model_setup.num_days)
     start = time.perf_counter()
     dt = 3600
-
     for day in time_loop:
         timestep_start = time.perf_counter()
         print("\n*******************************************\n")
@@ -598,7 +597,7 @@ def initialise_model_data(model_setup):
     Wrapper function that calls various initialisation functions to set up
     MONARCHS.
     """
-
+    func_name = "monarchs.core.driver.initialise_model_data"
     # Load in the initial firn profile, either from a whole dem_utils, or a
     # user-defined subset
     if (
@@ -633,12 +632,24 @@ def initialise_model_data(model_setup):
     # Set up meteorological data, from either ERA5-format input ("ERA5") or
     # user-defined values from their model configuration ("user_defined")
     if model_setup.met_data_source == "ERA5":
+        setup_met_data_flag = True
         if model_setup.load_precalculated_met_data:
             print(
-                "monarchs.core.driver.initialise: Loading in pre-calculated"
+                f"{func_name}: Loading in pre-calculated"
                 " MONARCHS format met data"
             )
-        else:
+            # check the file actually exists first
+            if not os.path.exists(model_setup.met_output_filepath):
+                print(
+                    f"{func_name}: Pre-calculated met data file"
+                    f" {model_setup.met_output_filepath} does not exist."
+                    " Calculating from raw ERA5 data instead."
+                )
+                setup_met_data_flag = True
+            else:
+                setup_met_data_flag = False
+
+        if setup_met_data_flag:
             setup_met_data.met_data_from_era5(model_setup, lat_array, lon_array)
     elif model_setup.met_data_source == "user_defined":
         setup_met_data.prescribed_met_data(model_setup)

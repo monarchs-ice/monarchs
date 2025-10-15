@@ -16,7 +16,8 @@ def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     k = sfrac * k_ice + (1 - sfrac - lfrac) * k_air + lfrac * k_water
     cp_ice = 7.16 * T + 138
     cp = sfrac * cp_ice + (1 - sfrac - lfrac) * cp_air + lfrac * cp_water
-    kappa = k / (cp * rho)  # thermal diffusivity [m^2 s^-1]
+    # thermal diffusivity [m^2 s^-1]
+    kappa = k / (cp * rho)
     return k, kappa
 
 
@@ -50,7 +51,6 @@ def heateqn(
         wind,
         x[0],
     )
-    # Q = 650  # Placeholder value for testing
     N = len(x)
     T_old = cell["firn_temperature"][:N]
     Sfrac = cell["Sfrac"][:N]

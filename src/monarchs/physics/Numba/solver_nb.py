@@ -12,8 +12,8 @@ can be generated according to the value of a single Boolean.
 import numpy as np
 from NumbaMinpack import hybrd, minpack_sig
 from numba import cfunc, jit
-
 import monarchs.physics.Numba.heateqn_nb as hnb
+from monarchs.physics import surface_fluxes
 
 heq = hnb.heateqn.address
 heqlid = hnb.heateqn_lid.address
@@ -299,51 +299,69 @@ def lake_formation_eqn(x, output, args):
 @jit(nopython=True, fastmath=False)
 def lake_development_eqn(x, output, args):
     """
-    Numba-compatible form of the lake development version of the surface
+    Scipy-compatible form of the lake development version of the surface
     temperature equation. Called in get_lake_solver.
 
     Parameters
     ----------
     x : array_like, float, dimension(vert_grid_lake)
         Initial estimate of the lake temperature. [K]
-    output : array_like, float, dimension(vert_grid_lake)
-        Output array containing the lake temperature. We only actually return
-        the first element of this array.
-        This may be possible to set to float, along with x, but Numba works in
-        mysterious ways and this seems to compile and work.
+
     args : array_like
         Array of input arguments to be extracted into the relevant variables
         (J, Q, vert_grid_lake and lake_temperature).
 
     Returns
     -------
-    None.
+    output : float
+        Estimate of the surface lake temperature [K].
     """
-    # float, turbulent heat flux factor, equal to 1.907 E-5. [m s^-1 K^-(1/3)]
-    J = args[0]
-    # float, Surface energy flux [W m^-2]
-    Q = args[1]
-    # float, number of vertical levels in the lake profile
-    vert_grid_lake = args[2]
-    # array_like, float, dimension(vert_grid_lake)
-    lake_temperature = np.zeros(int(vert_grid_lake))
-    # have to use a loop as Numba doesn't like slicing like args[3:] with
-    # cfuncs
-    for i in range(len(lake_temperature)):
-        lake_temperature[i] = args[3 + i]
-    # get core temperature via central point of lake
-    T_core = lake_temperature[int(vert_grid_lake / 2)]
+    J = 0.1 * (9.8 * 5 * 10 ** -5 * (1.19 * 10 ** -7) ** 2 / 10 ** -6) ** (
+            1 / 3)
 
-    # set output[0] rather than just output else we will just return our
-    # initial guess. (i.e. solution does not converge and the code fails)
-    output[0] = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
-        + Q
-        + np.sign(T_core - x[0])
-        * 1000
-        * 4181
-        * J
-        * abs(T_core - x[0]) ** (4 / 3)
+    vert_grid_lake = args[0]
+    melt = args[1]
+    exposed_water = args[2]
+    lid = args[3]
+    lake = args[4]
+    lake_depth = args[5]
+    lw_in = args[6]
+    sw_in = args[7]
+    air_temp = args[8]
+    p_air = args[9]
+    dew_point_temperature = args[10]
+    wind = args[11]
+    lake_temperature = np.zeros(int(vert_grid_lake))
+    for i in range(len(lake_temperature)):
+        lake_temperature[i] = args[12 + i]
+
+    # TODO - add Q as a function of lake temperature here
+    Q = surface_fluxes.sfc_flux(
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        x[0],
+    )
+
+    T_core = lake_temperature[int(vert_grid_lake / 2)]
+    output[0] = np.array(
+        [
+            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+            + Q
+            + np.sign(T_core - x[0])
+            * 1000
+            * 4181
+            * J
+            * abs(T_core - x[0]) ** (4 / 3)
+        ]
     )
 
 
@@ -446,7 +464,8 @@ def sfc_energy_lid(x, output, args):
     output[0] = (
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
-        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+    # TODO - changed sign here
+        + k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
 
 

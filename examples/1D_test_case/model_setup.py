@@ -8,10 +8,8 @@ The template includes all MONARCHS parameters explicitly.
 Since this is a Python script, you can specify parameters e.g. as numpy arrays.
 """
 
-import os
 import numpy as np
 
-print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
@@ -147,7 +145,7 @@ dump_filepath = f"output/1d_testcase_dump_{vertical_points_firn}.nc"
 reload_from_dump = (
     False  # Flag to determine whether to reload the state or not
 )
-use_numba = False
+use_numba = True
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 

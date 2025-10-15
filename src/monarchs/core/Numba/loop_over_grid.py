@@ -10,6 +10,7 @@ from numba import prange
 
 
 # disable unused-argument as this is to make the overloading work
+# pylint: disable=unused-argument
 def loop_over_grid_numba(
     row_amount,
     col_amount,
@@ -19,8 +20,11 @@ def loop_over_grid_numba(
     t_steps_per_day,
     toggle_dict,
     ncores="all",
-    **kwargs,  # pylint: disable=unused-argument
+    client=False,
+    dask_scheduler=False,
+    parallel=True,
 ):
+# pylint: enable=unused-argument
     """
     This function wraps timestep_loop, allowing for it to be
     run in parallel over an arbitrarily sized grid. The grid

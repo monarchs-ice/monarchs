@@ -3,14 +3,12 @@
 # TODO - module level docstring, split/refactor lake_formation and
 #      - lake_development if possible
 import numpy as np
-from monarchs.physics import firn_column
-from monarchs.physics import surface_fluxes
-from monarchs.physics import solver
-from monarchs.physics import percolation
+from monarchs.physics import regrid_column, surface_fluxes, solver, percolation
 from monarchs.core import utils
 
 
-def sfc_energy_lake(J, Q, cell):
+def sfc_energy_lake(cell, lw_in, sw_in, air_temp,
+                    p_air, dew_point_temperature, wind):
     """
     Calculate the surface energy balance for the lake, after it has already
     formed.
@@ -26,6 +24,19 @@ def sfc_energy_lake(J, Q, cell):
         Surface energy flux, calculated via surface_fluxes.sfc_flux.  [W m^-2]
     cell : numpy structured array
         Element of the model grid we are operating on.
+    lw_in:  float
+        Downwelling longwave radiation at the surface. [W m^-2]
+    sw_in : float
+        Downwelling shortwave radiation at the surface [W m^-2]
+    air_temp : float
+        Surface air temperature. [K]
+    p_air : float
+        Surface air pressure. [Pa]
+    dew_point_temperature : float
+        Dewpoint temperature of the air at the surface. [K]
+    wind : float
+        Wind speed at the surface. [m s^-1]
+
     Returns
     -------
     lake_surf_temp : float
@@ -36,8 +47,12 @@ def sfc_energy_lake(J, Q, cell):
     # then turbulent mixing can occur, then lake dev
     # lake well mixed - boundary and core temp so only boundaries have a diff
     # temperature.
-    x = np.array([cell["lake_temperature"][int(cell["vert_grid_lake"] / 2)]])
-    args = np.array([J, Q, cell["vert_grid_lake"]])
+    x = np.array([cell["lake_temperature"][0]])
+    args = np.array([cell["vert_grid_lake"], cell['melt'], cell['exposed_water'],
+                        cell['lid'], cell['lake'], cell['lake_depth'],
+
+                     lw_in, sw_in, air_temp, p_air, dew_point_temperature,
+                     wind])
     args = np.append(args, cell["lake_temperature"])
     lake_surf_temp = solver.lake_solver(x, args)[0][0]
     return lake_surf_temp
@@ -98,7 +113,7 @@ def freeze_pre_lake(cell):
     cell["lake_depth"] = 0
     cell["firn_depth"] += dHdt
     cell["Sfrac"][0] += (
-        cell["Lfrac"][0] * cell["rho_water"] / cell["rho_ice"]
+            cell["Lfrac"][0] * cell["rho_water"] / cell["rho_ice"]
     )  # freeze all water in top layer
     cell["Lfrac"][0] = 0
     # expansion of this water can cause Sfrac to be > 1, but the volume
@@ -131,7 +146,8 @@ def turbulent_mixing(cell, sw_in, dt):
 
     tau = 0.025
     # pylint: disable=invalid-name
-    J = 0.1 * (9.8 * 5 * 10**-5 * (1.19 * 10**-7) ** 2 / 10**-6) ** (1 / 3)
+    J = 0.1 * (9.8 * 5 * 10 ** -5 * (1.19 * 10 ** -7) ** 2 / 10 ** -6) ** (
+                1 / 3)
     # pylint: enable=invalid-name
 
     albedo = surface_fluxes.sfc_albedo(
@@ -142,10 +158,25 @@ def turbulent_mixing(cell, sw_in, dt):
         cell["lake_depth"],
     )
 
-    # Beer's Law but (1-alpha) taken out as already calculated with incoming SW
-    net_solar = (1 - albedo) * sw_in * np.exp(-tau * cell["lake_depth"]) - (
-        1 - albedo
-    ) * sw_in * np.exp(-tau * 0)
+    # --- SHORTWAVE INTO WATER COLUMN ---
+    if cell["lid"]:
+        # Transmitted shortwave just below the lid (into water)
+        # Optical coefficients (tune as needed; kept as locals to avoid changing cell)
+        k_ice_opt  = 1.5    # m^-1 (bare ice ~1–3)
+        T0         = 0.9  # bulk interface factor
+
+
+        # Irradiance just below ice: (1 - albedo_lid) * SW_in * transmission_through_lid
+        I0_below_ice = (1.0 - albedo) * sw_in * T0 \
+                       * np.exp(-k_ice_opt * cell['lid_depth']) \
+
+        # Beer’s law within the WATER column from interface (z=0) to lake_depth
+        net_solar = I0_below_ice * (np.exp(-tau * cell["lake_depth"]) - np.exp(-tau * 0.0))
+    else:
+        # Open water: standard Beer’s law referenced to the surface
+        net_solar = (1.0 - albedo) * sw_in * np.exp(-tau * cell["lake_depth"]) - \
+                    (1.0 - albedo) * sw_in * np.exp(-tau * 0.0)
+
     # factor by which you want to scale the temporal resolution of this
     # calculation
     # it is very slow (taking up to half of the overall model runtime
@@ -153,7 +184,7 @@ def turbulent_mixing(cell, sw_in, dt):
     # Increasing this value up to the max value (dt) will make the
     # model run faster, but you
     # increase the likelihood of numerical instability
-    dt_scaling = 20
+    dt_scaling = 1
     # disable unused variable warnings as we use this
     # pylint: disable=unused-variable
     for _ in range(int(dt / dt_scaling)):
@@ -162,22 +193,22 @@ def turbulent_mixing(cell, sw_in, dt):
         ]
         # Flux at upper boundary
         flux_upper = (
-            np.sign(lake_core_temp - cell["lake_temperature"][0])
-            * 1000
-            * 4181
-            * J
-            * abs(lake_core_temp - cell["lake_temperature"][0]) ** (4 / 3)
+                np.sign(lake_core_temp - cell["lake_temperature"][0])
+                * 1000
+                * 4181
+                * J
+                * abs(lake_core_temp - cell["lake_temperature"][0]) ** (4 / 3)
         )
         # Flux at lower boundary
         flux_lower = (
-            np.sign(lake_core_temp - 273.15)
-            * 1000
-            * 4181
-            * J
-            * abs(lake_core_temp - 273.15) ** (4 / 3)
+                np.sign(lake_core_temp - 273.15)
+                * 1000
+                * 4181
+                * J
+                * abs(lake_core_temp - 273.15) ** (4 / 3)
         )
         temp_change = (-flux_lower - flux_upper - net_solar) / (
-            1000 * 4181 * cell["lake_depth"]
+                1000 * 4181 * cell["lake_depth"]
         )
         lake_core_temp = lake_core_temp + temp_change * dt_scaling
         # start at 1 as want layers below surface, end at len-1 to
@@ -186,24 +217,25 @@ def turbulent_mixing(cell, sw_in, dt):
         cell["lake_temperature"][indices] = lake_core_temp
     # calculate Fl and Fu again one last time - Fu is used in lid development.
     flux_lower = (
-        np.sign(lake_core_temp - 273.15)
-        * 1000
-        * 4181
-        * J
-        * abs(lake_core_temp - 273.15) ** (4 / 3)
+            np.sign(lake_core_temp - 273.15)
+            * 1000
+            * 4181
+            * J
+            * abs(lake_core_temp - 273.15) ** (4 / 3)
     )
     flux_upper = (
-        np.sign(lake_core_temp - cell["lake_temperature"][0])
-        * 1000
-        * 4181
-        * J
-        * abs(lake_core_temp - cell["lake_temperature"][0]) ** (4 / 3)
+            np.sign(lake_core_temp - cell["lake_temperature"][0])
+            * 1000
+            * 4181
+            * J
+            * abs(lake_core_temp - cell["lake_temperature"][0]) ** (4 / 3)
     )
+    print('lake_core_temp = ', lake_core_temp)
     return flux_lower, flux_upper
 
 
 def lake_formation(
-    cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
+        cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
 ):
     """
     Generate a lake, and track its evolution until we reach the point where
@@ -242,24 +274,44 @@ def lake_formation(
         if cell["firn_temperature"][i] > 273.15:
             cp_ice[i] = 4186.8
             k_ice[i] = 1000 * (
-                1.017 * 10**-4 + 1.695 * 10**-6 * cell["firn_temperature"][i]
+                    1.017 * 10 ** -4 + 1.695 * 10 ** -6 *
+                    cell["firn_temperature"][i]
             )
         else:
             cp_ice[i] = 1000 * (
-                7.16 * 10**-3 * cell["firn_temperature"][i] + 0.138
+                    7.16 * 10 ** -3 * cell["firn_temperature"][i] + 0.138
             )  # Alexiades & Solomon pg. 8
             k_ice[i] = 1000 * (
-                2.24 * 10**-3
-                + 5.975
-                * 10**-6
-                * (273.15 - cell["firn_temperature"][i]) ** 1.156
+                    2.24 * 10 ** -3
+                    + 5.975
+                    * 10 ** -6
+                    * (273.15 - cell["firn_temperature"][i]) ** 1.156
             )
         air[i] = 1 - cell["Sfrac"][i] - cell["Lfrac"][i]
     k = (
-        cell["Sfrac"] * k_ice
-        + air * cell["k_air"]
-        + cell["Lfrac"] * cell["k_water"]
+            cell["Sfrac"] * k_ice
+            + air * cell["k_air"]
+            + cell["Lfrac"] * cell["k_water"]
     )
+    x = cell["firn_temperature"]
+    args = (
+        cell,
+        dt,
+        dz,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+    )
+
+    root, _, success, _ = solver.solve_firn_heateqn(
+        x, args, fixed_sfc=True, solver_method="hybr"
+    )
+    if success:
+        cell["firn_temperature"] = root
+
     x = cell["lake_temperature"]
     Q = surface_fluxes.sfc_flux(
         cell["melt"],
@@ -279,18 +331,18 @@ def lake_formation(
     old_T_sfc = sfc_energy_lake_formation(air_temp, Q, k, cell)
     # Check for conservation of mass
     new_mass = utils.calc_mass_sum(cell)
-    assert abs(original_mass - new_mass) < 1.5 * 10**-7
+    assert abs(original_mass - new_mass) < 1.5 * 10 ** -7
     if old_T_sfc > 273.15 and Q > 0:  # melting occurring at the surface
         kdTdz = (
-            (cell["firn_temperature"][0] - cell["firn_temperature"][1])
-            * abs(k[0])
-            / (cell["firn_depth"] / cell["vert_grid"])
+                (cell["firn_temperature"][0] - cell["firn_temperature"][1])
+                * abs(k[0])
+                / (cell["firn_depth"] / cell["vert_grid"])
         )
         # change in firn height due to melting
         dHdt = (
-            (Q - kdTdz)
-            / (cell["Sfrac"][0] * cell["L_ice"] * cell["rho_ice"])
-            * dt
+                (Q - kdTdz)
+                / (cell["Sfrac"][0] * cell["L_ice"] * cell["rho_ice"])
+                * dt
         )
         if dHdt < 0:
             raise ValueError(
@@ -299,7 +351,7 @@ def lake_formation(
         cell["melt_hours"] += 1
 
         # we reduce the firn height and add to the lake depth here
-        firn_column.regrid_after_melt(cell, dHdt, lake=True)
+        regrid_column.regrid_after_melt(cell, dHdt, lake=True)
         # Set end=False since we only care about the top cell, and in this case
         # we want to put this water into the lake.
         percolation.calc_saturation(cell, 0)
@@ -309,8 +361,8 @@ def lake_formation(
     else:
         cell["exposed_water_refreeze_counter"] += 1
         if (
-            cell["exposed_water_refreeze_counter"] > 48
-            and cell["lake_depth"] < 0.1
+                cell["exposed_water_refreeze_counter"] > 48
+                and cell["lake_depth"] < 0.1
         ):
             # freeze_pre_lake(cell)
             pass
@@ -318,31 +370,14 @@ def lake_formation(
     cell["vertical_profile"] = np.linspace(
         0, cell["firn_depth"], cell["vert_grid"]
     )
-    x = cell["firn_temperature"]
-    args = (
-        cell,
-        dt,
-        dz,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-    )
-    root, _, success, _ = solver.solve_firn_heateqn(
-        x, args, fixed_sfc=True, solver_method="hybr"
-    )
-    if success:
-        cell["firn_temperature"] = root
     if cell["lake_depth"] >= 0.1:
         cell["lake"] = True
     new_mass = utils.calc_mass_sum(cell)
-    assert abs(original_mass - new_mass) < 1.5 * 10**-7
+    assert abs(original_mass - new_mass) < 1.5 * 10 ** -7
 
 
 def lake_development(
-    cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
+        cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
 ):
     """
     Once a lake of at least 10 cm deep is present this function calculates
@@ -373,7 +408,7 @@ def lake_development(
     -------
 
     """
-    J = 0.1 * (9.8 * 5 * 10**-5 * (1.19 * 10**-7) ** 2 / 10**-6) ** (1 / 3)
+
     original_mass = utils.calc_mass_sum(cell)
     if not cell["v_lid"] and not cell["lid"]:
         x = cell["lake_temperature"]
@@ -394,7 +429,11 @@ def lake_development(
             x[0],
         )
         # Calculate cell.lake_temperature and lid_temperature
-        cell["lake_temperature"][0] = sfc_energy_lake(J, Q, cell)
+        cell["lake_temperature"][0] = sfc_energy_lake(cell, lw_in, sw_in,
+                                                      air_temp, p_air,
+                                                      dew_point_temperature,
+                                                      wind)
+
         # when 10 cm - switch to a real lid
         if cell["lake_temperature"][0] < 273.15:
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
@@ -403,30 +442,37 @@ def lake_development(
         if cell["lake_temperature"][0] > 300:
             print(f"lake_temp = {cell["lake_temperature"][0]}")
             raise ValueError("Lake too warm!")
+
+    elif cell["lid"] or cell["v_lid"]:
+        # If a refrozen lid is present then the temperature of the top
+        # of the lake is fixed at 0 degrees C.
+        cell["lake_temperature"][0] = 273.15
+
     # Calculate cp and k for firn below lake (note:orig also calculated if
     # T > 273.15 but shouldn't be possible here)
     k_ice = np.zeros(cell["vert_grid"])
     for i in np.arange(0, cell["vert_grid"]):
         if cell["firn_temperature"][i] > 273.15:
             k_ice[i] = 1000 * (
-                1.017 * 10**-4 + 1.695 * 10**-6 * cell["firn_temperature"][i]
+                    1.017 * 10 ** -4 + 1.695 * 10 ** -6 *
+                    cell["firn_temperature"][i]
             )
 
         else:
             k_ice[i] = 1000 * (
-                2.24 * 10**-3
-                + 5.975
-                * 10**-6
-                * (273.15 - cell["firn_temperature"][i]) ** 1.156
+                    2.24 * 10 ** -3
+                    + 5.975
+                    * 10 ** -6
+                    * (273.15 - cell["firn_temperature"][i]) ** 1.156
             )
 
     # Lake is assumed turbulent as over 10cm.
-    _, Fu = turbulent_mixing(cell, sw_in, dt)
+    Fl, Fu = turbulent_mixing(cell, sw_in, dt)
     air = 1 - (cell["Sfrac"] + cell["Lfrac"])
     k = (
-        cell["Sfrac"] * k_ice
-        + air * cell["k_air"]
-        + cell["Lfrac"] * cell["k_water"]
+            cell["Sfrac"] * k_ice
+            + air * cell["k_air"]
+            + cell["Lfrac"] * cell["k_water"]
     )
     # If lake is above freezing it will begin to melt the firn below it
     if cell["lake_temperature"][-2] > 273.15:
@@ -435,11 +481,17 @@ def lake_development(
             # coordinate system is defined in depth terms. Therefore, if the
             # firn is colder than the lake, the gradient is negative, so heat
             # flows in the positive direction (downwards).
+
+            # get avg_k from average of k from 0:2
+            avg_k = np.mean(k[0:2])
+            # new implementation - calculating gradient for the upward
+            # flux from the *firn*
+            # no minus sign as T(z1) and T(z0) other way around
+            # firn temperature profile should be linear
             kdTdz = (
-                (273.15 - cell["lake_temperature"][-2])
-                * abs(k[0])
-                / (2 * (cell["lake_depth"] / cell["vert_grid_lake"]))
-                # / (2 * (cell["firn_depth"] / cell["vert_grid"]))
+                    (273.15 - cell["firn_temperature"][2])
+                    * abs(avg_k)
+                    / (2 * (cell["firn_depth"] / cell["vert_grid"]))
             )
             # -ve kdTdz = +ve boundary_change, as energy flows from the lake
             # into the firn, causing
@@ -449,19 +501,37 @@ def lake_development(
             # a reversed sign, since in that case the response to a negative
             # kdTdz is freezing (which in turn shifts the boundary down).
 
-            boundary_change = (
-                # (kdTdz + Fl) / (cell["Sfrac"][0] * cell["L_ice"]
-                # * cell["rho_ice"]) * dt
-                -(kdTdz)
-                / (cell["Sfrac"][0] * cell["L_ice"] * cell["rho_ice"])
-                * dt
-            )
+            # First work out the maximum available amount of melt based
+            # on the solid fraction of the top cell
+            # TODO - add something here to handle Sfrac -> 0
+            # TODO - maybe account for liquid fraction? intent is to account
+            # for the air fraction.
+            # actual change should be on the order of cm or mm per timestep.
+            # Have to say - if solid fraction < 10% of the grid cell, then
+            # expect it will become a lake anyway.
+            # have to reduce lake temperature to perform said melting.
+            if cell["Sfrac"][0] < 0.1:
+                boundary_change = cell['firn_depth'] / cell['vert_grid']
+                print('Sfrac = ', cell["Sfrac"][0], ' - setting boundary change to ', boundary_change)
+            else:
+                boundary_change = (
+                        (Fl - kdTdz)
+                        / (cell["L_ice"] * cell["rho_ice"])
+                        * dt
+                )
+                print('Fl = ', Fl)
+                print('kdTdz = ', kdTdz)
+                if kdTdz < 0:
+                    print('kdTdz < 0, = ', cell['firn_temperature'][2])
+                print('Boundary change = ', boundary_change)
+                print('Surface lake temp = ', cell['lake_temperature'][1])
+
             cell["lake_boundary_change"] += boundary_change
             # Regrid the firn column to account for the change in boundary
             # (which is subtracted from the firn and added to the lake in
             # this subroutine)
 
-            firn_column.regrid_after_melt(cell, boundary_change, lake=True)
+            regrid_column.regrid_after_melt(cell, boundary_change, lake=True)
             # print('New firn depth = ', cell["firn_depth"])
             # Set end=False since we only care about the top cell, and in this
             # case we want to put this water into the lake.
@@ -524,5 +594,5 @@ def lake_development(
 
     # mass conservation testing
     new_mass = utils.calc_mass_sum(cell)
-    assert abs(original_mass - new_mass) < 1.5 * 10**-7
+    assert abs(original_mass - new_mass) < 1.5 * 10 ** -7
     return Fu  # used in lid development later

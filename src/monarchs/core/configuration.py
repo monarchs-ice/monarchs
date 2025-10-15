@@ -387,9 +387,9 @@ def jit_modules(fastmath=False):
     # pylint: disable=import-outside-toplevel
     from numba import njit
     from monarchs.physics import (
+        surface_fluxes,
         percolation,
         lid,
-        surface_fluxes,
         lake,
         firn_column,
         timestep,
@@ -397,13 +397,10 @@ def jit_modules(fastmath=False):
         lateral_movement,
         virtual_lid,
         reset_column,
+        regrid_column
     )
     from monarchs.core import model_output, utils
-    from monarchs.physics import solver
-    from monarchs.physics.Numba import solver_nb as numba_solver
-
     # pylint: enable=import-outside-toplevel
-
     # modules to search from when applying jit
     module_list = [
         utils,
@@ -418,6 +415,7 @@ def jit_modules(fastmath=False):
         timestep,
         lateral_movement,
         reset_column,
+        regrid_column
     ]
 
     # Set up a list of modules to not apply njit to.
@@ -430,7 +428,14 @@ def jit_modules(fastmath=False):
         "memory_tracker",
         "do_not_jit",
         "wraps",
+        "create_dimensions",
+        "convert_bool_dtypes",
+        "create_variable",
+        "add_lat_long",
+        "get_variable_dims",
     ]  # other builtins/decorators
+
+
 
     for module in module_list:
         functions_list = getmembers(module, isfunction)
@@ -452,6 +457,13 @@ def jit_modules(fastmath=False):
                 function, fastmath=fastmath, debug=False, cache=True
             )
             setattr(module, name, jitted_function)
+
+    # we import these here since we need the other functions to first be
+    # jit-decorated
+    # pylint: disable=import-outside-toplevel
+    from monarchs.physics import solver
+    from monarchs.physics.Numba import solver_nb as numba_solver
+    # pylint: enable=import-outside-toplevel
 
     # relax the isfunction stipulation for `numba_solver` since it is mostly
     # jitted functions (which are `<CPUDispatcher>` objects rather than

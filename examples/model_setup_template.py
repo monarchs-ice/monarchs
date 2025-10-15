@@ -1,15 +1,11 @@
 # TODO - check TODOs in docstrings, move docstrings to documentation file but don't include in final runscript
-"""
-Run script for MONARCHS.
-All parameters that have default values will use these defaults if they are not specified in the runscript.
-The template includes all MONARCHS parameters explicitly.
-Since this is a Python script, you can specify parameters e.g. as numpy arrays.
-"""
+"""Run script for MONARCHS. All parameters that have default values will use
+these defaults if they are not specified in the runscript. The template
+includes all MONARCHS parameters explicitly. Since this is a Python script,
+you can specify parameters e.g. as numpy arrays."""
 
-import os
 import numpy as np
 
-print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 
@@ -21,12 +17,13 @@ Spatial parameters
         Number of columns (i.e. `x`-points) in your model grid, looking from top-down.
         MONARCHS indexes the model grid via `grid[row][col]`, i.e. the `y`-coordinate is the first index.
     
-    lat_grid_size : float, or str
-        Size of each grid cell in m. This is used to determine how much water can flow during the lateral
-        flow calculations. If set to a number, then the cells are assumed square. If set to `'dem'`, then the `x` and
-        `y` dimensions are calculated separately - in which case the cells are not necessarily assumed to be square.
-        This value is stored in the IceShelf class as `cell.grid_size_dx` and `cell.grid_size_dy`
-"""
+    lat_grid_size : float, or str Size of each grid cell in m. This is used 
+    to determine how much water can flow during the lateral flow 
+    calculations. If set to a number, then the cells are assumed square. If 
+    set to `'dem'`, then the `x` and `y` dimensions are calculated separately 
+    - in which case the cells are not necessarily assumed to be square. This 
+    value is stored in the IceShelf class as `cell.grid_size_dx` and 
+    `cell.grid_size_dy`"""
 col_amount = 50  # Number of columns in your model grid, looking from top-down.
 row_amount = 50  # Number of rows in your model grid, looking from top-down.
 lat_grid_size = (  # size of each lateral grid cell in m - can either be a number or 'dem' to calculate

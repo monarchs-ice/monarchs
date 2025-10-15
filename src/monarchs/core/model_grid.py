@@ -67,7 +67,6 @@ def initialise_iceshelf(
     """
 
     iceshelf = np.zeros((num_rows, num_cols), dtype=dtype)
-
     def validate_inputs(value, default_value, z):
         """Check for NaNs and assign default values with correct shape."""
         shape = (num_rows, num_cols, z)
@@ -204,7 +203,7 @@ def initialise_iceshelf(
     return iceshelf
 
 
-def get_spec(vert_grid_size, vert_grid_lid, vert_grid_lake):
+def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
     """
     Define the structured array dtype for the model grid, with explicit sizes
     for dimensions.

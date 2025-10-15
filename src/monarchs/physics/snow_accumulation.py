@@ -32,10 +32,15 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
     #     TODO - what happens if we have a lid? Gets added to top and we just
     #      regrid as normal.
+    # TODO - need to make sure we use actual measured snow T values
     if snow_depth != 0:
-        if cell["lake"]:  # if lake - add it to lake depth not firn
+        if cell["lid"]:
+            # if we have a lid, add snow to the top of the lid
+            # TODO - actually need to regrid, but just do this to test for now.
+            cell["lid_depth"] += snow_depth * snow_rho / cell["rho_water"]
+        elif cell["lake"] and not cell["lid"]:  # if lake - add it to lake depth not firn
             cell["lake_depth"] += snow_depth * snow_rho / cell["rho_water"]
-        else:
+        elif not cell["lid"]:
             original_mass = utils.calc_mass_sum(cell)
 
             # Set temperature just below freezing if it is somehow above 0
@@ -151,6 +156,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
                 )
                 < 1.5 * 10**-7
             )
+
 
 
 def densification(cell, t_steps_per_day):

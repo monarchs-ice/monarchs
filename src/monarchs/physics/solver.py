@@ -11,7 +11,7 @@ can be generated according to the value of a single Boolean.
 
 import numpy as np
 from scipy.optimize import fsolve, root
-from monarchs.physics import heateqn
+from monarchs.physics import heateqn, surface_fluxes
 
 
 def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
@@ -226,12 +226,41 @@ def lake_development_eqn(x, args):
     output : float
         Estimate of the surface lake temperature [K].
     """
-    J = args[0]
-    Q = args[1]
-    vert_grid_lake = args[2]
+    J = 0.1 * (9.8 * 5 * 10 ** -5 * (1.19 * 10 ** -7) ** 2 / 10 ** -6) ** (
+            1 / 3)
+
+    vert_grid_lake = args[0]
+    melt = args[1]
+    exposed_water = args[2]
+    lid = args[3]
+    lake = args[4]
+    lake_depth = args[5]
+    lw_in = args[6]
+    sw_in = args[7]
+    air_temp = args[8]
+    p_air = args[9]
+    dew_point_temperature = args[10]
+    wind = args[11]
     lake_temperature = np.zeros(int(vert_grid_lake))
     for i in range(len(lake_temperature)):
-        lake_temperature[i] = args[3 + i]
+        lake_temperature[i] = args[12 + i]
+
+    # TODO - add Q as a function of lake temperature here
+    Q = surface_fluxes.sfc_flux(
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        x[0],
+    )
+
     T_core = lake_temperature[int(vert_grid_lake / 2)]
     output = np.array(
         [
@@ -351,7 +380,8 @@ def sfc_energy_lid(x, args):
     output[0] = (
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
-        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+        # TODO - changed sign here to test
+        + k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
     return output
 

@@ -106,7 +106,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             cell["lid"] = False
             cell["lid_depth"] = 0
         if cell["v_lid_depth"] <= 0 and cell["v_lid"]:
-            print("Setting virtual lid to False at start of timestep")
             cell["v_lid"] = False
             cell["v_lid_depth"] = 0
 
@@ -216,6 +215,22 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     )
 
             elif cell["lake"] and not cell["lid"]:
+
+                # TODO - - testing freezing
+                # for lev in range(cell["vert_grid"]):
+                #     percolation.calc_refreezing(cell, lev)
+                # firn_column.firn_column(
+                #     cell,
+                #     dt,
+                #     dz,
+                #     lw_in,
+                #     sw_in,
+                #     air_temp,
+                #     p_air,
+                #     dew_point_temperature,
+                #     wind,
+                #     toggle_dict,
+                # )
                 if lake_development_toggle:
                     lake.lake_development(
                         cell,
@@ -256,11 +271,15 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         reset_column.combine_lid_firn(cell)
 
             elif cell["lake"] and cell["lid"]:
+
+                # TODO - - testing freezing
+                for lev in range(cell["vert_grid"]):
+                    percolation.calc_refreezing(cell, lev)
                 if lid_development_toggle:
                     cell["v_lid"] = (
                         False  # turn virtual lid off if full lid present
                     )
-                    lake.lake_development(
+                    Fu = lake.lake_development(
                         cell,
                         dt,
                         lw_in,
@@ -279,6 +298,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         p_air,
                         dew_point_temperature,
                         wind,
+                        Fu
                     )
                 # If we have any of the following:
                 #    very small lake depth
@@ -294,7 +314,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     cell["lake_refreeze_counter"] += 1
                 else:
                     cell["lake_refreeze_counter"] = 0
-                if cell["lake_refreeze_counter"] > 23:
+                if cell["lake_refreeze_counter"] > 47:
                     print(
                         "Lake has been very cold for two full diurnal cycles"
                         "- freezing..."
@@ -311,7 +331,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         )
                         is False
                     )
-                    or (cell["lid_melt_count"] > 24)
+                    or (cell["lid_melt_count"] > 96)
                 ):
                     reset_column.combine_lid_firn(cell)
 
@@ -358,8 +378,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
     # If firn depth goes below 10, then we now consider this cell to be
     # invalid.
-    if cell["firn_depth"] < 10:
-        print("Firn depth below 10 m - setting cell to invalid")
+    if cell["firn_depth"] < 5:
+        print("Firn depth below 5 m - setting cell to invalid")
         cell["valid_cell"] = False
 
     cell["day"] += 1

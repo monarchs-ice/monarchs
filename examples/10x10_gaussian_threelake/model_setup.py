@@ -12,7 +12,6 @@ You can alternatively get a full reference of the available model_setup paramete
 at monarchs-ice.github.io/monarchs/model_setup_reference.
 """
 
-import os
 import numpy as np
 from monarchs.dem_utils import create_dem_gaussian_test_case as cgt
 
@@ -171,7 +170,6 @@ import numpy.testing as npt
 npt.assert_array_equal(firn_depth, firn_depth[::-1, ::-1])
 
 if __name__ == "__main__":
-    print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 
     from monarchs.core.driver import monarchs
 

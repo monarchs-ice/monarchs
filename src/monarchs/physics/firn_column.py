@@ -8,9 +8,7 @@ contained in percolation.py.
 # pylint: disable=broad-exception-raised, raise-missing-from
 # TODO - flesh out module-level docstring
 import numpy as np
-from monarchs.physics import percolation
-from monarchs.physics import surface_fluxes
-from monarchs.physics import solver
+from monarchs.physics import percolation, surface_fluxes, solver, regrid_column
 from monarchs.core import utils
 
 
@@ -105,7 +103,6 @@ def firn_column(
     root, _, success, _ = solver.solve_firn_heateqn(
         x, args, fixed_sfc=False, solver_method="hybr"
     )
-
     # If the solver didn't fail (e.g. due to too many iterations), and we have
     # a surface temperature above the freezing point, then melt will occur.
     # Since the firn column has a fixed boundary condition (273.15 K),
@@ -151,7 +148,7 @@ def firn_column(
                     " meteorological data."
                 )
 
-            regrid_after_melt(cell, height_change)
+            regrid_column.regrid_after_melt(cell, height_change)
         elif not success_fixedsfc and not toggle_dict["ignore_errors"]:
             raise ValueError(
                 "Heat equation solver failed to converge when surface"
@@ -168,7 +165,6 @@ def firn_column(
     # column (refreezing as it goes).
     if percolation_toggle:
         percolation.percolate(cell, dt, perc_time_toggle=perc_time_toggle)
-
     # Update density to reflect newly calculated solid/liquid fractions
     cell["rho"] = (
         cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
@@ -298,191 +294,3 @@ def calc_height_change(
         print("...")
         raise ValueError("Height change during melt is NaN")
     return dHdt
-
-
-def regrid_after_melt(cell, height_change, lake=False):
-    """
-    After melting occurs, subtract the amount of melting from the firn height,
-    convert it into meltwater, and interpolate the entire column to the new
-    vertical profile accounting for this height change.
-    This meltwater is either converted into surface liquid water fraction,
-    or if there is a lake, into lake height.
-
-
-    Parameters
-    ----------
-    cell : numpy structured array
-        Element of the model grid we are operating on.
-    height_change : float
-        Change in the firn height as a result of melting. [m]
-    lake : bool, optional
-        Flag to determine whether a lake is present or not. This is contained
-        here so that we can re-use the bulk of this algorithm, but with some
-        small changes to reflect the different situation that occurs when a
-        lake is present.
-
-    Returns
-    -------
-    None
-    """
-    original_mass = utils.calc_mass_sum(cell)
-
-    old_depth = cell["firn_depth"]
-    dz_old = old_depth / cell["vert_grid"]
-
-    new_depth = old_depth - height_change
-    cell["firn_depth"] = new_depth
-    original_sfrac = np.copy(cell["Sfrac"])
-    # we want to conserve the *bottom* of the grid, not the top. So the correct
-    # way to interpolate is to use depth as a coordinate not height, with the
-    # new top boundary being the lowered surface and the final depth being the
-    # same.
-    # This is crucially different to interpolating from 0 to the new depth!
-    # Define old and new vertical edges for layers
-    old_edges = np.linspace(0, old_depth, cell["vert_grid"] + 1)
-    new_edges = np.linspace(
-        height_change, old_depth, cell["vert_grid"] + 1
-    )  # shift down by melt height
-
-    # a subtlety. if the height change is greater than dz_old, then
-    # the Sfrac we need to use is not just the top layer Sfrac, but a weighted
-    # average of the melted layers. This may be more than one layer.
-    if height_change > dz_old:
-        # the weights are just the fraction of each layer that is melted
-        weights = np.ones(int(height_change / dz_old) + 1)
-        weights[-1] = (
-            height_change % dz_old
-        ) / dz_old  # partial layer at the bottom
-        w_sum = np.sum(weights)
-        sfrac_weight = (
-            np.sum(original_sfrac[: int(height_change / dz_old) + 1] * weights)
-            / w_sum
-        )
-        print("Melt amount > dz_old, using weighted Sfrac = ", sfrac_weight)
-    else:
-        sfrac_weight = original_sfrac[0]
-
-    meltwater_mass = height_change * cell["rho_ice"] * sfrac_weight
-
-    # to conserve mass we need meltwater_mass = new_height * cell["rho_water"]
-    meltwater_height = meltwater_mass / cell["rho_water"]
-    # but we now need to convert that into a liquid fraction. we do this by
-    # fitting this new meltwater height into the top level of the column
-    # meltwater = meltwater_height / dz_old
-    meltwater = meltwater_height / dz_old
-    cell["Lfrac"][0] += meltwater
-
-    new_sfrac = conservative_regrid(old_edges, cell["Sfrac"], new_edges)
-    cell["firn_temperature"] = conservative_regrid(
-        old_edges, cell["firn_temperature"], new_edges
-    )
-    cell["Sfrac"] = new_sfrac
-    # Lfrac is handled a bit differently. Scaling it by the volume ratio
-    # ensures that it is conserved. This can be done since we are not removing
-    # water, we are adding it, unlike with the solid fraction which is removed
-    # (and therefore has to be specifically regridded)
-    volume_ratio = old_depth / new_depth
-    scaled_lfrac = cell["Lfrac"] * volume_ratio
-    cell["Lfrac"] = scaled_lfrac
-    # We need our interpolation to conserve mass.
-    # Therefore, we may need to scale Sfrac and LFrac to compensate.
-
-    # If we have a lake, then we add the excess water to the lake depth after
-    # doing the regridding step.
-    if lake:
-        if cell["Lfrac"][0] + cell["Sfrac"][0] > 1:
-            excess_water = cell["Lfrac"][0] + cell["Sfrac"][0] - 1
-            cell["lake_depth"] += excess_water * (
-                cell["firn_depth"] / cell["vert_grid"]
-            )
-            cell["Lfrac"][0] = 1 - cell["Sfrac"][0]
-        # If we end up with cells in the firn column that have unphysical
-        # liquid + solid fraction, ensure that the water is moved up
-        # the column. This can happen e.g. if a lake and lid are combined
-        # with the firn column and we end up with entirely liquid or
-        # solid parts of the firn column as the model evolves.
-        if np.any((cell["Lfrac"] + cell["Sfrac"]) > 1):
-            v_levs = np.where((cell["Lfrac"] + cell["Sfrac"]) > 1)[0]
-            lev = v_levs[-1]
-            percolation.calc_saturation(cell, lev, end=True)
-    cell["vertical_profile"] = np.linspace(
-        0, cell["firn_depth"], cell["vert_grid"]
-    )
-
-    # don't clip top layer as may have meltwater we want to percolate later
-    new_mass = utils.calc_mass_sum(cell)
-
-    try:
-        assert abs(new_mass - original_mass) < 1 * 10**-2
-    except Exception:
-        print(new_mass)
-        print(original_mass)
-        raise AssertionError
-
-
-def interp_nb(x_vals, x, y):
-    """
-    Wrapper function for np.interp. This function exists purely so that an
-    alternative interpolation algorithm can be
-    used throughout the code without needing to change every instance.
-    Named interp_nb as this function also has Numba compatibility in its
-    default form.
-
-    Parameters
-    ----------
-    x_vals : array_like
-        New coordinates that we want to interpolate our input y values onto.
-    x : array_like
-        Original coordinates of our y values.
-    y : array_like
-        Values we want to interpolate.
-
-    Returns
-    -------
-    res : array_like
-        values from y, interpolated onto our new grid of x_vals
-    """
-    #     TODO - possibly redundant now?
-    res = np.interp(x_vals, x, y)
-    return res
-
-
-def conservative_regrid(old_edges, old_values, new_edges):
-    """
-    Mass-conserving remapping of column values from old grid to new grid.
-
-    Parameters
-    ----------
-    old_edges : 1D numpy array of floats, length M+1
-        The edges of old vertical layers (depth boundaries).
-    old_values : 1D numpy array of floats, length M
-        Values in old layers (assumed piecewise-constant).
-    new_edges : 1D numpy array of floats, length N+1
-        The edges of new vertical layers (depth boundaries).
-
-    Returns
-    -------
-    new_values : 1D numpy array of floats, length N
-        Values remapped onto the new grid conservatively.
-    """
-    old_dz = np.diff(old_edges)
-    old_mass_cum = np.zeros(len(old_edges))
-    old_mass_cum[1:] = np.cumsum(old_values * old_dz)
-
-    new_values = np.zeros(len(new_edges) - 1)
-
-    for i in range(len(new_values)):
-        z_start = new_edges[i]
-        z_end = new_edges[i + 1]
-
-        # Integrate cumulative mass at the start and end of new layer
-        mass_start = np.interp(z_start, old_edges, old_mass_cum)
-        mass_end = np.interp(z_end, old_edges, old_mass_cum)
-
-        layer_mass = mass_end - mass_start
-        layer_dz = z_end - z_start
-        if layer_dz > 0:
-            new_values[i] = layer_mass / layer_dz
-        else:
-            new_values[i] = 0.0
-    return new_values
