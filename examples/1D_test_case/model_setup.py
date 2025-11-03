@@ -145,7 +145,7 @@ dump_filepath = f"output/1d_testcase_dump_{vertical_points_firn}.nc"
 reload_from_dump = (
     False  # Flag to determine whether to reload the state or not
 )
-use_numba = True
+use_numba = False
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 

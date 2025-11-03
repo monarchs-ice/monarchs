@@ -199,7 +199,7 @@ def lake_formation_eqn(x, args):
     T1 = args[4]
     output = np.array(
         [
-            -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
             + Q
             - k * (-T1 + x[0]) / (firn_depth / vert_grid)
         ]
@@ -264,13 +264,13 @@ def lake_development_eqn(x, args):
     T_core = lake_temperature[int(vert_grid_lake / 2)]
     output = np.array(
         [
-            -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
             + Q
-            + np.sign(T_core - x[0])
-            * 1000
-            * 4181
-            * J
-            * abs(T_core - x[0]) ** (4 / 3)
+            + (np.sign(T_core - x[0])
+               * 1000
+               * 4181
+               * J
+               * abs(T_core - x[0]) ** (4 / 3))
         ]
     )
     return output
@@ -348,11 +348,11 @@ def sfc_energy_virtual_lid(x, args):
     # an array
     output = np.zeros(1)
     output[0] = (
-        -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
-        + Q
-        - k_v_lid
-        * (-lake_temperature[1] + x[0])
-        / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
+            -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
+            + Q
+            - k_v_lid
+            * (-lake_temperature[1] + x[0])
+            / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
     )
 
     return output
@@ -371,17 +371,43 @@ def sfc_energy_lid(x, args):
     output : float
 
     """
-    Q = args[0]
-    k_lid = args[1]
-    lid_depth = args[2]
-    vert_grid_lid = args[3]
-    sub_T = args[4]
+    k_lid = args[0]
+    lid_depth = args[1]
+    vert_grid_lid = args[2]
+    sub_T = args[3]
+    melt = args[4]
+    exposed_water = args[5]
+    lid = args[6]
+    lake = args[7]
+    lake_depth = args[8]
+    lw_in = args[9]
+    sw_in = args[10]
+    air_temp = args[11]
+    p_air = args[12]
+    dew_point_temperature = args[13]
+    wind = args[14]
+
     output = np.zeros(1)
+    Q = surface_fluxes.sfc_flux(
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        x[0],
+    )
+
     output[0] = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
-        + Q
-        # TODO - changed sign here to test
-        + k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+            + Q
+            # TODO - changed sign here to test
+            - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
     return output
 
@@ -425,6 +451,7 @@ def lid_seb_solver(x, args, v_lid=False):
     if v_lid:
         eqn = sfc_energy_virtual_lid
     else:
+        print('Using true lid surface energy balance solver')
         eqn = sfc_energy_lid
     root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
     root = np.around(root, decimals=8)

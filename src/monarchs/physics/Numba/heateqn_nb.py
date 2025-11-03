@@ -269,12 +269,15 @@ def heateqn_lid(x, output, args):
         wind,
     ) = extract_args.extract_args_lid(args)
 
-    # k_ice = (1000 * 2.24 * 0.001 + 5.975 * 0.000001 *
-    # (273.15 - cell.lid_temperature) ** 1.156)
+
+    k_lid = 1000 * (
+        2.24e-03 + 5.975e-06 * ((273.15 - lid_temperature) ** 1.156)
+    )
     # k = cell.Sfrac_lid * k_ice + (1 - cell.Sfrac_lid - cell.Lfrac_lid)
     # * cell.k_air + cell.Lfrac_lid * cell.k_water
+
     cp_ice = 1000 * (0.00716 * lid_temperature + 0.138)
-    cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cp_air
+    cp = Sfrac_lid * cp_ice #+ (1 - Sfrac_lid) * cp_air
     rho = 917
     # thermal diffusivity [m^2 s^-1]
     kappa = k_lid / (cp * rho)
@@ -294,13 +297,13 @@ def heateqn_lid(x, output, args):
         wind,
         x[0],
     )
-    output[0] = k_lid * (x[0] - x[1]) / dz - (Q - epsilon * sigma * x[0] ** 4)
+    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
 
     for idx in np.arange(1, vert_grid_lid - 1):
         output[idx] = (
             lid_temperature[idx]
             - x[idx]
-            + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+            + dt * (kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2
         )
     # fix boundary temperature to 273.15
     output[-1] = x[vert_grid_lid - 1] - 273.15

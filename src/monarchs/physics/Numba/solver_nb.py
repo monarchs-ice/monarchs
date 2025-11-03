@@ -335,7 +335,6 @@ def lake_development_eqn(x, output, args):
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[12 + i]
 
-    # TODO - add Q as a function of lake temperature here
     Q = surface_fluxes.sfc_flux(
         melt,
         exposed_water,
@@ -448,26 +447,49 @@ def sfc_energy_lid(x, output, args):
     Parameters
     ----------
     x
-    output
     args
 
     Returns
     -------
+    output : float
 
     """
+    k_lid = args[0]
+    lid_depth = args[1]
+    vert_grid_lid = args[2]
+    sub_T = args[3]
+    melt = args[4]
+    exposed_water = args[5]
+    lid = args[6]
+    lake = args[7]
+    lake_depth = args[8]
+    lw_in = args[9]
+    sw_in = args[10]
+    air_temp = args[11]
+    p_air = args[12]
+    dew_point_temperature = args[13]
+    wind = args[14]
 
-    Q = args[0]
-    k_lid = args[1]
-    lid_depth = args[2]
-    vert_grid_lid = args[3]
-    sub_T = args[4]
+    Q = surface_fluxes.sfc_flux(
+        melt,
+        exposed_water,
+        lid,
+        lake,
+        lake_depth,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        x[0],
+    )
+
     output[0] = (
         -0.98 * 5.670373 * 10**-8 * x[0] ** 4
         + Q
-    # TODO - changed sign here
-        + k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
-
 
 sfc_energy_virtual_lid = cfunc(minpack_sig)(sfc_energy_virtual_lid)
 sfc_energy_lid = cfunc(minpack_sig)(sfc_energy_lid)

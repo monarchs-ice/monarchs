@@ -167,11 +167,11 @@ def get_snow_sum(met_data_grid, grid, met_start_idx, met_end_idx, snow_added):
         for j in range(len(grid[0])):
             if grid["valid_cell"][i, j]:
                 snow_array = (
-                    met_data_grid["snow_dens"][met_start_idx:met_end_idx, i, j]
-                    * met_data_grid["snowfall"][met_start_idx:met_end_idx, i, j]
+                    met_data_grid["snow_dens"][:, i, j]
+                    * met_data_grid["snowfall"][:, i, j]
                 )
-
                 snow_added += np.sum(snow_array)
+
     return snow_added
 
 

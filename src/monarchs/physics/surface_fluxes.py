@@ -190,3 +190,86 @@ def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature):
     Fsens = 1.275 * 1005 * CT * wind * (air_temp - T_sfc)
     Flat = 1.275 * L * CT * wind * (s_hum / 1000 - q_0)
     return Flat, Fsens
+#
+#
+# def bulk_fluxes(
+#     wind,                   # m s^-1 at 10 m
+#     air_temp,               # K (2 m or surface-layer air temperature)
+#     T_sfc,                  # K (skin/surface temperature)
+#     p_air_hPa,              # hPa (surface pressure)
+#     dew_point_temperature,  # K (2 m dew point)
+#     is_ice_surface=True,    # choose saturation at surface over ice or water
+#     z_ref=10.0              # m (measurement height)
+# ):
+#     """
+#     Compute bulk turbulent sensible and latent heat fluxes using a bulk-Ri stability correction.
+#     SIGN CONVENTION: Positive flux = downward (from air to surface).
+#
+#     Returns:
+#         Flat (W m^-2): Latent heat flux (downward positive; evaporation makes this typically negative).
+#         Fsens (W m^-2): Sensible heat flux (downward positive if air > surface).
+#     """
+#
+#     # --- Constants ---
+#     g      = 9.80665          # m s^-2
+#     Rd     = 287.05           # J kg^-1 K^-1
+#     Rv     = 461.5            # J kg^-1 K^-1
+#     cp     = 1005.0           # J kg^-1 K^-1 (dry air)
+#     Lv     = 2.5e6            # J kg^-1 (vaporization over liquid)
+#     Ls     = 2.834e6          # J kg^-1 (sublimation over ice)
+#     L      = Ls if is_ice_surface else Lv
+#
+#     # Neutral transfer coefficient (heat/moisture); can tune 1.1e-3–1.5e-3
+#     C0     = 1.3e-3
+#
+#     # Bulk-Richardson stability parameters (as in your code)
+#     b      = 20.0
+#     c_coef = 1961.0 * b * C0
+#
+#     # --- Pressure & density ---
+#     p_Pa   = 100.0 * float(p_air_hPa)                 # convert hPa -> Pa
+#     # virtual temperature (simple): Tv ≈ T * (1 + 0.61 q). Start with q from dew point
+#     # Saturation vapor pressure at dew point (over water; dewpoint is over water by definition)
+#     # Magnus (Alduchov & Eskridge-like) form:
+#     a1, a3, a4 = 611.21, 17.502, 32.19  # Pa, -, K  (over water)
+#     e_air = a1 * np.exp(a3 * (dew_point_temperature - 273.16) /
+#                         (dew_point_temperature - a4))  # Pa
+#
+#     # Specific humidity of air (kg/kg)
+#     q_air = (Rd / Rv) * e_air / (p_Pa - (1.0 - Rd/Rv) * e_air)
+#
+#     # Virtual temperature and density
+#     Tv_air = air_temp * (1.0 + 0.61 * q_air)
+#     rho    = p_Pa / (Rd * Tv_air)                     # kg m^-3
+#
+#     # --- Surface saturation specific humidity q_sfc ---
+#     # Choose saturation over ice or over water for the skin temperature
+#     if is_ice_surface:
+#         # Saturation over ice (e.g., Murphy & Koop 2005 or a common approximation)
+#         # Here: a practical approximation
+#         e_sfc = 611.15 * np.exp(22.587 * (T_sfc - 273.16) / (T_sfc + 0.7))  # Pa (over ice)
+#     else:
+#         # Saturation over water (Magnus)
+#         e_sfc = a1 * np.exp(a3 * (T_sfc - 273.16) / (T_sfc - a4))          # Pa (over water)
+#
+#     q_sfc = 0.622 * e_sfc / (p_Pa - 0.378 * e_sfc)    # kg/kg
+#
+#     # --- Stability: bulk Richardson number at z_ref ---
+#     # Avoid division by zero
+#     U = max(1e-6, float(wind))
+#     Ri = g * (air_temp - T_sfc) * z_ref / (air_temp * U**2)
+#
+#     # Bulk stability correction to transfer coefficient
+#     if Ri < 0.0:
+#         C_bulk = C0 * (1.0 - 2.0 * b * Ri / (1.0 + c_coef * abs(Ri)**0.5))
+#     else:
+#         C_bulk = C0 * (1.0 + b * Ri)**(-2.0)
+#
+#     # Use same coefficient for heat/moisture (common in bulk schemes)
+#     CH = CE = C_bulk
+#
+#     # --- Fluxes (downward positive) ---
+#     Fsens =  rho * cp * CH * U * (air_temp - T_sfc)          # W m^-2
+#     Flat  =  rho * L  * CE * U * (q_air    - q_sfc)          # W m^-2
+#
+#     return float(Flat), float(Fsens)

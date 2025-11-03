@@ -240,6 +240,9 @@ def heateqn_lid(
     """
     cp_ice = 1000 * (0.00716 * cell["lid_temperature"] + 0.138)
     cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cell["cp_air"]
+    k_lid = 1000 * (
+        2.24e-03 + 5.975e-06 * ((273.15 - cell["lid_temperature"]) ** 1.156)
+    )
     kappa = k_lid / (cp * cell["rho_ice"])
     epsilon = 0.98
     sigma = 5.670374 * 10**-8
@@ -258,12 +261,12 @@ def heateqn_lid(
         x[0],
     )
     output = np.zeros(cell["vert_grid_lid"])
-    output[0] = k_lid * (x[0] - x[1]) / dz - (Q - epsilon * sigma * x[0] ** 4)
+    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
     idx = np.arange(1, cell["vert_grid_lid"] - 1)
     output[idx] = (
         cell["lid_temperature"][idx]
         - x[idx]
-        + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+        + dt * (kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2
     )
     output[-1] = x[cell["vert_grid_lid"] - 1] - 273.15
     return output

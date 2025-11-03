@@ -314,7 +314,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     cell["lake_refreeze_counter"] += 1
                 else:
                     cell["lake_refreeze_counter"] = 0
-                if cell["lake_refreeze_counter"] > 47:
+                if cell["lake_refreeze_counter"] > 12:
                     print(
                         "Lake has been very cold for two full diurnal cycles"
                         "- freezing..."
