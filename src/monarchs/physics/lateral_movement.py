@@ -9,7 +9,6 @@ from numba import types
 from monarchs.core.utils import find_nearest
 from monarchs.physics.percolation import percolate, calc_saturation
 
-
 try:
     from numba import prange
 except ImportError:
@@ -328,8 +327,8 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     #      - centre to centre, is probably fine assuming size of adjacent cells
     #      - is the same, but could implement a fix at some point.
 
-    big_pi = -2.53 * 10**-10  # hydraulic permeability (m^2)
-    eta = 1.787 * 10**-3  # viscosity(Pa/s)
+    big_pi = -2.53 * 10 ** -10  # hydraulic permeability (m^2)
+    eta = 1.787 * 10 ** -3  # viscosity(Pa/s)
     cell["rho"] = (
         cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
     )

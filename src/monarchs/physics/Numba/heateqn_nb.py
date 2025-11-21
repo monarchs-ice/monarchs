@@ -47,18 +47,18 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     k, kappa = get_k_and_kappa(
         T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
     )
-    # Total number of layers in the firn column
+    # total number of layers in the firn column
     total_len = np.shape(cell["firn_temperature"])[0]
-    # Number of layers below the nonlinear region
+    # number of layers below the nonlinear region
     n = total_len - N
 
     # Initialize diagonals and RHS
-    A = np.zeros(n - 1, dtype=np.float64)  # Sub-diagonal (lower)
-    B = np.zeros(n, dtype=np.float64)  # Main diagonal
-    C = np.zeros(n - 1, dtype=np.float64)  # Super-diagonal (upper)
+    A = np.zeros(n - 1, dtype=np.float64)  # sub-diagonal (lower)
+    B = np.zeros(n, dtype=np.float64)  # main diagonal
+    C = np.zeros(n - 1, dtype=np.float64)  # super-diagonal (upper)
     D = np.zeros(n, dtype=np.float64)  # RHS vector
 
-    factor = np.float64(dt / dz**2)
+    factor = np.float64(dt / dz ** 2)
 
     # First row: connect to top nonlinear region
     i = 0
@@ -83,14 +83,13 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
         C[i] = -alpha
         D[i] = T_old[i]
 
-    # Last row: Neumann BC using backward difference
+    # zero-flux (neumann) boundary condition
     i = n - 1
     alpha = factor * kappa[i]
     A[i - 1] = -alpha
     B[i] = 1 + alpha
     D[i] = T_old[i]
     T_new = solve_tridiagonal(A, B, C, D)
-    # print(T_new)
     return T_new
 
 
@@ -204,16 +203,16 @@ def heateqn(x, output, args):
         output[idx] = (
             T[idx]
             - x[idx]
-            + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+            + dt
+            * (kappa[idx] / dz ** 2)
+            * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
         )
 
     output[N - 1] = (
         T[N - 1]
         - x[N - 1]
-        + dt * (kappa[N - 1] / dz**2) * (-x[N - 1] + x[N - 2])
+        + dt * (kappa[N - 1] / dz ** 2) * (-x[N - 1] + x[N - 2])
     )
-
-    # print(f"Residual for T_sfc = {x}: {residual}")
 
 
 def heateqn_lid(x, output, args):
@@ -269,20 +268,18 @@ def heateqn_lid(x, output, args):
         wind,
     ) = extract_args.extract_args_lid(args)
 
-
     k_lid = 1000 * (
         2.24e-03 + 5.975e-06 * ((273.15 - lid_temperature) ** 1.156)
     )
-    # k = cell.Sfrac_lid * k_ice + (1 - cell.Sfrac_lid - cell.Lfrac_lid)
-    # * cell.k_air + cell.Lfrac_lid * cell.k_water
 
     cp_ice = 1000 * (0.00716 * lid_temperature + 0.138)
-    cp = Sfrac_lid * cp_ice #+ (1 - Sfrac_lid) * cp_air
+    cp = Sfrac_lid * cp_ice
     rho = 917
     # thermal diffusivity [m^2 s^-1]
     kappa = k_lid / (cp * rho)
     epsilon = 0.98
-    sigma = 5.670374 * (10**-8)
+    sigma = 5.670374 * (10 ** -8)
+    tau_ice = 1.5
     Q = surface_fluxes.sfc_flux(
         melt,
         exposed_water,
@@ -297,15 +294,33 @@ def heateqn_lid(x, output, args):
         wind,
         x[0],
     )
-    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
+    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (
+        Q - epsilon * sigma * x[0] ** 4
+    )
+    # SW radiation baked into surface flux already
 
     for idx in np.arange(1, vert_grid_lid - 1):
+        z_depth = idx * dz
+        flux_in = sw_in * 0.6 * np.exp(-tau_ice * z_depth)
+        flux_out = sw_in * 0.6 * np.exp(-tau_ice * z_depth + 1)
+        sw_absorbed_in_layer = flux_in - flux_out
+        # convert source to temperature change contribution: S / (rho * cp)
+        # units: [W/m3] / ([kg/m3] * [J/kg/K]) = [J/s/m3] / [J/m3/K] = K/s
+        dT_solar = sw_absorbed_in_layer / (rho * cp[idx])
         output[idx] = (
             lid_temperature[idx]
             - x[idx]
-            + dt * (kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2
+            + dt
+            * (
+                (
+                    (kappa[idx])
+                    * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+                    / dz ** 2
+                )
+            + dT_solar)
+
         )
-    # fix boundary temperature to 273.15
+
     output[-1] = x[vert_grid_lid - 1] - 273.15
 
 

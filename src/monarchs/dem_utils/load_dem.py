@@ -150,11 +150,13 @@ def export_DEM(
         # projection, then back again into lat/long.
 
         corners = [bottom_left, bottom_right, top_right, top_left]
-        lon_min, lon_max = min([corner[1] for corner in corners]), max(
-            [corner[1] for corner in corners]
+        lon_min, lon_max = (
+            min([corner[1] for corner in corners]),
+            max([corner[1] for corner in corners]),
         )
-        lat_min, lat_max = min([corner[0] for corner in corners]), max(
-            [corner[0] for corner in corners]
+        lat_min, lat_max = (
+            min([corner[0] for corner in corners]),
+            max([corner[0] for corner in corners]),
         )
         subset_raster = projected_raster.rio.clip_box(
             minx=lon_min,
@@ -341,11 +343,7 @@ def generate_diagnostic_plots(
     bounds = np.arange(0, 500, 1)
 
     cont = ax1.contourf(
-        lons,
-        lats,
-        heights,
-        cmap=cmap,
-        transform=ccrs.PlateCarree(),
+        lons, lats, heights, cmap=cmap, transform=ccrs.PlateCarree(),
     )
     # levels=bounds, vmin=0, vmax=50)
     ax1.coastlines()

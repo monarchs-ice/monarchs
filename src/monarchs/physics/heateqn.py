@@ -75,12 +75,12 @@ def heateqn(
     residual[idx] = (
         cell["firn_temperature"][idx]
         - x[idx]
-        + dt * kappa[idx] * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2
+        + dt * kappa[idx] * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz ** 2
     )
     residual[-1] = (
         cell["firn_temperature"][len(x) - 1]
         - x[len(x) - 1]
-        + dt * (kappa[len(x) - 1]) * (-x[len(x) - 1] + x[len(x) - 2]) / dz**2
+        + dt * (kappa[len(x) - 1]) * (-x[len(x) - 1] + x[len(x) - 2]) / dz ** 2
     )
     # print(f"Residual for T_sfc = {x}: {residual}")
 
@@ -128,7 +128,7 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     C = np.zeros(n - 1, dtype=np.float64)
     D = np.zeros(n, dtype=np.float64)
 
-    factor = np.float64(dt / dz**2)
+    factor = np.float64(dt / dz ** 2)
 
     # First row: connect to top nonlinear region
     i = 0
@@ -245,7 +245,10 @@ def heateqn_lid(
     )
     kappa = k_lid / (cp * cell["rho_ice"])
     epsilon = 0.98
-    sigma = 5.670374 * 10**-8
+    tau_ice = 1.5
+    sigma = 5.670374 * 10 ** -8
+    rho = 917
+
     Q = sfc_flux(
         cell["melt"],
         cell["exposed_water"],
@@ -260,13 +263,24 @@ def heateqn_lid(
         wind,
         x[0],
     )
+
     output = np.zeros(cell["vert_grid_lid"])
-    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
+    input_sw = np.zeros(cell["vert_grid_lid"])
+    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (
+        Q - epsilon * sigma * x[0] ** 4
+    )
     idx = np.arange(1, cell["vert_grid_lid"] - 1)
+    z_depth = idx * dz
+    flux_in = sw_in * 0.6 * np.exp(-tau_ice * z_depth)
+    flux_out = sw_in * 0.6 * np.exp(-tau_ice * z_depth + 1)
+    sw_absorbed_in_layer = flux_in - flux_out
+    dT_solar = sw_absorbed_in_layer / (rho * cp[idx])
+
     output[idx] = (
         cell["lid_temperature"][idx]
         - x[idx]
-        + dt * (kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2
+        + dt * ((kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz ** 2)
+        + dt * dT_solar
     )
     output[-1] = x[cell["vert_grid_lid"] - 1] - 273.15
     return output

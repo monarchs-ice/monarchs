@@ -67,6 +67,7 @@ def initialise_iceshelf(
     """
 
     iceshelf = np.zeros((num_rows, num_cols), dtype=dtype)
+
     def validate_inputs(value, default_value, z):
         """Check for NaNs and assign default values with correct shape."""
         shape = (num_rows, num_cols, z)

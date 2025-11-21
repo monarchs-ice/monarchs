@@ -16,7 +16,7 @@ SAFE_IMPORTS = {
     "scipy",
     "datetime",
     "pandas",
-    "cartopy"
+    "cartopy",
 }
 MODULE_NAME = "monarchs.core.load_model_setup"
 

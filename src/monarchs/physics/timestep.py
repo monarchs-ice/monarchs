@@ -99,7 +99,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         raise ValueError("NaN in firn temperature")
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
-        if cell["lake_depth"] <= 0 and cell["lake"]:
+        if cell["lake_depth"] <= 1e-5 and cell["lake"]:
             cell["lake"] = False
             cell["lake_depth"] = 0
         if cell["lid_depth"] <= 0 and cell["lid"]:
@@ -172,18 +172,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 )
                 if success:
                     cell["firn_temperature"] = sol
-                else:
-                    print(
-                        "Warning - solver failed to converge - lake"
-                        " development"
-                    )
-                    print(x)
-                    print(cell["lake"])
-                    print(cell["lid"])
-                    print(cell["lake_depth"])
-                    print(success)
-                    print(cell["firn_depth"])
-                    print(cell["firn_temperature"])
 
             cell["rho"] = (
                 cell["Sfrac"] * cell["rho_ice"]
@@ -216,23 +204,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
             elif cell["lake"] and not cell["lid"]:
 
-                # TODO - - testing freezing
-                # for lev in range(cell["vert_grid"]):
-                #     percolation.calc_refreezing(cell, lev)
-                # firn_column.firn_column(
-                #     cell,
-                #     dt,
-                #     dz,
-                #     lw_in,
-                #     sw_in,
-                #     air_temp,
-                #     p_air,
-                #     dew_point_temperature,
-                #     wind,
-                #     toggle_dict,
-                # )
                 if lake_development_toggle:
-                    lake.lake_development(
+                    Fu = lake.lake_development(
                         cell,
                         dt,
                         lw_in,
@@ -254,21 +227,14 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                             p_air,
                             dew_point_temperature,
                             wind,
+                            Fu,
                         )
 
                     # if virtual lid freezes the entire lake (possible if
                     # lateral movement), then combine (virtual) lid and
                     # lake profiles.
-                    if (
-                        cell["lake_depth"] <= 1e-5
-                        or np.any(
-                            cell["lake_temperature"][
-                                cell["lake_temperature"] > 273.15
-                            ]
-                        )
-                        is False
-                    ):
-                        reset_column.combine_lid_firn(cell)
+                    if cell["lake_depth"] <= 1e-5:
+                        reset_column.combine_lid_firn(cell, freeze_lake=False)
 
             elif cell["lake"] and cell["lid"]:
 
@@ -276,9 +242,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 for lev in range(cell["vert_grid"]):
                     percolation.calc_refreezing(cell, lev)
                 if lid_development_toggle:
-                    cell["v_lid"] = (
-                        False  # turn virtual lid off if full lid present
-                    )
+                    cell[
+                        "v_lid"
+                    ] = False  # turn virtual lid off if full lid present
                     Fu = lake.lake_development(
                         cell,
                         dt,
@@ -298,42 +264,15 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         p_air,
                         dew_point_temperature,
                         wind,
-                        Fu
+                        Fu,
                     )
-                # If we have any of the following:
-                #    very small lake depth
-                #    any points in the lake below freezing
-                #    The whole lake is below a threshold temperature
-                # then we say that the lake is frozen, and combine it
-                # with the lid and firn to create a singular profile again.
-                # first determine if the lake temperature is below freezing.
-                # If so, count.
-                # If the count goes above 48 (48h of freezing), then freeze
-                # the whole lake.
-                if (cell["lake_temperature"] <= 273.15).all():
-                    cell["lake_refreeze_counter"] += 1
-                else:
-                    cell["lake_refreeze_counter"] = 0
-                if cell["lake_refreeze_counter"] > 12:
-                    print(
-                        "Lake has been very cold for two full diurnal cycles"
-                        "- freezing..."
-                    )
-                    reset_column.combine_lid_firn(cell)
+                # Check for if we need to reset the column - two possible
+                # conditions - if lake depth v small,
+                #            - or if lid melt count > 24 (i.e. lid has been
+                #              melting for 1 full day)
+                if cell["lake_depth"] <= 1e-5 or (cell["lid_melt_count"] > 24):
 
-                if (
-                    cell["lake_depth"] <= 1e-5
-                    or (
-                        np.any(
-                            cell["lake_temperature"][
-                                cell["lake_temperature"] > 273.15
-                            ]
-                        )
-                        is False
-                    )
-                    or (cell["lid_melt_count"] > 96)
-                ):
-                    reset_column.combine_lid_firn(cell)
+                    reset_column.combine_lid_firn(cell, freeze_lake=False)
 
         # If we have Sfrac + Lfrac > 1, we need to ensure that Lfrac is
         # adjusted accordingly.
@@ -376,8 +315,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             0, cell["firn_depth"], cell["vert_grid"]
         )
 
-    # If firn depth goes below 10, then we now consider this cell to be
-    # invalid.
+    # If firn depth goes below 5, then we now consider this cell to be
+    # invalid. This prevents situations where points where water concentrates
+    # and melts through the firn column causing the whole model to crash.
     if cell["firn_depth"] < 5:
         print("Firn depth below 5 m - setting cell to invalid")
         cell["valid_cell"] = False

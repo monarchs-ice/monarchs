@@ -195,8 +195,7 @@ def check_correct(cell):
         print("Sfrac :", cell["Sfrac"][0])
         print("Lfrac :", cell["Lfrac"][0])
         print(
-            "Sfrac + Lfrac:",
-            cell["Lfrac"][0] + cell["Sfrac"][0],
+            "Sfrac + Lfrac:", cell["Lfrac"][0] + cell["Sfrac"][0],
         )
         raise ValueError(
             f"{func_name}: Sum of liquid and solid"
@@ -332,7 +331,7 @@ def check_energy_conservation(grid):
         for cell in row:
             if cell["valid_cell"]:
                 cp_ice = 1000 * (
-                    7.16 * 10**-3 * cell["firn_temperature"] + 0.138
+                    7.16 * 10 ** -3 * cell["firn_temperature"] + 0.138
                 )
                 cp = (
                     cell["cp_water"] * cell["Lfrac"]

@@ -62,10 +62,18 @@ def sfc_flux(
     # Positive going into ice shelf
     alpha = sfc_albedo(melt, exposed_water, lid, lake, lake_depth)
     Flat, Fsens = bulk_fluxes(
-        wind, air_temp, xsurf, p_air, dew_point_temperature
+        wind, air_temp, xsurf, p_air, dew_point_temperature, lake, lid
     )
     epsilon = 0.98  # emissivity
-    Q = epsilon * lw_in + (1 - alpha) * sw_in + Flat + Fsens
+
+    if lid:
+        frac_scaling = 0.4  # fraction of solar absorbed at lid surface
+    elif lake:
+        frac_scaling = 0.4  # fraction of solar absorbed at lake surface
+    else:
+        frac_scaling = 1
+    Q = epsilon * lw_in + ((1 - alpha) * sw_in) * frac_scaling + Flat + Fsens
+
     return Q
 
 
@@ -114,13 +122,14 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
     return alpha
 
 
-def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature):
+def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid):
     """
     Calculate the latent and sensible heat fluxes given the wind speed and
     surface meteorology.
 
     Parameters
     ----------
+
     wind : float
         Wind speed. [m s^-1].
     air_temp : float
@@ -131,7 +140,8 @@ def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature):
         Surface air pressure. [hPa]
     dew_point_temperature : float
         2m dewpoint temperature. [K]
-
+    lid
+    lake
     Returns
     -------
     Flat : float
@@ -151,125 +161,50 @@ def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature):
     b = 20
     # Height windspeed is measured at
     dz = 10
-    CT0 = 1.3 * 10**-3
+    CT0 = 1.3 * 10 ** -3
     c = 1961 * b * CT0
     # J kg−1 K−1 From section 12 of documentation in docstring
     R_dry = 287.0597
     # J kg−1 K−1
     R_sat = 461.5250
     # Pa
-    a1 = 611.21
     # K
     T_0 = 273.16
     # This and a4 set to over water values as dewpoint temp being
     # used (following ERA-5 documentation)
-    a3 = 17.502
-    # K
-    a4 = 32.19
-    # Calculate the saturation vapour pressure at the dewpoint temperature
-    # (i.e. the vapour pressure at the real temp)
+    # Choose coefficients depending on surface
+    if lake and not lid:  # i.e. over water
+        a1, a3, a4 = 611.21, 17.502, 32.19
+        L = 2.501e6
+        p_v = 2.53e11 * np.exp(-5420 / T_sfc)
+
+    else:  # over ice/snow
+        a1 = 611.21
+        a3, a4 = 22.587, 0.7
+        L = 2.834e6
+        # saturation vapor pressure over ice
+        p_v = a1 * np.exp(22.587 * (T_sfc - T_0) / (T_sfc + 0.7))
+
     e_sat = a1 * np.exp(
         a3 * (dew_point_temperature - T_0) / (dew_point_temperature - a4)
     )
-    # Alternative form for testing - Clausius-Clapeyron over ice
-    # e_sat = a1 * np.exp(22.587 * (dew_point_temperature - T_0) / (dew_point_temperature + 0.7))
-    # this is in kg/kg I think?
+    p_air *= 100  # convert hPa to Pa for consistency
+    # Calculate the saturation vapour pressure at the dewpoint temperature
+    # (i.e. the vapour pressure at the real temp)
+    # this is in kg/kg
     s_hum = (R_dry / R_sat) * e_sat / (p_air - (e_sat * (1 - (R_dry / R_sat))))
     # Richardson number
     if wind == 0:
         Ri = 0
     else:
-        Ri = g * (air_temp - T_sfc) * dz / (air_temp * wind**2)
+        Ri = g * (air_temp - T_sfc) * dz / (air_temp * wind ** 2)
     if Ri < 0:
         CT = CT0 * (1 - 2 * b * Ri / (1 + c * abs(Ri) ** 0.5))
     else:
         CT = CT0 * (1 + b * Ri) ** -2
-    L = 2.501 * 10**6
-    p_v = 2.53 * 10**8 * np.exp(-5420 / T_sfc)
+    # added extra factor of 1000 to convert from kPa to Pa
     q_0 = 0.622 * p_v / (p_air - 0.378 * p_v)
-    Fsens = 1.275 * 1005 * CT * wind * (air_temp - T_sfc)
-    Flat = 1.275 * L * CT * wind * (s_hum / 1000 - q_0)
+    Fsens = 1.275 * 1000 * CT * wind * (air_temp - T_sfc)
+    #  q_0 is in kg/kg, s_hum is in kg/kg also.
+    Flat = 1.275 * L * CT * wind * (s_hum - q_0)
     return Flat, Fsens
-#
-#
-# def bulk_fluxes(
-#     wind,                   # m s^-1 at 10 m
-#     air_temp,               # K (2 m or surface-layer air temperature)
-#     T_sfc,                  # K (skin/surface temperature)
-#     p_air_hPa,              # hPa (surface pressure)
-#     dew_point_temperature,  # K (2 m dew point)
-#     is_ice_surface=True,    # choose saturation at surface over ice or water
-#     z_ref=10.0              # m (measurement height)
-# ):
-#     """
-#     Compute bulk turbulent sensible and latent heat fluxes using a bulk-Ri stability correction.
-#     SIGN CONVENTION: Positive flux = downward (from air to surface).
-#
-#     Returns:
-#         Flat (W m^-2): Latent heat flux (downward positive; evaporation makes this typically negative).
-#         Fsens (W m^-2): Sensible heat flux (downward positive if air > surface).
-#     """
-#
-#     # --- Constants ---
-#     g      = 9.80665          # m s^-2
-#     Rd     = 287.05           # J kg^-1 K^-1
-#     Rv     = 461.5            # J kg^-1 K^-1
-#     cp     = 1005.0           # J kg^-1 K^-1 (dry air)
-#     Lv     = 2.5e6            # J kg^-1 (vaporization over liquid)
-#     Ls     = 2.834e6          # J kg^-1 (sublimation over ice)
-#     L      = Ls if is_ice_surface else Lv
-#
-#     # Neutral transfer coefficient (heat/moisture); can tune 1.1e-3–1.5e-3
-#     C0     = 1.3e-3
-#
-#     # Bulk-Richardson stability parameters (as in your code)
-#     b      = 20.0
-#     c_coef = 1961.0 * b * C0
-#
-#     # --- Pressure & density ---
-#     p_Pa   = 100.0 * float(p_air_hPa)                 # convert hPa -> Pa
-#     # virtual temperature (simple): Tv ≈ T * (1 + 0.61 q). Start with q from dew point
-#     # Saturation vapor pressure at dew point (over water; dewpoint is over water by definition)
-#     # Magnus (Alduchov & Eskridge-like) form:
-#     a1, a3, a4 = 611.21, 17.502, 32.19  # Pa, -, K  (over water)
-#     e_air = a1 * np.exp(a3 * (dew_point_temperature - 273.16) /
-#                         (dew_point_temperature - a4))  # Pa
-#
-#     # Specific humidity of air (kg/kg)
-#     q_air = (Rd / Rv) * e_air / (p_Pa - (1.0 - Rd/Rv) * e_air)
-#
-#     # Virtual temperature and density
-#     Tv_air = air_temp * (1.0 + 0.61 * q_air)
-#     rho    = p_Pa / (Rd * Tv_air)                     # kg m^-3
-#
-#     # --- Surface saturation specific humidity q_sfc ---
-#     # Choose saturation over ice or over water for the skin temperature
-#     if is_ice_surface:
-#         # Saturation over ice (e.g., Murphy & Koop 2005 or a common approximation)
-#         # Here: a practical approximation
-#         e_sfc = 611.15 * np.exp(22.587 * (T_sfc - 273.16) / (T_sfc + 0.7))  # Pa (over ice)
-#     else:
-#         # Saturation over water (Magnus)
-#         e_sfc = a1 * np.exp(a3 * (T_sfc - 273.16) / (T_sfc - a4))          # Pa (over water)
-#
-#     q_sfc = 0.622 * e_sfc / (p_Pa - 0.378 * e_sfc)    # kg/kg
-#
-#     # --- Stability: bulk Richardson number at z_ref ---
-#     # Avoid division by zero
-#     U = max(1e-6, float(wind))
-#     Ri = g * (air_temp - T_sfc) * z_ref / (air_temp * U**2)
-#
-#     # Bulk stability correction to transfer coefficient
-#     if Ri < 0.0:
-#         C_bulk = C0 * (1.0 - 2.0 * b * Ri / (1.0 + c_coef * abs(Ri)**0.5))
-#     else:
-#         C_bulk = C0 * (1.0 + b * Ri)**(-2.0)
-#
-#     # Use same coefficient for heat/moisture (common in bulk schemes)
-#     CH = CE = C_bulk
-#
-#     # --- Fluxes (downward positive) ---
-#     Fsens =  rho * cp * CH * U * (air_temp - T_sfc)          # W m^-2
-#     Flat  =  rho * L  * CE * U * (q_air    - q_sfc)          # W m^-2
-#
-#     return float(Flat), float(Fsens)

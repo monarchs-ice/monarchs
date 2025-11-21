@@ -290,16 +290,16 @@ def lake_formation_eqn(x, output, args):
     # set output[0] rather than just output else we will just return our
     # initial guess.
     output[0] = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
         + Q
-        - k * (-T1 + x[0]) / (firn_depth / vert_grid)
+        - k * (x[0] - T1) / (firn_depth / vert_grid)
     )
 
 
 @jit(nopython=True, fastmath=False)
 def lake_development_eqn(x, output, args):
     """
-    Scipy-compatible form of the lake development version of the surface
+    Numba-compatible form of the lake development version of the surface
     temperature equation. Called in get_lake_solver.
 
     Parameters
@@ -317,7 +317,8 @@ def lake_development_eqn(x, output, args):
         Estimate of the surface lake temperature [K].
     """
     J = 0.1 * (9.8 * 5 * 10 ** -5 * (1.19 * 10 ** -7) ** 2 / 10 ** -6) ** (
-            1 / 3)
+        1 / 3
+    )
 
     vert_grid_lake = args[0]
     melt = args[1]
@@ -351,15 +352,17 @@ def lake_development_eqn(x, output, args):
     )
 
     T_core = lake_temperature[int(vert_grid_lake / 2)]
+    # fluxes +ve downwards - if T_sfc > T_core, we have a flux downward
+    # which cools the lake surface - negative sign
     output[0] = np.array(
         [
-            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+            -0.98 * (5.670373 * 10 ** -8) * (x[0] ** 4)
             + Q
-            + np.sign(T_core - x[0])
+            - np.sign(x[0] - T_core)
             * 1000
             * 4181
             * J
-            * abs(T_core - x[0]) ** (4 / 3)
+            * abs(x[0] - T_core) ** (4 / 3)
         ]
     )
 
@@ -431,12 +434,14 @@ def sfc_energy_virtual_lid(x, output, args):
 
     # set output[0] rather than just output as solution doesn't converge
     # otherwise as it expects an array
+    # sign convention = fluxes positive downwards
+    # positive flux =
     output[0] = (
-        -0.98 * 5.670373 * (10**-8) * (x[0] ** 4)
+        -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
         + Q
         - k_v_lid
-        * (-lake_temperature[1] + x[0])
-        / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
+        * (x[0] - lake_temperature[1])
+        / (lake_depth / (vert_grid_lake / 2) + v_lid_depth)
     )
 
 
@@ -486,10 +491,11 @@ def sfc_energy_lid(x, output, args):
     )
 
     output[0] = (
-        -0.98 * 5.670373 * 10**-8 * x[0] ** 4
+        -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
         + Q
-        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+        - k_lid * (x[0] - sub_T) / (lid_depth / vert_grid_lid)
     )
+
 
 sfc_energy_virtual_lid = cfunc(minpack_sig)(sfc_energy_virtual_lid)
 sfc_energy_lid = cfunc(minpack_sig)(sfc_energy_lid)
@@ -628,8 +634,7 @@ def lid_heateqn_solver(x, args):
         k_lid=k_lid,
         Sfrac_lid=Sfrac_lid,
     )
-    # print(f'Lid heat equation solver,
-    # loaded in args... col = {cell.column}, row = {cell.row}')
+    # print(f'Lid heat equation solver, loaded in args... col = {cell.column}, row = {cell.row}')
     # for idx, arg in enumerate(args):
     #     print(f'index = {idx}')
     #     print(arg)

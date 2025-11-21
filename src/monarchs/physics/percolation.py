@@ -173,17 +173,16 @@ def calc_refreezing(cell, v_lev):
     cp = 7.16 * cell["firn_temperature"][v_lev] + 138
     excess_water = 0
 
-    if cell['Sfrac'][v_lev] == 0:
+    if cell["Sfrac"][v_lev] == 0:
         T_change_all = 1000000  # for testing
         # print('Refreezing with Sfrac = 0')
     else:
         T_change_all = (
-                cell["Lfrac"][v_lev]
-                * cell["L_ice"]
-                * cell["rho_water"]
-                / (cell["rho_ice"] * cp * cell["Sfrac"][v_lev])
-
-    )  # T change if all water freezes
+            cell["Lfrac"][v_lev]
+            * cell["L_ice"]
+            * cell["rho_water"]
+            / (cell["rho_ice"] * cp * cell["Sfrac"][v_lev])
+        )  # T change if all water freezes
     Vol_Rfrz_Max = (
         (1 - cell["Sfrac"][v_lev])
         * (cell["firn_depth"] / cell["vert_grid"])
@@ -413,7 +412,7 @@ def perc_time(cell, v_lev):
     # specific gravity of the firn
     rho_s_star = cell["Sfrac"][v_lev] * cell["rho_ice"] / cell["rho_water"]
     # specific permeability
-    perm_s = 0.077 * delta**2 * np.exp(-7.8 * rho_s_star)
+    perm_s = 0.077 * delta ** 2 * np.exp(-7.8 * rho_s_star)
     # viscosity
     eta = 0.001787
 

@@ -85,11 +85,10 @@ def merge_cells_into_lake(cell, height_change):
     height_change: float
         Updated height_change after merging fully liquid layers into the lake.
     """
-
     nz = int(cell["vert_grid"])
     old_depth = float(cell["firn_depth"])
     dz = old_depth / nz
-    is_full_liq = cell['Lfrac'] >= 0.95
+    is_full_liq = cell["Lfrac"] >= 0.98
     # how many *full* layers have we melted through already?
     layers_melted = int(
         np.floor(height_change / (cell["firn_depth"] / cell["vert_grid"]))
@@ -103,6 +102,8 @@ def merge_cells_into_lake(cell, height_change):
     # accounting for any cells melted through.
     # in the edge case that everything is liquid, we have a problem...
     # but one that we will let a later part of the code handle.
+    if len(is_full_liq) == 0:
+        return height_change  # nothing to merge
     if np.all(is_full_liq):
         n_removed = nz
     # else, find where we get our first False value.
@@ -118,8 +119,9 @@ def merge_cells_into_lake(cell, height_change):
     # Otherwise, work out how many layers we have either melted or merged,
     # and set this as our new height change.
     height_change = (n_removed + layers_melted) * dz
-    print('Combining', n_removed, 'fully liquid layers into lake.')
-    cell['lake_boundary_change'] += n_removed * dz
+    print("Combining", n_removed, "fully liquid layers into lake.")
+
+    cell["lake_boundary_change"] += n_removed * dz
     return height_change
 
 
@@ -162,7 +164,7 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     assert (
         height_change < old_depth
-    ), "Height change must be less than the column depth."
+    ), f"Height change must be less than the column depth. Got {height_change}"
 
     old_edges = np.linspace(0.0, old_depth, nz + 1)
 
@@ -179,14 +181,17 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     new_depth = old_depth - height_change
     new_edges = np.linspace(height_change, old_depth, nz + 1)
-    if height_change > old_depth/nz:
-        print('Warning: height change greater than one layer thickness.')
-        print('height_change =', height_change)
+    if height_change > old_depth / nz:
+
+        print("Warning: height change greater than one layer thickness.")
+        print("height_change =", height_change)
 
     cell["Sfrac"] = conservative_regrid(old_edges, cell["Sfrac"], new_edges)
     cell["Lfrac"] = conservative_regrid(old_edges, cell["Lfrac"], new_edges)
-    cell["firn_temperature"] = conservative_regrid(
-        old_edges, cell["firn_temperature"], new_edges
+    old_centers = 0.5 * (old_edges[:-1] + old_edges[1:])
+    new_centers = 0.5 * (new_edges[:-1] + new_edges[1:])
+    cell["firn_temperature"] = np.interp(
+        new_centers, old_centers, cell["firn_temperature"]
     )
     cell["firn_depth"] = new_depth
 

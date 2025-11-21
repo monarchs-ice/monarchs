@@ -57,9 +57,9 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
         if model_setup.max_height_handler == "clip":
             firn_depth = np.clip(firn_depth, 0, model_setup.firn_max_height)
         elif model_setup.max_height_handler == "filter":
-            valid_cells[np.where(firn_depth > model_setup.firn_max_height)] = (
-                False
-            )
+            valid_cells[
+                np.where(firn_depth > model_setup.firn_max_height)
+            ] = False
             with np.printoptions(threshold=np.inf):
                 print(
                     f"{func_name}:"
@@ -76,9 +76,9 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                 firn_depth, a_min=model_setup.firn_min_height, a_max=None
             )
         elif model_setup.min_height_handler == "filter":
-            valid_cells[np.where(firn_depth < model_setup.firn_min_height)] = (
-                False
-            )
+            valid_cells[
+                np.where(firn_depth < model_setup.firn_min_height)
+            ] = False
             with np.printoptions(threshold=np.inf):
                 print(
                     f"{func_name}:"

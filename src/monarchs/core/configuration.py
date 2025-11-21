@@ -315,9 +315,9 @@ def create_defaults_for_missing_flags(model_setup):
     vardict["input_crs"] = 3031
     vardict["cores"] = "all"
     vardict["solver"] = "hybr"
-    vardict["dask_scheduler"] = (
-        "processes"  # set to "distributed" if using HPC across multiple nodes
-    )
+    vardict[
+        "dask_scheduler"
+    ] = "processes"  # set to "distributed" if using HPC across multiple nodes
     vardict["flow_speed_scaling"] = 1.0
     vardict["outflow_proportion"] = 1.0
     if hasattr(model_setup, "met_input_filepath"):
@@ -397,9 +397,10 @@ def jit_modules(fastmath=False):
         lateral_movement,
         virtual_lid,
         reset_column,
-        regrid_column
+        regrid_column,
     )
     from monarchs.core import model_output, utils
+
     # pylint: enable=import-outside-toplevel
     # modules to search from when applying jit
     module_list = [
@@ -415,7 +416,7 @@ def jit_modules(fastmath=False):
         timestep,
         lateral_movement,
         reset_column,
-        regrid_column
+        regrid_column,
     ]
 
     # Set up a list of modules to not apply njit to.
@@ -434,8 +435,6 @@ def jit_modules(fastmath=False):
         "add_lat_long",
         "get_variable_dims",
     ]  # other builtins/decorators
-
-
 
     for module in module_list:
         functions_list = getmembers(module, isfunction)
@@ -463,6 +462,7 @@ def jit_modules(fastmath=False):
     # pylint: disable=import-outside-toplevel
     from monarchs.physics import solver
     from monarchs.physics.Numba import solver_nb as numba_solver
+
     # pylint: enable=import-outside-toplevel
 
     # relax the isfunction stipulation for `numba_solver` since it is mostly

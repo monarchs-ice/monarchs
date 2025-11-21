@@ -85,8 +85,7 @@ def setup_toggle_dict(model_setup):
 
         # pylint: enable=import-outside-toplevel
         num_dict = Dict.empty(
-            key_type=types.unicode_type,
-            value_type=types.boolean,
+            key_type=types.unicode_type, value_type=types.boolean,
         )
         for key, value in toggle_dict.items():
             num_dict[key] = value
@@ -130,15 +129,18 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
             )
             reload_dump_success = False
         else:
-            grid, met_start_idx, met_end_idx, first_iteration = (
-                reload_from_dump(
-                    reload_name,
-                    get_iceshelf_spec(
-                        model_setup.vertical_points_firn,
-                        model_setup.vertical_points_lake,
-                        model_setup.vertical_points_lid,
-                    ),
-                )
+            (
+                grid,
+                met_start_idx,
+                met_end_idx,
+                first_iteration,
+            ) = reload_from_dump(
+                reload_name,
+                get_iceshelf_spec(
+                    model_setup.vertical_points_firn,
+                    model_setup.vertical_points_lake,
+                    model_setup.vertical_points_lid,
+                ),
             )
             print(
                 f"Loading model state from dump file {reload_name} - first"
@@ -617,10 +619,17 @@ def initialise_model_data(model_setup):
             model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
         )
     else:
-        firn_temperature, rho, firn_depth, valid_cells, dx, dy, _, _ = (
-            initial_conditions.initialise_firn_profile(
-                model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
-            )
+        (
+            firn_temperature,
+            rho,
+            firn_depth,
+            valid_cells,
+            dx,
+            dy,
+            _,
+            _,
+        ) = initial_conditions.initialise_firn_profile(
+            model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
         )
         lat_array = (
             np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan

@@ -10,7 +10,7 @@ from monarchs.core import utils
 
 
 def virtual_lid_development(
-    cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
+    cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, Fu
 ):
     """
     When a lake undergoes freezing from the top due to the surface conditions,
@@ -57,10 +57,14 @@ def virtual_lid_development(
     original_mass = utils.calc_mass_sum(cell)
     x = np.array([cell["virtual_lid_temperature"]])
 
+    # JE - As with the lake, we need to calculate the surface energy based
+    # on how much radiation is actually absorbed at the surface, which is
+    # not going to be *all* of it, even it it may be a bit higher than
+    # for a lake.
     Q = surface_fluxes.sfc_flux(
         cell["melt"],
         cell["exposed_water"],
-        cell["lid"],
+        cell["v_lid"],  # use virtual lid here not true lid
         cell["lake"],
         cell["lake_depth"],
         lw_in,
@@ -72,8 +76,8 @@ def virtual_lid_development(
         x[0],
     )
     k_v_lid = 1000 * (
-        2.24 * 10**-3
-        + 5.975 * 10**-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
+        2.24 * 10 ** -3
+        + 5.975 * 10 ** -6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
     )
 
     # Surface energy balance calculation to determine the virtual lid
@@ -96,8 +100,12 @@ def virtual_lid_development(
     )[0][0]
 
     # TODO - are we missing Fu from here also?
+    # TODO - kind of, but this approach is specific to the virtual lid, we are doing
+    # a conductive approach across the virtual lid rather than using the fluxes
+    # until a true lid forms (at which point the real fluxes are used).
+    # this stops a blowout due to low virtual lid depth
     kdTdz = (
-        (cell["virtual_lid_temperature"] - cell["lake_temperature"][1])
+        (cell["virtual_lid_temperature"] - 273.15)
         * abs(cell["k_water"])
         / (
             cell["lake_depth"] / (cell["vert_grid_lake"] / 2)
@@ -105,7 +113,7 @@ def virtual_lid_development(
         )
     )
 
-    new_boundary_change = kdTdz / (cell["L_ice"] * cell["rho_ice"]) * dt
+    new_boundary_change = (kdTdz + Fu) / (cell["L_ice"] * cell["rho_ice"]) * dt
     # further freezing of the virtual lid
     if cell["virtual_lid_temperature"] < 273.15:
         if new_boundary_change < 0:
@@ -128,7 +136,7 @@ def virtual_lid_development(
     # check we've not gained or lost too much mass
     new_mass = utils.calc_mass_sum(cell)
     try:
-        assert abs(new_mass - original_mass) < 1.5 * 10**-7
+        assert abs(new_mass - original_mass) < 1.5 * 10 ** -7
     except Exception:
         print("Original mass = ", original_mass)
         print("New mass = ", new_mass)
@@ -143,7 +151,7 @@ def update_virtual_lid_temperature(
     Q = surface_fluxes.sfc_flux(
         cell["melt"],
         cell["exposed_water"],
-        cell["lid"],
+        cell["v_lid"],
         cell["lake"],
         cell["lake_depth"],
         lw_in,
@@ -199,7 +207,6 @@ def freeze_virtual_lid(cell, new_boundary_change):
         cell["v_lid_depth"] += cell["lake_depth"] * (
             cell["rho_water"] / cell["rho_ice"]
         )
-        orig_lake_depth = cell["lake_depth"] + 0
         cell["lake_depth"] = 0
         cell["lake"] = False
 
@@ -207,15 +214,11 @@ def freeze_virtual_lid(cell, new_boundary_change):
 def melt_virtual_lid(cell, Q, dt):
     cell["virtual_lid_temperature"] = 273.15
     k_im_lid = 1000 * (
-        1.017 * 10**-4 + 1.695 * 10**-6 * cell["virtual_lid_temperature"]
+        1.017 * 10 ** -4 + 1.695 * 10 ** -6 * cell["virtual_lid_temperature"]
     )
-    kdTdz = (
-        (cell["virtual_lid_temperature"] - 273.15)
-        * abs(k_im_lid)
-        / (
-            cell["lake_depth"]
-            / (cell["vert_grid_lake"] / 2 + cell["v_lid_depth"])
-        )
+    kdTdz = ((cell["virtual_lid_temperature"] - 273.15) * abs(k_im_lid)) / (
+        cell["lake_depth"]
+        / ((cell["vert_grid_lake"] / 2) + cell["v_lid_depth"])
     )
     new_boundary_change = (Q - kdTdz) / (cell["L_ice"] * cell["rho_ice"]) * dt
 
@@ -237,6 +240,5 @@ def melt_virtual_lid(cell, Q, dt):
             cell["total_melt"] = cell["total_melt"] + new_boundary_change
     # check if we still have a virtual lid
     if cell["v_lid_depth"] <= 0 and cell["v_lid"]:
-        print("Virtual lid no longer present")
         cell["v_lid"] = False
         cell["v_lid_depth"] = 0

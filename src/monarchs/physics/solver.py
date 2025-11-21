@@ -245,7 +245,6 @@ def lake_development_eqn(x, args):
     for i in range(len(lake_temperature)):
         lake_temperature[i] = args[12 + i]
 
-    # TODO - add Q as a function of lake temperature here
     Q = surface_fluxes.sfc_flux(
         melt,
         exposed_water,
@@ -406,7 +405,6 @@ def sfc_energy_lid(x, args):
     output[0] = (
             -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
             + Q
-            # TODO - changed sign here to test
             - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
     return output

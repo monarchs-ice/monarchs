@@ -38,7 +38,9 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             # if we have a lid, add snow to the top of the lid
             # TODO - actually need to regrid, but just do this to test for now.
             cell["lid_depth"] += snow_depth * snow_rho / cell["rho_water"]
-        elif cell["lake"] and not cell["lid"]:  # if lake - add it to lake depth not firn
+        elif (
+            cell["lake"] and not cell["lid"]
+        ):  # if lake - add it to lake depth not firn
             cell["lake_depth"] += snow_depth * snow_rho / cell["rho_water"]
         elif not cell["lid"]:
             original_mass = utils.calc_mass_sum(cell)
@@ -154,9 +156,8 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
                     utils.calc_mass_sum(cell)
                     - (original_mass + snow_depth * snow_rho)
                 )
-                < 1.5 * 10**-7
+                < 1.5 * 10 ** -7
             )
-
 
 
 def densification(cell, t_steps_per_day):

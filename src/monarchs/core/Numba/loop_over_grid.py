@@ -24,7 +24,7 @@ def loop_over_grid_numba(
     dask_scheduler=False,
     parallel=True,
 ):
-# pylint: enable=unused-argument
+    # pylint: enable=unused-argument
     """
     This function wraps timestep_loop, allowing for it to be
     run in parallel over an arbitrarily sized grid. The grid
@@ -90,10 +90,6 @@ def loop_over_grid_numba(
     for i in prange(row_amount * col_amount):
 
         timestep_loop(
-            flat_grid[i],
-            dt,
-            met_data[i],
-            t_steps_per_day,
-            toggle_dict,
+            flat_grid[i], dt, met_data[i], t_steps_per_day, toggle_dict,
         )
     return np.reshape(flat_grid, (row_amount, col_amount))  # reshape

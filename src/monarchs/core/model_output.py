@@ -191,11 +191,7 @@ def interpolate_model_output(grid, vert_grid_size, var):
         3D variable to interpolate, with shape (x, y, z).
     """
     new_var = np.zeros(
-        (
-            len(grid["firn_depth"]),
-            len(grid["firn_depth"][0]),
-            vert_grid_size,
-        )
+        (len(grid["firn_depth"]), len(grid["firn_depth"][0]), vert_grid_size,)
     )
     for i in range(len(grid["firn_depth"])):
         for j in range(len(grid["firn_depth"][i])):

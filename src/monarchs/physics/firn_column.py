@@ -173,7 +173,7 @@ def firn_column(
     # Test for mass conservation - if we lose mass, then there is an issue with
     # the regridding.
     new_mass = utils.calc_mass_sum(cell)
-    assert abs(original_mass - new_mass) < 1.5 * 10**-7
+    assert abs(original_mass - new_mass) < 1.5 * 10 ** -7
 
 
 def calc_height_change(
@@ -219,7 +219,7 @@ def calc_height_change(
         Change in firn height as a result of melting. [m]
     """
     epsilon = 0.98
-    sigma = 5.670373 * 10**-8
+    sigma = 5.670373 * 10 ** -8
     dz = cell["firn_depth"] / cell["vert_grid"]
     L_fus = 334000
     if (
@@ -233,9 +233,9 @@ def calc_height_change(
     ):
         cell["firn_temperature"][1] = 273.15
     k_sfc = (
-        1000 * 2.24 * 10**-3
+        1000 * 2.24 * 10 ** -3
         + 5.975
-        * 10**-6
+        * 10 ** -6
         * (
             273.15
             - (cell["firn_temperature"][0] + cell["firn_temperature"][1]) / 2
@@ -262,6 +262,10 @@ def calc_height_change(
     # conceptually for this function to consider the
     # height change rather than depth change, so dz is kept positive here.
     dtdz = (cell["firn_temperature"][0] - cell["firn_temperature"][1]) / dz
+
+    # If the surface is very empty, just melt one layer
+    if cell["Sfrac"][0] < 0.1:
+        dHdt = cell["firn_depth"] / cell["vert_grid"]
     dHdt = (
         (
             Q
