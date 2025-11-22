@@ -7,7 +7,9 @@ where <filepath> is the path to a model setup script.
 """
 
 from monarchs.core.driver import monarchs
-
+import sys
+# fix for CPOM server
+sys.setrecursionlimit(3000)
 
 def run_from_cli(return_grid=False):
     """

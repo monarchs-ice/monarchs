@@ -145,7 +145,7 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
         if not soldict.success:
             print(
                 "Root-finding for surface temperature failed - returning"
-                f" original guess. row = {cell["row"]}, col = {cell["column"]}"
+                f" original guess. row = {cell['row']}, col = {cell['column']}"
             )
 
         if N == cell["vert_grid"]:

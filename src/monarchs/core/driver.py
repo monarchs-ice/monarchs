@@ -588,6 +588,11 @@ def main(model_setup, grid):
             f"Total time for day {day + 1}:"
             f" {time.perf_counter() - timestep_start:.2f}s"
         )
+        if day in [100, 200, 300, 400, 500, 600, 700]:
+            print('Writing model state as an extra checkpoint')
+            dump_state(
+                    model_setup.dump_filepath + str(day), grid, met_start_idx, met_end_idx
+                )
     print("\n*******************************************\n")
     print("MONARCHS has finished running successfully!")
     print("Total time taken = ", time.perf_counter() - tic)

@@ -453,7 +453,7 @@ def jit_modules(fastmath=False):
                 continue
             print(f"Applying Numba jit decorator to {module.__name__}.{name}")
             jitted_function = njit(
-                function, fastmath=fastmath, debug=False, cache=True
+                function, fastmath=fastmath, debug=False, cache=False
             )
             setattr(module, name, jitted_function)
 

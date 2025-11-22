@@ -208,8 +208,9 @@ def check_correct(cell):
             " will percolate at start of next timestep."
         )
         print("Lfrac = ", cell["Lfrac"][0], ", Sfrac = ", cell["Sfrac"][0])
-
-
+        print("Location: ", cell["row"], cell["column"])
+        print(', which is a valid cell? ', cell['valid_cell']) 
+        print('Firn depth = ', cell['firn_depth'])
 def check_grid_correctness(grid):
     """
     Wraps check_correct for each cell in the grid. We do this in a separate

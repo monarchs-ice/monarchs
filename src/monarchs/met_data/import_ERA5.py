@@ -61,7 +61,7 @@ def ERA5_to_variables(
             raise ValueError(
                 "monarchs.met_data.import_ERA5.ERA5_to_variables: End index"
                 f" {end_index} is greater than the length of the data"
-                f" available ({len(era5_data.variables["time"])} timesteps) in"
+                f" available ({len(era5_data.variables['time'])} timesteps) in"
                 " the input netCDF file. Please check your input data is"
                 " large enough, or adjust your chosen number of days to"
                 " compensate."

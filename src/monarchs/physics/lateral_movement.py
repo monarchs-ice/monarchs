@@ -46,7 +46,11 @@ def update_water_level(cell):
     if not cell["valid_cell"]:
         # Invalid cell - not interested so set water level to something
         # unreasonably high
-        cell["water_level"] = 1e10
+        cell["water"][:] = 0
+        cell["saturation"][:] = 0
+        cell["lake_depth"] = 0
+        cell["Lfrac"][:] = 0
+        cell["water_level"] = 1e11
         return
 
     elif not cell["lake"] and not cell["lid"]:
@@ -352,6 +356,7 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
 
         # JE - added flow_speed_scaling variable here.
         water_frac = water_frac * flow_speed_scaling
+    water_frac = np.clip(water_frac, a_min=0, a_max=1)
     return water_frac
 
 
@@ -512,36 +517,48 @@ def calc_catchment_outflow(
     # Whether we are moving from a lake or ice lens, scale by the outflow
     # proportion.
     water_to_move = water_to_move * outflow_proportion
+    water_out = 0.0
     # either: remove water from the lake directly.
     if cell["lake"] and not cell["lid"]:
-        water_out = water_to_move
+        current_lake_depth = temporary_cell['lake_depth']
+
         if cell["lake_depth"] < water_to_move:
-            water_to_move = cell["lake_depth"]
+            water_out = current_lake_depth
             temporary_cell["lake_depth"] = 0
-            water_out = water_to_move
-            water_to_move = 0
         else:
             temporary_cell["lake_depth"] -= water_to_move
-            if temporary_cell["lake_depth"] < 0:
-                # account for rounding errors
-                if temporary_cell["lake_depth"] < -1e-12:
-                    raise ValueError("Lake depth has gone below 0")
-                temporary_cell["lake_depth"] = 0
+            water_out = water_to_move
+        if temporary_cell["lake_depth"] < 0:
+            # account for rounding errors
+            if temporary_cell["lake_depth"] < -1e-12:
+                raise ValueError("Lake depth has gone below 0")
+            temporary_cell["lake_depth"] = 0
     # otherwise, loop through the column and remove water from it,
     # going from the top.
     else:
-        water_out = 0
         for _l in range(0, cell["ice_lens_depth"] + 1):
-            if cell["water"][_l] > water_to_move:
-                temporary_cell["water"][_l] -= water_to_move
-                temporary_cell["saturation"][_l] = 0
-                water_out += water_to_move
+            layer_share = cell["water"][_l] / (split + 1)
+            current_actual = temporary_cell["water"][_l]
+
+            if layer_share > current_actual:
+                layer_share = current_actual
+
+            if layer_share > water_to_move:
+                amount_to_remove = water_to_move
                 water_to_move = 0
             else:
-                water_to_move -= cell["water"][_l]
-                water_out += cell["water"][_l]
-                temporary_cell["water"][_l] -= cell["water"][_l]
+                amount_to_remove = layer_share
+                water_to_move -= layer_share
+            # actually remove the water
+            temporary_cell["water"][_l] -= amount_to_remove
+            water_out += amount_to_remove
 
+            if temporary_cell["water"][_l] <= 1e-12:
+                temporary_cell["water"][_l] = 0
+                temporary_cell["saturation"][_l] = 0 
+            # stop looping if we've flowed all the water
+            if water_to_move <= 0:
+                break
     return water_out
 
 
@@ -784,22 +801,14 @@ def handle_invalid_neighbour_cell(
     """
     # If the neighbour cell is invalid, we aren't interested in flowing water
     # into it...
-    if row + n_s_index >= len(grid) and col + w_e_index >= len(grid[0]):
-        if (
-            not grid[row + n_s_index][col + w_e_index]["valid_cell"]
-            and not flow_into_land
-        ):
-            # return 0 and False to indicate that we want to `continue` the
-            # loop in move_water rather than return out
-            return 0, False
-
+    neighbour = grid[row + n_s_index][col + w_e_index]
+    if neighbour["valid_cell"]:
+        return 0, False
     # ...unless water can flow into the land (i.e. through crevices etc.) - in
     # which case run the catchment outflow algorithm, then return out of the
     # function.
-    elif (
-        not grid[row + n_s_index][col + w_e_index]["valid_cell"]
-        and flow_into_land
-    ):
+    if flow_into_land:
+        # how much drains away?
         water_out = calc_catchment_outflow(
             cell,
             temporary_cell,
@@ -810,8 +819,9 @@ def handle_invalid_neighbour_cell(
         if water_out > 0:
             print(f"Moved {float(water_out)} units of water into the land")
             return water_out, False
-
-        return 0, False
+        else:
+            # no water moved, but still invalid, so skip
+            return 0, True
 
     else:
         return 0, True
@@ -887,7 +897,7 @@ def move_to_neighbours(
 
     cell = grid[row][col]
     cell["water_direction"][:] = 0  # clear water direction
-
+    total_water_out = 0.0
     # for each of the neighbours we wish to move water to, which depends on the
     # difference in water level between the central cell and the cells at each
     # cardinal point
@@ -946,20 +956,23 @@ def move_to_neighbours(
                 water_frac,
                 outflow_proportion,
             )
+            total_water_out += land_water_out
+            if invalid_flag or land_water_out > 0:
+                continue
             water_out += land_water_out
-            if invalid_flag:
-                return water_out
             # if handle_invalid_neighbour_cell returns -1, then don't flow to
             # this particular (invalid) cell, but there may be a neighbour
             # that *is* valid
-            if water_out == -1 and idx != len(biggest_neighbours) - 1:
-                continue
+            #if water_out == -1 and idx != len(biggest_neighbours) - 1:
+            #    continue
             # If we get to the end and all possible neighbours have been
             # exhausted, then simply return 0 so we don't do anything.
             # This fixes a bug where if no valid neighbours are found, then
             # an extremely large amount of water is moved.
-            elif water_out == -1:
-                return 0
+            #elif water_out == -1:
+            #    return total_water_out  # return accumulator
+
+            """Logic for valid cells"""
             # Determine the neighbour and create a temporary version of it to
             # hold info while we move to/from other cells
             if 0 <= row + n_s_index < len(grid) and 0 <= col + w_e_index < len(
@@ -973,7 +986,7 @@ def move_to_neighbours(
             # physically unlikely, so we ignore movement in this case.
             if cell["lid"] or grid[row + n_s_index][col + w_e_index]["lid"]:
                 continue
-
+            is_outflow = False
             # Case where the central cell has a lake.
             if cell["lake"]:
                 water_to_move, _, _, _ = calc_available_water_lake(
@@ -981,6 +994,7 @@ def move_to_neighbours(
                     water_frac,
                     split,
                     grid[row + n_s_index][col + w_e_index],
+                    outflow=is_outflow
                 )
                 temporary_cell, temporary_neighbour = move_from_lake(
                     cell,
@@ -1007,6 +1021,7 @@ def move_to_neighbours(
                     water_frac,
                     split,
                     grid[row + n_s_index][col + w_e_index],
+                    outflow=is_outflow
                 )
 
                 temporary_cell, temporary_neighbour = move_from_ice_lens(
@@ -1028,7 +1043,7 @@ def move_to_neighbours(
                 # it should preferentially percolate downwards.
                 raise ValueError("This should not be happening...")
 
-    return 0
+    return total_water_out
 
 
 def move_water(
@@ -1124,6 +1139,26 @@ def move_water(
                 ]
                 temp_grid[row, col]["meltflag"][level] = cell["meltflag"][level]
 
+    # === INSERT THIS DEBUG BLOCK HERE ===
+    print("Verifying grid state before lateral movement...")
+    for row in range(max_grid_row):
+        for col in range(max_grid_col):
+            cell = grid[row][col]
+            # Check for the corruption immediately after update_water_level
+            if (grid[row][col]["water"] < -1e-5).any():
+                print(f"\n!!! CORRUPTION DETECTED BEFORE LATERAL MOVES !!!")
+                print(f"Location: [{row}, {col}]")
+                print(f"Min Water: {np.min(grid[row][col]['water'])}")
+                print("This confirms the bug is in Single Column Physics or update_water_level.")
+                # Check Lfrac to see if it's the source
+                print(f"Min Lfrac: {np.min(grid[row][col]['Lfrac'])}")
+                print(f"Firn Depth: {grid[row][col]['firn_depth']}")
+                raise ValueError("Pre-existing corruption detected")
+            if (grid[row][col]["Lfrac"] > 2).any():
+                print(grid[row][col]['Lfrac'][np.where(grid[row][col]['Lfrac'] > 2)])
+                print(f"Location: [{row}, {col}]")
+                print(f"Firn depth = ', {cell['firn_depth']}")
+                print('Warning - high LFrac detected.')
     # Now loop through the cells again, this time actually performing the
     # movement step. This and the prior loop cannot be merged, since the
     # temporary grid needs to be fully populated and the water levels
@@ -1182,7 +1217,7 @@ def move_water(
 
     # Now we have the values calculated in our temporary grid,
     # update the values of <grid>, i.e. performing our movement in one step
-    for row in prange(0, max_grid_row):
+    for row in range(0, max_grid_row):
         for col in range(0, max_grid_col):
             cell = grid[row][col]
             temporary_cell = temp_grid[row][col]
@@ -1201,7 +1236,16 @@ def move_water(
             # as noise, else an error is raised.
             tol = -1e-8
             if (cell["water"] < tol).any():
-                raise ValueError("cell.water is negative")
+                print(cell['water'])
+                print(cell['row'], cell['column'])
+                print(cell['valid_cell'])
+                print(cell['lake'])
+                if cell["valid_cell"]:
+                    print(cell['water'])
+                    print(np.where(cell['water'] < 0))
+                    raise ValueError("cell.water is negative")
+                else:  # if in an invalid cell, we don't care, just zero it
+                    cell["water"][:] = 0 
             if (cell["water"] < 0).any():
                 set_to_zeros = np.where(cell["water"] < 0)
                 cell["water"][set_to_zeros] = 0
@@ -1224,7 +1268,24 @@ def move_water(
                     # end up with unphysical liquid fraction
                     for k in np.arange(cell["vert_grid"])[::-1]:
                         calc_saturation(cell, k, end=True)
-
+            if (grid[row][col]["water"] < -1e-5).any():
+                print(f"\n!!! CORRUPTION DETECTED BEFORE LATERAL MOVES !!!")
+                print(f"Location: [{row}, {col}]")
+                print(f"Min Water: {np.min(grid[row][col]['water'])}")
+                print("This confirms the bug is in Single Column Physics or update_water_level.")
+                # Check Lfrac to see if it's the source
+                print(f"Min Lfrac: {np.min(grid[row][col]['Lfrac'])}")
+                print(f"Firn Depth: {grid[row][col]['firn_depth']}")
+                raise ValueError("Pre-existing corruption detected")
+            #if (np.abs(grid[row][col]["Lfrac"]) > 2).any() and grid[row][col]['valid_cell']:
+            #    print(grid[row][col]['Lfrac'][np.where(np.abs(grid[row][col]['Lfrac']) > 2)])
+            #    print(f"Location: [{row}, {col}]")
+            #    print(f"Valid cell = ", grid[row][col]['valid_cell'])
+            #    print("Firn depth = ", {float(grid[row][col]['firn_depth'])})
+            #    raise ValueError('Unrealistically high Lfrac')
+            if (np.abs(grid[row][col]["lake_depth"]) > 100):
+                print(grid[row][col]["lake_depth"])
+                raise ValueError('Issue with lake depth')
     print("\nLateral water movement diagnostics:")
     print("Starting water total = ", total_water)
     print("Finishing water total = ", new_water)
