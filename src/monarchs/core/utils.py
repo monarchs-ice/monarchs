@@ -135,7 +135,6 @@ def check_for_mass_conservation(cell, original_mass, new_mass,
             print("    New:", new_mass)
             cell['error_flag'] = 1
             errflag = 1
-            raise ValueError(f"{routine_name} - ERROR")
     return errflag
 
 def generic_error(cell, routine_name, message):
@@ -161,7 +160,6 @@ def generic_error(cell, routine_name, message):
         c = int(cell['column'])
         print(f"{routine_name} - ERROR at [{r}, {c}]: {message}")
         cell['error_flag'] = 1
-        raise ValueError(f"{routine_name} - ERROR")
 
 
 def calc_grid_mass(grid):
