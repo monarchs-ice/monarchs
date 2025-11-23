@@ -1,5 +1,6 @@
 import numpy as np
 import contextlib
+from monarchs.core.utils import calc_mass_sum
 
 try:
     from numba import prange, objmode
