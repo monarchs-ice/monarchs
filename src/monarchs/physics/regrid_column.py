@@ -222,4 +222,4 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     mass_after = utils.calc_mass_sum(cell)
     tol = max(1e-2, 1e-10 * mass_before)
-    assert abs(mass_after - mass_before) < tol, (mass_after, mass_before)
+    utils.check_for_mass_conservation(cell, mass_before, mass_after, 'monarchs.physics.regrid_after_melt')

@@ -78,6 +78,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     None. The function amends the instance of <cell> passed to it.
 
     """
+    cell["visit_count"] += 1
     routine_name = f"{MODULE_NAME}.timestep_loop"
     parallel = toggle_dict["parallel"]
     use_numba = toggle_dict["use_numba"]
@@ -87,7 +88,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     lake_development_toggle = toggle_dict["lake_development_toggle"]
     lid_development_toggle = toggle_dict["lid_development_toggle"]
     ignore_errors = toggle_dict["ignore_errors"]
-    print('Running cell = ', cell['row'], cell['column'])
     if cell['row'] == 71 and cell['column'] == 84:
         print('71 84 lake depth at start of timestep ', cell['lake_depth'])
         print('... which is valid? ', cell['valid_cell'])

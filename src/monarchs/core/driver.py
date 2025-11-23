@@ -527,7 +527,10 @@ def main(model_setup, grid):
                 dask_scheduler=model_setup.dask_scheduler,
                 client=CLIENT,
             )
-
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                if grid[i][j]['visit_count'] == 0:
+                    raise ValueError('Visit count = 0')
         """Check for any errors in the grid after the single-column physics step"""
         errflag = check_for_single_column_errors(grid)
         if errflag:

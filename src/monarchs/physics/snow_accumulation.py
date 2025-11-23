@@ -88,8 +88,8 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             # error handling
             if np.any(cell["Lfrac"] < -0.001):
                 message = "Lfrac before snow < 0"
-                message += f"{np.where(cell["Lfrac"] < -0.001)}"
-                message += f"{cell["Lfrac"]}"
+                message += f"{np.where(cell['Lfrac'] < -0.001)}"
+                message += f"{cell['Lfrac']}"
                 utils.generic_error(cell, routine_name, message)
 
             cell["Lfrac"][0] = (weight1 * 0 + weight2 * cell["Lfrac"][0]) / (
@@ -97,19 +97,19 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             )
             if np.any(cell["Lfrac"] < -0.001):
                 message = "Lfrac before hold < 0"
-                message += f"{np.where(cell["Lfrac"] < -0.001)}"
-                message += f"{cell["Lfrac"]}"
+                message += f"{np.where(cell['Lfrac'] < -0.001)}"
+                message += f"{cell['Lfrac']}"
                 message += f"{lfrac_hold}"
                 utils.generic_error(cell, routine_name, message)
             if np.any(cell["Sfrac"] < -0.001):
                 message = ("Sfrac before snow > 0")
-                message += f"{np.where(cell["Sfrac"] < -0.001)}"
-                message += f"{cell["Sfrac"]}"
+                message += f"{np.where(cell['Sfrac'] < -0.001)}"
+                message += f"{cell['Sfrac']}"
                 utils.generic_error(cell, routine_name, message)
             if np.any(cell["Sfrac"] > 1.001):
                 message = "Sfrac before snow > 1"
-                message += f"{np.where(cell["Sfrac"] < -0.001)}"
-                message += f"{cell["Sfrac"]}"
+                message += f"{np.where(cell['Sfrac'] < -0.001)}"
+                message += f"{cell['Sfrac']}"
                 utils.generic_error(cell, routine_name, message)
 
 
@@ -139,18 +139,16 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
                     cell["firn_temperature"][i - 1] * weight_1
                     + cell["firn_temperature"][i] * weight_2
                 ) / (weight_1 + weight_2)
-            lfrac_hold[0] = cell["Lfrac"][0]
-            sfrac_hold[0] = cell["Sfrac"][0]
+            lfrac_hold[0] = cell['Lfrac'][0]
+            sfrac_hold[0] = cell['Sfrac'][0]
             T_hold[0] = cell["firn_temperature"][0]
             # further error handling
             if np.any(lfrac_hold < -0.001):
                 w = np.where(lfrac_hold < -0.001)
                 message = "Lfrac hold < 0"
                 message += f"{w[0][0]}"
-                message += ("New Lfrac = ", lfrac_hold[: w[0][0]
-                + 2])
-                message += ("Old Lfrac = ", cell["Lfrac"][: w[0][
-                0] + 2])
+                message += f"New Lfrac = {lfrac_hold[: w[0][0] + 2]}"
+                message += f"Old Lfrac = {cell['Lfrac'][: w[0][0] + 2]}"
                 utils.generic_error(cell, routine_name, message)
 
             if np.any(sfrac_hold < -0.001):
@@ -158,7 +156,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
                 message = "Sfrac hold < 0"
                 message += f"{w[0][0]}"
                 message += f"New Sfrac = {sfrac_hold[: w[0][0] + 2]}"
-                message += f"Old Sfrac = {cell["Sfrac"][: w[0][0] + 2]}"
+                message += f"Old Sfrac = {cell['Sfrac'][: w[0][0] + 2]}"
                 utils.generic_error(cell, routine_name, message)
 
             if np.any(sfrac_hold > 1.001):

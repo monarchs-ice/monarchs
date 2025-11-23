@@ -141,6 +141,7 @@ def initialise_iceshelf(
         "virtual_lid_temperature": virtual_lid_temperature,
         "t_step": 0,
         "day": 0,
+        "visit_count": 0,
     }
     flags = {
         "has_had_lid": has_had_lid,
@@ -290,6 +291,7 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("lid_boundary_change", np.float64),
             ("lake_refreeze_counter", np.int32),
             ("error_flag", np.bool_),
+            ("visit_count", np.int32),
         ]
     )
     return dtype

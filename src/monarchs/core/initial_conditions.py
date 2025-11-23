@@ -60,14 +60,14 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             valid_cells[
                 np.where(firn_depth > model_setup.firn_max_height)
             ] = False
-            with np.printoptions(threshold=np.inf):
-                print(
-                    f"{func_name}:"
-                    " Filtering out cells according to the following mask"
-                    " (False = filtered out), since they exceed the firn"
-                    " height threshold:"
-                )
-                print("Valid cells = ", valid_cells)
+            #with np.printoptions(threshold=np.inf):
+                #print(
+                #    f"{func_name}:"
+                #    " Filtering out cells according to the following mask"
+                #    " (False = filtered out), since they exceed the firn"
+                #    " height threshold:"
+                #)
+                #print("Valid cells = ", valid_cells)
     firn_depth_under_35_flag = False
     if hasattr(model_setup, "firn_min_height"):
         if model_setup.min_height_handler == "clip":

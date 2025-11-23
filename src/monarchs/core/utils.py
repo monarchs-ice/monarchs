@@ -201,7 +201,9 @@ def check_for_single_column_errors(grid):
                 print(" ", int(cell['column']), "]")
                 print("after the single-column physics step. ")
                 print("Check the output logs for details on the error.")
-                return True
+                flag = True
+    if flag:
+        return True
     return False
 
 def check_correct(cell):
