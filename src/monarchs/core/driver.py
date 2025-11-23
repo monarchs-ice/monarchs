@@ -488,30 +488,6 @@ def main(model_setup, grid):
             met_data_grid, 0, -1
         )  # move the first axis to the last axis
         
-        target_row, target_col = 71, 84
-
-        print("\n--- PRE-PHYSICS NEIGHBORHOOD CHECK ---")
-        for r in range(target_row - 1, target_row + 2):
-            for c in range(target_col - 1, target_col + 2):
-                try:
-                    cell = grid[r, c]
-                    print(f"Cell [{r}, {c}] Status:")
-                    print(f"  Valid: {cell['valid_cell']}")
-                    print(f"  Lake depth: {float(cell['lake_depth'])}")
-                    print(f"  Lid depth: {cell['lid_depth']}")
-                    print(f"  Firn depth: {float(cell['firn_depth'])}")
-                    print(f"  Lake status: {cell['lake']}")
-                    print(f"  Lid status: {cell['lid']}")
-                    print(f"  Saturation status at surface = ", cell['saturation'][:5])
-                    print(f"  Meltflag status at surface = ", cell['meltflag'][:5])
-                    print(f"  Exposed water flag = ", cell['exposed_water'])
-                    if not cell['valid_cell']:
-                        print("  WARNING: Cell is marked INVALID before physics starts.")
-                    print("-------------------------")
-                except IndexError:
-                    print(f"Cell [{r}, {c}] is OUT OF BOUNDS")
-                    print("-------------------------")
-        print("--- END OF NEIGHBORHOOD CHECK ---\n")
 
         if model_setup.single_column_toggle:
             grid = loop_over_grid(
@@ -540,7 +516,6 @@ def main(model_setup, grid):
             )
         print("Single-column physics finished")
         print(f"Single column physics time: {time.perf_counter() - start:.2f}s")
-        print('driver ld - ', grid[71][84]['lake_depth'])
         start_serial = time.perf_counter()
         if model_setup.dump_data_pre_lateral_movement:
             if model_setup.dump_format == "NETCDF4":

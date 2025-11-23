@@ -88,11 +88,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     lake_development_toggle = toggle_dict["lake_development_toggle"]
     lid_development_toggle = toggle_dict["lid_development_toggle"]
     ignore_errors = toggle_dict["ignore_errors"]
-    if cell['row'] == 71 and cell['column'] == 84:
-        print('71 84 lake depth at start of timestep ', cell['lake_depth'])
-        print('... which is valid? ', cell['valid_cell'])
-    if not cell["valid_cell"]:
-        return cell
+
 
     # track evolution of firn, lake and lid over time. We do this for each day,
     # so it resets at the start of the model day.
@@ -336,11 +332,10 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     # and melts through the firn column causing the whole model to crash.
     if cell["firn_depth"] < 5:
         print("Firn depth below 5 m - setting cell to invalid")
+        print('Location of firn depth below 5 m - ', cell["row"], cell["column"])
         cell["valid_cell"] = False
-    if cell["lake_depth"] > 5:
+    if cell["lake_depth"] > 15:
         print('Location of large lake (end of timestep) - ', cell["row"], cell["column"])
-    if cell["row"] == 71 and cell["column"] == 84:
-        print('71, 84 at end of timestep = ', cell["lake_depth"])
     cell["day"] += 1
 
     return cell 
