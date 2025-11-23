@@ -200,6 +200,7 @@ def check_for_single_column_errors(grid):
     bool
         True if any cell has error_flag == 1, False otherwise.
     """
+    flag = False
     for row in grid:
         for cell in row:
             if cell['error_flag'] == 1:

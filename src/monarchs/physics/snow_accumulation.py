@@ -125,7 +125,8 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     # clip Sfrac and Lfrac if regridding causes them to exceed physical limits
     # and this isnt fixed by the saturation calculation
     cell["Sfrac"] = np.clip(cell["Sfrac"], 0, 1)
-    cell["Lfrac"] = np.clip(cell["Lfrac"], 0, 1)
+    # don't clip top layer as this can be saturated
+    cell["Lfrac"][1:] = np.clip(cell["Lfrac"][1:], 0, 1)
 
     # mass checks - will fail if there is an error that isnt fixed by
     # either of the above
