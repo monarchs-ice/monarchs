@@ -8,7 +8,7 @@ import numpy as np
 from monarchs.core import utils
 
 from monarchs.physics.regrid_column import conservative_regrid
-
+from monarchs.physics.percolation import calc_saturation
 MODULE_NAME = "monarchs.physics.snow_accumulation"
 
 def snowfall(cell, snow_depth, snow_rho, snow_T):
@@ -113,11 +113,22 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     cell["firn_temperature"] = new_T
     cell["vertical_profile"] = np.linspace(0, new_total_depth, nz)
 
+    # regridding can cause sfrac + lfrac to exceed 1 - in this case
+    # run saturation calculation to fix in the first instance.
+    oversaturated_indices = np.where((cell["Sfrac"] + cell["Lfrac"]) > 1.0)[0]
+    if len(oversaturated_indices) > 0:
+        # Run saturation fix on the deepest issue first, letting it bubble up if needed
+        # (Or specifically call your existing saturation manager)
+        for idx in oversaturated_indices:
+             calc_saturation(cell, idx, end=True)
+
     # clip Sfrac and Lfrac if regridding causes them to exceed physical limits
+    # and this isnt fixed by the saturation calculation
     cell["Sfrac"] = np.clip(cell["Sfrac"], 0, 1)
     cell["Lfrac"] = np.clip(cell["Lfrac"], 0, 1)
 
-    # mass checks
+    # mass checks - will fail if there is an error that isnt fixed by
+    # either of the above
     final_mass = utils.calc_mass_sum(cell)
     tol = max(1e-7, 1e-10 * expected_new_mass)
 
