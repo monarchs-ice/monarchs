@@ -647,6 +647,6 @@ def calc_height_adjustment(cell, k, dt_scaling, Fl):
 
         else:
             message = "Lake over completely melted firn\n"
-            utils.generic_error(cell, routine_name, message)
+            generic_error(cell, routine_name, message)
 
     return boundary_change, cap_reached
