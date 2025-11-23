@@ -120,9 +120,10 @@ def check_for_mass_conservation(cell, original_mass, new_mass,
     ValueError
         If mass conservation is violated beyond the specified tolerance.
     """
-    with objmode:
+    errflag = 0
+
+    with objmode(errflag='int32'):
         mass_diff = abs(original_mass - new_mass)
-        errflag = False
         if mass_diff >= tol:
             # Print error (cast row/col to int to avoid <object> print issues)
             r = int(cell['row'])
@@ -133,7 +134,7 @@ def check_for_mass_conservation(cell, original_mass, new_mass,
             print("    Original:", original_mass)
             print("    New:", new_mass)
             cell['error_flag'] = 1
-            errflag = True
+            errflag = 1
         return errflag
 
 def generic_error(cell, routine_name, message):
