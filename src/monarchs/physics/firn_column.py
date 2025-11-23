@@ -10,6 +10,7 @@ contained in percolation.py.
 import numpy as np
 from monarchs.physics import percolation, surface_fluxes, solver, regrid_column
 from monarchs.core import utils
+from monarchs.core.error_handling import check_for_mass_conservation, generic_error
 
 MODULE_NAME = "monarchs.physics.firn_column"
 
@@ -147,7 +148,7 @@ def firn_column(
             if np.isnan(height_change):
                 message = ("Height change is NaN - likely due to unrealistic "
                            "meteorological data.")
-                utils.generic_error(cell, routine_name, message)
+                generic_error(cell, routine_name, message)
 
             regrid_column.regrid_after_melt(cell, height_change)
         elif not success_fixedsfc and not toggle_dict["ignore_errors"]:
@@ -155,7 +156,7 @@ def firn_column(
                 "Heat equation solver failed to converge when surface"
                 " temperature was fixed."
             )
-            utils.generic_error(cell, routine_name, message)
+            generic_error(cell, routine_name, message)
 
     # If the surface temperature is below the melting point, then we simply
     # update the firn temperature provided the solver didn't fail.
@@ -175,7 +176,7 @@ def firn_column(
     # Test for mass conservation - if we lose mass, then there is an issue with
     # the regridding.
     new_mass = utils.calc_mass_sum(cell)
-    utils.check_for_mass_conservation(cell, original_mass, new_mass,
+    check_for_mass_conservation(cell, original_mass, new_mass,
                                       routine_name)
 
 def calc_height_change(
@@ -300,8 +301,8 @@ def calc_height_change(
             "Height change during melt is negative, and outside the bounds of"
             " a numerical error"
         )
-        utils.generic_error(cell, routine_name, message)
+        generic_error(cell, routine_name, message)
     elif np.isnan(dHdt):
         message = ("Height change during melt is NaN")
-        utils.generic_error(cell, routine_name, message)
+        generic_error(cell, routine_name, message)
     return dHdt

@@ -5,6 +5,7 @@
 import numpy as np
 from monarchs.physics import regrid_column, surface_fluxes, solver, percolation
 from monarchs.core import utils
+from monarchs.core.error_handling import check_for_mass_conservation, generic_error
 
 MODULE_NAME = "monarchs.physics.lake"
 
@@ -428,7 +429,7 @@ def lake_formation(
     old_T_sfc = sfc_energy_lake_formation(air_temp, Q, k, cell)
     # Check for conservation of mass
     new_mass = utils.calc_mass_sum(cell)
-    errflag = utils.check_for_mass_conservation(cell, original_mass, new_mass,
+    errflag = check_for_mass_conservation(cell, original_mass, new_mass,
                                                 routine_name)
     if errflag:
         # return early to stop processing garbage
@@ -455,7 +456,7 @@ def lake_formation(
             print(f"{routine_name}: ")
             message = "Error in surface temperature in lake formation \n"
             message += f"\tdHdt = {dHdt}\n"
-            utils.generic_error(cell, routine_name, message)
+            generic_error(cell, routine_name, message)
             return cell
 
         cell["melt_hours"] += 1
@@ -485,7 +486,7 @@ def lake_formation(
     # Another round of mass conservation checks
     new_mass = utils.calc_mass_sum(cell)
     # end of timestep so not bothered about returning early if error
-    utils.check_for_mass_conservation(cell, original_mass, new_mass,
+    check_for_mass_conservation(cell, original_mass, new_mass,
                                       routine_name)
 
 
@@ -545,7 +546,7 @@ def lake_development(
         if cell["lake_temperature"][0] > 300:
             message = "Unrealistic lake surface temperature > 300K\n"
             message += f"\tT_sfc = {cell['lake_temperature'][0]}\n"
-            utils.generic_error(cell, routine_name, message)
+            generic_error(cell, routine_name, message)
 
     elif cell["lid"] or cell["v_lid"]:
         cell["lake_temperature"][0] = 273.15
@@ -590,7 +591,7 @@ def lake_development(
     cell["lake_temperature"][-1] = 273.15
 
     new_mass = utils.calc_mass_sum(cell)
-    utils.check_for_mass_conservation(cell, original_mass, new_mass,
+    check_for_mass_conservation(cell, original_mass, new_mass,
                                       routine_name)
     return Fu
 
@@ -638,7 +639,7 @@ def calc_height_adjustment(cell, k, dt_scaling, Fl):
             if kdTdz < 0:
                 message = "Error in lake development kdTdz < 0\n"
                 message += f"kdTdz = {kdTdz}\n"
-                utils.generic_error(cell, routine_name, message)
+                generic_error(cell, routine_name, message)
 
 
             cell["lake_boundary_change"] += boundary_change

@@ -6,6 +6,7 @@ response to melting.
 import numpy as np
 from monarchs.physics import percolation
 from monarchs.core import utils
+from monarchs.core.error_handling import check_for_mass_conservation
 
 
 def _integrate_piecewise_constant(edges, values, z0, z1):
@@ -222,4 +223,4 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     mass_after = utils.calc_mass_sum(cell)
     tol = max(1e-2, 1e-10 * mass_before)
-    utils.check_for_mass_conservation(cell, mass_before, mass_after, 'monarchs.physics.regrid_after_melt')
+    check_for_mass_conservation(cell, mass_before, mass_after, 'monarchs.physics.regrid_after_melt')

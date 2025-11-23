@@ -7,6 +7,7 @@ import numpy as np
 from monarchs.physics import surface_fluxes
 from monarchs.physics import solver
 from monarchs.core import utils
+from monarchs.core.error_handling import check_for_mass_conservation
 
 MODULE_NAME = "monarchs.physics.virtual_lid"
 
@@ -137,7 +138,7 @@ def virtual_lid_development(
 
     # check we've not gained or lost too much mass
     new_mass = utils.calc_mass_sum(cell)
-    utils.check_for_mass_conservation(cell, original_mass, new_mass,
+    check_for_mass_conservation(cell, original_mass, new_mass,
                                       routine_name)
 
 

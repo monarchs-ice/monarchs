@@ -6,7 +6,7 @@ firn column.
 
 # TODO - refactor/split up percolation, rename
 import numpy as np
-from monarchs.core import utils
+from monarchs.core.error_handling import generic_error
 
 MODULE_NAME = "monarchs.physics.percolation"
 
@@ -229,7 +229,7 @@ def calc_refreezing(cell, v_lev):
             )
         if cell["Lfrac"][v_lev] < 0:
             message = "Lfrac < 0 in saturation Sfrac > 1 calculation"
-            utils.generic_error(cell, routine_name, message)
+            generic_error(cell, routine_name, message)
 
         cell["Sfrac"][v_lev] = cell["Sfrac"][v_lev] + Vol_Change * (
             cell["rho_water"] / cell["rho_ice"]
@@ -245,7 +245,7 @@ def calc_refreezing(cell, v_lev):
         cell["Lfrac"][v_lev] = 0
     if cell["Lfrac"][v_lev] < 0:
         message = f"Lfrac < 0 in refreezing calculation at v_lev {v_lev}"
-        utils.generic_error(cell, routine_name, message)
+        generic_error(cell, routine_name, message)
 
     cell["Lfrac"][v_lev] = cell["Lfrac"][v_lev] + excess_water / (
         cell["firn_depth"] / cell["vert_grid"]
@@ -367,7 +367,7 @@ def calc_saturation(cell, v_lev_in, end=False):
                     )  # convert to a height in m
                     if cell["lake"] and cell["lake_depth"] < 0:
                         message = "Lake depth is negative - problem..."
-                        utils.generic_error(cell, routine_name, message)
+                        generic_error(cell, routine_name, message)
                 elif (
                     cell["Lfrac"][0] > Lfrac_max
                     and cell["Lfrac"][0] > 0

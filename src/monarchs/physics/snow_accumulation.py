@@ -9,6 +9,8 @@ from monarchs.core import utils
 
 from monarchs.physics.regrid_column import conservative_regrid
 from monarchs.physics.percolation import calc_saturation
+from monarchs.core.error_handling import generic_error
+
 MODULE_NAME = "monarchs.physics.snow_accumulation"
 
 def snowfall(cell, snow_depth, snow_rho, snow_T):
@@ -138,7 +140,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
                   "Expected: ", float(expected_new_mass), \
                   "Actual: ",  float(final_mass), \
                   "Diff:  ", float(final_mass - expected_new_mass)
-        utils.generic_error(cell, routine_name, message)
+        generic_error(cell, routine_name, message)
 
 def densification(cell, t_steps_per_day):
     """

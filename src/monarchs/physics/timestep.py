@@ -16,7 +16,7 @@ from monarchs.physics import (
     snow_accumulation,
     reset_column,
 )
-from monarchs.core import utils
+from monarchs.core.error_handling import generic_error, check_correct
 
 MODULE_NAME = "monarchs.physics.timestep"
 
@@ -310,13 +310,13 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     "Lfrac + Sfrac > 1 after regridding, after saturation"
                     " calculation."
                 )
-                utils.generic_error(cell, routine_name, message)
+                generic_error(cell, routine_name, message)
         if cell["lake_depth"] > 5:
                 print('Location of large lake - ', cell["row"], cell["column"])
                 print('Firn depth of large lake - ', cell['firn_depth'])
                 print('Depth of large lake - ', cell['lake_depth'])    
         if not ignore_errors:
-            utils.check_correct(cell)
+            check_correct(cell)
 
         cell["rho"] = (
             cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
