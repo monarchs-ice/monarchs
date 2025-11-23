@@ -7,6 +7,7 @@ import numpy as np
 from monarchs.physics import percolation
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
+from monarchs.physics.regrid_column import conservative_regrid
 
 def combine_lid_firn(cell, freeze_lake=False):
     routine_name = 'monarchs.physics.reset_column.combine_lid_firn'
@@ -61,15 +62,7 @@ def combine_lid_firn(cell, freeze_lake=False):
         ),
     )
 
-    # density interpolation: lake becomes ice if freezing
-    lake_rho_profile = np.ones(cell["vert_grid_lake"]) * (
-        cell["rho_ice"] if freeze_lake else cell["rho_water"]
-    )
-    new_rho = np.interp(
-        new_depth_grid,
-        old_depth_grid,
-        np.concatenate((cell["rho_lid"], lake_rho_profile, cell["rho"])),
-    )
+
 
     # Reconstruct phase fractions with mass conservation
     sfrac_new = mass_conserving_profile(
@@ -78,7 +71,9 @@ def combine_lid_firn(cell, freeze_lake=False):
     lfrac_new = mass_conserving_profile(
         cell, orig_lid_depth, var="Lfrac", freeze_lake=freeze_lake
     )
-
+    # Density is derived directly from the new mass-conserved fractions.
+    # Interpolating rho directly causes mass errors when layer sizes change.
+    new_rho = (sfrac_new * cell["rho_ice"]) + (lfrac_new * cell["rho_water"])
     # update cell with the new combined profiles/values
     cell["firn_temperature"] = new_firn_temperature
     cell["rho"] = new_rho
@@ -120,101 +115,42 @@ def combine_lid_firn(cell, freeze_lake=False):
 def mass_conserving_profile(
     cell, orig_lid_depth, var="Sfrac", freeze_lake=False
 ):
-    lid_dz = np.full(
-        cell["vert_grid_lid"], orig_lid_depth / cell["vert_grid_lid"]
-    )
 
-    # use ice-equivalent thickness when freezing the lake (water expands)
-    if freeze_lake:
-        lake_depth_eff = cell["lake_depth"] * (
-            cell["rho_water"] / cell["rho_ice"]
-        )
+    if cell["vert_grid_lid"] > 0 and orig_lid_depth > 0:
+        lid_dz = np.full(cell["vert_grid_lid"], orig_lid_depth / cell["vert_grid_lid"])
     else:
-        lake_depth_eff = cell["lake_depth"]
-    lake_dz = np.full(
-        cell["vert_grid_lake"], lake_depth_eff / cell["vert_grid_lake"]
-    )
+        lid_dz = np.array([])
 
-    column_dz = np.full(
-        cell["vert_grid"], cell["firn_depth"] / cell["vert_grid"]
-    )
+    if cell["vert_grid_lake"] > 0 and cell["lake_depth"] > 0:
+        if freeze_lake:
+            lake_depth_eff = cell["lake_depth"] * (cell["rho_water"] / cell["rho_ice"])
+        else:
+            lake_depth_eff = cell["lake_depth"]
+        lake_dz = np.full(cell["vert_grid_lake"], lake_depth_eff / cell["vert_grid_lake"])
+    else:
+        lake_dz = np.array([])
+
+    column_dz = np.full(cell["vert_grid"], cell["firn_depth"] / cell["vert_grid"])
+
+    dz_full = np.concatenate((lid_dz, lake_dz, column_dz))
+    source_edges = np.concatenate((np.array([0.0]), np.cumsum(dz_full)))
 
     if var == "Sfrac":
-        # sfrac: lid is ice, lake is ice if freezing, else zero
-        if freeze_lake:
-            var_lidlake = np.concatenate(
-                (
-                    np.ones(cell["vert_grid_lid"]),
-                    np.ones(cell["vert_grid_lake"]),
-                )
-            )
-        else:
-            var_lidlake = np.concatenate(
-                (
-                    np.ones(cell["vert_grid_lid"]),
-                    np.zeros(cell["vert_grid_lake"]),
-                )
-            )
-        var_column = cell["Sfrac"]
-        rho_seg = (
-            cell["rho_ice"],
-            cell["rho_ice"] if freeze_lake else cell["rho_water"],
-            cell["rho_ice"],
-        )
-    else:
-        # lfrac: lid is zero, lake is zero if freezing, else one
-        if freeze_lake:
-            var_lidlake = np.concatenate(
-                (
-                    np.zeros(cell["vert_grid_lid"]),
-                    np.zeros(cell["vert_grid_lake"]),
-                )
-            )
-        else:
-            var_lidlake = np.concatenate(
-                (
-                    np.zeros(cell["vert_grid_lid"]),
-                    np.ones(cell["vert_grid_lake"]),
-                )
-            )
-        var_column = cell["Lfrac"]
-        rho_seg = (cell["rho_water"], cell["rho_water"], cell["rho_water"])
+        val_lid = np.ones(len(lid_dz))
+        val_lake = np.ones(len(lake_dz)) if freeze_lake else np.zeros(len(lake_dz))
+        val_firn = cell["Sfrac"]
+    else: # Lfrac
+        val_lid = np.zeros(len(lid_dz))
+        val_lake = np.zeros(len(lake_dz)) if freeze_lake else np.ones(len(lake_dz))
+        val_firn = cell["Lfrac"]
 
-    # combine into full profile
-    dz_full = np.concatenate((lid_dz, lake_dz, column_dz))
-    var_full = np.concatenate((var_lidlake, var_column))
+    source_vals = np.concatenate((val_lid, val_lake, val_firn))
 
-    rho_full = np.concatenate(
-        (
-            np.full(cell["vert_grid_lid"], rho_seg[0]),
-            np.full(cell["vert_grid_lake"], rho_seg[1]),
-            np.full(cell["vert_grid"], rho_seg[2]),
-        )
-    )
+    total_depth = source_edges[-1]
+    nz = cell["vert_grid"]
+    target_edges = np.linspace(0, total_depth, nz + 1)
 
-    # depth edges of full profile
-    z_edges_full = np.concatenate((np.array([0.0]), np.cumsum(dz_full)))
+    # 4. Regrid
+    new_vals = conservative_regrid(source_edges, source_vals, target_edges)
 
-    total_depth = z_edges_full[-1]
-    num_layers_new = cell["vert_grid"]
-    dz_new = np.full(num_layers_new, total_depth / num_layers_new)
-    z_edges_new = np.linspace(0.0, total_depth, num_layers_new + 1)
-
-    # mass per layer in old grid
-    mass_old = var_full * dz_full * rho_full
-
-    # cumulative mass at edges
-    mass_profile = np.zeros_like(z_edges_full)
-    mass_profile[1:] = np.cumsum(mass_old)
-
-    # interpolate cumulative mass to new edges
-    mass_interp_edges = np.interp(z_edges_new, z_edges_full, mass_profile)
-
-    # new mass per layer and recover fraction
-    mass_new = np.diff(mass_interp_edges)
-
-    rho_var = cell["rho_ice"] if var == "Sfrac" else cell["rho_water"]
-    # get our final Sfrac and Lfrac profiles weighted by the correct density
-    var_new = mass_new / (dz_new * rho_var)
-
-    return np.clip(var_new, 0.0, 1.0)
+    return np.clip(new_vals, 0.0, 1.0)
