@@ -89,7 +89,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     lid_development_toggle = toggle_dict["lid_development_toggle"]
     ignore_errors = toggle_dict["ignore_errors"]
 
-
+    if not cell["valid_cell"]:
+        return cell
     # track evolution of firn, lake and lid over time. We do this for each day,
     # so it resets at the start of the model day.
     cell["firn_boundary_change"] = 0
