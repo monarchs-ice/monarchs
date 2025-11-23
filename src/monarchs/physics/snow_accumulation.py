@@ -71,7 +71,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     # old edges start at 0 - shift them down by 'snow_depth'.
     old_edges = np.linspace(0, old_depth, nz + 1)
     shifted_old_edges = old_edges + snow_depth
-    source_edges = np.concatenate(([0.0], shifted_old_edges))
+    source_edges = np.concatenate((np.array([0.0]), shifted_old_edges))
 
     snow_sfrac = snow_rho / cell["rho_ice"]
     # ensure Sfrac doesn't exceed 1 (e.g. if input rho > 917)
@@ -80,9 +80,9 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
 
     # combine solid fraction for both snow and old firn
     # assume fresh snow is dry
-    source_Sfrac = np.concatenate(([snow_sfrac], cell["Sfrac"]))
+    source_Sfrac = np.concatenate((np.array([snow_sfrac]), cell["Sfrac"]))
     source_Lfrac = np.concatenate(
-        ([0.0], cell["Lfrac"]))
+        (np.array([0.0]), cell["Lfrac"]))
 
     # temperature interpolation - use centres rather than edges
     old_centers = 0.5 * (old_edges[:-1] + old_edges[1:])
@@ -91,8 +91,8 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     # new snow center is at half the snow depth
     snow_center = snow_depth / 2.0
 
-    source_centers = np.concatenate(([snow_center], shifted_old_centers))
-    source_temps = np.concatenate(([snow_T], cell["firn_temperature"]))
+    source_centers = np.concatenate((np.array([snow_center]), shifted_old_centers))
+    source_temps = np.concatenate((np.array([snow_T]), cell["firn_temperature"]))
 
     # new grid (after height change)
     new_total_depth = old_depth + snow_depth
