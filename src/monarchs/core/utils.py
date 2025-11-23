@@ -5,12 +5,17 @@ Utilities module containing various helper functions or wrappers.
 from functools import wraps
 import numpy as np
 import pathos
+import contextlib
 
 try:
-    from numba import prange
+    from numba import prange, objmode
 except ImportError:
     # fallback if numba is not installed
     prange = range  # pylint: disable=invalid-name
+    @contextlib.contextmanager
+    def objmode(*args, **kwargs):
+        """Dummy context manager for objmode when numba is not installed."""
+        yield
 
 
 def do_not_jit(function):
@@ -115,20 +120,21 @@ def check_for_mass_conservation(cell, original_mass, new_mass,
     ValueError
         If mass conservation is violated beyond the specified tolerance.
     """
-    mass_diff = abs(original_mass - new_mass)
-    errflag = False
-    if mass_diff >= tol:
-        # Print error (cast row/col to int to avoid <object> print issues)
-        r = int(cell['row'])
-        c = int(cell['column'])
-        print(f"{routine_name} - ERROR:")
-        print("mass not conserved at [", r, ",", c, "] !!!")
-        print("    Difference:", mass_diff)
-        print("    Original:", original_mass)
-        print("    New:", new_mass)
-        cell['error_flag'] = 1
-        errflag = True
-    return errflag
+    with objmode:
+        mass_diff = abs(original_mass - new_mass)
+        errflag = False
+        if mass_diff >= tol:
+            # Print error (cast row/col to int to avoid <object> print issues)
+            r = int(cell['row'])
+            c = int(cell['column'])
+            print(f"{routine_name} - ERROR:")
+            print("mass not conserved at [", r, ",", c, "] !!!")
+            print("    Difference:", mass_diff)
+            print("    Original:", original_mass)
+            print("    New:", new_mass)
+            cell['error_flag'] = 1
+            errflag = True
+        return errflag
 
 def generic_error(cell, routine_name, message):
     """
@@ -148,10 +154,11 @@ def generic_error(cell, routine_name, message):
     -------
     None
     """
-    r = int(cell['row'])
-    c = int(cell['column'])
-    print(f"{routine_name} - ERROR at [{r}, {c}]: {message}")
-    cell['error_flag'] = 1
+    with objmode:
+        r = int(cell['row'])
+        c = int(cell['column'])
+        print(f"{routine_name} - ERROR at [{r}, {c}]: {message}")
+        cell['error_flag'] = 1
 
 
 def calc_grid_mass(grid):
@@ -306,6 +313,7 @@ def check_correct(cell):
        # print("Location: ", cell["row"], cell["column"])
        # print(', which is a valid cell? ', cell['valid_cell']) 
        # print('Firn depth = ', cell['firn_depth'])
+
 def check_grid_correctness(grid):
     """
     Wraps check_correct for each cell in the grid.
