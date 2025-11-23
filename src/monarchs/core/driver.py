@@ -482,10 +482,7 @@ def main(model_setup, grid):
         timestep_start = time.perf_counter()
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")
-        print('driver ld (start) - ', grid[71][84]['lake_depth'])
-        print('valid? ', grid[71][84]['valid_cell'])
-        print('row = ', grid[71][84]['row'])
-        print('col = ', grid[71][84]['column'])
+
         # pre-flatten and rearrange met_data_grid
         met_data_grid = met_data_grid.reshape(24, -1)
         met_data_grid = np.moveaxis(
