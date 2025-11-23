@@ -31,9 +31,11 @@ from monarchs.core.model_grid import get_spec as get_iceshelf_spec
 from monarchs.core.model_output import setup_output, update_model_output
 from monarchs.core.utils import (
     get_2d_grid,
+    get_num_cores,
+)
+from monarchs.core.error_handling import (
     calc_grid_mass,
     check_grid_correctness,
-    get_num_cores,
     check_for_single_column_errors
 )
 from monarchs.met_data.met_data_grid import initialise_met_data, get_spec
@@ -296,6 +298,8 @@ def print_model_end_of_timestep_messages(
     toc = time.perf_counter()
     print("\n*******************************************\n")
     print("End of timestep diagnostics:")
+    if calc_grid_mass(grid) == np.nan:
+        raise ValueError("Total mass of grid is NaN! Debug.")
     print(f"Total mass at end of iteration {day + 1} = ", calc_grid_mass(grid))
     if model_setup.snowfall_toggle and model_setup.catchment_outflow:
         print(
