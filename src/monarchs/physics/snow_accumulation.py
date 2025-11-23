@@ -1,177 +1,132 @@
-""" """
+"""
+Module handling snow accumulation on the surface.
+Uses conservative regridding to maintain mass balance when adding
+new layers to the top of the firn column.
+"""
 
-# TODO - module-level docstring, densification
 import numpy as np
 from monarchs.core import utils
+
+from monarchs.physics.regrid_column import conservative_regrid
 
 MODULE_NAME = "monarchs.physics.snow_accumulation"
 
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
-    Adds snowfall to surface of model and regrids model to incorporate it.
-    This snow is added to the firn or lake depth, depending on the current
-    state of the cell.
-    Called in <timestep_loop>.
+    After melting occurs, subtract the amount of melting from the firn height,
+    convert it into meltwater, and interpolate the entire column to the new
+    vertical profile accounting for this height change.
+    This meltwater is either converted into surface liquid water fraction,
+    or if there is a lake, into lake height.
+    code Code
 
 
     Parameters
     ----------
     cell : numpy structured array
         Element of the model grid we are operating on.
-    snow_depth : float
-        Depth of the snow, read in from the meteorological data input [m]
-    snow_rho : float
-        Snow density, either read in from the meteorological data input,
-        or assumed 300 [kg m^-3]
-    snow_T : float
-        Snow temperature, either read in from meterological data input,
-        or assumed 273.15 [K]
+    height_change : float
+        Change in the firn height as a result of melting. [m]
+    lake : bool, optional
+        Flag to determine whether a lake is present or not. This is contained
+        here so that we can re-use the bulk of this algorithm, but with some
+        small changes to reflect the different situation that occurs when a
+        lake is present.
 
     Returns
     -------
-    None.
+    None
     """
-    #     TODO - what happens if we have a lid? Gets added to top and we just
-    #      regrid as normal.
-    # TODO - need to make sure we use actual measured snow T values
     routine_name = f"{MODULE_NAME}.snowfall"
-    if snow_depth != 0:
-        if cell["lid"]:
-            # if we have a lid, add snow to the top of the lid
-            # TODO - actually need to regrid, but just do this to test for now.
-            cell["lid_depth"] += snow_depth * snow_rho / cell["rho_water"]
-        elif (
-            cell["lake"] and not cell["lid"]
-        ):  # if lake - add it to lake depth not firn
-            cell["lake_depth"] += snow_depth * snow_rho / cell["rho_water"]
-        elif not cell["lid"]:
-            original_mass = utils.calc_mass_sum(cell)
 
-            # Set temperature just below freezing if it is somehow above 0
-            # degrees, which it shouldn't be
-            # if we don't do this, we can run into errors when solving the
-            # heat equation later
-            if snow_T > 273.15:
-                snow_T = 273.149
-            # track pre-snow dz and firn depth
-            dz_old = cell["firn_depth"] / cell["vert_grid"]
-            old_firn_depth = cell["firn_depth"] + 0
+    # 0. trivial checks
+    if snow_depth <= 0:
+        return
 
-            # add height to the firn
-            cell["firn_depth"] += snow_depth
-            dz_new = cell["firn_depth"] / cell["vert_grid"]
-            # create a new layer for the firn depth
+    # handle Lids and Lakes (no regridding of firn)
+    if cell["lid"]:
+        # add to lid depth
+        cell["lid_depth"] += snow_depth * snow_rho / cell["rho_water"]
+        return
+    elif cell["lake"] and not cell["lid"]:
+        # add to lake depth
+        cell["lake_depth"] += snow_depth * snow_rho / cell["rho_water"]
+        return
 
-            # First interpolate the existing profiles
-            sfrac_hold = np.zeros(np.shape(cell["Sfrac"]))
-            lfrac_hold = np.zeros(np.shape(cell["Lfrac"]))
-            T_hold = np.zeros(np.shape(cell["firn_temperature"]))
-            # Scale temperature in the top layer to account for the fact
-            # that we have added snow
-            weight1 = dz_old * (
-                cell["Sfrac"][0] * cell["rho_ice"]
-                + cell["Lfrac"][0] * cell["rho_water"]
-            )
-            weight2 = snow_depth * snow_rho
-            cell["firn_temperature"][0] = (
-                weight1 * cell["firn_temperature"][0] + weight2 * snow_T
-            ) / (weight1 + weight2)
-            # Scale Sfrac and Lfrac in the top layer also
-            weight1 = snow_depth
-            weight2 = dz_old
+    # dry firn/ice lens
 
-            cell["Sfrac"][0] = (
-                weight1 * (snow_rho / cell["rho_ice"])
-                + weight2 * cell["Sfrac"][0]
-            ) / (weight1 + weight2)
+    # calculate mass
+    current_mass = utils.calc_mass_sum(cell)
+    added_mass = snow_depth * snow_rho
+    expected_new_mass = current_mass + added_mass
 
-            # error handling
-            if np.any(cell["Lfrac"] < -0.001):
-                message = "Lfrac before snow < 0"
-                message += f"{np.where(cell['Lfrac'] < -0.001)}"
-                message += f"{cell['Lfrac']}"
-                utils.generic_error(cell, routine_name, message)
-
-            cell["Lfrac"][0] = (weight1 * 0 + weight2 * cell["Lfrac"][0]) / (
-                weight1 + weight2
-            )
-            if np.any(cell["Lfrac"] < -0.001):
-                message = "Lfrac before hold < 0"
-                message += f"{np.where(cell['Lfrac'] < -0.001)}"
-                message += f"{cell['Lfrac']}"
-                message += f"{lfrac_hold}"
-                utils.generic_error(cell, routine_name, message)
-            if np.any(cell["Sfrac"] < -0.001):
-                message = ("Sfrac before snow > 0")
-                message += f"{np.where(cell['Sfrac'] < -0.001)}"
-                message += f"{cell['Sfrac']}"
-                utils.generic_error(cell, routine_name, message)
-            if np.any(cell["Sfrac"] > 1.001):
-                message = "Sfrac before snow > 1"
-                message += f"{np.where(cell['Sfrac'] < -0.001)}"
-                message += f"{cell['Sfrac']}"
-                utils.generic_error(cell, routine_name, message)
+    # sanitize Input Temperature
+    if snow_T > 273.15:
+        snow_T = 273.15
 
 
-            # Calculate the new profile as a weighted average of the proportion
-            # of the new cell that was made up by the old
-            # cells.
-            for i in range(1, len(cell["Sfrac"])):
-                weight_1 = (
-                    cell["firn_depth"]
-                    - i * dz_new
-                    - (old_firn_depth - i * dz_old)
-                )  # new top of upper layer - bottom of old upper layer
-                weight_2 = (
-                    old_firn_depth
-                    - i * dz_old
-                    - (cell["firn_depth"] - (i + 1) * dz_new)
-                )  # old bottom of upper layer - new bottom of upper layer
-                lfrac_hold[i] = (
-                    cell["Lfrac"][i - 1] * weight_1
-                    + cell["Lfrac"][i] * weight_2
-                ) / (weight_1 + weight_2)
-                sfrac_hold[i] = (
-                    cell["Sfrac"][i - 1] * weight_1
-                    + cell["Sfrac"][i] * weight_2
-                ) / (weight_1 + weight_2)
-                T_hold[i] = (
-                    cell["firn_temperature"][i - 1] * weight_1
-                    + cell["firn_temperature"][i] * weight_2
-                ) / (weight_1 + weight_2)
-            lfrac_hold[0] = cell['Lfrac'][0]
-            sfrac_hold[0] = cell['Sfrac'][0]
-            T_hold[0] = cell["firn_temperature"][0]
-            # further error handling
-            if np.any(lfrac_hold < -0.001):
-                w = np.where(lfrac_hold < -0.001)
-                message = "Lfrac hold < 0"
-                message += f"{w[0][0]}"
-                message += f"New Lfrac = {lfrac_hold[: w[0][0] + 2]}"
-                message += f"Old Lfrac = {cell['Lfrac'][: w[0][0] + 2]}"
-                utils.generic_error(cell, routine_name, message)
+    nz = int(cell["vert_grid"])
+    old_depth = float(cell["firn_depth"])
 
-            if np.any(sfrac_hold < -0.001):
-                w = np.where(sfrac_hold < 0)
-                message = "Sfrac hold < 0"
-                message += f"{w[0][0]}"
-                message += f"New Sfrac = {sfrac_hold[: w[0][0] + 2]}"
-                message += f"Old Sfrac = {cell['Sfrac'][: w[0][0] + 2]}"
-                utils.generic_error(cell, routine_name, message)
+    # old edges start at 0 - shift them down by 'snow_depth'.
+    old_edges = np.linspace(0, old_depth, nz + 1)
+    shifted_old_edges = old_edges + snow_depth
+    source_edges = np.concatenate(([0.0], shifted_old_edges))
 
-            if np.any(sfrac_hold > 1.001):
-                message = "Sfrac hold > 1"
-                message += f"{np.where(sfrac_hold > 1.001)}"
-                message += f"{sfrac_hold}"
-                utils.generic_error(cell, routine_name, message)
+    snow_sfrac = snow_rho / cell["rho_ice"]
+    # ensure Sfrac doesn't exceed 1 (e.g. if input rho > 917)
+    if snow_sfrac > 1.0:
+        snow_sfrac = 1.0
 
-            cell["Sfrac"] = sfrac_hold
-            cell["Lfrac"] = lfrac_hold
-            cell["firn_temperature"] = T_hold
-            new_mass = utils.calc_mass_sum(cell)
-            utils.check_for_mass_conservation(cell, original_mass, new_mass,
-                                                routine_name)
+    # combine solid fraction for both snow and old firn
+    # assume fresh snow is dry
+    source_Sfrac = np.concatenate(([snow_sfrac], cell["Sfrac"]))
+    source_Lfrac = np.concatenate(
+        ([0.0], cell["Lfrac"]))
 
+    # temperature interpolation - use centres rather than edges
+    old_centers = 0.5 * (old_edges[:-1] + old_edges[1:])
+    shifted_old_centers = old_centers + snow_depth
+
+    # new snow center is at half the snow depth
+    snow_center = snow_depth / 2.0
+
+    source_centers = np.concatenate(([snow_center], shifted_old_centers))
+    source_temps = np.concatenate(([snow_T], cell["firn_temperature"]))
+
+    # new grid (after height change)
+    new_total_depth = old_depth + snow_depth
+    target_edges = np.linspace(0, new_total_depth, nz + 1)
+    target_centers = 0.5 * (target_edges[:-1] + target_edges[1:])
+
+    # conservative regridding
+    new_Sfrac = conservative_regrid(source_edges, source_Sfrac, target_edges)
+    new_Lfrac = conservative_regrid(source_edges, source_Lfrac, target_edges)
+
+    # linear interpolation in temperature
+    new_T = np.interp(target_centers, source_centers, source_temps)
+
+    # update the cell
+    cell["firn_depth"] = new_total_depth
+    cell["Sfrac"] = new_Sfrac
+    cell["Lfrac"] = new_Lfrac
+    cell["firn_temperature"] = new_T
+    cell["vertical_profile"] = np.linspace(0, new_total_depth, nz)
+
+    # clip Sfrac and Lfrac if regridding causes them to exceed physical limits
+    cell["Sfrac"] = np.clip(cell["Sfrac"], 0, 1)
+    cell["Lfrac"] = np.clip(cell["Lfrac"], 0, 1)
+
+    # mass checks
+    final_mass = utils.calc_mass_sum(cell)
+    tol = max(1e-7, 1e-10 * expected_new_mass)
+
+    if abs(final_mass - expected_new_mass) > tol:
+        message = f"Mass conservation failed in snowfall.\n" \
+                  f"Expected: {expected_new_mass}\n" \
+                  f"Actual:   {final_mass}\n" \
+                  f"Diff:     {final_mass - expected_new_mass}"
+        utils.generic_error(cell, routine_name, message)
 
 def densification(cell, t_steps_per_day):
     """
