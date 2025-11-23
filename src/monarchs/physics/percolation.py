@@ -6,7 +6,9 @@ firn column.
 
 # TODO - refactor/split up percolation, rename
 import numpy as np
+from monarchs.core import utils
 
+MODULE_NAME = "monarchs.physics.percolation"
 
 def calc_solid_mass(cell):
     """Calculate the mass of the solid part of the column."""
@@ -166,6 +168,7 @@ def calc_refreezing(cell, v_lev):
         unphysical state.
 
     """
+    routine_name = f"{MODULE_NAME}.calc_refreezing"
     # TODO - allow water to freeze if in a under-firn lake, but not expand.
     # TODO - check that this doesnt violate mass conservation
     # Maximum allowable temperature change
@@ -225,7 +228,9 @@ def calc_refreezing(cell, v_lev):
                 cell["firn_depth"] / cell["vert_grid"]
             )
         if cell["Lfrac"][v_lev] < 0:
-            raise ValueError("Lfrac < 0 in saturation Sfrac > 1 calculation")
+            message = "Lfrac < 0 in saturation Sfrac > 1 calculation"
+            utils.generic_error(cell, routine_name, message)
+
         cell["Sfrac"][v_lev] = cell["Sfrac"][v_lev] + Vol_Change * (
             cell["rho_water"] / cell["rho_ice"]
         ) / (cell["firn_depth"] / cell["vert_grid"])
@@ -239,7 +244,9 @@ def calc_refreezing(cell, v_lev):
         )
         cell["Lfrac"][v_lev] = 0
     if cell["Lfrac"][v_lev] < 0:
-        raise ValueError("Lfrac < 0 in saturation Sfrac > 1 calculation")
+        message = f"Lfrac < 0 in refreezing calculation at v_lev {v_lev}"
+        utils.generic_error(cell, routine_name, message)
+
     cell["Lfrac"][v_lev] = cell["Lfrac"][v_lev] + excess_water / (
         cell["firn_depth"] / cell["vert_grid"]
     )
@@ -286,6 +293,7 @@ def calc_saturation(cell, v_lev_in, end=False):
         If lake depth goes negative, model is in an unphysical state so we
         throw an error.
     """
+    routine_name = f"{MODULE_NAME}.calc_saturation"
     v_lev = int(v_lev_in)
     Lfrac_max = 1 - cell["Sfrac"][v_lev]
 
@@ -358,7 +366,8 @@ def calc_saturation(cell, v_lev_in, end=False):
                         cell["firn_depth"] / cell["vert_grid"]
                     )  # convert to a height in m
                     if cell["lake"] and cell["lake_depth"] < 0:
-                        raise ValueError("Lake depth is negative - problem...")
+                        message = "Lake depth is negative - problem..."
+                        utils.generic_error(cell, routine_name, message)
                 elif (
                     cell["Lfrac"][0] > Lfrac_max
                     and cell["Lfrac"][0] > 0

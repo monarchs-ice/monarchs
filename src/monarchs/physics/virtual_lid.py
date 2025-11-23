@@ -8,6 +8,7 @@ from monarchs.physics import surface_fluxes
 from monarchs.physics import solver
 from monarchs.core import utils
 
+MODULE_NAME = "monarchs.physics.virtual_lid"
 
 def virtual_lid_development(
     cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, Fu
@@ -54,6 +55,7 @@ def virtual_lid_development(
     -------
     None (amends cell inplace)
     """
+    routine_name = f"{MODULE_NAME}.virtual_lid_development"
     original_mass = utils.calc_mass_sum(cell)
     x = np.array([cell["virtual_lid_temperature"]])
 
@@ -135,13 +137,8 @@ def virtual_lid_development(
 
     # check we've not gained or lost too much mass
     new_mass = utils.calc_mass_sum(cell)
-    try:
-        assert abs(new_mass - original_mass) < 1.5 * 10 ** -7
-    except Exception:
-        print("Original mass = ", original_mass)
-        print("New mass = ", new_mass)
-        print("Difference = ", abs(new_mass - original_mass))
-        raise Exception
+    utils.check_for_mass_conservation(cell, original_mass, new_mass,
+                                      routine_name)
 
 
 def update_virtual_lid_temperature(

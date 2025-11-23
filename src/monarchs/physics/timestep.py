@@ -18,6 +18,7 @@ from monarchs.physics import (
 )
 from monarchs.core import utils
 
+MODULE_NAME = "monarchs.physics.timestep"
 
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """
@@ -77,6 +78,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     None. The function amends the instance of <cell> passed to it.
 
     """
+    routine_name = f"{MODULE_NAME}.timestep_loop"
     parallel = toggle_dict["parallel"]
     use_numba = toggle_dict["use_numba"]
     snowfall_toggle = toggle_dict["snowfall_toggle"]
@@ -99,14 +101,13 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     cell["lid_boundary_change"] = 0
 
     if np.isnan(cell["firn_temperature"]).any():
-        raise ValueError("NaN in firn temperature")
+        message = ("NaN in firn temperature")
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
         # Validation of model state at the start of the timestep
         if cell["lake_depth"] > 50:
             print('Location = ', cell['row'], cell['column'])
             print('Lake depth = ', cell['lake_depth'])
-            #raise ValueError('Lake depth is unrealistically high')
 
         if cell["lake_depth"] <= 1e-5 and cell["lake"]:
             cell["lake"] = False
@@ -305,10 +306,11 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 np.any(cell["Lfrac"][1:] + cell["Sfrac"][1:] > 1.00000000001)
                 and cell["Sfrac"][0] <= 1
             ):
-                raise ValueError(
+                message = (
                     "Lfrac + Sfrac > 1 after regridding, after saturation"
                     " calculation."
                 )
+                utils.generic_error(cell, routine_name, message)
         if cell["lake_depth"] > 5:
                 print('Location of large lake - ', cell["row"], cell["column"])
                 print('Firn depth of large lake - ', cell['firn_depth'])

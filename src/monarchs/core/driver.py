@@ -34,6 +34,7 @@ from monarchs.core.utils import (
     calc_grid_mass,
     check_grid_correctness,
     get_num_cores,
+    check_for_single_column_errors
 )
 from monarchs.met_data.met_data_grid import initialise_met_data, get_spec
 from monarchs.physics import lateral_movement
@@ -526,6 +527,9 @@ def main(model_setup, grid):
                 dask_scheduler=model_setup.dask_scheduler,
                 client=CLIENT,
             )
+
+        """Check for any errors in the grid after the single-column physics step"""
+        check_for_single_column_errors(grid)
 
         print("Single-column physics finished")
         print(f"Single column physics time: {time.perf_counter() - start:.2f}s")

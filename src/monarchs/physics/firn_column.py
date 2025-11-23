@@ -11,6 +11,7 @@ import numpy as np
 from monarchs.physics import percolation, surface_fluxes, solver, regrid_column
 from monarchs.core import utils
 
+MODULE_NAME = "monarchs.physics.firn_column"
 
 def firn_column(
     cell,
@@ -73,6 +74,7 @@ def firn_column(
     -------
     None (amends cell inplace)
     """
+    routine_name = f"{MODULE_NAME}.firn_column"
     # calculate mass before any melting occurs to use for a diagnostic later
     original_mass = utils.calc_mass_sum(cell)
     percolation_toggle = toggle_dict["percolation_toggle"]
@@ -143,17 +145,17 @@ def firn_column(
             )
 
             if np.isnan(height_change):
-                raise ValueError(
-                    "Height change is NaN - likely due to unrealistic"
-                    " meteorological data."
-                )
+                message = ("Height change is NaN - likely due to unrealistic "
+                           "meteorological data.")
+                utils.generic_error(cell, routine_name, message)
 
             regrid_column.regrid_after_melt(cell, height_change)
         elif not success_fixedsfc and not toggle_dict["ignore_errors"]:
-            raise ValueError(
+            message = (
                 "Heat equation solver failed to converge when surface"
                 " temperature was fixed."
             )
+            utils.generic_error(cell, routine_name, message)
 
     # If the surface temperature is below the melting point, then we simply
     # update the firn temperature provided the solver didn't fail.
@@ -173,8 +175,8 @@ def firn_column(
     # Test for mass conservation - if we lose mass, then there is an issue with
     # the regridding.
     new_mass = utils.calc_mass_sum(cell)
-    assert abs(original_mass - new_mass) < 1.5 * 10 ** -7
-
+    utils.check_for_mass_conservation(cell, original_mass, new_mass,
+                                      routine_name)
 
 def calc_height_change(
     cell,
@@ -218,6 +220,7 @@ def calc_height_change(
     dHdt : float
         Change in firn height as a result of melting. [m]
     """
+    routine_name = f"{MODULE_NAME}.calc_height_change"
     epsilon = 0.98
     sigma = 5.670373 * 10 ** -8
     dz = cell["firn_depth"] / cell["vert_grid"]
@@ -263,9 +266,9 @@ def calc_height_change(
     # height change rather than depth change, so dz is kept positive here.
     dtdz = (cell["firn_temperature"][0] - cell["firn_temperature"][1]) / dz
 
-    # If the surface is very empty, just melt one layer
-    if cell["Sfrac"][0] < 0.1:
-        dHdt = cell["firn_depth"] / cell["vert_grid"]
+    # # If the surface is very empty, just melt one layer
+    # if cell["Sfrac"][0] < 0.1:
+    #     dHdt = cell["firn_depth"] / cell["vert_grid"]
     dHdt = (
         (
             Q
@@ -285,16 +288,20 @@ def calc_height_change(
         * timestep
     )
     cell["firn_boundary_change"] += dHdt
+    # Melt maximum one layer per timestep to avoid instability
+    if dHdt > (cell["firn_depth"] / cell["vert_grid"]
+    ):
+        dHdt = cell["firn_depth"] / cell["vert_grid"]
 
-    # dHdt = 0.01
     if 0 > dHdt > -0.01:
         dHdt = 0
     elif dHdt < -0.01:
-        raise ValueError(
+        message = (
             "Height change during melt is negative, and outside the bounds of"
             " a numerical error"
         )
+        utils.generic_error(cell, routine_name, message)
     elif np.isnan(dHdt):
-        print("...")
-        raise ValueError("Height change during melt is NaN")
+        message = ("Height change during melt is NaN")
+        utils.generic_error(cell, routine_name, message)
     return dHdt

@@ -4,6 +4,7 @@
 import numpy as np
 from monarchs.core import utils
 
+MODULE_NAME = "monarchs.physics.snow_accumulation"
 
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
@@ -33,6 +34,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     #     TODO - what happens if we have a lid? Gets added to top and we just
     #      regrid as normal.
     # TODO - need to make sure we use actual measured snow T values
+    routine_name = f"{MODULE_NAME}.snowfall"
     if snow_depth != 0:
         if cell["lid"]:
             # if we have a lid, add snow to the top of the lid
@@ -85,22 +87,31 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
 
             # error handling
             if np.any(cell["Lfrac"] < -0.001):
-                print(np.where(lfrac_hold < -0.001))
-                raise ValueError("Lfrac before snow < 0")
+                message = "Lfrac before snow < 0"
+                message += (np.where(cell["Lfrac"] < -0.001))
+                message += (cell["Lfrac"])
+                utils.generic_error(cell, routine_name, message)
+
             cell["Lfrac"][0] = (weight1 * 0 + weight2 * cell["Lfrac"][0]) / (
                 weight1 + weight2
             )
             if np.any(cell["Lfrac"] < -0.001):
-                print(np.where(lfrac_hold < -0.001))
-                print(cell["Lfrac"])
-                print(lfrac_hold)
-                raise ValueError("Lfrac before hold < 0")
+                message = "Lfrac before hold < 0"
+                message += (np.where(lfrac_hold < -0.001))
+                message += (cell["Lfrac"])
+                message += lfrac_hold
+                utils.generic_error(cell, routine_name, message)
             if np.any(cell["Sfrac"] < -0.001):
-                print(np.where(cell["Sfrac"] < -0.001))
-                raise ValueError("Sfrac before snow > 0")
+                message = ("Sfrac before snow > 0")
+                message += (np.where(cell["Sfrac"] < -0.001))
+                message += (cell["Sfrac"])
+                utils.generic_error(cell, routine_name, message)
             if np.any(cell["Sfrac"] > 1.001):
-                print(np.where(cell["Sfrac"] > 1.001))
-                raise ValueError("Sfrac before snow > 1")
+                message = "Sfrac before snow > 1"
+                message += (np.where(cell["Sfrac"] > 1.001))
+                message += (cell["Sfrac"])
+                utils.generic_error(cell, routine_name, message)
+
 
             # Calculate the new profile as a weighted average of the proportion
             # of the new cell that was made up by the old
@@ -134,30 +145,34 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
             # further error handling
             if np.any(lfrac_hold < -0.001):
                 w = np.where(lfrac_hold < -0.001)
-                print(w[0][0])
-                print("New Lfrac = ", lfrac_hold[: w[0][0] + 2])
-                print("Old Lfrac = ", cell["Lfrac"][: w[0][0] + 2])
-                raise ValueError("Lfrac hold < 0")
+                message = "Lfrac hold < 0"
+                message += (w[0][0])
+                message += ("New Lfrac = ", lfrac_hold[: w[0][0]
+                + 2])
+                message += ("Old Lfrac = ", cell["Lfrac"][: w[0][
+                0] + 2])
+                utils.generic_error(cell, routine_name, message)
+
             if np.any(sfrac_hold < -0.001):
                 w = np.where(sfrac_hold < 0)
-                print(w[0][0])
-                print("New Sfrac = ", sfrac_hold[: w[0][0] + 2])
-                print("Old Sfrac = ", cell["Sfrac"][: w[0][0] + 2])
-                raise ValueError("Sfrac hold > 0")
+                message = "Sfrac hold < 0"
+                message += (w[0][0])
+                message += ("New Sfrac = ", sfrac_hold[: w[0][0] + 2])
+                message += ("Old Sfrac = ", cell["Sfrac"][: w[0][0] + 2])
+                utils.generic_error(cell, routine_name, message)
+
             if np.any(sfrac_hold > 1.001):
-                print(np.where(sfrac_hold > 1))
-                print(sfrac_hold)
-                raise ValueError("Sfrac before snow > 1")
+                message = "Sfrac hold > 1"
+                message += (np.where(sfrac_hold > 1.001))
+                message += (sfrac_hold)
+                utils.generic_error(cell, routine_name, message)
+
             cell["Sfrac"] = sfrac_hold
             cell["Lfrac"] = lfrac_hold
             cell["firn_temperature"] = T_hold
-            assert (
-                abs(
-                    utils.calc_mass_sum(cell)
-                    - (original_mass + snow_depth * snow_rho)
-                )
-                < 1.5 * 10 ** -7
-            )
+            new_mass = utils.calc_mass_sum(cell)
+            utils.check_for_mass_conservation(cell, original_mass, new_mass,
+                                                routine_name)
 
 
 def densification(cell, t_steps_per_day):

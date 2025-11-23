@@ -86,6 +86,73 @@ def find_nearest(a, a0):
     idx = np.abs(a - a0).argmin()
     return idx
 
+def check_for_mass_conservation(cell, original_mass, new_mass,
+                                routine_name, tol=1e-6):
+    """
+    Check for mass conservation in the grid. We use this instead of
+    using standard asserts or if cond: raise ValueError, since
+    these can often fail silently if using Numba + parallel processing.
+
+    Parameters
+    ----------
+    grid : List, or numba.typed.List
+        the model grid
+    original_mass : float
+        The original mass of the grid to compare against.
+    new_mass : float
+        The new mass of the grid to compare against.
+    routine_name: str
+        Name of the routine calling this function, for error reporting.
+    tol : float, optional
+        Tolerance for mass conservation check. Default is 1e-6.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If mass conservation is violated beyond the specified tolerance.
+    """
+    mass_diff = abs(original_mass - new_mass)
+    errflag = False
+    if mass_diff >= tol:
+        # Print error (cast row/col to int to avoid <object> print issues)
+        r = int(cell['row'])
+        c = int(cell['column'])
+        print(f"{routine_name} - ERROR:")
+        print("mass not conserved at [", r, ",", c, "] !!!")
+        print("    Difference:", mass_diff)
+        print("    Original:", original_mass)
+        print("    New:", new_mass)
+        cell['error_flag'] = 1
+        errflag = True
+    return errflag
+
+def generic_error(cell, routine_name, message):
+    """
+    Generic error handling function to set error flag and print message,
+    based on a specific error the user is encountering.
+
+    Parameters
+    ----------
+    cell : numpy structured array
+        Element of the model grid where the error occurred.
+    routine_name : str
+        Name of the routine where the error occurred.
+    message : str
+        Error message to be printed.
+
+    Returns
+    -------
+    None
+    """
+    r = int(cell['row'])
+    c = int(cell['column'])
+    print(f"{routine_name} - ERROR at [{r}, {c}]: {message}")
+    cell['error_flag'] = 1
+
 
 def calc_grid_mass(grid):
     """
@@ -110,6 +177,32 @@ def calc_grid_mass(grid):
                 total_mass += calc_mass_sum(cell)
     return total_mass
 
+def check_for_single_column_errors(grid):
+    """
+    Check the grid for any cells that have error_status set to 1,
+    indicating an error has occurred in that cell.
+
+    Parameters
+    ----------
+    grid : List, or numba.typed.List
+        the model grid
+
+    Returns
+    -------
+    bool
+        True if any cell has error_flag == 1, False otherwise.
+    """
+    for row in grid:
+        for cell in row:
+            if cell['error_flag'] == 1:
+                print("----------------------------------------")
+                print("monarchs.core.utils.check_for_single_column_errors:")
+                print("Error detected in cell at [", int(cell['row']), ",",)
+                print(" ", int(cell['column']), "]")
+                print("after the single-column physics step. ")
+                print("Check the output logs for details on the error.")
+                return True
+    return False
 
 def check_correct(cell):
     """
@@ -213,8 +306,9 @@ def check_correct(cell):
        # print('Firn depth = ', cell['firn_depth'])
 def check_grid_correctness(grid):
     """
-    Wraps check_correct for each cell in the grid. We do this in a separate
-    function so that we can wrap it with numba.njit and speed things up.
+    Wraps check_correct for each cell in the grid.
+    We do not run in parallel, as there are issues with error
+    handling inside numba prange loops.
 
     Parameters
     ----------
@@ -225,7 +319,7 @@ def check_grid_correctness(grid):
 
     """
 
-    for i in prange(len(grid)):  # pylint: disable=not-an-iterable
+    for i in range(len(grid)):  # pylint: disable=not-an-iterable
         for j in range(len(grid[0])):
             check_correct(grid[i][j])
 

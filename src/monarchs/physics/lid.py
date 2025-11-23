@@ -2,6 +2,7 @@ import numpy as np
 from monarchs.physics import surface_fluxes, solver
 from monarchs.core import utils
 
+MODULE_NAME = "monarchs.physics.lid"
 
 def lid_development(
     cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, Fu
@@ -39,6 +40,8 @@ def lid_development(
     -------
     None (amends cell inplace)
     """
+    routine_name = f"{MODULE_NAME}.lid_development"
+
     original_mass = utils.calc_mass_sum(cell)
 
     k_lid_seb = 1000 * (
@@ -138,7 +141,8 @@ def lid_development(
     # the profile to a firn column only.
     adjust_lid_height(cell, dt, Fu, k_lid)
     new_mass = utils.calc_mass_sum(cell)
-    assert abs(new_mass - original_mass) < 1.5 * 10 ** -7
+    utils.check_for_mass_conservation(cell, original_mass, new_mass,
+                                      routine_name)
 
     # If the lid has shrunk to < 10cm, then revert it back to a virtual lid.
     if cell["lid_depth"] < 0.1:
@@ -148,8 +152,8 @@ def lid_development(
         cell["v_lid"] = True
         print("Reverting true lid back to a virtual lid")
     new_mass = utils.calc_mass_sum(cell)
-    assert abs(new_mass - original_mass) < 1.5 * 10 ** -7
-
+    utils.check_for_mass_conservation(cell, original_mass, new_mass,
+                                      routine_name)
 
 def surface_freezing(cell):
     """
@@ -204,6 +208,7 @@ def surface_melt(cell, dt, Q):
     -------
     k_lid - float - thermal conductivity of the lid [W m^-1 K^-1]
     """
+    routine_name = f"{MODULE_NAME}.surface_melt"
     original_mass = utils.calc_mass_sum(cell)
     # Switch to determine if this is being run as part of the initial lid
     # formation - if so then don't iterate the melt (but the rest is the same)
@@ -233,7 +238,8 @@ def surface_melt(cell, dt, Q):
     #      - This is long-term work for climate modelling.
 
     new_mass = utils.calc_mass_sum(cell)
-    assert abs(new_mass - original_mass) < 1.5 * 10 ** -7
+    utils.check_for_mass_conservation(cell, original_mass, new_mass,
+                                      routine_name)
     return k_lid
 
 
