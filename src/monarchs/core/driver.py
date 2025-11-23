@@ -29,6 +29,7 @@ from monarchs.core.load_model_setup import get_model_setup
 from monarchs.core.dump_model_state import dump_state, reload_from_dump
 from monarchs.core.model_grid import get_spec as get_iceshelf_spec
 from monarchs.core.model_output import setup_output, update_model_output
+from monarchs.core.debug import neighbourhood_check
 from monarchs.core.utils import (
     get_2d_grid,
     get_num_cores,
@@ -489,7 +490,8 @@ def main(model_setup, grid):
             met_data_grid, 0, -1
         )  # move the first axis to the last axis
         
-
+        neighbourhood_check(grid, 71, 76)
+        visit_grid = np.copy(grid['visit_count'])
         if model_setup.single_column_toggle:
             grid = loop_over_grid(
                 model_setup.row_amount,
@@ -504,17 +506,25 @@ def main(model_setup, grid):
                 dask_scheduler=model_setup.dask_scheduler,
                 client=CLIENT,
             )
-        for i in range(len(grid)):
-            for j in range(len(grid[0])):
-                if grid[i][j]['visit_count'] == 0:
-                    raise ValueError('Visit count = 0')
+        flag = False
+        
         """Check for any errors in the grid after the single-column physics step"""
+        print('Error max = ', np.max(grid['error_flag'])) 
         errflag = check_for_single_column_errors(grid)
+        
         if errflag:
             raise RuntimeError(
-                "monarchs.core.driver.main: Error flag raised during single-"
-                "column physics step. See logs for details."
-            )
+               "monarchs.core.driver.main: Error flag raised during single-"
+               "column physics step. See logs for details."
+               )
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                if grid[i][j]['valid_cell'] and (grid[i][j]['visit_count'] != visit_grid[i][j] + 1):
+                    print('i = ', i, 'j = ', j, 'old visit count = ', visit_grid[i][j], 'new visit count = ', grid[i][j]['visit_count'])
+                    flag = True
+        if flag:
+            raise ValueError('Cells not being visited in single-column physics step')
+            
         print("Single-column physics finished")
         print(f"Single column physics time: {time.perf_counter() - start:.2f}s")
         start_serial = time.perf_counter()
@@ -526,7 +536,7 @@ def main(model_setup, grid):
             elif model_setup.dump_format == "pickle":
                 with open(model_setup.dump_filepath, "wb") as outfile:
                     pickle.dump(grid, outfile)
-
+        print('Max lake depth before lateral movement = ', np.max(grid['lake_depth']))
         lat_start = time.perf_counter()
         if model_setup.lateral_movement_toggle:
             print("Moving water laterally...")
@@ -604,7 +614,7 @@ def main(model_setup, grid):
             f"Total time for day {day + 1}:"
             f" {time.perf_counter() - timestep_start:.2f}s"
         )
-        if day in np.arange(100, 4000, 100):
+        if day in np.arange(100, 4000, 50):
             print('Writing model state as an extra checkpoint')
             dump_state(
                     model_setup.dump_filepath + str(day), grid, met_start_idx, met_end_idx

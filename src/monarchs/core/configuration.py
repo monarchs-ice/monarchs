@@ -399,12 +399,13 @@ def jit_modules(fastmath=False):
         reset_column,
         regrid_column,
     )
-    from monarchs.core import model_output, utils
+    from monarchs.core import model_output, utils, error_handling
 
     # pylint: enable=import-outside-toplevel
     # modules to search from when applying jit
     module_list = [
         utils,
+        error_handling,
         snow_accumulation,
         surface_fluxes,
         lake,
@@ -434,6 +435,10 @@ def jit_modules(fastmath=False):
         "create_variable",
         "add_lat_long",
         "get_variable_dims",
+        "calc_grid_mass",
+        "check_for_single_column_errors",
+        "check_grid_correctness"
+        
     ]  # other builtins/decorators
 
     for module in module_list:

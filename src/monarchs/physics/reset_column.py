@@ -6,9 +6,10 @@
 import numpy as np
 from monarchs.physics import percolation
 from monarchs.core import utils
-
+from monarchs.core.error_handling import check_for_mass_conservation
 
 def combine_lid_firn(cell, freeze_lake=False):
+    routine_name = 'monarchs.physics.reset_column.combine_lid_firn'
     original_mass = utils.calc_mass_sum(cell)
 
     if cell["v_lid"]:
@@ -114,10 +115,7 @@ def combine_lid_firn(cell, freeze_lake=False):
 
     # validate mass conservation
     new_mass = utils.calc_mass_sum(cell)
-    assert (
-        abs(new_mass - original_mass) < original_mass / 1000
-    ), f"new mass = {new_mass}, original mass = {original_mass}"
-
+    check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
 
 def mass_conserving_profile(
     cell, orig_lid_depth, var="Sfrac", freeze_lake=False

@@ -42,9 +42,12 @@ def lid_development(
     None (amends cell inplace)
     """
     routine_name = f"{MODULE_NAME}.lid_development"
-
+    if np.isnan(cell['lid_depth']):
+        print('Error - start of timestep, lid depth is NaN')
+        cell['error_flag'] = 1
     original_mass = utils.calc_mass_sum(cell)
-
+    if cell['lid_temperature'][0] > 273.15:
+        cell['lid_temperature'][0] = 273.15
     k_lid_seb = 1000 * (
         2.24 * 10 ** -3
         + 5.975 * 10 ** -6 * (273.15 - cell["lid_temperature"][0]) ** 1.156
@@ -144,7 +147,9 @@ def lid_development(
     new_mass = utils.calc_mass_sum(cell)
     check_for_mass_conservation(cell, original_mass, new_mass,
                                       routine_name)
-
+    if np.any(np.isnan(k_lid)):
+        print('k_lid = NaN in lid')
+        cell['error_flag'] = 1
     # If the lid has shrunk to < 10cm, then revert it back to a virtual lid.
     if cell["lid_depth"] < 0.1:
         cell["v_lid_depth"] = cell["lid_depth"]
@@ -155,6 +160,9 @@ def lid_development(
     new_mass = utils.calc_mass_sum(cell)
     check_for_mass_conservation(cell, original_mass, new_mass,
                                       routine_name)
+    if np.isnan(cell['lid_depth']):
+        print('Error (end of timestep) - lid depth is NaN')
+        cell['error_flag'] = 1
 
 def surface_freezing(cell):
     """

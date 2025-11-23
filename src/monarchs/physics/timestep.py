@@ -308,10 +308,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     " calculation."
                 )
                 generic_error(cell, routine_name, message)
-        if cell["lake_depth"] > 5:
-                print('Location of large lake - ', cell["row"], cell["column"])
-                print('Firn depth of large lake - ', cell['firn_depth'])
-                print('Depth of large lake - ', cell['lake_depth'])    
         if not ignore_errors:
             check_correct(cell)
 
@@ -325,9 +321,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         cell["vertical_profile"] = np.linspace(
             0, cell["firn_depth"], cell["vert_grid"]
         )
-        if cell["row"] == 71 and cell["column"] == 84:
-            print('Lake depth for 71, 84 = ', cell["lake_depth"])
-            print('Firn depth for 71, 84 = ', cell["firn_depth"])
     # If firn depth goes below 5, then we now consider this cell to be
     # invalid. This prevents situations where points where water concentrates
     # and melts through the firn column causing the whole model to crash.

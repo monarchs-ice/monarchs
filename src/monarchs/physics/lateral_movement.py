@@ -1139,6 +1139,9 @@ def move_water(
                 print('Cell col = ', grid[row][col]['column'])
                 print("Firn depth = ", grid[row][col]['firn_depth'])
                 print('Valid cell? ', grid[row][col]['valid_cell'])
+                print('Lake state? ', grid[row][col]['lake'])
+                print('Lid state? ', grid[row][col]['lid'])
+                print('Exposed water? ' , grid[row][col]['exposed_water'])
             if (np.abs(grid[row][col]["lake_depth"]) > 50):
                 print('Extra-large lake ', grid[row][col]["lake_depth"])
                 print(f"Location: [{row}, {col}]")

@@ -1,0 +1,18 @@
+monarchs.core.utils: psutil module not found. Memory profiling will not be available. To suppress this warning, install psutil with 'python -m pip install psutil'.
+Loading model setup from model_setup_george_vi_numba.py
+Traceback (most recent call last):
+  File "/home/jonelsey/monarchs/monarchs_env/bin/monarchs", line 8, in <module>
+    sys.exit(run_from_cli())
+  File "/home/jonelsey/monarchs/monarchs/src/monarchs/run_monarchs.py", line 18, in run_from_cli
+    grid = monarchs()
+  File "/home/jonelsey/monarchs/monarchs/src/monarchs/core/driver.py", line 746, in monarchs
+    model_setup = get_model_setup(model_setup_path)
+  File "/home/jonelsey/monarchs/monarchs/src/monarchs/core/load_model_setup.py", line 198, in get_model_setup
+    model_setup = ModelSetup(model_setup_path)
+  File "/home/jonelsey/monarchs/monarchs/src/monarchs/core/load_model_setup.py", line 34, in __init__
+    self.validate_model_setup()
+  File "/home/jonelsey/monarchs/monarchs/src/monarchs/core/load_model_setup.py", line 59, in validate_model_setup
+    self.check_for_key_variables()
+  File "/home/jonelsey/monarchs/monarchs/src/monarchs/core/load_model_setup.py", line 107, in check_for_key_variables
+    with open(self.script_path, "r", encoding="utf-8") as f:
+FileNotFoundError: [Errno 2] No such file or directory: 'model_setup_george_vi_numba.py'

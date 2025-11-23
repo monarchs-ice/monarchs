@@ -43,19 +43,18 @@ def check_for_mass_conservation(cell, original_mass, new_mass,
     """
 
     mass_diff = abs(original_mass - new_mass)
+    errflag = 0
     if mass_diff >= tol:
-        errflag = 0
-        with objmode(errflag='int32'):
-            # Print error (cast row/col to int to avoid <object> print issues)
-            r = int(cell['row'])
-            c = int(cell['column'])
-            print(f"{routine_name} - ERROR:")
-            print("mass not conserved at [", r, ",", c, "] !!!")
-            print("    Difference:", mass_diff)
-            print("    Original:", original_mass)
-            print("    New:", new_mass)
-            cell['error_flag'] = 1
-            errflag = 1
+        # Print error (cast row/col to int to avoid <object> print issues)
+        r = int(cell['row'])
+        c = int(cell['column'])
+        print(f"{routine_name} - ERROR:")
+        print("mass not conserved at [", r, ",", c, "] !!!")
+        print("    Difference:", mass_diff)
+        print("    Original:", original_mass)
+        print("    New:", new_mass)
+        cell['error_flag'] = 1
+        errflag = 1
     return errflag
 
 def generic_error(cell, routine_name, message):
@@ -132,9 +131,7 @@ def check_for_single_column_errors(grid):
                 print("after the single-column physics step. ")
                 print("Check the output logs for details on the error.")
                 flag = True
-    if flag:
-        return True
-    return False
+    return flag
 
 def check_correct(cell):
     """
@@ -161,23 +158,12 @@ def check_correct(cell):
     """
     func_name = "monarchs.core.utils.check_correct"
     if cell["lake_depth"] < -1e-12:  # account for rounding errors
-        print(f"{func_name}: ")
-        print("Lake depth = ", cell["lake_depth"])
-        raise ValueError("Lake depth must not be negative \n")
+        generic_error(cell, func_name, 'Lake depth < -1e-12')
     if cell["lake_depth"] < 0:
         cell["lake_depth"] = 0
 
     if cell["firn_depth"] < 0:
-        print(
-            "Error: column = ",
-            cell["column"],
-            ", row = ",
-            cell["row"],
-            ", firn_depth = ",
-            cell["firn_depth"],
-            "\n",
-        )
-        raise ValueError(f"{func_name}: All firn has melted.")
+        generic_error(cell, func_name, 'Firn depth below 0')
     if np.any(cell["Sfrac"][cell["Sfrac"] < -0.01]) or np.any(
         cell["Sfrac"][cell["Sfrac"] > 1.01]
     ):
@@ -188,11 +174,7 @@ def check_correct(cell):
 """
         )
         print("Minimum Sfrac = ", np.min(cell["Sfrac"]))
-        raise ValueError(
-            f"""{func_name}: Solid fraction must be between 0 and 1
-"""
-        )
-
+        generic_error(cell, func_name, 'Sfrac must be between 0 and 1')
     # Set total to look at all but the top layer. The top layer can sometimes
     # become oversaturated, but this is allowed provided that meltflag is True
     # for that cell (i.e. the water will percolate in the next timestep).
@@ -209,10 +191,7 @@ def check_correct(cell):
             cell["Lfrac"][np.where(total > 1)]
             + cell["Sfrac"][np.where(total > 1)],
         )
-        raise ValueError(
-            f"{func_name}: Sum of liquid and solid"
-            " fraction must be less than 1"
-        )
+        generic_error(cell, func_name, 'Sum of Sfrac and Lfrac below surface must be <= 1')
     if cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and not cell["meltflag"][0]:
         total_top = cell["Sfrac"][0] + cell["Lfrac"][0]
         print(f"{func_name}: ")
@@ -222,20 +201,7 @@ def check_correct(cell):
         print(
             "Sfrac + Lfrac:", cell["Lfrac"][0] + cell["Sfrac"][0],
         )
-        raise ValueError(
-            f"{func_name}: Sum of liquid and solid"
-            " fraction in top layer must be less than 1 unless meltflag is"
-            " True (i.e. water will percolate at start of next timestep)"
-        )
-    #if cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and cell["meltflag"][0]:
-     #   print(
-      #      "Warning - top layer oversaturated but meltflag is True - water"
-       #     " will percolate at start of next timestep."
-       # )
-       # print("Lfrac = ", cell["Lfrac"][0], ", Sfrac = ", cell["Sfrac"][0])
-       # print("Location: ", cell["row"], cell["column"])
-       # print(', which is a valid cell? ', cell['valid_cell'])
-       # print('Firn depth = ', cell['firn_depth'])
+        generic_error(cell, func_name, 'Sum of Sfrac and Lfrac at surface must be < 1 unless water can percolate')
 
 def check_grid_correctness(grid):
     """

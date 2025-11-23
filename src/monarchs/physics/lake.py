@@ -363,6 +363,11 @@ def lake_formation(
     None (amends cell inplace).
     """
     routine_name = f"{MODULE_NAME}.lake_formation"
+    if cell['lake_depth'] > 0.1:
+        cell['lake'] = True
+    if np.isnan(cell['lake_depth']):
+        print('Error (start of timestep) - lake depth is NaN')
+        cell['error_flag'] = 1
     original_mass = utils.calc_mass_sum(cell)
     dz = cell["firn_depth"] / cell["vert_grid"]
     cp_ice = np.zeros(cell["vert_grid"])
@@ -433,6 +438,7 @@ def lake_formation(
                                                 routine_name)
     if errflag:
         # return early to stop processing garbage
+        print('Returning out of lake.py early since we are processing garbage')
         return cell
 
     if old_T_sfc > 273.15 and Q > 0:  # melting occurring at the surface
@@ -488,7 +494,9 @@ def lake_formation(
     # end of timestep so not bothered about returning early if error
     check_for_mass_conservation(cell, original_mass, new_mass,
                                       routine_name)
-
+    if np.isnan(cell['lake_depth']):
+        print('Error - lake depth is NaN (end of timestep)')
+        cell['error_flag'] = 1
 
 def lake_development(
         cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
