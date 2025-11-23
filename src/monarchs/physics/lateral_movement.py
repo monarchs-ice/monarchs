@@ -386,7 +386,11 @@ def calc_available_water_lake(
     if cell["lake_depth"] < water_to_move * (split + 1):
         water_to_move = float(cell["lake_depth"] / (split + 1))
     if water_to_move < 0:
-        raise ValueError("Water to move from lake is less than 0")
+        if water_to_move > -1e-8:
+            water_to_move = 0
+        else:
+            print('Water to move = ', water_to_move)
+            raise ValueError("Water to move from lake is less than 0")
     return water_to_move, 0, 0, 0
 
 
@@ -456,7 +460,12 @@ def calc_available_water_ice_lens(
         * (cell["water_level"] - neighbour_cell["water_level"])
         / (split + 1)
     )
-
+    
+    if water_to_move < 0:
+        if water_to_move > -1e-8:
+            water_to_move = 0
+        else:
+            raise ValueError(f'Negative water in move_to_ice_lens: {water_to_move}')
     # If saturated firn doesn't hold enough water to fill the "quota",
     # then all of it moves but no more
     # +1 so we include the one where we move from
@@ -468,6 +477,8 @@ def calc_available_water_ice_lens(
         water_to_move = np.sum(cell["water"][: move_from_index + 1]) / (
             split + 1
         )
+    
+
     return (
         water_to_move,
         lowest_water_level,
@@ -1112,7 +1123,6 @@ def move_water(
     # about types if a user specifies e.g. 1.
     flow_speed_scaling = float(flow_speed_scaling)
     outflow_proportion = float(outflow_proportion)
-
     # Perform some housekeeping. This consists of:
     # a) determining the water level in each cell,
     # b) creating temporary cells for our water to move in and out of,
@@ -1122,6 +1132,21 @@ def move_water(
     for row in prange(max_grid_row):
         for col in range(max_grid_col):
             cell = grid[row][col]
+            if (np.abs(grid[row][col]["lake_depth"]) > 25):
+                print('Large lake ', grid[row][col]["lake_depth"])
+                print(f"Location: [{row}, {col}]")
+                print('Cell row = ', grid[row][col]['row'])
+                print('Cell col = ', grid[row][col]['column'])
+                print("Firn depth = ", grid[row][col]['firn_depth'])
+                print('Valid cell? ', grid[row][col]['valid_cell'])
+            if (np.abs(grid[row][col]["lake_depth"]) > 50):
+                print('Extra-large lake ', grid[row][col]["lake_depth"])
+                print(f"Location: [{row}, {col}]")
+                print('Cell row = ', grid[row][col]['row'])
+                print('Cell col = ', grid[row][col]['column'])
+                print("Firn depth = ", grid[row][col]['firn_depth'])
+                print('Valid cell? ', grid[row][col]['valid_cell']) 
+                raise ValueError('Issue with lake depth')
             update_water_level(cell)
             total_water += np.sum(cell["water"]) + cell["lake_depth"]
 
@@ -1159,6 +1184,11 @@ def move_water(
                 print(f"Location: [{row}, {col}]")
                 print(f"Firn depth = ', {cell['firn_depth']}")
                 print('Warning - high LFrac detected.')
+            if (np.abs(grid[row][col]["lake_depth"]) > 50):
+                print(grid[row][col]["lake_depth"])
+                print(f"Location: [{row}, {col}]")
+                print("Firn depth = ", cell['firn_depth'])
+                raise ValueError('Issue with lake depth')
     # Now loop through the cells again, this time actually performing the
     # movement step. This and the prior loop cannot be merged, since the
     # temporary grid needs to be fully populated and the water levels
@@ -1283,6 +1313,7 @@ def move_water(
             #    print(f"Valid cell = ", grid[row][col]['valid_cell'])
             #    print("Firn depth = ", {float(grid[row][col]['firn_depth'])})
             #    raise ValueError('Unrealistically high Lfrac')
+            
             if (np.abs(grid[row][col]["lake_depth"]) > 100):
                 print(grid[row][col]["lake_depth"])
                 raise ValueError('Issue with lake depth')

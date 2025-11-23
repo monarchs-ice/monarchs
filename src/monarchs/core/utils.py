@@ -202,15 +202,15 @@ def check_correct(cell):
             " fraction in top layer must be less than 1 unless meltflag is"
             " True (i.e. water will percolate at start of next timestep)"
         )
-    if cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and cell["meltflag"][0]:
-        print(
-            "Warning - top layer oversaturated but meltflag is True - water"
-            " will percolate at start of next timestep."
-        )
-        print("Lfrac = ", cell["Lfrac"][0], ", Sfrac = ", cell["Sfrac"][0])
-        print("Location: ", cell["row"], cell["column"])
-        print(', which is a valid cell? ', cell['valid_cell']) 
-        print('Firn depth = ', cell['firn_depth'])
+    #if cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and cell["meltflag"][0]:
+     #   print(
+      #      "Warning - top layer oversaturated but meltflag is True - water"
+       #     " will percolate at start of next timestep."
+       # )
+       # print("Lfrac = ", cell["Lfrac"][0], ", Sfrac = ", cell["Sfrac"][0])
+       # print("Location: ", cell["row"], cell["column"])
+       # print(', which is a valid cell? ', cell['valid_cell']) 
+       # print('Firn depth = ', cell['firn_depth'])
 def check_grid_correctness(grid):
     """
     Wraps check_correct for each cell in the grid. We do this in a separate

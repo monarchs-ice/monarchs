@@ -85,7 +85,10 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     lake_development_toggle = toggle_dict["lake_development_toggle"]
     lid_development_toggle = toggle_dict["lid_development_toggle"]
     ignore_errors = toggle_dict["ignore_errors"]
-
+    print('Running cell = ', cell['row'], cell['column'])
+    if cell['row'] == 71 and cell['column'] == 84:
+        print('71 84 lake depth at start of timestep ', cell['lake_depth'])
+        print('... which is valid? ', cell['valid_cell'])
     if not cell["valid_cell"]:
         return cell
 
@@ -99,6 +102,12 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         raise ValueError("NaN in firn temperature")
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
+        # Validation of model state at the start of the timestep
+        if cell["lake_depth"] > 50:
+            print('Location = ', cell['row'], cell['column'])
+            print('Lake depth = ', cell['lake_depth'])
+            #raise ValueError('Lake depth is unrealistically high')
+
         if cell["lake_depth"] <= 1e-5 and cell["lake"]:
             cell["lake"] = False
             cell["lake_depth"] = 0
@@ -300,7 +309,10 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     "Lfrac + Sfrac > 1 after regridding, after saturation"
                     " calculation."
                 )
-
+        if cell["lake_depth"] > 5:
+                print('Location of large lake - ', cell["row"], cell["column"])
+                print('Firn depth of large lake - ', cell['firn_depth'])
+                print('Depth of large lake - ', cell['lake_depth'])    
         if not ignore_errors:
             utils.check_correct(cell)
 
@@ -314,15 +326,19 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         cell["vertical_profile"] = np.linspace(
             0, cell["firn_depth"], cell["vert_grid"]
         )
-
+        if cell["row"] == 71 and cell["column"] == 84:
+            print('Lake depth for 71, 84 = ', cell["lake_depth"])
+            print('Firn depth for 71, 84 = ', cell["firn_depth"])
     # If firn depth goes below 5, then we now consider this cell to be
     # invalid. This prevents situations where points where water concentrates
     # and melts through the firn column causing the whole model to crash.
     if cell["firn_depth"] < 5:
         print("Firn depth below 5 m - setting cell to invalid")
         cell["valid_cell"] = False
-
+    if cell["lake_depth"] > 5:
+        print('Location of large lake (end of timestep) - ', cell["row"], cell["column"])
+    if cell["row"] == 71 and cell["column"] == 84:
+        print('71, 84 at end of timestep = ', cell["lake_depth"])
     cell["day"] += 1
 
-    if parallel and not use_numba:
-        return cell
+    return cell 
