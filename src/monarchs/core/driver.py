@@ -529,8 +529,12 @@ def main(model_setup, grid):
             )
 
         """Check for any errors in the grid after the single-column physics step"""
-        check_for_single_column_errors(grid)
-
+        errflag = check_for_single_column_errors(grid)
+        if errflag:
+            raise RuntimeError(
+                "monarchs.core.driver.main: Error flag raised during single-"
+                "column physics step. See logs for details."
+            )
         print("Single-column physics finished")
         print(f"Single column physics time: {time.perf_counter() - start:.2f}s")
         print('driver ld - ', grid[71][84]['lake_depth'])
