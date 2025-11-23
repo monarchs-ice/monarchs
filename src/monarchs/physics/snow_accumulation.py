@@ -123,9 +123,9 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
 
     if abs(final_mass - expected_new_mass) > tol:
         message = f"Mass conservation failed in snowfall.\n" \
-                  f"Expected: {expected_new_mass}\n" \
-                  f"Actual:   {final_mass}\n" \
-                  f"Diff:     {final_mass - expected_new_mass}"
+                  "Expected: ", float(expected_new_mass), \
+                  "Actual: ",  float(final_mass), \
+                  "Diff:  ", float(final_mass - expected_new_mass)
         utils.generic_error(cell, routine_name, message)
 
 def densification(cell, t_steps_per_day):
