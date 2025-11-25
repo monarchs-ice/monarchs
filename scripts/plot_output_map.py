@@ -1,6 +1,6 @@
 """
 Sample script to do some basic plotting of model diagnostics. This script will generate contour maps
-of the firn and lake depths on the dem_utils.
+of the firn and lake depths on the DEM.
 """
 
 from netCDF4 import Dataset

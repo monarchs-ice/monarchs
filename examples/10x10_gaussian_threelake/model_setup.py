@@ -27,7 +27,7 @@ vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
-# Latitude/longitude. Set to 'dem' to use the boundaries from the dem_utils itself if using. Set np.nan to ignore entirely.
+# Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
 # Set to a number if you want to manually specify a bounding box.
 
 """
@@ -44,7 +44,7 @@ lateral_timestep = (
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
 """
-dem_utils/firn profile parameters
+DEM/firn profile parameters
 """
 
 firn_depth = 35 * cgt.export_gaussian_dem(row_amount, diagnostic_plots=False)
@@ -164,7 +164,7 @@ lid_development_toggle = True
 single_column_toggle = True
 
 
-# Just for this specific case - assert that the dem_utils is symmetric
+# Just for this specific case - assert that the DEM is symmetric
 import numpy.testing as npt
 
 npt.assert_array_equal(firn_depth, firn_depth[::-1, ::-1])

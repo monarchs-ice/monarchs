@@ -29,18 +29,18 @@ row_amount = 50  # Number of rows in your model grid, looking from top-down.
 lat_grid_size = (  # size of each lateral grid cell in m - can either be a number or 'dem' to calculate
     "dem"
 )
-# x and y grid sizes from the dem_utils itself.
+# x and y grid sizes from the DEM itself.
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
-# Latitude/longitude. Set to 'dem' to use the boundaries from the dem_utils itself if using. Set np.nan to ignore entirely.
+# Latitude/longitude. Set to 'dem' to use the boundaries from the DEM itself if using. Set np.nan to ignore entirely.
 # Set to a number if you want to manually specify a bounding box.
 lat_bounds = "dem"
-latmax = np.nan  # Maximum latitude to use in our dem_utils and met data files.
-latmin = np.nan  # Minimum latitude to use in our dem_utils and met data files.
-longmax = np.nan  # Maximum longitude to use in our dem_utils and met data files.
-longmin = np.nan  # Minimum longitude to use in our dem_utils and met data files.
+latmax = np.nan  # Maximum latitude to use in our DEM and met data files.
+latmin = np.nan  # Minimum latitude to use in our DEM and met data files.
+longmax = np.nan  # Maximum longitude to use in our DEM and met data files.
+longmin = np.nan  # Minimum longitude to use in our DEM and met data files.
 
 bbox_top_right = [
     (-66.52, -62.814)
@@ -69,10 +69,10 @@ lateral_timestep = (
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
 """
-dem_utils/initial firn profile
+DEM/initial firn profile
 
     DEM_path : str
-        Path to a digital elevation model (dem_utils) to be read in by MONARCHS.
+        Path to a digital elevation model (DEM) to be read in by MONARCHS.
         This will be read in by MONARCHS according to its filetype, and 
         interpolated to size(<row_amount>, <col_amount>).
         If using a relative import, it is a relative import from the folder you are running
@@ -80,15 +80,15 @@ dem_utils/initial firn profile
 
     firn_depth : float, or array_like, float, dimension(<row_amount, <col_amount>)
         Initial depth of the firn columns making up the MONARCHS model grid.
-        If a valid dem_utils path is specified, then this is overridden by the dem_utils. Use this only if you want to manually
-        specify your own dem_utils path. Specify as either a number or an array. 
+        If a valid DEM path is specified, then this is overridden by the DEM. Use this only if you want to manually
+        specify your own DEM path. Specify as either a number or an array. 
         If a number is specified, this number is assumed as the firn depth across the whole grid.
         If an array is specified, this should be an array of dimension(<row_amount>, <col_amount>), 
         i.e. the firn depth is user-specified across the whole grid. This is likely the safest option if you want to
         pre-process your firn profile, or don't trust MONARCHS to interpolate it to your desired model grid for you.
 
     firn_max_height : float
-        Maximum height that your firn column can be at. Use this if you're loading in a dem_utils which has large height
+        Maximum height that your firn column can be at. Use this if you're loading in a DEM which has large height
         ranges. 
     firn_min_height : float
         Minimum height that we consider to be "firn". Anything below this we consider to be solid ice, which affects
@@ -106,10 +106,10 @@ dem_utils/initial firn profile
         
 """
 
-DEM_path = "dem_utils/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
-# DEM_path = "dem_utils/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
+DEM_path = "DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
+# DEM_path = "DEM/42_07_32m_v2.0/42_07_32m_v2.0_dem.tif"
 
-# firn_depth - by default overridden by the presence of a valid dem_utils
+# firn_depth - by default overridden by the presence of a valid DEM
 firn_depth = np.ones((row_amount, col_amount)) * 35
 firn_max_height = 100
 firn_min_height = 35

@@ -8,7 +8,6 @@ For example, say you wanted to run a single-column job, with different vertical 
 Using the `1d_testcase` example as a template, we can amend it with the following:
 
 .. code-block:: python
-   print(f"Loading runscript from {os.getcwd()}/model_setup.py")
    """
    Spatial parameters
    """

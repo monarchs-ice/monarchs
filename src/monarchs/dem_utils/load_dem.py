@@ -20,15 +20,15 @@ def interpolate_DEM(heights, num_points):
     Parameters
     ----------
     heights : array_like, float, dimension(lat, long)
-        Array of heights from the dem_utils, creating a heightmap of the area we want
+        Array of heights from the DEM, creating a heightmap of the area we want
          to interpolate to our model space.
     num_points : int
-        Number of points we want to interpolate the dem_utils onto. This currently
+        Number of points we want to interpolate the DEM onto. This currently
         just works for square grids, i.e. row_amount == col_amount.
 
     Returns
     -------
-    interp((X, Y)) - dem_utils interpolated onto the regular grid defined by
+    interp((X, Y)) - DEM interpolated onto the regular grid defined by
     num_points.
     """
     # new resolution is 1/scale
@@ -54,11 +54,11 @@ def export_DEM(
     input_crs=3031,  # Antarctic polar stereographic projection by default
 ):
     """
-    Load in a dem_utils from a GeoTIFF file, and turn it into an elevation map in the
+    Load in a DEM from a GeoTIFF file, and turn it into an elevation map in the
     form of a Numpy array.
     This can optionally be done using a bounding box, to restrict the output to
-    a specific region of the dem_utils.
-    Since our dem_utils is in polar stereographic coordinates, this bounding box is
+    a specific region of the DEM.
+    Since our DEM is in polar stereographic coordinates, this bounding box is
     not "nice". Therefore, we need to specify the corner coordinates of the
     bounding box rather than just a max/min lat/long.
 
@@ -67,25 +67,25 @@ def export_DEM(
     tiffname : str
         Name of the geoTIFF file that you wish to load in.
     num_points : int, optional
-        Number of points to interpolate the dem_utils onto. Currently only supports
+        Number of points to interpolate the DEM onto. Currently only supports
         square grids as output.
         Default 50.
 
     top_right : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the top right of the rectangle
-        to be used as the bounding box to extract the part of the dem_utils we want.
+        to be used as the bounding box to extract the part of the DEM we want.
         Default False
     top_left : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the top left of the rectangle
-        to be used as the bounding box to extract the part of the dem_utils we want.
+        to be used as the bounding box to extract the part of the DEM we want.
         Default False.
     bottom_right : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the bottom right of the rectangle
-        to be used as the bounding box to extract the part of the dem_utils we want.
+        to be used as the bounding box to extract the part of the DEM we want.
         Default False.
     bottom_left : bool or array_like, optional, dimension([lat, long])
         Latitude/longitude of the bottom left of the rectangle
-        to be used as the bounding box to extract the part of the dem_utils we want.
+        to be used as the bounding box to extract the part of the DEM we want.
         Default False.
     diagnostic_plots : bool, optional
         Flag that triggers whether to generate plots of the output for testing.
@@ -126,7 +126,7 @@ def export_DEM(
     """
 
     input_raster = rioxarray.open_rasterio(tiffname).rio.reproject("EPSG:3031")
-    # Get the lat/long coordinates of the dem_utils
+    # Get the lat/long coordinates of the DEM
 
     transformer = Transformer.from_crs(
         input_crs, CRS.from_epsg(4326), always_xy=True
@@ -287,7 +287,7 @@ def bounding_box_diagnostic_plots(
     )
     ax1.coastlines()
     ax1.gridlines(draw_labels=True)
-    ax1.title.set_text("dem_utils height profile with subset")
+    ax1.title.set_text("DEM height profile with subset")
     cont = ax1.contourf(
         lon_subset,
         lat_subset,
@@ -308,7 +308,7 @@ def generate_diagnostic_plots(
     lons, lats, heights, newlons, newlats, newheights, new_heights_interpolated
 ):
     """
-    Diagnostics for the dem_utils interpolation process.
+    Diagnostics for the DEM interpolation process.
 
     Parameters
     ----------
@@ -348,7 +348,7 @@ def generate_diagnostic_plots(
     # levels=bounds, vmin=0, vmax=50)
     ax1.coastlines()
     ax1.gridlines(draw_labels=True)
-    ax1.title.set_text("Initial dem_utils height profile")
+    ax1.title.set_text("Initial DEM height profile")
 
     ax2 = fig.add_subplot(212, projection=projection)
     cont2 = ax2.contourf(
@@ -368,10 +368,10 @@ def generate_diagnostic_plots(
     fig.colorbar(cont2, cax=cax)
 
     """
-    This figure shows the final result - the dem_utils on our chosen grid. Note that
+    This figure shows the final result - the DEM on our chosen grid. Note that
     if the aspect ratio  is different between the chosen grid and the size of
-    the initial dem_utils grid (accounting for your choice
-    of boundaries), then the final dem_utils will be stretched to compensate.
+    the initial DEM grid (accounting for your choice
+    of boundaries), then the final DEM will be stretched to compensate.
     """
     fig, ax3 = plt.subplots()
     cs = ax3.imshow(new_heights_interpolated, vmin=0, vmax=200)

@@ -101,8 +101,8 @@ def handle_incompatible_flags(model_setup):
         if model_setup.lat_bounds.lower() == "dem":
             raise ValueError(
                 f"{func_name}: You"
-                ' must provide a dem_utils file using the "DEM_path" argument to'
-                " use dem_utils lat/long bounds."
+                ' must provide a DEM file using the "DEM_path" argument to'
+                " use DEM lat/long bounds."
             )
     dump_attrs = ["dump_data", "reload_from_dump"]
     for attr in dump_attrs:
@@ -196,7 +196,7 @@ def create_defaults_for_missing_flags(model_setup):
     Prevent the model from crashing out if certain flags are not specified in
     the model_setup file.
     This will not prevent the code from stopping if key information is not
-    provided (e.g. a dem_utils GeoTIFF file or a NumPy array of firn column depth
+    provided (e.g. a DEM GeoTIFF file or a NumPy array of firn column depth
     matching the chosen grid size, or a netCDF of input meteorological data).
     It is intended to ensure that the code runs even if the setup file does not
     contain every possible argument. (for example, not having flags that don't

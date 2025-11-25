@@ -152,7 +152,7 @@ def process_year(model_setup, year, index, lat_array, lon_array):
     era5_grid = interpolate_grid(
         era5_vars, model_setup.row_amount, model_setup.col_amount
     )
-    # If we are using a dem_utils to define our lat/long bounds, get these from the dem_utils now
+    # If we are using a DEM to define our lat/long bounds, get these from the DEM now
     if getattr(model_setup, "lat_bounds", "").lower() == "dem":
         era5_grid = get_met_bounds_from_DEM(
             model_setup,

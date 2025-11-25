@@ -280,7 +280,7 @@ def generate_met_dem_diagnostic_plots(
 ):
     """
     Generate diagnostic plots to visualise the regridding of ERA5 data onto the
-    dem_utils mesh.
+    DEM mesh.
 
     Parameters
     ----------
@@ -356,7 +356,7 @@ def generate_met_dem_diagnostic_plots(
         levels=20,
         transform=ccrs.PlateCarree(),
     )
-    ax3.title.set_text("Initial dem_utils height profile")
+    ax3.title.set_text("Initial DEM height profile")
     fig2.colorbar(cont, extend="both")
     plt.show()
 
@@ -388,7 +388,7 @@ def get_met_bounds_from_DEM(
         num_points=model_setup.row_amount,
         input_crs=model_setup.input_crs,
     )
-    print("Loading in lat/long bounds from dem_utils")
+    print("Loading in lat/long bounds from DEM")
     lat_indices = np.zeros((model_setup.row_amount, model_setup.col_amount))
     lon_indices = np.zeros((model_setup.row_amount, model_setup.col_amount))
     new_era5_grid = {}

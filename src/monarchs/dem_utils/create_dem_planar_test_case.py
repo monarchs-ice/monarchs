@@ -38,7 +38,7 @@ def export_planar_dem(num_points=20, diagnostic_plots=False):
 
     x = y = np.linspace(-1, 1, 10)
 
-    # As with the Gaussian dem_utils - generate a heights array
+    # As with the Gaussian DEM - generate a heights array
     heights = np.zeros((len(x), len(y)), dtype=np.float64)
     for i in range(len(heights)):
         heights[:, i] = (len(heights) - i) / len(heights)

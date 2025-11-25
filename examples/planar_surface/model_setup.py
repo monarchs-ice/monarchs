@@ -44,7 +44,7 @@ lateral_timestep = (
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
 """
-dem_utils/firn profile parameters
+DEM/firn profile parameters
 """
 
 firn_depth = 35 * cpt.export_planar_dem(row_amount, diagnostic_plots=False)
@@ -164,7 +164,7 @@ lid_development_toggle = True
 single_column_toggle = True
 
 
-# Just for this specific case - assert that the dem_utils is symmetric
+# Just for this specific case - assert that the DEM is symmetric
 import numpy.testing as npt
 
 npt.assert_array_equal(firn_depth, firn_depth[::-1])

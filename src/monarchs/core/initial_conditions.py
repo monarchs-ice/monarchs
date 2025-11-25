@@ -3,7 +3,7 @@ Functions used by run_monarchs.py to convert a model runscript
 (default model_setup.py) to the format actually usedb y MONARCHS.
 This includes setting up the initial firn profile information,
 loading in meteorological data and interpolating it, and loading
-in/interpolating the digital elevation model (dem_utils) if applicable.
+in/interpolating the digital elevation model (DEM) if applicable.
 
 """
 
@@ -15,7 +15,7 @@ from monarchs.core.model_grid import initialise_iceshelf, get_spec
 
 def initialise_firn_profile(model_setup, diagnostic_plots=False):
     """
-    dem_utils/initial firn profile
+    DEM/initial firn profile
 
     """
     #     TODO - docstring
@@ -28,7 +28,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
 
     print(f"{func_name}: Setting up firn profile")
     if hasattr(model_setup, "DEM_path"):
-        print(f"{func_name}: Reading in firn depth from dem_utils")
+        print(f"{func_name}: Reading in firn depth from DEM")
 
         firn_depth, lat_array, lon_array, dx, dy = export_DEM(
             model_setup.DEM_path,
@@ -47,7 +47,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     else:
         raise ValueError(
             f"{func_name}:"
-            " Neither a path to a dem_utils or a firn depth profile exists. Please"
+            " Neither a path to a DEM or a firn depth profile exists. Please"
             " specify this in your model configuration file."
         )
     valid_cells = np.ones(

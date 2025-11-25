@@ -241,7 +241,7 @@ def update_met_conditions(
 def check_firn_met_consistency(grid, met_data_grid):
     """
     Check visually that the meteorological data input is mapped to the
-    dem_utils input.
+    DEM input.
     """
     # pylint: disable=import-outside-toplevel
     from matplotlib import pyplot as plt
@@ -662,7 +662,7 @@ def initialise_model_data(model_setup):
     MONARCHS.
     """
     func_name = "monarchs.core.driver.initialise_model_data"
-    # Load in the initial firn profile, either from a whole dem_utils, or a
+    # Load in the initial firn profile, either from a whole DEM, or a
     # user-defined subset
     if (
         hasattr(model_setup, "lat_bounds")

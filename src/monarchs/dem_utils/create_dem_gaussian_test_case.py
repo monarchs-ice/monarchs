@@ -67,7 +67,7 @@ def export_gaussian_dem(num_points=20, diagnostic_plots=False):
 
 
 def interpolate_func_to_dem(heights, scale):
-    """Interpolate the dem_utils from the original Gaussian to the scale that we
+    """Interpolate the DEM from the original Gaussian to the scale that we
     want"""
     x = np.linspace(0, 1, len(heights))
     y = np.linspace(0, 1, len(np.transpose(heights)))
