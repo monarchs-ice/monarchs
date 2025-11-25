@@ -271,7 +271,9 @@ def turbulent_mixing(cell, sw_in, dt, k):
             1 / 3
     )
     # pylint: enable=invalid-name
-
+    # If lake is below 0.1 m deep then it is no longer turbulent
+    if cell['lake_depth'] < 0.1:
+        return 0, 0
     lake_absorbed_solar, radiation_at_bottom = radiative_transfer(cell, sw_in)
     # factor by which you want to scale the temporal resolution of this
     # calculation. it is very slow (taking up to half of the overall
@@ -315,14 +317,13 @@ def turbulent_mixing(cell, sw_in, dt, k):
         net_lower_flux_for_dh = flux_lower + radiation_at_bottom
         # record energy removed from lake by the bottom flux this substep
         # (flux_lower positive downward => energy leaving lake if positive)
-        if not cap_reached:
-            dh_change, cap_reached = calc_height_adjustment(
+        dh_change, cap_reached = calc_height_adjustment(
                 cell, k, dt_scaling, net_lower_flux_for_dh
             )
-        else:
-            dh_change = 0
-
+        
         dh += dh_change
+        if dh > (cell['firn_depth'] / cell['vert_grid']):
+            dh = cell['firn_depth'] / cell['vert_grid']
         # apply mixed core temp to interior nodes
         indices = np.arange(1, cell["vert_grid_lake"] - 1)
         cell["lake_temperature"][indices] = lake_core_temp

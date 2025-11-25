@@ -292,6 +292,7 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("lake_refreeze_counter", np.int32),
             ("error_flag", np.bool_),
             ("visit_count", np.int32),
-        ]
+        ],
+        align=True
     )
     return dtype

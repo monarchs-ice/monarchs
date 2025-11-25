@@ -125,16 +125,16 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
             snow_accumulation.snowfall(
                 cell,
-                met_data["snowfall"][t_step],
-                met_data["snow_dens"][t_step],
+                met_data[t_step]["snowfall"],
+                met_data[t_step]["snow_dens"],
                 273.15,
             )
-        sw_in = met_data["SW_down"][t_step]
-        lw_in = met_data["LW_down"][t_step]
-        wind = met_data["wind"][t_step]
-        dew_point_temperature = met_data["dew_point_temperature"][t_step]
-        air_temp = met_data["temperature"][t_step]
-        p_air = met_data["surf_pressure"][t_step]
+        sw_in = met_data[t_step]["SW_down"]
+        lw_in = met_data[t_step]["LW_down"]
+        wind = met_data[t_step]["wind"]
+        dew_point_temperature = met_data[t_step]["dew_point_temperature"]
+        air_temp = met_data[t_step]["temperature"]
+        p_air = met_data[t_step]["surf_pressure"]
 
         """
         Two main paths - either no exposed water, in which case the dry firn

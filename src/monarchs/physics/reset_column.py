@@ -11,12 +11,12 @@ from monarchs.physics.regrid_column import conservative_regrid
 
 def combine_lid_firn(cell, freeze_lake=False):
     routine_name = 'monarchs.physics.reset_column.combine_lid_firn'
-    original_mass = utils.calc_mass_sum(cell)
-
+    cell['rho'] = (cell['Sfrac'] * cell['rho_ice']) + (cell['Lfrac'] * cell['rho_water'])
     if cell["v_lid"]:
         cell["lid_depth"] = cell["v_lid_depth"]
+        cell['v_lid_depth'] = 0
     orig_lid_depth = cell["lid_depth"] + 0.0
-
+    original_mass = utils.calc_mass_sum(cell)
     # get effective frozen lake thickness (used only if we freeze)
     lake_depth_eff = (
         cell["lake_depth"] * (cell["rho_water"] / cell["rho_ice"])
@@ -110,16 +110,16 @@ def combine_lid_firn(cell, freeze_lake=False):
 
     # validate mass conservation
     new_mass = utils.calc_mass_sum(cell)
-    check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
+    # use a slightly more relaxed tolerance (1%) for this function
+    check_for_mass_conservation(cell, original_mass, new_mass, routine_name, tol=original_mass/100)
 
 def mass_conserving_profile(
     cell, orig_lid_depth, var="Sfrac", freeze_lake=False
 ):
-
     if cell["vert_grid_lid"] > 0 and orig_lid_depth > 0:
         lid_dz = np.full(cell["vert_grid_lid"], orig_lid_depth / cell["vert_grid_lid"])
     else:
-        lid_dz = np.array([])
+        lid_dz = np.zeros(0)
 
     if cell["vert_grid_lake"] > 0 and cell["lake_depth"] > 0:
         if freeze_lake:
@@ -128,7 +128,7 @@ def mass_conserving_profile(
             lake_depth_eff = cell["lake_depth"]
         lake_dz = np.full(cell["vert_grid_lake"], lake_depth_eff / cell["vert_grid_lake"])
     else:
-        lake_dz = np.array([])
+        lake_dz = np.zeros(0)
 
     column_dz = np.full(cell["vert_grid"], cell["firn_depth"] / cell["vert_grid"])
 

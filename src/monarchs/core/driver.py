@@ -417,7 +417,22 @@ def main(model_setup, grid):
         from numba import jit
         from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
         from numba import set_num_threads
+        import numba
 
+
+        # 1. Define a dummy parallel function
+        @numba.jit(parallel=True, nopython=True)
+        def force_threading_init():
+            # Doing a tiny bit of work forces the threading layer to start
+            x = np.zeros(4)
+            for i in numba.prange(4):
+                x[i] = i
+            return x
+
+        # 2. Run it immediately
+        # This triggers the initialization of TBB/OpenMP
+        force_threading_init()
+        print('Threading layer is ', numba.threading_layer())
         if model_setup.cores in ["all", False]:
             cores = pathos.helpers.cpu_count()
         else:

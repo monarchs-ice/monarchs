@@ -42,15 +42,17 @@ def lid_development(
     None (amends cell inplace)
     """
     routine_name = f"{MODULE_NAME}.lid_development"
+  
     if np.isnan(cell['lid_depth']):
         print('Error - start of timestep, lid depth is NaN')
         cell['error_flag'] = 1
     original_mass = utils.calc_mass_sum(cell)
     if cell['lid_temperature'][0] > 273.15:
         cell['lid_temperature'][0] = 273.15
+    temp_diff = max(0.0, 273.15 - cell['lid_temperature'][0])
     k_lid_seb = 1000 * (
         2.24 * 10 ** -3
-        + 5.975 * 10 ** -6 * (273.15 - cell["lid_temperature"][0]) ** 1.156
+        + 5.975 * 10 ** -6 * (temp_diff) ** 1.156
     )
 
     # If this is the first time we have a lid for the current state,
@@ -78,9 +80,9 @@ def lid_development(
         initialise_lid(cell, seb_args)
 
     # Assume no water present in lid or snow above it
-    k_ice, cp_ice = calc_k_and_cp(cell)
     Sfrac_lid = np.ones(cell["vert_grid_lid"])
-
+    k_ice, _ = calc_k_and_cp(cell)
+    k_lid_mean = np.mean(k_ice)
     # Determine if the lid is melting or freezing at the surface. We adjust
     # cell["lid_melt_count"] accordingly. If this is above a certain threshold,
     # then we have too much melt at the surface, and the lid and firn are later
@@ -88,7 +90,6 @@ def lid_development(
 
     x = cell["lid_temperature"]
     dz = cell["lid_depth"] / cell["vert_grid_lid"]
-    k_lid = np.mean(k_ice)  # not actually used
     heateqn_args = (
         cell,
         dt,
@@ -100,7 +101,7 @@ def lid_development(
         dew_point_temperature,
         wind,
         Sfrac_lid,
-        k_lid,
+        k_lid_mean,
     )
     # Solve the heat equation for the lid (including surface energy balance)
     # Force lake-lid boundary temperature to 273.15 before and after.
@@ -179,9 +180,10 @@ def surface_freezing(cell):
     -------
     k_lid - float - thermal conductivity of the lid [W m^-1 K^-1]
     """
+    temp_diff = np.maximum(0.0, 273.15 - cell["lid_temperature"])
     k_lid = 1000 * (
         2.24 * 10 ** -3
-        + 5.975 * 10 ** -6 * (273.15 - cell["lid_temperature"]) ** 1.156
+        + 5.975 * 10 ** -6 * (temp_diff) ** 1.156
     )
     if cell["lid_melt_count"] > 0:
         print(
@@ -314,9 +316,13 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
     T_above = cell["lid_temperature"][-2]
     # Heat flux into interface from the ice side (positive into interface)
     q_ice = -k_ice[-1] * (T_above - T_int) / dz_i
-
+    
+    if np.isnan(Fu):
+        Fu = 0.0 
     q_net = q_ice + Fu  # Fu positive downward (into interface) by convention
-
+    if np.isnan(q_ice):
+        print('Q ice = np.nan')
+        cell['error_flag'] = 1
     dh = (q_net / (cell["rho_ice"] * cell["L_ice"])) * dt
     if dh <= 0:
         cell["lid_boundary_change"] += dh
