@@ -6,7 +6,10 @@ response to melting.
 import numpy as np
 from monarchs.physics import percolation
 from monarchs.core import utils
-from monarchs.core.error_handling import check_for_mass_conservation, generic_error
+from monarchs.core.error_handling import (
+    check_for_mass_conservation,
+    generic_error,
+)
 
 
 def _integrate_piecewise_constant(edges, values, z0, z1):
@@ -158,7 +161,7 @@ def regrid_after_melt(cell, height_change, lake=False):
         height_change = merge_cells_into_lake(cell, height_change)
     if height_change <= 0.0:
         return
-    
+
     mass_before = utils.calc_mass_sum(cell)
 
     old_depth = float(cell["firn_depth"])
@@ -167,7 +170,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     if height_change > old_depth:
         message = "Height change must be less than the column depth. Got {height_change}"
         generic_error(cell, routine_name, message)
-        
+
     old_edges = np.linspace(0.0, old_depth, nz + 1)
 
     rem_S_thick = _integrate_piecewise_constant(
@@ -224,4 +227,6 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     mass_after = utils.calc_mass_sum(cell)
     tol = max(1e-2, 1e-10 * mass_before)
-    check_for_mass_conservation(cell, mass_before, mass_after, 'monarchs.physics.regrid_after_melt')
+    check_for_mass_conservation(
+        cell, mass_before, mass_after, "monarchs.physics.regrid_after_melt"
+    )

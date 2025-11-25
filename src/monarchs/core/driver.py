@@ -37,7 +37,7 @@ from monarchs.core.utils import (
 from monarchs.core.error_handling import (
     calc_grid_mass,
     check_grid_correctness,
-    check_for_single_column_errors
+    check_for_single_column_errors,
 )
 from monarchs.met_data.met_data_grid import initialise_met_data, get_spec
 from monarchs.physics import lateral_movement
@@ -300,8 +300,10 @@ def print_model_end_of_timestep_messages(
     print("\n*******************************************\n")
     print("End of timestep diagnostics:")
     if np.isnan(calc_grid_mass(grid)):
-        raise ValueError("Total mass of grid is NaN. This likely indicates that in the single-column physics "
-                         "a variable has become undefined due to a divide-by-zero. Check the logs for more details.")
+        raise ValueError(
+            "Total mass of grid is NaN. This likely indicates that in the single-column physics "
+            "a variable has become undefined due to a divide-by-zero. Check the logs for more details."
+        )
     print(f"Total mass at end of iteration {day + 1} = ", calc_grid_mass(grid))
     if model_setup.snowfall_toggle and model_setup.catchment_outflow:
         print(
@@ -505,7 +507,7 @@ def main(model_setup, grid):
 
         """ Single-column physics """
         # Check that we access each cell exactly once during the single-column physics step
-        visit_grid = np.copy(grid['visit_count'])
+        visit_grid = np.copy(grid["visit_count"])
         if model_setup.single_column_toggle:
             grid = loop_over_grid(
                 model_setup.row_amount,
@@ -523,23 +525,36 @@ def main(model_setup, grid):
 
         """Check for any errors in the grid after the single-column physics step"""
         errflag = check_for_single_column_errors(grid)
-        
+
         if errflag:
             raise RuntimeError(
-               "monarchs.core.driver.main: Error flag raised during single-"
-               "column physics step. See logs for details."
-               )
+                "monarchs.core.driver.main: Error flag raised during single-"
+                "column physics step. See logs for details."
+            )
 
         # Validation - check that valid cells are actually being
         # operated upon during the single-column physics step
         visit_flag = False
         for i in range(len(grid)):
             for j in range(len(grid[0])):
-                if grid[i][j]['valid_cell'] and (grid[i][j]['visit_count'] != visit_grid[i][j] + 1):
-                    print('i = ', i, 'j = ', j, 'old visit count = ', visit_grid[i][j], 'new visit count = ', grid[i][j]['visit_count'])
+                if grid[i][j]["valid_cell"] and (
+                    grid[i][j]["visit_count"] != visit_grid[i][j] + 1
+                ):
+                    print(
+                        "i = ",
+                        i,
+                        "j = ",
+                        j,
+                        "old visit count = ",
+                        visit_grid[i][j],
+                        "new visit count = ",
+                        grid[i][j]["visit_count"],
+                    )
                     visit_flag = True
         if visit_flag:
-            raise ValueError('Cells not being visited in single-column physics step')
+            raise ValueError(
+                "Cells not being visited in single-column physics step"
+            )
 
         print("Single-column physics finished")
         print(f"Single column physics time: {time.perf_counter() - start:.2f}s")
@@ -643,13 +658,21 @@ def main(model_setup, grid):
         """ Extra checkpointing """
         if model_setup.dump_data:
             if model_setup.dump_checkpoint_frequency:
-                dump_checkpoints = np.arange(0, model_setup.num_days,
-                                             model_setup.dump_checkpoint_frequency)
-                print(f'Writing model state as an extra checkpoint at timestep {day}')
+                dump_checkpoints = np.arange(
+                    0,
+                    model_setup.num_days,
+                    model_setup.dump_checkpoint_frequency,
+                )
+                print(
+                    f"Writing model state as an extra checkpoint at timestep {day}"
+                )
                 if day in dump_checkpoints:
                     dump_state(
-                            model_setup.dump_filepath + str(day), grid, met_start_idx, met_end_idx
-                        )
+                        model_setup.dump_filepath + str(day),
+                        grid,
+                        met_start_idx,
+                        met_end_idx,
+                    )
     print("\n*******************************************\n")
     print("MONARCHS has finished running successfully!")
     print("Total time taken = ", time.perf_counter() - tic)

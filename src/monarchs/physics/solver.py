@@ -181,7 +181,8 @@ def lake_development_eqn(x, args):
         Estimate of the surface lake temperature [K].
     """
     J = 0.1 * (9.8 * 5 * 10 ** -5 * (1.19 * 10 ** -7) ** 2 / 10 ** -6) ** (
-            1 / 3)
+        1 / 3
+    )
 
     vert_grid_lake = args[0]
     melt = args[1]
@@ -219,11 +220,13 @@ def lake_development_eqn(x, args):
         [
             -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
             + Q
-            + (np.sign(T_core - x[0])
-               * 1000
-               * 4181
-               * J
-               * abs(T_core - x[0]) ** (4 / 3))
+            + (
+                np.sign(T_core - x[0])
+                * 1000
+                * 4181
+                * J
+                * abs(T_core - x[0]) ** (4 / 3)
+            )
         ]
     )
     return output
@@ -301,11 +304,11 @@ def sfc_energy_virtual_lid(x, args):
     # an array
     output = np.zeros(1)
     output[0] = (
-            -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
-            + Q
-            - k_v_lid
-            * (-lake_temperature[1] + x[0])
-            / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
+        -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
+        + Q
+        - k_v_lid
+        * (-lake_temperature[1] + x[0])
+        / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
     )
 
     return output
@@ -357,9 +360,9 @@ def sfc_energy_lid(x, args):
     )
 
     output[0] = (
-            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
-            + Q
-            - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+        -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+        + Q
+        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
     return output
 

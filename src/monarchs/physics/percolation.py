@@ -10,6 +10,7 @@ from monarchs.core.error_handling import generic_error
 
 MODULE_NAME = "monarchs.physics.percolation"
 
+
 def calc_solid_mass(cell):
     """Calculate the mass of the solid part of the column."""
     return np.sum(

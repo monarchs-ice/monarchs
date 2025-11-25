@@ -317,8 +317,8 @@ def heateqn_lid(x, output, args):
                     * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
                     / dz ** 2
                 )
-            + dT_solar)
-
+                + dT_solar
+            )
         )
 
     output[-1] = x[vert_grid_lid - 1] - 273.15

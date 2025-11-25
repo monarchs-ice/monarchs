@@ -111,7 +111,7 @@ def loop_over_grid(
     flat_grid = grid.flatten()
     met_data_grid = met_data
     if parallel:
-        print('Running timstep in parallel')
+        print("Running timstep in parallel")
         # Dynamic chunk size for load balancing
         chunksize = max(1, len(flat_grid) // (ncores * 2))
 

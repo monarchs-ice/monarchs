@@ -5,6 +5,7 @@ from monarchs.core.error_handling import check_for_mass_conservation
 
 MODULE_NAME = "monarchs.physics.lid"
 
+
 def lid_development(
     cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, Fu
 ):
@@ -42,19 +43,18 @@ def lid_development(
     None (amends cell inplace)
     """
     routine_name = f"{MODULE_NAME}.lid_development"
-  
-    if np.isnan(cell['lid_depth']):
-        print('Error - start of timestep, lid depth is NaN')
-        cell['error_flag'] = 1
+
+    if np.isnan(cell["lid_depth"]):
+        print("Error - start of timestep, lid depth is NaN")
+        cell["error_flag"] = 1
     original_mass = utils.calc_mass_sum(cell)
-    if cell['lid_temperature'][0] > 273.15:
-        cell['lid_temperature'][0] = 273.15
+    if cell["lid_temperature"][0] > 273.15:
+        cell["lid_temperature"][0] = 273.15
     # clamp temperature change to avoid extreme conductivities if
     # numerical noise causes lid temp to go above 273.15 K
-    temp_diff = max(0.0, 273.15 - cell['lid_temperature'][0])
+    temp_diff = max(0.0, 273.15 - cell["lid_temperature"][0])
     k_lid_seb = 1000 * (
-        2.24 * 10 ** -3
-        + 5.975 * 10 ** -6 * (temp_diff) ** 1.156
+        2.24 * 10 ** -3 + 5.975 * 10 ** -6 * (temp_diff) ** 1.156
     )
     # If this is the first time we have a lid for the current state,
     # then initialise its temperature profile
@@ -147,11 +147,10 @@ def lid_development(
     # the profile to a firn column only.
     adjust_lid_height(cell, dt, Fu, k_lid)
     new_mass = utils.calc_mass_sum(cell)
-    check_for_mass_conservation(cell, original_mass, new_mass,
-                                      routine_name)
+    check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
     if np.any(np.isnan(k_lid)):
-        print('ERROR: monarchs.physics.lid.lid_development: k_lid = NaN')
-        cell['error_flag'] = 1
+        print("ERROR: monarchs.physics.lid.lid_development: k_lid = NaN")
+        cell["error_flag"] = 1
     # If the lid has shrunk to < 10cm, then revert it back to a virtual lid.
     if cell["lid_depth"] < 0.1:
         cell["v_lid_depth"] = cell["lid_depth"]
@@ -160,11 +159,11 @@ def lid_development(
         cell["v_lid"] = True
 
     new_mass = utils.calc_mass_sum(cell)
-    check_for_mass_conservation(cell, original_mass, new_mass,
-                                      routine_name)
-    if np.isnan(cell['lid_depth']):
-        print('Error (end of timestep) - lid depth is NaN')
-        cell['error_flag'] = 1
+    check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
+    if np.isnan(cell["lid_depth"]):
+        print("Error (end of timestep) - lid depth is NaN")
+        cell["error_flag"] = 1
+
 
 def surface_freezing(cell):
     """
@@ -182,10 +181,7 @@ def surface_freezing(cell):
     k_lid - float - thermal conductivity of the lid [W m^-1 K^-1]
     """
     temp_diff = np.maximum(0.0, 273.15 - cell["lid_temperature"])
-    k_lid = 1000 * (
-        2.24 * 10 ** -3
-        + 5.975 * 10 ** -6 * (temp_diff) ** 1.156
-    )
+    k_lid = 1000 * (2.24 * 10 ** -3 + 5.975 * 10 ** -6 * (temp_diff) ** 1.156)
     if cell["lid_melt_count"] > 0:
         # decrement the melt count if the lid is frozen
         cell["lid_melt_count"] -= 1
@@ -246,8 +242,7 @@ def surface_melt(cell, dt, Q):
     #      - This is long-term work for climate modelling.
 
     new_mass = utils.calc_mass_sum(cell)
-    check_for_mass_conservation(cell, original_mass, new_mass,
-                                      routine_name)
+    check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
     return k_lid
 
 
@@ -313,13 +308,13 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
     T_above = cell["lid_temperature"][-2]
     # Heat flux into interface from the ice side (positive into interface)
     q_ice = -k_ice[-1] * (T_above - T_int) / dz_i
-    
+
     if np.isnan(Fu):
-        Fu = 0.0 
+        Fu = 0.0
     q_net = q_ice + Fu  # Fu positive downward (into interface) by convention
     if np.isnan(q_ice):
-        print('ERROR: monarchs.physics.lid.adjust_lid_height: Q ice = np.nan')
-        cell['error_flag'] = 1
+        print("ERROR: monarchs.physics.lid.adjust_lid_height: Q ice = np.nan")
+        cell["error_flag"] = 1
     dh = (q_net / (cell["rho_ice"] * cell["L_ice"])) * dt
     if dh <= 0:
         cell["lid_boundary_change"] += dh

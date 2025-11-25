@@ -73,8 +73,8 @@ def loop_over_grid_numba(
         # cannot see its members
 
         nthreads = (
-            numba.config.NUMBA_DEFAULT_NUM_THREADS  # pylint: disable=no-member
-        )
+            numba.config.NUMBA_DEFAULT_NUM_THREADS
+        )  # pylint: disable=no-member
 
     numba.set_num_threads(nthreads)
     # append everything to a new 1D instance of a Numba typed list, flatten,

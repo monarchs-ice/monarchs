@@ -196,7 +196,6 @@ def initialise_iceshelf(
     # model_setup.t_steps_per_day and setting up the dtype accordingly.
     # (e.g. ("example_diagnostic", np.float64, model_setup.t_steps_per_day))
 
-
     def add_keys_to_grid(input_dict):
         """Add keys and values from a dictionary to the
         iceshelf structured array."""
@@ -305,6 +304,6 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("error_flag", np.bool_),
             ("visit_count", np.int32),
         ],
-        align=True
+        align=True,
     )
     return dtype

@@ -13,6 +13,7 @@ from monarchs.core.error_handling import generic_error
 
 MODULE_NAME = "monarchs.physics.snow_accumulation"
 
+
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
     After melting occurs, subtract the amount of melting from the firn height,
@@ -66,7 +67,6 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     if snow_T > 273.15:
         snow_T = 273.15
 
-
     nz = int(cell["vert_grid"])
     old_depth = float(cell["firn_depth"])
 
@@ -83,8 +83,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     # combine solid fraction for both snow and old firn
     # assume fresh snow is dry
     source_Sfrac = np.concatenate((np.array([snow_sfrac]), cell["Sfrac"]))
-    source_Lfrac = np.concatenate(
-        (np.array([0.0]), cell["Lfrac"]))
+    source_Lfrac = np.concatenate((np.array([0.0]), cell["Lfrac"]))
 
     # temperature interpolation - use centres rather than edges
     old_centers = 0.5 * (old_edges[:-1] + old_edges[1:])
@@ -93,8 +92,12 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     # new snow center is at half the snow depth
     snow_center = snow_depth / 2.0
 
-    source_centers = np.concatenate((np.array([snow_center]), shifted_old_centers))
-    source_temps = np.concatenate((np.array([snow_T]), cell["firn_temperature"]))
+    source_centers = np.concatenate(
+        (np.array([snow_center]), shifted_old_centers)
+    )
+    source_temps = np.concatenate(
+        (np.array([snow_T]), cell["firn_temperature"])
+    )
 
     # new grid (after height change)
     new_total_depth = old_depth + snow_depth
@@ -122,7 +125,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
         # Run saturation fix on the deepest issue first, letting it bubble up if needed
         # (Or specifically call your existing saturation manager)
         for idx in oversaturated_indices:
-             calc_saturation(cell, idx, end=True)
+            calc_saturation(cell, idx, end=True)
 
     # clip Sfrac and Lfrac if regridding causes them to exceed physical limits
     # and this isnt fixed by the saturation calculation
@@ -136,11 +139,16 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     tol = max(1e-7, 1e-10 * expected_new_mass)
 
     if abs(final_mass - expected_new_mass) > tol:
-        message = f"Mass conservation failed in snowfall.\n" \
-                  "Expected: ", float(expected_new_mass), \
-                  "Actual: ",  float(final_mass), \
-                  "Diff:  ", float(final_mass - expected_new_mass)
+        message = (
+            f"Mass conservation failed in snowfall.\n" "Expected: ",
+            float(expected_new_mass),
+            "Actual: ",
+            float(final_mass),
+            "Diff:  ",
+            float(final_mass - expected_new_mass),
+        )
         generic_error(cell, routine_name, message)
+
 
 def densification(cell, t_steps_per_day):
     """

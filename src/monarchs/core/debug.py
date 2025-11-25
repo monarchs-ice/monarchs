@@ -1,5 +1,3 @@
-
-
 def neighbourhood_check(grid, target_row, target_col):
     """
     A debugging function that prints out the status of the target cell and its
@@ -26,11 +24,15 @@ def neighbourhood_check(grid, target_row, target_col):
                 print(f"  Firn depth: {float(cell['firn_depth'])}")
                 print(f"  Lake status: {cell['lake']}")
                 print(f"  Lid status: {cell['lid']}")
-                print(f"  Saturation status at surface = ", cell['saturation'][:5])
-                print(f"  Meltflag status at surface = ", cell['meltflag'][:5])
-                print(f"  Exposed water flag = ", cell['exposed_water'])
-                if not cell['valid_cell']:
-                    print("  WARNING: Cell is marked INVALID before physics starts.")
+                print(
+                    f"  Saturation status at surface = ", cell["saturation"][:5]
+                )
+                print(f"  Meltflag status at surface = ", cell["meltflag"][:5])
+                print(f"  Exposed water flag = ", cell["exposed_water"])
+                if not cell["valid_cell"]:
+                    print(
+                        "  WARNING: Cell is marked INVALID before physics starts."
+                    )
                 print("-------------------------")
             except IndexError:
                 print(f"Cell [{r}, {c}] is OUT OF BOUNDS")

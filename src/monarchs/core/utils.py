@@ -12,6 +12,7 @@ try:
 except ImportError:
     # fallback if numba is not installed
     prange = range  # pylint: disable=invalid-name
+
     @contextlib.contextmanager
     def objmode(*args, **kwargs):
         """Dummy context manager for objmode when numba is not installed."""
@@ -37,7 +38,6 @@ def do_not_jit(function):
         return function(*args, **kwargs)
 
     return wrapper
-
 
 
 def calc_mass_sum(cell):
@@ -77,6 +77,7 @@ def calc_mass_sum(cell):
         + cell["v_lid_depth"] * cell["rho_ice"]
     )
     return total_mass
+
 
 def get_2d_grid(grid, attr, index=False):
     """
@@ -129,7 +130,6 @@ def find_nearest(a, a0):
     """Obtain index of element in array `a` closest to the scalar value `a0`"""
     idx = np.abs(a - a0).argmin()
     return idx
-
 
 
 def add_random_water(grid, max_grid_row, max_grid_col):

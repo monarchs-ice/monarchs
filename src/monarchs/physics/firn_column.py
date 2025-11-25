@@ -10,9 +10,13 @@ contained in percolation.py.
 import numpy as np
 from monarchs.physics import percolation, surface_fluxes, solver, regrid_column
 from monarchs.core import utils
-from monarchs.core.error_handling import check_for_mass_conservation, generic_error
+from monarchs.core.error_handling import (
+    check_for_mass_conservation,
+    generic_error,
+)
 
 MODULE_NAME = "monarchs.physics.firn_column"
+
 
 def firn_column(
     cell,
@@ -146,8 +150,10 @@ def firn_column(
             )
 
             if np.isnan(height_change):
-                message = ("Height change is NaN - likely due to unrealistic "
-                           "meteorological data.")
+                message = (
+                    "Height change is NaN - likely due to unrealistic "
+                    "meteorological data."
+                )
                 generic_error(cell, routine_name, message)
 
             regrid_column.regrid_after_melt(cell, height_change)
@@ -176,8 +182,8 @@ def firn_column(
     # Test for mass conservation - if we lose mass, then there is an issue with
     # the regridding.
     new_mass = utils.calc_mass_sum(cell)
-    check_for_mass_conservation(cell, original_mass, new_mass,
-                                      routine_name)
+    check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
+
 
 def calc_height_change(
     cell,
@@ -290,8 +296,7 @@ def calc_height_change(
     )
     cell["firn_boundary_change"] += dHdt
     # Melt maximum one layer per timestep to avoid instability
-    if dHdt > (cell["firn_depth"] / cell["vert_grid"]
-    ):
+    if dHdt > (cell["firn_depth"] / cell["vert_grid"]):
         dHdt = cell["firn_depth"] / cell["vert_grid"]
 
     if 0 > dHdt > -0.01:
@@ -303,6 +308,6 @@ def calc_height_change(
         )
         generic_error(cell, routine_name, message)
     elif np.isnan(dHdt):
-        message = ("Height change during melt is NaN")
+        message = "Height change during melt is NaN"
         generic_error(cell, routine_name, message)
     return dHdt

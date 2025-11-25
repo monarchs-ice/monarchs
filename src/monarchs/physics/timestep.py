@@ -20,6 +20,7 @@ from monarchs.core.error_handling import generic_error, check_correct
 
 MODULE_NAME = "monarchs.physics.timestep"
 
+
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """
     Main timestepping loop applied to an instance of the model grid.
@@ -98,7 +99,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     cell["lid_boundary_change"] = 0
 
     if np.isnan(cell["firn_temperature"]).any():
-        message = ("NaN in firn temperature")
+        message = "NaN in firn temperature"
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
         # Validation of model state at the start of the timestep
@@ -322,9 +323,11 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     # and melts through the firn column causing the whole model to crash.
     if cell["firn_depth"] < 5:
         print("Firn depth below 5 m - setting cell to invalid")
-        print('Location of firn depth below 5 m - ', cell["row"], cell["column"])
+        print(
+            "Location of firn depth below 5 m - ", cell["row"], cell["column"]
+        )
         cell["valid_cell"] = False
 
     cell["day"] += 1
 
-    return cell 
+    return cell

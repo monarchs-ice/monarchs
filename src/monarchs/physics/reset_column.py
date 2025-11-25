@@ -9,15 +9,18 @@ from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
 from monarchs.physics.regrid_column import conservative_regrid
 
+
 def combine_lid_firn(cell, freeze_lake=False):
-    routine_name = 'monarchs.physics.reset_column.combine_lid_firn'
+    routine_name = "monarchs.physics.reset_column.combine_lid_firn"
 
     # ensure that the density is up-to-date
-    cell['rho'] = (cell['Sfrac'] * cell['rho_ice']) + (cell['Lfrac'] * cell['rho_water'])
+    cell["rho"] = (cell["Sfrac"] * cell["rho_ice"]) + (
+        cell["Lfrac"] * cell["rho_water"]
+    )
     # add virtual lid to lid if we have one - we are combining either way
     if cell["v_lid"]:
         cell["lid_depth"] = cell["v_lid_depth"]
-        cell['v_lid_depth'] = 0
+        cell["v_lid_depth"] = 0
     orig_lid_depth = cell["lid_depth"] + 0.0  # get a copy
     original_mass = utils.calc_mass_sum(cell)
     # get effective frozen lake thickness (used only if we freeze)
@@ -112,37 +115,52 @@ def combine_lid_firn(cell, freeze_lake=False):
     # validate mass conservation
     new_mass = utils.calc_mass_sum(cell)
     # use a slightly more relaxed tolerance (1%) for this function
-    check_for_mass_conservation(cell, original_mass, new_mass, routine_name, tol=original_mass/100)
+    check_for_mass_conservation(
+        cell, original_mass, new_mass, routine_name, tol=original_mass / 100
+    )
+
 
 def mass_conserving_profile(
     cell, orig_lid_depth, var="Sfrac", freeze_lake=False
 ):
     if cell["vert_grid_lid"] > 0 and orig_lid_depth > 0:
-        lid_dz = np.full(cell["vert_grid_lid"], orig_lid_depth / cell["vert_grid_lid"])
+        lid_dz = np.full(
+            cell["vert_grid_lid"], orig_lid_depth / cell["vert_grid_lid"]
+        )
     else:
         lid_dz = np.zeros(0)
 
     if cell["vert_grid_lake"] > 0 and cell["lake_depth"] > 0:
         if freeze_lake:
-            lake_depth_eff = cell["lake_depth"] * (cell["rho_water"] / cell["rho_ice"])
+            lake_depth_eff = cell["lake_depth"] * (
+                cell["rho_water"] / cell["rho_ice"]
+            )
         else:
             lake_depth_eff = cell["lake_depth"]
-        lake_dz = np.full(cell["vert_grid_lake"], lake_depth_eff / cell["vert_grid_lake"])
+        lake_dz = np.full(
+            cell["vert_grid_lake"], lake_depth_eff / cell["vert_grid_lake"]
+        )
     else:
         lake_dz = np.zeros(0)
 
-    column_dz = np.full(cell["vert_grid"], cell["firn_depth"] / cell["vert_grid"])
+    column_dz = np.full(
+        cell["vert_grid"], cell["firn_depth"] / cell["vert_grid"]
+    )
 
     dz_full = np.concatenate((lid_dz, lake_dz, column_dz))
     source_edges = np.concatenate((np.array([0.0]), np.cumsum(dz_full)))
 
     if var == "Sfrac":
         val_lid = np.ones(len(lid_dz))
-        val_lake = np.ones(len(lake_dz)) if freeze_lake else np.zeros(len(lake_dz))
+        val_lake = (
+            np.ones(len(lake_dz)) if freeze_lake else np.zeros(len(lake_dz))
+        )
         val_firn = cell["Sfrac"]
-    else: # Lfrac
+    else:  # Lfrac
         val_lid = np.zeros(len(lid_dz))
-        val_lake = np.zeros(len(lake_dz)) if freeze_lake else np.ones(len(lake_dz))
+        val_lake = (
+            np.zeros(len(lake_dz)) if freeze_lake else np.ones(len(lake_dz))
+        )
         val_firn = cell["Lfrac"]
 
     source_vals = np.concatenate((val_lid, val_lake, val_firn))

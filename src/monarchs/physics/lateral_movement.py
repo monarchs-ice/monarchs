@@ -389,7 +389,7 @@ def calc_available_water_lake(
         if water_to_move > -1e-8:
             water_to_move = 0
         else:
-            print('Water to move = ', water_to_move)
+            print("Water to move = ", water_to_move)
             raise ValueError("Water to move from lake is less than 0")
     return water_to_move, 0, 0, 0
 
@@ -460,12 +460,14 @@ def calc_available_water_ice_lens(
         * (cell["water_level"] - neighbour_cell["water_level"])
         / (split + 1)
     )
-    
+
     if water_to_move < 0:
         if water_to_move > -1e-8:
             water_to_move = 0
         else:
-            raise ValueError(f'Negative water in move_to_ice_lens: {water_to_move}')
+            raise ValueError(
+                f"Negative water in move_to_ice_lens: {water_to_move}"
+            )
     # If saturated firn doesn't hold enough water to fill the "quota",
     # then all of it moves but no more
     # +1 so we include the one where we move from
@@ -477,7 +479,6 @@ def calc_available_water_ice_lens(
         water_to_move = np.sum(cell["water"][: move_from_index + 1]) / (
             split + 1
         )
-    
 
     return (
         water_to_move,
@@ -531,7 +532,7 @@ def calc_catchment_outflow(
     water_out = 0.0
     # either: remove water from the lake directly.
     if cell["lake"] and not cell["lid"]:
-        current_lake_depth = temporary_cell['lake_depth']
+        current_lake_depth = temporary_cell["lake_depth"]
 
         if cell["lake_depth"] < water_to_move:
             water_out = current_lake_depth
@@ -566,7 +567,7 @@ def calc_catchment_outflow(
 
             if temporary_cell["water"][_l] <= 1e-12:
                 temporary_cell["water"][_l] = 0
-                temporary_cell["saturation"][_l] = 0 
+                temporary_cell["saturation"][_l] = 0
             # stop looping if we've flowed all the water
             if water_to_move <= 0:
                 break
@@ -974,13 +975,13 @@ def move_to_neighbours(
             # if handle_invalid_neighbour_cell returns -1, then don't flow to
             # this particular (invalid) cell, but there may be a neighbour
             # that *is* valid
-            #if water_out == -1 and idx != len(biggest_neighbours) - 1:
+            # if water_out == -1 and idx != len(biggest_neighbours) - 1:
             #    continue
             # If we get to the end and all possible neighbours have been
             # exhausted, then simply return 0 so we don't do anything.
             # This fixes a bug where if no valid neighbours are found, then
             # an extremely large amount of water is moved.
-            #elif water_out == -1:
+            # elif water_out == -1:
             #    return total_water_out  # return accumulator
 
             """Logic for valid cells"""
@@ -1005,7 +1006,7 @@ def move_to_neighbours(
                     water_frac,
                     split,
                     grid[row + n_s_index][col + w_e_index],
-                    outflow=is_outflow
+                    outflow=is_outflow,
                 )
                 temporary_cell, temporary_neighbour = move_from_lake(
                     cell,
@@ -1032,7 +1033,7 @@ def move_to_neighbours(
                     water_frac,
                     split,
                     grid[row + n_s_index][col + w_e_index],
-                    outflow=is_outflow
+                    outflow=is_outflow,
                 )
 
                 temporary_cell, temporary_neighbour = move_from_ice_lens(
@@ -1226,16 +1227,16 @@ def move_water(
             # as noise, else an error is raised.
             tol = -1e-8
             if (cell["water"] < tol).any():
-                print(cell['water'])
-                print(cell['row'], cell['column'])
-                print(cell['valid_cell'])
-                print(cell['lake'])
+                print(cell["water"])
+                print(cell["row"], cell["column"])
+                print(cell["valid_cell"])
+                print(cell["lake"])
                 if cell["valid_cell"]:
-                    print(cell['water'])
-                    print(np.where(cell['water'] < 0))
+                    print(cell["water"])
+                    print(np.where(cell["water"] < 0))
                     raise ValueError("cell.water is negative")
                 else:  # if in an invalid cell, we don't care, just zero it
-                    cell["water"][:] = 0 
+                    cell["water"][:] = 0
             if (cell["water"] < 0).any():
                 set_to_zeros = np.where(cell["water"] < 0)
                 cell["water"][set_to_zeros] = 0

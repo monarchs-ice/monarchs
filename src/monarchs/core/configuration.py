@@ -250,7 +250,7 @@ def create_defaults_for_missing_flags(model_setup):
         "use_numba",
         "catchment_outflow",
         "load_precalculated_met_data",
-        "dump_checkpoint_frequency"
+        "dump_checkpoint_frequency",
     ]
     for attr in optional_args_to_true:
         if not hasattr(model_setup, attr):
@@ -438,8 +438,7 @@ def jit_modules(fastmath=False):
         "get_variable_dims",
         "calc_grid_mass",
         "check_for_single_column_errors",
-        "check_grid_correctness"
-        
+        "check_grid_correctness",
     ]  # other builtins/decorators
 
     for module in module_list:

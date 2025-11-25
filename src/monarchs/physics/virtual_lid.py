@@ -11,6 +11,7 @@ from monarchs.core.error_handling import check_for_mass_conservation
 
 MODULE_NAME = "monarchs.physics.virtual_lid"
 
+
 def virtual_lid_development(
     cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, Fu
 ):
@@ -138,8 +139,7 @@ def virtual_lid_development(
 
     # check we've not gained or lost too much mass
     new_mass = utils.calc_mass_sum(cell)
-    check_for_mass_conservation(cell, original_mass, new_mass,
-                                      routine_name)
+    check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
 
 
 def update_virtual_lid_temperature(
