@@ -203,10 +203,8 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
 
     """
 
-    N = 50  # number of cells at top to use in hybrd implementation
+    N = 10  # number of cells at top to use in hybrd implementation
     x = x[:N]
-    # cell, dt, dz, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind = [arg for arg in
-    # args]
     cell = args[0]
     dt = args[1]
     dz = args[2]
@@ -634,12 +632,7 @@ def lid_heateqn_solver(x, args):
         k_lid=k_lid,
         Sfrac_lid=Sfrac_lid,
     )
-    # print(f'Lid heat equation solver, loaded in args... col = {cell.column}, row = {cell.row}')
-    # for idx, arg in enumerate(args):
-    #     print(f'index = {idx}')
-    #     print(arg)
-    # print('Temp = ', cell.lid_temperature)
-    # print('args shape = ', np.shape(args))
+
     root, fvec, success, info = hybrd(eqn, x, args)
 
     root = np.around(root, decimals=8)

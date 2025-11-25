@@ -102,10 +102,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
         # Validation of model state at the start of the timestep
-        if cell["lake_depth"] > 50:
-            print('Location = ', cell['row'], cell['column'])
-            print('Lake depth = ', cell['lake_depth'])
-
         if cell["lake_depth"] <= 1e-5 and cell["lake"]:
             cell["lake"] = False
             cell["lake_depth"] = 0
@@ -328,8 +324,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         print("Firn depth below 5 m - setting cell to invalid")
         print('Location of firn depth below 5 m - ', cell["row"], cell["column"])
         cell["valid_cell"] = False
-    if cell["lake_depth"] > 15:
-        print('Location of large lake (end of timestep) - ', cell["row"], cell["column"])
+
     cell["day"] += 1
 
     return cell 

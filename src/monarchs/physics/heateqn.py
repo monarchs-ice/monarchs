@@ -152,12 +152,6 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     B[i] = 1 + alpha
     D[i] = T_old[i]
 
-    # Assemble banded matrix
-    # ab = np.zeros((3, n))
-    # ab[0, 1:] = C
-    # ab[1, :] = B
-    # ab[2, :-1] = A
-    # T_new = solve_banded((1, 1), ab, D)
     T_new = solve_tridiagonal(A, B, C, D)
     return T_new
 

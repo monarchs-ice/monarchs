@@ -85,7 +85,6 @@ def percolate(
                     cell["Sfrac"][v_lev] * cell["rho_ice"]
                     > cell["pore_closure"]
                 ):
-                    # print('Ice lens formed at depth ', v_lev)
                     cell["ice_lens"] = True
                     cell["saturation"][v_lev] = True
 
@@ -178,7 +177,6 @@ def calc_refreezing(cell, v_lev):
 
     if cell["Sfrac"][v_lev] == 0:
         T_change_all = 1000000  # for testing
-        # print('Refreezing with Sfrac = 0')
     else:
         T_change_all = (
             cell["Lfrac"][v_lev]
@@ -341,8 +339,6 @@ def calc_saturation(cell, v_lev_in, end=False):
                     break
 
             if v_lev <= 0:
-                # print('Adding excess water to surface, excess_water = ',
-                # excess_water, 'Lfrac = ', cell["Lfrac"][0])
                 cell["Lfrac"][0] = cell["Lfrac"][0] + excess_water
                 Lfrac_max = 1 - cell["Sfrac"][0]
 

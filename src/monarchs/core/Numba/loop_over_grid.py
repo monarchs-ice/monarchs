@@ -80,9 +80,6 @@ def loop_over_grid_numba(
     # append everything to a new 1D instance of a Numba typed list, flatten,
     # and loop over that.
     flat_grid = grid.flatten()
-    met_data_flat = met_data.flatten()
-    print('Flat shape = ', np.shape(met_data_flat))
-    print('Original shape = ', np.shape(met_data))
     # disable linting for prange not being an iterable as it is
     # when running with use_numba=True as it is decorated with
     # jit in driver.py at runtime (this lets us determine whether

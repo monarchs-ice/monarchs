@@ -250,6 +250,7 @@ def create_defaults_for_missing_flags(model_setup):
         "use_numba",
         "catchment_outflow",
         "load_precalculated_met_data",
+        "dump_checkpoint_frequency"
     ]
     for attr in optional_args_to_true:
         if not hasattr(model_setup, attr):

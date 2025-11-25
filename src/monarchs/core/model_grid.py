@@ -11,6 +11,7 @@ import numpy as np
 # pylint: disable=too-many-arguments,too-many-locals
 # pylint: disable=too-many-positional-arguments
 def initialise_iceshelf(
+    model_setup,  # Unused, but can be used for future extensions
     num_rows,
     num_cols,
     vert_grid,
@@ -184,6 +185,17 @@ def initialise_iceshelf(
         "total_melt": total_melt,
         "lid_sfc_melt": lid_sfc_melt,
     }
+
+    hourly_diagnostics = {}  # Placeholder for future use
+    # Example structure:
+    # hourly_diagnostics = {
+    #     "example_diagnostic": np.zeros((num_rows, num_cols,
+    #     model_setup.t_steps_per_day)),
+    # }
+    # This would necessitate changing get_spec to load in
+    # model_setup.t_steps_per_day and setting up the dtype accordingly.
+    # (e.g. ("example_diagnostic", np.float64, model_setup.t_steps_per_day))
+
 
     def add_keys_to_grid(input_dict):
         """Add keys and values from a dictionary to the

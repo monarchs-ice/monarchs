@@ -21,12 +21,8 @@ def run(model_setup):
     setup_met_data.met_data_from_era5(model_setup, lat_array, lon_array)
     # Initialise the model grid.
     grid = initial_conditions.create_model_grid(
-        model_setup.row_amount,
-        model_setup.col_amount,
+        model_setup,
         firn_depth,
-        model_setup.vertical_points_firn,
-        model_setup.vertical_points_lake,
-        model_setup.vertical_points_lid,
         rho,
         T_firn,
         use_numba=model_setup.use_numba,

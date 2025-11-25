@@ -11,11 +11,14 @@ from monarchs.physics.regrid_column import conservative_regrid
 
 def combine_lid_firn(cell, freeze_lake=False):
     routine_name = 'monarchs.physics.reset_column.combine_lid_firn'
+
+    # ensure that the density is up-to-date
     cell['rho'] = (cell['Sfrac'] * cell['rho_ice']) + (cell['Lfrac'] * cell['rho_water'])
+    # add virtual lid to lid if we have one - we are combining either way
     if cell["v_lid"]:
         cell["lid_depth"] = cell["v_lid_depth"]
         cell['v_lid_depth'] = 0
-    orig_lid_depth = cell["lid_depth"] + 0.0
+    orig_lid_depth = cell["lid_depth"] + 0.0  # get a copy
     original_mass = utils.calc_mass_sum(cell)
     # get effective frozen lake thickness (used only if we freeze)
     lake_depth_eff = (
@@ -62,9 +65,7 @@ def combine_lid_firn(cell, freeze_lake=False):
         ),
     )
 
-
-
-    # Reconstruct phase fractions with mass conservation
+    # get new solid and liquid fractions
     sfrac_new = mass_conserving_profile(
         cell, orig_lid_depth, var="Sfrac", freeze_lake=freeze_lake
     )
@@ -150,7 +151,6 @@ def mass_conserving_profile(
     nz = cell["vert_grid"]
     target_edges = np.linspace(0, total_depth, nz + 1)
 
-    # 4. Regrid
     new_vals = conservative_regrid(source_edges, source_vals, target_edges)
 
     return np.clip(new_vals, 0.0, 1.0)

@@ -31,6 +31,7 @@ def make_cell():
         lake_T[-1] = 273.15               # explicit lower boundary
 
         grid = initialise_iceshelf(
+            None,
             num_rows=1, num_cols=1,
             vert_grid=vert_grid,
             vert_grid_lake=vert_grid_lake,

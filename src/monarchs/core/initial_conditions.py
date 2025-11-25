@@ -253,14 +253,11 @@ def rho_init_emp(z, rho_sfc, z_t):
 # readability significantly, so we disable the pylint warnings here.
 # pylint: disable=too-many-arguments, too-many-locals, too-many-statements
 def create_model_grid(
-    row_amount,
-    col_amount,
+    model_setup,
     firn_depth,
-    vert_grid,
-    vert_grid_lake,
-    vert_grid_lid,
     rho,
     firn_temperature,
+    # default values
     sfrac=np.array([np.nan]),
     lfrac=np.array([np.nan]),
     meltflag=np.array([np.nan]),
@@ -285,7 +282,6 @@ def create_model_grid(
     virtual_lid_temperature=273.15,
     total_melt=0.0,
     valid_cells=np.array([np.nan]),
-    use_numba=False,
     lats=np.array([np.nan]),
     lons=np.array([np.nan]),
     size_dx=1000.0,
@@ -296,15 +292,19 @@ def create_model_grid(
     parameters.
     """
     y, x = np.meshgrid(
-        np.arange(0, row_amount, 1), np.arange(0, col_amount, 1), indexing="ij"
+        np.arange(0, model_setup.row_amount, 1),
+        np.arange(0, model_setup.col_amount, 1), indexing="ij"
     )
-    dtype = get_spec(vert_grid, vert_grid_lake, vert_grid_lid)
+    dtype = get_spec(model_setup.vertical_points_firn,
+                     model_setup.vertical_points_lake,
+                     model_setup.vertical_points_lid)
     grid = initialise_iceshelf(
-        row_amount,
-        col_amount,
-        vert_grid,
-        vert_grid_lake,
-        vert_grid_lid,
+        model_setup,
+        model_setup.row_amount,
+        model_setup.col_amount,
+        model_setup.vertical_points_firn,
+        model_setup.vertical_points_lake,
+        model_setup.vertical_points_lid,
         dtype,
         x,
         y,
@@ -327,7 +327,7 @@ def create_model_grid(
         water_level=water_level,
         water=water,
         ice_lens=ice_lens,
-        ice_lens_depth=vert_grid + 1,
+        ice_lens_depth=model_setup.vertical_points_firn + 1,
         has_had_lid=has_had_lid,
         lid_sfc_melt=lid_sfc_melt,
         lid_melt_count=lid_melt_count,
@@ -336,7 +336,7 @@ def create_model_grid(
         virtual_lid_temperature=virtual_lid_temperature,
         total_melt=total_melt,
         valid_cells=valid_cells,
-        numba=use_numba,
+        numba=model_setup.use_numba,
         lat=lats,
         lon=lons,
         size_dx=size_dx,

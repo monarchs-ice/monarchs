@@ -122,7 +122,6 @@ def freeze_pre_lake(cell):
     #      - since we can have tiny lakes freezing after
     #      - a lid is combined into the firn (meaning
     #      - that we have Sfrac = 1 at the surface)
-    print("Refreezing tiny lake")
     cell["exposed_water"] = False
     cell["exposed_water_refreeze_counter"] = 0
     dHdt = cell["lake_depth"] * cell["rho_water"] / cell["rho_ice"]
@@ -136,7 +135,6 @@ def freeze_pre_lake(cell):
     # will be so small that it should not matter.
     if cell["Sfrac"][0] > 1:
         cell["Sfrac"][0] = 1
-        print("Sfrac > 1 in exposed water refreeze")
 
 
 def radiative_transfer(cell, sw_in):
@@ -437,10 +435,7 @@ def lake_formation(
     new_mass = utils.calc_mass_sum(cell)
     errflag = check_for_mass_conservation(cell, original_mass, new_mass,
                                                 routine_name)
-    if errflag:
-        # return early to stop processing garbage
-        print('Returning out of lake.py early since we are processing garbage')
-        return cell
+
 
     if old_T_sfc > 273.15 and Q > 0:  # melting occurring at the surface
         kdTdz = (
@@ -460,7 +455,6 @@ def lake_formation(
 
         if dHdt < 0:
             cell["error_flag"] = True
-            print(f"{routine_name}: ")
             message = "Error in surface temperature in lake formation \n"
             message += f"\tdHdt = {dHdt}\n"
             generic_error(cell, routine_name, message)
@@ -581,20 +575,16 @@ def lake_development(
     # Lake is turbulent (>= 10 cm)
     # Compute dh using the actual fluxes over the timestep rather
     # than the instantaneous flux at the end of the timestep * dt
+    """ Height change calculation is embedded in turbulent_mixing """
     Fu, boundary_change = turbulent_mixing(cell, sw_in, dt, k)
 
     # Regrid the firn column to account for the change in boundary
     # (which is subtracted from the firn and added to the lake in
     # this subroutine)
     regrid_column.regrid_after_melt(cell, boundary_change, lake=True)
-    # print('New firn depth = ', cell["firn_depth"])
     # Set end=False since we only care about the top cell, and in this
     # case we want to put this water into the lake.
     percolation.calc_saturation(cell, 0)
-
-    # # Adjust lake height using constrained base energy
-    # adjust_lake_height(
-    #     cell, k, dt, e_account)
 
     # Bottom at freezing
     cell["lake_temperature"][-1] = 273.15

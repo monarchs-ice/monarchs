@@ -299,8 +299,9 @@ def print_model_end_of_timestep_messages(
     toc = time.perf_counter()
     print("\n*******************************************\n")
     print("End of timestep diagnostics:")
-    if calc_grid_mass(grid) == np.nan:
-        raise ValueError("Total mass of grid is NaN! Debug.")
+    if np.isnan(calc_grid_mass(grid)):
+        raise ValueError("Total mass of grid is NaN. This likely indicates that in the single-column physics "
+                         "a variable has become undefined due to a divide-by-zero. Check the logs for more details.")
     print(f"Total mass at end of iteration {day + 1} = ", calc_grid_mass(grid))
     if model_setup.snowfall_toggle and model_setup.catchment_outflow:
         print(
@@ -388,6 +389,7 @@ def main(model_setup, grid):
     # move some of the functions from above into utils also, or a new
     # module entirely.
 
+    """ Initialise parallelisation if required """
     # If running in parallel across multiple nodes, then we first set up the
     # dask Client object
     if (
@@ -429,17 +431,24 @@ def main(model_setup, grid):
     else:
         from monarchs.core.loop_over_grid import loop_over_grid
     # pylint: enable=import-outside-toplevel
+    # set up some helper variables
 
     tic = time.perf_counter()
     met_start_idx = 0
     met_end_idx = model_setup.t_steps_per_day
     output_counter = 0
+
+    """ Check for dump file and setup model output files """
+
+    # determine if we need to interpolate vector values (e.g. Sfrac)
+    # in the output
     if hasattr(model_setup, "output_grid_size"):
         output_grid_size = model_setup.output_grid_size
         if not output_grid_size:
             output_grid_size = grid["vert_grid"][0][0]
     else:
         output_grid_size = grid["vert_grid"][0][0]
+
     (
         grid,
         met_start_idx,
@@ -449,8 +458,7 @@ def main(model_setup, grid):
     ) = check_for_reload_from_dump(
         model_setup, grid, met_start_idx, met_end_idx
     )
-    print("firn depth = ", get_2d_grid(grid, "firn_depth"))
-    print("valid_cell = ", get_2d_grid(grid, "valid_cell"))
+
     if model_setup.save_output and not reload_dump_success:
         setup_output(
             model_setup.output_filepath,
@@ -463,6 +471,8 @@ def main(model_setup, grid):
         output_counter = first_iteration
     else:
         start = False
+
+    """ Load in meteorological data """
     snow_added = 0
     met_data_grid, met_data_len, snow_added = update_met_conditions(
         model_setup,
@@ -479,6 +489,9 @@ def main(model_setup, grid):
     time_loop = range(first_iteration, model_setup.num_days)
     start = time.perf_counter()
     dt = 3600
+
+    """ Main model time loop """
+
     for day in time_loop:
         timestep_start = time.perf_counter()
         print("\n*******************************************\n")
@@ -489,8 +502,9 @@ def main(model_setup, grid):
         met_data_grid = np.moveaxis(
             met_data_grid, 0, -1
         )  # move the first axis to the last axis
-        
-        neighbourhood_check(grid, 71, 76)
+
+        """ Single-column physics """
+        # Check that we access each cell exactly once during the single-column physics step
         visit_grid = np.copy(grid['visit_count'])
         if model_setup.single_column_toggle:
             grid = loop_over_grid(
@@ -506,10 +520,8 @@ def main(model_setup, grid):
                 dask_scheduler=model_setup.dask_scheduler,
                 client=CLIENT,
             )
-        flag = False
-        
+
         """Check for any errors in the grid after the single-column physics step"""
-        print('Error max = ', np.max(grid['error_flag'])) 
         errflag = check_for_single_column_errors(grid)
         
         if errflag:
@@ -517,14 +529,18 @@ def main(model_setup, grid):
                "monarchs.core.driver.main: Error flag raised during single-"
                "column physics step. See logs for details."
                )
+
+        # Validation - check that valid cells are actually being
+        # operated upon during the single-column physics step
+        visit_flag = False
         for i in range(len(grid)):
             for j in range(len(grid[0])):
                 if grid[i][j]['valid_cell'] and (grid[i][j]['visit_count'] != visit_grid[i][j] + 1):
                     print('i = ', i, 'j = ', j, 'old visit count = ', visit_grid[i][j], 'new visit count = ', grid[i][j]['visit_count'])
-                    flag = True
-        if flag:
+                    visit_flag = True
+        if visit_flag:
             raise ValueError('Cells not being visited in single-column physics step')
-            
+
         print("Single-column physics finished")
         print(f"Single column physics time: {time.perf_counter() - start:.2f}s")
         start_serial = time.perf_counter()
@@ -536,8 +552,10 @@ def main(model_setup, grid):
             elif model_setup.dump_format == "pickle":
                 with open(model_setup.dump_filepath, "wb") as outfile:
                     pickle.dump(grid, outfile)
-        print('Max lake depth before lateral movement = ', np.max(grid['lake_depth']))
+
+        """ Lateral movement """
         lat_start = time.perf_counter()
+
         if model_setup.lateral_movement_toggle:
             print("Moving water laterally...")
             # perc_toggle as its own variable for PEP8 (line too long)
@@ -557,6 +575,8 @@ def main(model_setup, grid):
                 catchment_outflow += current_iteration_outwater
         lat_end = time.perf_counter()
         start = time.perf_counter()
+
+        """ Validation checks and end-of-timestep messages """
         check_grid_correctness(grid)
 
         print_model_end_of_timestep_messages(
@@ -572,6 +592,8 @@ def main(model_setup, grid):
         print(f"Lateral movement time: {lat_end - lat_start:.2f}s")
         print(f"Checking grid consistency time: {msg_end - start:.2f}s")
         print(f"Diagnostic messages time: {time.perf_counter() - start:.2f}s")
+
+        """ Update meteorological data for next day """
         start = time.perf_counter()
         met_start_idx = (day + 1) * model_setup.t_steps_per_day % met_data_len
         met_end_idx = (day + 2) * model_setup.t_steps_per_day % met_data_len
@@ -585,6 +607,8 @@ def main(model_setup, grid):
             snow_added=snow_added,
         )
         print(f"Updating met data time: {time.perf_counter() - start:.2f}s")
+
+        """ Dump model state """
         start = time.perf_counter()
         if model_setup.dump_data and day % model_setup.dump_timestep == 0:
             print(f"Dumping model state to {model_setup.dump_filepath}...")
@@ -598,6 +622,8 @@ def main(model_setup, grid):
             print(
                 f"Dumping model state time: {time.perf_counter() - start:.2f}s"
             )
+
+        """ Model output """
         start = time.perf_counter()
         if model_setup.save_output and day % model_setup.output_timestep == 0:
             output_counter += 1
@@ -614,11 +640,16 @@ def main(model_setup, grid):
             f"Total time for day {day + 1}:"
             f" {time.perf_counter() - timestep_start:.2f}s"
         )
-        if day in np.arange(100, 4000, 50):
-            print('Writing model state as an extra checkpoint')
-            dump_state(
-                    model_setup.dump_filepath + str(day), grid, met_start_idx, met_end_idx
-                )
+        """ Extra checkpointing """
+        if model_setup.dump_data:
+            if model_setup.dump_checkpoint_frequency:
+                dump_checkpoints = np.arange(0, model_setup.num_days,
+                                             model_setup.dump_checkpoint_frequency)
+                print(f'Writing model state as an extra checkpoint at timestep {day}')
+                if day in dump_checkpoints:
+                    dump_state(
+                            model_setup.dump_filepath + str(day), grid, met_start_idx, met_end_idx
+                        )
     print("\n*******************************************\n")
     print("MONARCHS has finished running successfully!")
     print("Total time taken = ", time.perf_counter() - tic)
@@ -696,15 +727,10 @@ def initialise_model_data(model_setup):
 
     # Write all of the initial ice shelf values into the model grid
     grid = initial_conditions.create_model_grid(
-        model_setup.row_amount,
-        model_setup.col_amount,
+        model_setup,
         firn_depth,
-        model_setup.vertical_points_firn,
-        model_setup.vertical_points_lake,
-        model_setup.vertical_points_lid,
         rho,
         firn_temperature,
-        use_numba=model_setup.use_numba,
         valid_cells=valid_cells,
         lats=lat_array,
         lons=lon_array,
