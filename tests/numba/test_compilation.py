@@ -5,7 +5,7 @@ def run(model_setup):
     from monarchs.core import driver
     from monarchs.core import initial_conditions, setup_met_data
 
-    T_firn, rho, firn_depth, valid_cells, dx, dy = (
+    T_firn, rho, firn_depth, valid_cells, dx, dy, _, _ = (
         initial_conditions.initialise_firn_profile(
             model_setup, diagnostic_plots=False
         )
@@ -25,7 +25,6 @@ def run(model_setup):
         firn_depth,
         rho,
         T_firn,
-        use_numba=model_setup.use_numba,
         valid_cells=valid_cells,
         lats=lat_array,
         lons=lon_array,
@@ -39,10 +38,11 @@ def run(model_setup):
 def test_numba_compilation():
     """Run a very simple case for 10 days. This is mostly to make sure that the code compiles correctly without
     any Numba-specific errors."""
-    from monarchs.core import configuration
+    from monarchs.core import load_model_setup, configuration
 
-    model_setup = configuration.model_setup
+    model_setup = load_model_setup.get_model_setup('./numba/model_test_setup_numba.py')
     configuration.handle_incompatible_flags(model_setup)
     configuration.handle_invalid_values(model_setup)
     configuration.create_defaults_for_missing_flags(model_setup)
+    configuration.jit_modules()
     run(model_setup)

@@ -60,7 +60,7 @@ def run_mixing(cell, hours, sw_in=0.0):
     Prints inside turbulent_mixing are ignored by pytest unless -s is used.
     """
     for _ in range(hours):
-        turbulent_mixing(cell, sw_in=sw_in, dt=3600)
+        turbulent_mixing(cell, sw_in=sw_in, dt=3600, k=np.full(cell["vert_grid"], 2.24))
 
 
 @pytest.mark.parametrize(
@@ -113,7 +113,8 @@ def test_no_change_if_already_at_boundary(make_cell):
         (270.0, 272.0, "down"), # surface colder than core → core should cool
     ],
 )
-def test_upper_boundary_influence_no_heating(make_cell, surface_boundary, core_start, expect_direction):
+def test_upper_boundary_influence_no_heating(make_cell, surface_boundary,
+                                             core_start, expect_direction):
     """
     Optional: isolate the effect of the upper boundary when SW=0.
     The bottom boundary at 273.15 provides a restoring tendency; the net should

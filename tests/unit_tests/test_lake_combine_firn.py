@@ -1,7 +1,6 @@
 # test_regrid_and_merge.py
 import numpy as np
 import pytest
-
 from monarchs.physics import regrid_column as rg
 from monarchs.core.utils import calc_mass_sum
 
@@ -27,6 +26,9 @@ def make_cell(nz=4, firn_depth=4.0, rho_i=917.0, rho_w=1000.0,
         "lake": lake,
         "saturation": np.zeros(nz, dtype=int),
         "meltflag": np.zeros(nz, dtype=int),
+        "lake_boundary_change": 0,
+        "lid_boundary_change": 0,
+        "firn_boundary_change": 0
     }
     return cell
 

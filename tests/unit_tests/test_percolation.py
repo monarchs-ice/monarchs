@@ -1,8 +1,6 @@
 from monarchs.physics import percolation
 import numpy as np
-from numpy import testing as npt
-
-blah = 2
+import pytest
 
 
 def test_perc_time():

@@ -2,16 +2,13 @@
 """
 Sparse runscript for
 """
-
-import os
-
 import numpy as np
 
 """
 Spatial parameters
 """
-row_amount = 1  # Number of rows in your model grid, looking from top-down.
-col_amount = 1  # Number of columns in your model grid, looking from top-down.
+row_amount = 2  # Number of rows in your model grid, looking from top-down.
+col_amount = 2  # Number of columns in your model grid, looking from top-down.
 lat_grid_size = (
     2000  # size of each lateral grid cell in m - possible to automate
 )
@@ -35,7 +32,7 @@ lateral_timestep = (
 firn_depth = np.array([[35, 30], [30, 35]])
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 
-met_input_filepath = "../../data/ERA5_small.nc"
+met_input_filepath = "../data/ERA5_small.nc"
 met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
 met_output_filepath = "parallel_test_met_data.nc"
