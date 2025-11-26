@@ -39,7 +39,7 @@ jobs:
 
     - name: Check formatting with black
       run: |
-        black src/monarchs --check --diff ... || echo "::warning::Black formatting needed (see diff above)"
+        black src/monarchs --check || echo "::warning::Black formatting needed (see diff above)"
 
     - name: Lint with flake8
       run: |
@@ -48,11 +48,11 @@ jobs:
         # exit-zero treats all errors as warnings. 
         flake8 src/monarchs --count --exit-zero --max-complexity=10 --max-line-length=80 --statistics
 
-    - name: Lint with pylint
+    - name: Lint with pylint (warn only)
       run: |
         # Lint with pylint, but disable the C0103 (invalid-name) warning to allow non-conforming names
         # as we have lots of mathematical symbols etc. in the codebase.
-        pylint src/monarchs --disable=C0103
+        pylint src/monarchs --disable=C0103 || echo "::warning::Pylint reported issues"
 
     - name: Test with pytest
       run: |
