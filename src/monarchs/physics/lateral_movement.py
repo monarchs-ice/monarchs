@@ -58,7 +58,9 @@ def update_water_level(cell):
 
             # We find the water level by the topmost bit of saturated firn
             # above the ice lens.
-            if not np.any(cell["saturation"][: cell["ice_lens_depth"] + 1] > 0):
+            if not np.any(
+                cell["saturation"][: cell["ice_lens_depth"] + 1] > 0
+            ):
                 top_saturation_depth = cell["ice_lens_depth"]
             else:
                 top_saturation_depth = np.argmax(
@@ -76,19 +78,25 @@ def update_water_level(cell):
         # cell.water is only used for the lateral movement. So we first need to
         # update it based on Lfrac,
         # which is used in the rest of MONARCHS.
-        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
+        cell["water"] = cell["Lfrac"] * (
+            cell["firn_depth"] / cell["vert_grid"]
+        )
 
     # Add lake depth into water for the purposes of moving it around if a lake
     # is present.
     elif cell["lake"] and not cell["lid"]:
         cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
         # Determine the water level from the water on top + the firn depth.
-        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
+        cell["water"] = cell["Lfrac"] * (
+            cell["firn_depth"] / cell["vert_grid"]
+        )
 
     elif cell["lake_depth"] > 0.1 and not cell["lid"]:
         # Same again - account for a bug where lake switch doesn't activate
         cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
-        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
+        cell["water"] = cell["Lfrac"] * (
+            cell["firn_depth"] / cell["vert_grid"]
+        )
         cell["water"][0] += cell.lake_depth
 
     elif cell["lid"]:
@@ -96,7 +104,9 @@ def update_water_level(cell):
         cell["water_level"] = (
             cell["lid_depth"] + cell["firn_depth"] + cell["lake_depth"]
         )
-        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
+        cell["water"] = cell["Lfrac"] * (
+            cell["firn_depth"] / cell["vert_grid"]
+        )
 
 
 def get_neighbour_water_levels(
@@ -1148,7 +1158,9 @@ def move_water(
                 temp_grid[row, col]["saturation"][level] = cell["saturation"][
                     level
                 ]
-                temp_grid[row, col]["meltflag"][level] = cell["meltflag"][level]
+                temp_grid[row, col]["meltflag"][level] = cell["meltflag"][
+                    level
+                ]
 
     # Now loop through the cells again, this time actually performing the
     # movement step. This and the prior loop cannot be merged, since the

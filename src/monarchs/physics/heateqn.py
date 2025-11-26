@@ -273,7 +273,8 @@ def heateqn_lid(
     output[idx] = (
         cell["lid_temperature"][idx]
         - x[idx]
-        + dt * ((kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz ** 2)
+        + dt
+        * ((kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz ** 2)
         + dt * dT_solar
     )
     output[-1] = x[cell["vert_grid_lid"] - 1] - 273.15

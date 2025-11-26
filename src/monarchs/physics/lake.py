@@ -236,7 +236,8 @@ def radiative_transfer(cell, sw_in):
     radiation_at_bottom *= 1 - saturated_firn_albedo
     # and this reflected radiation will also be absorbed again in the lake.
     lake_absorbed_solar = lake_absorbed_solar + (
-        lake_reflected_radiation * (1 - np.exp(-tau_water * cell["lake_depth"]))
+        lake_reflected_radiation
+        * (1 - np.exp(-tau_water * cell["lake_depth"]))
     )
     # We don't especially care about the outgoing radiation as it isn't going
     # to be absorbed by the surface. This effectively becomes an additional

@@ -122,7 +122,9 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
     return alpha
 
 
-def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid):
+def bulk_fluxes(
+    wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid
+):
     """
     Calculate the latent and sensible heat fluxes given the wind speed and
     surface meteorology.

@@ -200,7 +200,9 @@ def check_correct(cell):
             + cell["Sfrac"][np.where(total > 1)],
         )
         generic_error(
-            cell, func_name, "Sum of Sfrac and Lfrac below surface must be <= 1"
+            cell,
+            func_name,
+            "Sum of Sfrac and Lfrac below surface must be <= 1",
         )
     if cell["Sfrac"][0] + cell["Lfrac"][0] > 1.01 and not cell["meltflag"][0]:
         total_top = cell["Sfrac"][0] + cell["Lfrac"][0]

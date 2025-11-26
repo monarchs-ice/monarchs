@@ -43,7 +43,9 @@ def met_data_from_era5(model_setup, lat_array=False, lon_array=False):
     for year in range(num_model_years):
         start_index = year * CHUNKSIZE * 24 / index
 
-        era5_grid = process_year(model_setup, year, index, lat_array, lon_array)
+        era5_grid = process_year(
+            model_setup, year, index, lat_array, lon_array
+        )
 
         if index > 1:
             # Repeat each timestep index times to get to hourly data.
@@ -110,7 +112,9 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
                     var[start_index:end_index] = value
                 elif key != "time":
                     var = f.createVariable(
-                        key, np.dtype("float64").char, ("time", "column", "row")
+                        key,
+                        np.dtype("float64").char,
+                        ("time", "column", "row"),
                     )
                     var.long_name = key
                     var[start_index:end_index] = value
@@ -218,7 +222,9 @@ def prescribed_met_data(model_setup):
                 var.long_name = "Longitude of grid cell"
                 var[:] = value
             elif key == "lat":
-                var = f.createVariable("cell_latitude", "f8", ("column", "row"))
+                var = f.createVariable(
+                    "cell_latitude", "f8", ("column", "row")
+                )
                 var.long_name = "Latitude of grid cell"
                 var[:] = value
             # time is only a dimension, not a variable. everything else is a function of it, so

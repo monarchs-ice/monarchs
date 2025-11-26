@@ -262,7 +262,9 @@ def interpolate_grid(var_dict, num_rows, num_cols):
             (var_dict["time"][:], var_dict["lat"], var_dict["long"][:]),
             var_dict[key][:, :, :],
         )
-        new_lat = np.linspace(var_dict["lat"][-1], var_dict["lat"][0], num_cols)
+        new_lat = np.linspace(
+            var_dict["lat"][-1], var_dict["lat"][0], num_cols
+        )
         new_long = np.linspace(
             var_dict["long"][0], var_dict["long"][-1], num_rows
         )

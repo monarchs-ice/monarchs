@@ -25,7 +25,8 @@ def neighbourhood_check(grid, target_row, target_col):
                 print(f"  Lake status: {cell['lake']}")
                 print(f"  Lid status: {cell['lid']}")
                 print(
-                    f"  Saturation status at surface = ", cell["saturation"][:5]
+                    f"  Saturation status at surface = ",
+                    cell["saturation"][:5],
                 )
                 print(f"  Meltflag status at surface = ", cell["meltflag"][:5])
                 print(f"  Exposed water flag = ", cell["exposed_water"])

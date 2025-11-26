@@ -81,7 +81,9 @@ def virtual_lid_development(
     )
     k_v_lid = 1000 * (
         2.24 * 10 ** -3
-        + 5.975 * 10 ** -6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
+        + 5.975
+        * 10 ** -6
+        * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
     )
 
     # Surface energy balance calculation to determine the virtual lid
@@ -161,7 +163,8 @@ def update_virtual_lid_temperature(
         x[0],
     )
     k_v_lid = 1000 * (
-        2.24e-3 + 5.975e-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
+        2.24e-3
+        + 5.975e-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
     )
     args = np.array(
         [

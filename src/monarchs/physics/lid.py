@@ -265,7 +265,8 @@ def calc_k_and_cp(cell):
         if cell["lid_temperature"][i] > 273.15:
             cp_ice[i] = 4186.8
             k_ice[i] = 1000 * (
-                1.017 * 10 ** -4 + 1.695 * 10 ** -6 * cell["lid_temperature"][i]
+                1.017 * 10 ** -4
+                + 1.695 * 10 ** -6 * cell["lid_temperature"][i]
             )
         else:
             # Alexiades & Solomon pg. 8

@@ -236,7 +236,9 @@ def get_xy_distance(latitudes, longitudes):
     ]
 
     # Convert dx/dy to full-sized arrays by padding (so they match raster size)
-    dy_metres = np.pad(dy_metres, ((0, 0), (0, 1)), mode="edge")  # Pad last row
+    dy_metres = np.pad(
+        dy_metres, ((0, 0), (0, 1)), mode="edge"
+    )  # Pad last row
     dx_metres = np.pad(
         dx_metres, ((0, 1), (0, 0)), mode="edge"
     )  # Pad last column

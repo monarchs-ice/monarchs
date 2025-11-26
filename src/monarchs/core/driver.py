@@ -557,7 +557,9 @@ def main(model_setup, grid):
             )
 
         print("Single-column physics finished")
-        print(f"Single column physics time: {time.perf_counter() - start:.2f}s")
+        print(
+            f"Single column physics time: {time.perf_counter() - start:.2f}s"
+        )
         start_serial = time.perf_counter()
         if model_setup.dump_data_pre_lateral_movement:
             if model_setup.dump_format == "NETCDF4":
@@ -649,7 +651,9 @@ def main(model_setup, grid):
                 vars_to_save=model_setup.vars_to_save,
                 vert_grid_size=output_grid_size,
             )
-        print(f"Updating model output time: {time.perf_counter() - start:.2f}s")
+        print(
+            f"Updating model output time: {time.perf_counter() - start:.2f}s"
+        )
         print(f"Serial time total: {time.perf_counter() - start_serial:.2f}s")
         print(
             f"Total time for day {day + 1}:"
@@ -744,7 +748,9 @@ def initialise_model_data(model_setup):
                 setup_met_data_flag = False
 
         if setup_met_data_flag:
-            setup_met_data.met_data_from_era5(model_setup, lat_array, lon_array)
+            setup_met_data.met_data_from_era5(
+                model_setup, lat_array, lon_array
+            )
     elif model_setup.met_data_source == "user_defined":
         setup_met_data.prescribed_met_data(model_setup)
 
