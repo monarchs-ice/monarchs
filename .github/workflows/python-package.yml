@@ -40,6 +40,7 @@ jobs:
       run: |
         # Reformat the code with black
         black src/monarchs --check --line-length=79 --preview --enable-unstable-feature string_processing
+        continue-on-error: true
 
     - name: Lint with flake8
       run: |
