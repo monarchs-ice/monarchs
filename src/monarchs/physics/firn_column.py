@@ -281,12 +281,13 @@ def calc_height_change(
             Q
             - epsilon
             * sigma
-            * (
-                1.5
-                * (
-                    cell["firn_temperature"][0]
-                    - 0.5 * cell["firn_temperature"][1]
-                )
+            # * (
+            #     1.5
+            #     * (
+            #         cell["firn_temperature"][0]
+            #         - 0.5 * cell["firn_temperature"][1]
+            #     )
+            * 0.98 * (cell["firn_temperature"][0]
             )
             ** 4
             - k_sfc * dtdz

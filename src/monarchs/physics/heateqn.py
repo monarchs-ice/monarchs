@@ -266,7 +266,7 @@ def heateqn_lid(
     idx = np.arange(1, cell["vert_grid_lid"] - 1)
     z_depth = idx * dz
     flux_in = sw_in * 0.6 * np.exp(-tau_ice * z_depth)
-    flux_out = sw_in * 0.6 * np.exp(-tau_ice * z_depth + 1)
+    flux_out = sw_in * 0.6 * np.exp(-tau_ice * z_depth + dz)
     sw_absorbed_in_layer = flux_in - flux_out
     dT_solar = sw_absorbed_in_layer / (rho * cp[idx])
 

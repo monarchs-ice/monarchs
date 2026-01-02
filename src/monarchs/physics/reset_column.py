@@ -107,6 +107,7 @@ def combine_lid_firn(cell, freeze_lake=False):
     cell["lake_depth"] = 0.0
     cell["lid_sfc_melt"] = 0.0
     cell["lake_refreeze_counter"] = 0
+    cell["snow_on_lid"] = False
 
     # get saturation of the new column explicitly rather than interpolating
     # the old values

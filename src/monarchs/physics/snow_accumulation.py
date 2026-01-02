@@ -42,28 +42,33 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
     routine_name = f"{MODULE_NAME}.snowfall"
 
-    # 0. trivial checks
     if snow_depth <= 0:
         return
 
-    # handle Lids and Lakes (no regridding of firn)
+    # handle lids and lakes (no regridding of firn)
     if cell["lid"]:
         # add to lid depth
-        cell["lid_depth"] += snow_depth * snow_rho / cell["rho_water"]
+        cell["lid_depth"] += snow_depth * snow_rho / cell["rho_ice"]
+        if snow_depth > 0 and cell['snow_on_lid'] is False:
+            cell['snow_on_lid'] = True
         return
-    elif cell["lake"] and not cell["lid"]:
-        # add to lake depth
-        cell["lake_depth"] += snow_depth * snow_rho / cell["rho_water"]
+    elif cell['lake']:
+        # add to virtual lid depth
+        cell["v_lid_depth"] += snow_depth * snow_rho / cell["rho_ice"]
         return
+    # elif cell["lake"] and not cell["lid"]:
+    #     # add to lake depth
+    #     cell["lake_depth"] += snow_depth * snow_rho / cell["rho_water"]
+    #     # modify temperature
+    #     return
 
     # dry firn/ice lens
-
     # calculate mass
     current_mass = utils.calc_mass_sum(cell)
     added_mass = snow_depth * snow_rho
     expected_new_mass = current_mass + added_mass
 
-    # sanitize Input Temperature
+    # sanitize input temperature
     if snow_T > 273.15:
         snow_T = 273.15
 
@@ -122,8 +127,6 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     # run saturation calculation to fix in the first instance.
     oversaturated_indices = np.where((cell["Sfrac"] + cell["Lfrac"]) > 1.0)[0]
     if len(oversaturated_indices) > 0:
-        # Run saturation fix on the deepest issue first, letting it bubble up if needed
-        # (Or specifically call your existing saturation manager)
         for idx in oversaturated_indices:
             calc_saturation(cell, idx, end=True)
 

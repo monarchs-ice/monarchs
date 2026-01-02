@@ -166,9 +166,9 @@ def ERA5_to_variables(
             start_index:end_index
         ]
     except KeyError:
-        var_dict["snow_dens"] = 300 * np.ones(
+        var_dict["snow_dens"] = 350 * np.ones(
             np.shape(era5_data.variables["t2m"][start_index:end_index])
-        )
+        ) # Kuipers Munekke 2015
     era5_data.close()
     return var_dict
 

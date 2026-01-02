@@ -99,25 +99,26 @@ def args_array(
     if lid:
         args = np.hstack(
             (
-                np.array([cell.vert_grid_lid]),
-                cell.lid_temperature,
+                np.array([cell["vert_grid_lid"]]),
+                cell['lid_temperature'],
                 Sfrac_lid,
                 np.array([k_lid]),
-                np.array([cell.cp_air]),
-                np.array([cell.cp_water]),
+                np.array([cell['cp_air']]),
+                np.array([cell['cp_water']]),
                 np.array([dt]),
                 np.array([dz]),
-                np.array([cell.melt]),
-                np.array([cell.exposed_water]),
+                np.array([cell['melt']]),
+                np.array([cell['exposed_water']]),
                 np.array([cell.lid]),
                 np.array([cell.lake]),
-                np.array([cell.lake_depth]),
+                np.array([cell['lake_depth']]),
                 np.array([lw_in]),
                 np.array([sw_in]),
                 np.array([air_temp]),
                 np.array([p_air]),
                 np.array([dew_point_temperature]),
                 np.array([wind]),
+                np.array([cell['snow_on_lid']])
             )
         )
     # test = cell.firn_temperature
@@ -125,20 +126,20 @@ def args_array(
         args = np.hstack(
             (
                 np.array([N]),
-                cell.firn_temperature[:N],
-                cell.Sfrac[:N],
-                cell.Lfrac[:N],
-                np.array([cell.k_air]),
-                np.array([cell.k_water]),
-                np.array([cell.cp_air]),
-                np.array([cell.cp_water]),
+                cell['firn_temperature'][:N],
+                cell['Sfrac'][:N],
+                cell['Lfrac'][:N],
+                np.array([cell['k_air']]),
+                np.array([cell['k_water']]),
+                np.array([cell['cp_air']]),
+                np.array([cell['cp_water']]),
                 np.array([dt]),
                 np.array([dz]),
-                np.array([cell.melt]),
-                np.array([cell.exposed_water]),
-                np.array([cell.lid]),
-                np.array([cell.lake]),
-                np.array([cell.lake_depth]),
+                np.array([cell['melt']]),
+                np.array([cell['exposed_water']]),
+                np.array([cell['lid']]),
+                np.array([cell['lake']]),
+                np.array([cell['lake_depth']]),
                 np.array([lw_in]),
                 np.array([sw_in]),
                 np.array([air_temp]),
@@ -433,13 +434,13 @@ def sfc_energy_virtual_lid(x, output, args):
     # set output[0] rather than just output as solution doesn't converge
     # otherwise as it expects an array
     # sign convention = fluxes positive downwards
-    # positive flux =
+    T_bottom = 273.15
+    effective_thickness = max(v_lid_depth, 0.005)
+    conduction_flux = - k_v_lid * (x[0] - T_bottom) / effective_thickness
     output[0] = (
         -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
         + Q
-        - k_v_lid
-        * (x[0] - lake_temperature[1])
-        / (lake_depth / (vert_grid_lake / 2) + v_lid_depth)
+        + conduction_flux
     )
 
 
@@ -472,6 +473,7 @@ def sfc_energy_lid(x, output, args):
     p_air = args[12]
     dew_point_temperature = args[13]
     wind = args[14]
+    snow_on_lid = args[15]
 
     Q = surface_fluxes.sfc_flux(
         melt,
@@ -486,6 +488,7 @@ def sfc_energy_lid(x, output, args):
         dew_point_temperature,
         wind,
         x[0],
+        snow_on_lid,
     )
 
     output[0] = (

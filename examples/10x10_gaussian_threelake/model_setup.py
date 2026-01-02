@@ -174,6 +174,9 @@ if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
     from monarchs.core.utils import get_2d_grid
+    import matplotlib
+
+    matplotlib.use("TkAgg")
 
     profile = False
     if profile:
@@ -236,3 +239,4 @@ if __name__ == "__main__":
 
     make_both(a, idx=30)
     a.close()
+    plt.show()

@@ -56,14 +56,8 @@ jobs:
 
     - name: Test with pytest
       run: |
-        cd tests/numba
-        pytest
-#        cd ../parallel
-#        pytest
-#        cd ../output
-#        pytest
-#        cd ../dem_import
-#        pytest
-#        cd ../era5_import
-#        pytest
-        
+        cd tests/unit_tests
+        pytest . 
+        cd ../numba
+        pytest .
+

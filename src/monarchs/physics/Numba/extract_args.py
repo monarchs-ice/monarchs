@@ -224,7 +224,7 @@ def extract_args_lid(args):
     p_air = args[arrind + 13]
     dew_point_temperature = args[arrind + 14]
     wind = args[arrind + 15]
-
+    snow_on_lid = args[arrind + 16]
     return (
         T,
         Sfrac,
@@ -244,6 +244,7 @@ def extract_args_lid(args):
         p_air,
         dew_point_temperature,
         wind,
+        snow_on_lid
     )
 
 

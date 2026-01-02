@@ -439,6 +439,8 @@ def jit_modules(fastmath=False):
         "calc_grid_mass",
         "check_for_single_column_errors",
         "check_grid_correctness",
+        "get_num_cores",
+
     ]  # other builtins/decorators
 
     for module in module_list:

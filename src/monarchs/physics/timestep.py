@@ -81,8 +81,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """
     cell["visit_count"] += 1
     routine_name = f"{MODULE_NAME}.timestep_loop"
-    parallel = toggle_dict["parallel"]
-    use_numba = toggle_dict["use_numba"]
     snowfall_toggle = toggle_dict["snowfall_toggle"]
     firn_column_toggle = toggle_dict["firn_column_toggle"]
     firn_heat_toggle = toggle_dict["firn_heat_toggle"]
@@ -119,12 +117,15 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 cell["Sfrac"] * cell["rho_ice"]
                 + cell["Lfrac"] * cell["rho_water"]
             )
-
+            if met_data[t_step]['temperature'] > 273.15:
+                snow_T = 273.1  # sergienko thesis pg. 26
+            else:
+                snow_T = met_data[t_step]['temperature']
             snow_accumulation.snowfall(
                 cell,
                 met_data[t_step]["snowfall"],
                 met_data[t_step]["snow_dens"],
-                273.15,
+                snow_T,
             )
         sw_in = met_data[t_step]["SW_down"]
         lw_in = met_data[t_step]["LW_down"]
@@ -193,6 +194,12 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             if cell["lake_depth"] == 0:
                 cell["exposed_water"] = False
 
+            # TODO - add refreezing calculation here - relevant if we have
+            # lakes underneath a frozen lid that gets combined
+            if firn_heat_toggle:
+                for lev in range(cell["vert_grid"]):
+                    percolation.calc_refreezing(cell, lev)
+
             if not cell["lake"]:
                 if lake_development_toggle:
                     lake.lake_formation(
@@ -243,8 +250,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             elif cell["lake"] and cell["lid"]:
 
                 # TODO - - testing freezing
-                for lev in range(cell["vert_grid"]):
-                    percolation.calc_refreezing(cell, lev)
+                # for lev in range(cell["vert_grid"]):
+                #     percolation.calc_refreezing(cell, lev)
                 if lid_development_toggle:
                     cell[
                         "v_lid"
@@ -272,10 +279,10 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     )
                 # Check for if we need to reset the column - two possible
                 # conditions - if lake depth v small,
-                #            - or if lid melt count > 24 (i.e. lid has been
-                #              melting for 1 full day)
-                if cell["lake_depth"] <= 1e-5 or (cell["lid_melt_count"] > 24):
-
+                #            - or if lid melt count > 6 (i.e. lid has been
+                #              melting for half a day, and therefore has
+                #              significant slush/water on the surface)
+                if cell["lake_depth"] <= 1e-5 or (cell["lid_melt_count"] > 6):
                     reset_column.combine_lid_firn(cell, freeze_lake=False)
 
         # If we have Sfrac + Lfrac > 1, we need to ensure that Lfrac is

@@ -105,21 +105,17 @@ def virtual_lid_development(
         x, args, v_lid=True
     )[0][0]
 
-    # TODO - are we missing Fu from here also?
-    # TODO - kind of, but this approach is specific to the virtual lid, we are doing
+    k_ice = 2.24
     # a conductive approach across the virtual lid rather than using the fluxes
     # until a true lid forms (at which point the real fluxes are used).
     # this stops a blowout due to low virtual lid depth
-    kdTdz = (
-        (cell["virtual_lid_temperature"] - 273.15)
-        * abs(cell["k_water"])
-        / (
-            cell["lake_depth"] / (cell["vert_grid_lake"] / 2)
-            + cell["v_lid_depth"]
-        )
-    )
+    effective_thickness = max(cell["v_lid_depth"], 0.005)  # 5 mm minimum
+    delta_T = cell["virtual_lid_temperature"] - 273.15
+    kdTdz = (k_ice * delta_T) / effective_thickness
 
-    new_boundary_change = (kdTdz + Fu) / (cell["L_ice"] * cell["rho_ice"]) * dt
+    new_boundary_change = (kdTdz - Fu) / (cell["L_ice"] * cell["rho_ice"]) * dt
+    # new_boundary_change = (kdTdz) / (cell["L_ice"] * cell["rho_ice"]) * dt
+
     # further freezing of the virtual lid
     if cell["virtual_lid_temperature"] < 273.15:
         if new_boundary_change < 0:

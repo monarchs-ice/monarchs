@@ -18,6 +18,9 @@ SAFE_IMPORTS = {
     "pandas",
     "cartopy",
     "argparse",
+    "flow_plot",
+    "cProfile",
+    "sys"
 }
 MODULE_NAME = "monarchs.core.load_model_setup"
 

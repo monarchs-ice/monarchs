@@ -141,13 +141,7 @@ def freeze_pre_lake(cell):
 
 
 def radiative_transfer(cell, sw_in):
-    albedo = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["lake_depth"],
-    )
+
     """
     # JE - I'm thinking about the solar radiation in the lake.
     # I'm a bit concerned about how it was handled before. The assumption is
@@ -197,9 +191,25 @@ def radiative_transfer(cell, sw_in):
     # I think that the boundary will basically absorb everything, minus some
     # fraction that will be reflected. I am assuming this will be based
     # on the saturated firn albedo (0.6). 
+    # We also need to consider that the lake water will be turbid, and 
+    # not pure (it will be grainy meltwater). So we should use a higher
+    # absorption coefficient than pure water.
     """
+    if cell['lid']:# or cell['v_lid']:
+        lid_flag = True
+    albedo = surface_fluxes.sfc_albedo(
+        cell["melt"],
+        cell["exposed_water"],
+        lid_flag,
+        cell["lake"],
+        cell["lake_depth"],
+        snow_on_lid=cell["snow_on_lid"],
+    )
     not_absorbed_frac = 0.6  # fraction of sw_in that penetrates lake surface
-    tau_water = 0.1  # more realistic I think than 0.025
+    tau_water = 0.36  # Table 1, panchromatic absorption coefficient,
+                      # Pope et al. (2016), The Cryosphere,
+                      # doi:10.5194/tc-10-15-2016
+
     sw_penetrating = (1 - albedo) * sw_in * not_absorbed_frac
     tau_ice = 1.5  # black ice extinction coefficient
     # rough value taking into account:
@@ -216,14 +226,15 @@ def radiative_transfer(cell, sw_in):
         # is optically thin compared to firn (and just thin in general),
         # we need to actually model the penetration of radiation into the ice
         I0_below_ice = (
-            ((1.0 - albedo) * sw_in)
-            * not_absorbed_frac
+            sw_penetrating
             * np.exp(-tau_ice * cell["lid_depth"])
         )
         lake_absorbed_solar = I0_below_ice
-        radiation_at_bottom = 0
+        sw_entering_lake = sw_penetrating * np.exp(-tau_ice * cell["lid_depth"])
+        radiation_at_bottom = sw_entering_lake * np.exp(
+            -tau_water * cell["lake_depth"])
+        lake_absorbed_solar = sw_entering_lake - radiation_at_bottom
     else:
-        # i0 - i0 exp(-tau_water*z)
         radiation_at_bottom = sw_penetrating * np.exp(
             -tau_water * cell["lake_depth"]
         )
@@ -233,17 +244,22 @@ def radiative_transfer(cell, sw_in):
     # of saturated firn is 0.6. So accounting for this:
     saturated_firn_albedo = 0.6
     lake_reflected_radiation = radiation_at_bottom * saturated_firn_albedo
-    radiation_at_bottom *= 1 - saturated_firn_albedo
+    radiation_at_bottom *= (1 - saturated_firn_albedo)
     # and this reflected radiation will also be absorbed again in the lake.
     lake_absorbed_solar = lake_absorbed_solar + (
         lake_reflected_radiation
         * (1 - np.exp(-tau_water * cell["lake_depth"]))
     )
+    # TODO - set bottom radiation to 0 for testing
+    # radiation_at_bottom = 0
+
     # We don't especially care about the outgoing radiation as it isn't going
     # to be absorbed by the surface. This effectively becomes an additional
     # contribution to the albedo.
     # Is this true? It matters if we have a lid! But I think the assumption is
     # that most radiation will be absorbed by now...?
+    print('Bottom radiation = ', radiation_at_bottom)
+    print('Lake absorbed solar = ', lake_absorbed_solar)
     return lake_absorbed_solar, radiation_at_bottom
 
 
@@ -307,28 +323,31 @@ def turbulent_mixing(cell, sw_in, dt, k):
             * J
             * abs(lake_core_temp - 273.15) ** (4 / 3)
         )
-
-        # temp change *from turbulent divergence* (you already do this)
+        # temp change
+        # signs - positive downward into lake
         temp_change = (flux_upper - flux_lower + lake_absorbed_solar) / (
             1000 * 4181 * cell["lake_depth"]
         )
 
         lake_core_temp += temp_change * dt_scaling
-
         net_lower_flux_for_dh = flux_lower + radiation_at_bottom
         # record energy removed from lake by the bottom flux this substep
         # (flux_lower positive downward => energy leaving lake if positive)
-        dh_change, cap_reached = calc_height_adjustment(
-            cell, k, dt_scaling, net_lower_flux_for_dh
-        )
 
-        dh += dh_change
-        if dh > (cell["firn_depth"] / cell["vert_grid"]):
-            dh = cell["firn_depth"] / cell["vert_grid"]
         # apply mixed core temp to interior nodes
         indices = np.arange(1, cell["vert_grid_lake"] - 1)
         cell["lake_temperature"][indices] = lake_core_temp
 
+    dh_change, cap_reached = calc_height_adjustment(
+        cell, k, dt_scaling, net_lower_flux_for_dh
+    )
+    print('dh_change in turbulent mixing: ', dh_change)
+    dh += dh_change
+    if dh > (cell["firn_depth"] / cell["vert_grid"]):
+        dh = cell["firn_depth"] / cell["vert_grid"]
+
+    # print('dh in turbulent mixing: ', dh)
+    # print('dh in turbulent mixing (original calc): ', dh_change * 3600)
     # return both the bottom flux (W/m^2) and the cumulative energy moved there (J/m^2)
     return flux_upper, dh
 
@@ -532,11 +551,10 @@ def lake_development(
     original_mass = utils.calc_mass_sum(cell)
     if not cell["v_lid"] and not cell["lid"]:
         # Solve lake surface temperature
-        sw_in_adjusted = 0.4 * sw_in  # assume 40% absorbed by surface layer(s)
         cell["lake_temperature"][0] = sfc_energy_lake(
             cell,
             lw_in,
-            sw_in_adjusted,
+            sw_in,
             air_temp,
             p_air,
             dew_point_temperature,
@@ -548,6 +566,7 @@ def lake_development(
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15
             cell["v_lid"] = True
+            cell["virtual_lid_temperature"] = cell["lid_temperature"][0]
 
         if cell["lake_temperature"][0] > 300:
             message = "Unrealistic lake surface temperature > 300K\n"
@@ -556,6 +575,7 @@ def lake_development(
 
     elif cell["lid"] or cell["v_lid"]:
         cell["lake_temperature"][0] = 273.15
+    print('Firn temperature = ', cell["firn_temperature"][0:10])
 
     # Conductivity below lake
     k_ice = np.zeros(cell["vert_grid"])
@@ -584,7 +604,15 @@ def lake_development(
     # Regrid the firn column to account for the change in boundary
     # (which is subtracted from the firn and added to the lake in
     # this subroutine)
-    regrid_column.regrid_after_melt(cell, boundary_change, lake=True)
+    if boundary_change > 0:
+        regrid_column.regrid_after_melt(cell, boundary_change, lake=True)
+    elif boundary_change < 0:
+        # remove water from lake, add ice to firn
+        thickness_to_add = abs(boundary_change)
+        water_loss = thickness_to_add * (cell["rho_ice"] / cell["rho_water"])
+        cell["lake_depth"] -= water_loss
+        regrid_column.regrid_after_freeze(cell, thickness_to_add)
+        cell["lake_boundary_change"] += boundary_change
     # Set end=False since we only care about the top cell, and in this
     # case we want to put this water into the lake.
     percolation.calc_saturation(cell, 0)
@@ -602,6 +630,7 @@ def calc_height_adjustment(cell, k, dt_scaling, Fl):
     # If lake is above freezing it will begin to melt the firn below it
     boundary_change = 0
     cap_reached = False
+    # only do this if melting is possible!
     if cell["lake_temperature"][-2] > 273.15:
         # but only if the firn isn't completely melted.
         if cell["firn_depth"] > 0:
@@ -609,23 +638,24 @@ def calc_height_adjustment(cell, k, dt_scaling, Fl):
             # firn is colder than the lake, the gradient is positive, so heat
             # flows in the positive direction (downwards).
             # get avg_k from average of k from 0:2
-            avg_k = np.mean(k[0:2])
             kdTdz = (
                 (cell["firn_temperature"][0] - cell["firn_temperature"][1])
-                * abs(avg_k)
+                * abs(k[0])
                 / ((cell["firn_depth"] / cell["vert_grid"]))
             )
-
             # First work out the maximum available amount of melt based
             # on the solid fraction of the top cell
-            # Limit sfrac_top to a minimum of 1e-6 to avoid zero division error
-            sfrac_top = max(1e-6, cell["Sfrac"][0])
-
+            # Limit sfrac_top to a minimum of 1e-2 to avoid zero division error
+            sfrac_top = max(1e-2, cell["Sfrac"][0])
+            if cell['Sfrac'][0] < 1e-2:
+                print('Warning - Sfrac at top of firn very low in calc_height_adjustment')
+            print('Fl = ', Fl)
+            print('kdTdz = ', kdTdz)
+            print('Net flux = ', (Fl - kdTdz))
             boundary_change_raw = (
                 (Fl - kdTdz)
                 / (sfrac_top * cell["L_ice"] * cell["rho_ice"])
-                * dt_scaling
-            )
+            ) * dt_scaling * 3600
 
             cap = cell["firn_depth"] / cell["vert_grid"]
 
@@ -634,9 +664,12 @@ def calc_height_adjustment(cell, k, dt_scaling, Fl):
             if abs(boundary_change_raw) > cap:
                 boundary_change = np.sign(boundary_change_raw) * cap
                 cap_reached = True
+                print('Cap reached in calc_height_adjustment')
             else:
                 boundary_change = boundary_change_raw
 
+            # Raise an error if we have unphysical kdTdz (i.e. firn temperature
+            # below the boundary is warmer than at the boundary)
             if kdTdz < 0:
                 message = "Error in lake development kdTdz < 0\n"
                 message += f"kdTdz = {kdTdz}\n"

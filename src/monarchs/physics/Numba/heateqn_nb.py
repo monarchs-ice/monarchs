@@ -22,7 +22,10 @@ from monarchs.physics import surface_fluxes
 @njit
 def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
-    rho = sfrac * 917 + lfrac * 1000
+    rho_ice = 917.0
+    rho_water = 1000.0
+    rho_air = 1.29
+    air_frac = 1.0 - sfrac - lfrac
     k_ice = np.zeros(np.shape(T), dtype=np.float64)
     k_ice[T < 273.15] = 1000 * (
         2.24e-03 + 5.975e-06 * ((273.15 - T[T < 273.15]) ** 1.156)
@@ -30,8 +33,15 @@ def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     k_ice[T >= 273.15] = 2.24
     k = sfrac * k_ice + (1 - sfrac - lfrac) * k_air + lfrac * k_water
     cp_ice = 7.16 * T + 138
-    cp = sfrac * cp_ice + (1 - sfrac - lfrac) * cp_air + lfrac * cp_water
-    kappa = k / (cp * rho)
+    cv_ice = sfrac * rho_ice * cp_ice
+    cv_water = lfrac * rho_water * cp_water
+    cv_air = air_frac * rho_air * cp_air
+
+    C_vol = cv_ice + cv_water + cv_air
+
+    # Avoid divide by zero if C_vol is somehow 0
+    # Diffusivity [m^2 s^-1]
+    kappa = k / C_vol
     return k, kappa
 
 
@@ -266,6 +276,7 @@ def heateqn_lid(x, output, args):
         p_air,
         dew_point_temperature,
         wind,
+        snow_on_lid
     ) = extract_args.extract_args_lid(args)
 
     k_lid = 1000 * (
@@ -293,20 +304,27 @@ def heateqn_lid(x, output, args):
         dew_point_temperature,
         wind,
         x[0],
+        snow_on_lid=snow_on_lid,
     )
     output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (
         Q - epsilon * sigma * x[0] ** 4
     )
     # SW radiation baked into surface flux already
+    albedo = surface_fluxes.sfc_albedo(
+        melt, exposed_water, lid, lake, lake_depth, snow_on_lid=snow_on_lid
+    )
+    # fraction of the remaining radiation absorbed at surface layer - baked
+    # into surface flux Q.
+    sfc_abs_frac = 0.4
 
     for idx in np.arange(1, vert_grid_lid - 1):
         z_depth = idx * dz
-        flux_in = sw_in * 0.6 * np.exp(-tau_ice * z_depth)
-        flux_out = sw_in * 0.6 * np.exp(-tau_ice * z_depth + 1)
+        flux_in = sw_in * (1 - albedo) * (1 - sfc_abs_frac) * np.exp(-tau_ice * z_depth)
+        flux_out = sw_in * (1 - albedo) * (1 - sfc_abs_frac) * np.exp(-tau_ice * (z_depth + dz))
         sw_absorbed_in_layer = flux_in - flux_out
         # convert source to temperature change contribution: S / (rho * cp)
-        # units: [W/m3] / ([kg/m3] * [J/kg/K]) = [J/s/m3] / [J/m3/K] = K/s
-        dT_solar = sw_absorbed_in_layer / (rho * cp[idx])
+        # units: [W/m2] / ([kg/m3] * [J/kg/K] * m) = [J/s/m2] / [J/m2/K] = K/s
+        dT_solar = sw_absorbed_in_layer / (rho * cp[idx] * dz)
         output[idx] = (
             lid_temperature[idx]
             - x[idx]

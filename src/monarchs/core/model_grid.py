@@ -156,6 +156,7 @@ def initialise_iceshelf(
         "ice_lens": ice_lens,
         "reset_combine": False,
         "error_flag": False,
+        "snow_on_lid": False,
     }
     counters = {
         "lid_melt_count": lid_melt_count,
@@ -303,6 +304,7 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("lake_refreeze_counter", np.int32),
             ("error_flag", np.bool_),
             ("visit_count", np.int32),
+            ("snow_on_lid", np.bool_),
         ],
         align=True,
     )

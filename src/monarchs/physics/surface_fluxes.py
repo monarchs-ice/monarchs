@@ -17,6 +17,7 @@ def sfc_flux(
     dew_point_temperature,
     wind,
     xsurf,
+    snow_on_lid=False
 ):
     """
     Calculate the surface heat flux from the input shortwave and longwave
@@ -60,7 +61,8 @@ def sfc_flux(
 
     """
     # Positive going into ice shelf
-    alpha = sfc_albedo(melt, exposed_water, lid, lake, lake_depth)
+    alpha = sfc_albedo(melt, exposed_water, lid, lake, lake_depth,
+                       snow_on_lid=snow_on_lid)
     Flat, Fsens = bulk_fluxes(
         wind, air_temp, xsurf, p_air, dew_point_temperature, lake, lid
     )
@@ -71,13 +73,13 @@ def sfc_flux(
     elif lake:
         frac_scaling = 0.4  # fraction of solar absorbed at lake surface
     else:
-        frac_scaling = 1
-    Q = epsilon * lw_in + ((1 - alpha) * sw_in) * frac_scaling + Flat + Fsens
+        frac_scaling = 1    # firn surface - all radiation absorbed at surface
+    Q = epsilon * lw_in + ((1 - alpha) * sw_in * frac_scaling) + Flat + Fsens
 
     return Q
 
 
-def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
+def sfc_albedo(melt, exposed_water, lid, lake, lake_depth, snow_on_lid=False):
     """
     Determine the effective surface albedo depending on the situation at the
     top of the ice shelf (i.e. is there exposed water, firn or snow etc.)
@@ -107,7 +109,11 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
     if melt:
         if exposed_water:
             if lid:
-                alpha = 0.413  # ice lid albedo
+                # JE - if we have a "full" lid (white ice), then the albedo
+                # is actually higher?
+                # https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JC014161
+                # this implies (Fig. 1) that it should be ~0.6
+                alpha = 0.6  # ice lid albedo
             elif lake:
                 h = lake_depth
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
@@ -119,6 +125,10 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
             alpha = 0.6  # wet snow albedo
     else:
         alpha = 0.867  # dry snow albedo
+
+    if snow_on_lid:
+        alpha = 0.867  # snow albedo
+
     return alpha
 
 
@@ -204,9 +214,8 @@ def bulk_fluxes(
         CT = CT0 * (1 - 2 * b * Ri / (1 + c * abs(Ri) ** 0.5))
     else:
         CT = CT0 * (1 + b * Ri) ** -2
-    # added extra factor of 1000 to convert from kPa to Pa
     q_0 = 0.622 * p_v / (p_air - 0.378 * p_v)
-    Fsens = 1.275 * 1000 * CT * wind * (air_temp - T_sfc)
+    Fsens = 1.275 * 1004 * CT * wind * (air_temp - T_sfc)
     #  q_0 is in kg/kg, s_hum is in kg/kg also.
     Flat = 1.275 * L * CT * wind * (s_hum - q_0)
     return Flat, Fsens

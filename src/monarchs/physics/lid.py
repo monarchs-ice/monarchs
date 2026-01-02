@@ -88,7 +88,7 @@ def lid_development(
     # cell["lid_melt_count"] accordingly. If this is above a certain threshold,
     # then we have too much melt at the surface, and the lid and firn are later
     # combined into one profile (see `combine_lid_firn` and `timestep.py`).
-
+    print('K_ice = ', k_ice)
     x = cell["lid_temperature"]
     dz = cell["lid_depth"] / cell["vert_grid_lid"]
     heateqn_args = (
@@ -127,6 +127,7 @@ def lid_development(
         dew_point_temperature,
         wind,
         x[0],
+        cell['snow_on_lid']
     )
     if cell["lid_temperature"][0] < 273.15:  # frozen
         # Decrement lid_melt_count if the lid is freezing.
@@ -243,6 +244,8 @@ def surface_melt(cell, dt, Q):
 
     new_mass = utils.calc_mass_sum(cell)
     check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
+    cell["snow_on_lid"] = False  # melting lid surface removes snow
+
     return k_lid
 
 
