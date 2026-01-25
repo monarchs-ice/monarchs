@@ -204,7 +204,7 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
 
     """
 
-    N = 10  # number of cells at top to use in hybrd implementation
+    N = 50  # number of cells at top to use in hybrd implementation
     x = x[:N]
     cell = args[0]
     dt = args[1]
@@ -435,7 +435,7 @@ def sfc_energy_virtual_lid(x, output, args):
     # otherwise as it expects an array
     # sign convention = fluxes positive downwards
     T_bottom = 273.15
-    effective_thickness = max(v_lid_depth, 0.005)
+    effective_thickness = max(v_lid_depth, 1e-5)
     conduction_flux = - k_v_lid * (x[0] - T_bottom) / effective_thickness
     output[0] = (
         -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)

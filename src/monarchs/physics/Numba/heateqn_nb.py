@@ -217,7 +217,7 @@ def heateqn(x, output, args):
             * (kappa[idx] / dz ** 2)
             * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
         )
-
+    # neumann boundary condition at the bottom
     output[N - 1] = (
         T[N - 1]
         - x[N - 1]
@@ -304,18 +304,18 @@ def heateqn_lid(x, output, args):
         dew_point_temperature,
         wind,
         x[0],
-        snow_on_lid=snow_on_lid,
+        snow_on_lid,
     )
     output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (
         Q - epsilon * sigma * x[0] ** 4
     )
     # SW radiation baked into surface flux already
     albedo = surface_fluxes.sfc_albedo(
-        melt, exposed_water, lid, lake, lake_depth, snow_on_lid=snow_on_lid
+        melt, exposed_water, lid, lake, lake_depth, snow_on_lid
     )
     # fraction of the remaining radiation absorbed at surface layer - baked
     # into surface flux Q.
-    sfc_abs_frac = 0.4
+    sfc_abs_frac = 0.5
 
     for idx in np.arange(1, vert_grid_lid - 1):
         z_depth = idx * dz

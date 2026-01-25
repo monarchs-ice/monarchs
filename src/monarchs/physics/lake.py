@@ -119,25 +119,43 @@ def sfc_energy_lake_formation(air_temp, Q, k, cell):
     return old_surf_temp
 
 
+from monarchs.physics import regrid_column
+
 def freeze_pre_lake(cell):
-    """ """
-    # TODO - this needs to properly regrid the column
-    #      - since we can have tiny lakes freezing after
-    #      - a lid is combined into the firn (meaning
-    #      - that we have Sfrac = 1 at the surface)
+    """
+    Refreeze a shallow 'pre-lake' (exposed water film) into the firn column, conserving mass.
+
+    Converts the entire lake water depth H_w to an equivalent ice thickness
+    H_i = H_w * (rho_water / rho_ice), adds that thickness at the surface
+    (pure ice), and removes the lake water. Uses the same regridding
+    routine as other freezing events to keep all state arrays consistent.
+    """
+    # Clear exposed-water flags/counters up-front
     cell["exposed_water"] = False
     cell["exposed_water_refreeze_counter"] = 0
-    dHdt = cell["lake_depth"] * cell["rho_water"] / cell["rho_ice"]
-    cell["lake_depth"] = 0
-    cell["firn_depth"] += dHdt
-    cell["Sfrac"][0] += (
-        cell["Lfrac"][0] * cell["rho_water"] / cell["rho_ice"]
-    )  # freeze all water in top layer
-    cell["Lfrac"][0] = 0
-    # expansion of this water can cause Sfrac to be > 1, but the volume
-    # will be so small that it should not matter.
-    if cell["Sfrac"][0] > 1:
-        cell["Sfrac"][0] = 1
+
+    # Nothing to do if the pre-lake is already zero
+    H_w = float(max(0.0, cell["lake_depth"]))
+    if H_w == 0.0:
+        return
+
+    # Equivalent ice thickness to add at the surface (mass conservation)
+    H_i = H_w * (cell["rho_water"] / cell["rho_ice"])
+
+    # Remove all lake water and mark no lake
+    cell["lake_depth"] = 0.0
+    cell["lake"] = False
+
+    # Add a solid-ice layer of thickness H_i on top of the firn column.
+    # This routine handles firn_depth, temperature, Sfrac/Lfrac, rho, etc.
+    regrid_column.regrid_after_freeze(cell, H_i)
+
+    # Newly formed surface ice should be at the melting point (freshwater)
+    cell["firn_temperature"][0] = 273.15
+
+    # If any lid flags were left over from previous states, ensure they're off
+    cell["v_lid"] = False
+    cell["lid"]   = False
 
 
 def radiative_transfer(cell, sw_in):
@@ -182,8 +200,8 @@ def radiative_transfer(cell, sw_in):
     # into the lake.
     # So we need to:
     # weight surface_fluxes by the amount we absorb specifically
-    # at the surface. We can heuristically use ~0.4 as a fractional
-    # absorption at the surface (i.e. 60% penetrates).
+    # at the surface. We can heuristically use ~0.5 as a fractional
+    # absorption at the surface (i.e. 50% penetrates).
     # Then, get an estimated combined NIR+Vis absorption coefficient to use
     # to model the penetration of the rest of the radiation into the lake.
     # The rest of the radiation will penetrate all the way to the
@@ -194,8 +212,12 @@ def radiative_transfer(cell, sw_in):
     # We also need to consider that the lake water will be turbid, and 
     # not pure (it will be grainy meltwater). So we should use a higher
     # absorption coefficient than pure water.
+
+    Section 4.1.2 of Leppäranta (2015): Freezing of Lakes and the Evolution of
+    their Ice Cover explicitly mentions a factor of ~0.45-0.5 for the
+    surface absorption fraction.
     """
-    if cell['lid']:# or cell['v_lid']:
+    if cell['lid'] or cell['v_lid']:
         lid_flag = True
     albedo = surface_fluxes.sfc_albedo(
         cell["melt"],
@@ -203,9 +225,9 @@ def radiative_transfer(cell, sw_in):
         lid_flag,
         cell["lake"],
         cell["lake_depth"],
-        snow_on_lid=cell["snow_on_lid"],
+        cell["snow_on_lid"],
     )
-    not_absorbed_frac = 0.6  # fraction of sw_in that penetrates lake surface
+    not_absorbed_frac = 0.5  # fraction of sw_in that penetrates lake surface
     tau_water = 0.36  # Table 1, panchromatic absorption coefficient,
                       # Pope et al. (2016), The Cryosphere,
                       # doi:10.5194/tc-10-15-2016
@@ -258,8 +280,8 @@ def radiative_transfer(cell, sw_in):
     # contribution to the albedo.
     # Is this true? It matters if we have a lid! But I think the assumption is
     # that most radiation will be absorbed by now...?
-    print('Bottom radiation = ', radiation_at_bottom)
-    print('Lake absorbed solar = ', lake_absorbed_solar)
+    # print('Bottom radiation = ', radiation_at_bottom)
+    # print('Lake absorbed solar = ', lake_absorbed_solar)
     return lake_absorbed_solar, radiation_at_bottom
 
 
@@ -341,7 +363,7 @@ def turbulent_mixing(cell, sw_in, dt, k):
     dh_change, cap_reached = calc_height_adjustment(
         cell, k, dt_scaling, net_lower_flux_for_dh
     )
-    print('dh_change in turbulent mixing: ', dh_change)
+    # print('dh_change in turbulent mixing: ', dh_change)
     dh += dh_change
     if dh > (cell["firn_depth"] / cell["vert_grid"]):
         dh = cell["firn_depth"] / cell["vert_grid"]
@@ -459,7 +481,7 @@ def lake_formation(
         cell, original_mass, new_mass, routine_name
     )
 
-    if old_T_sfc > 273.15 and Q > 0:  # melting occurring at the surface
+    if old_T_sfc >= 273.15 and Q > 0:  # melting occurring at the surface
         kdTdz = (
             (cell["firn_temperature"][0] - cell["firn_temperature"][1])
             * abs(k[0])
@@ -498,8 +520,9 @@ def lake_formation(
             cell["exposed_water_refreeze_counter"] > 48
             and cell["lake_depth"] < 0.1
         ):
-            # freeze_pre_lake(cell)
+            freeze_pre_lake(cell)
             pass
+
 
     cell["vertical_profile"] = np.linspace(
         0, cell["firn_depth"], cell["vert_grid"]
@@ -575,7 +598,7 @@ def lake_development(
 
     elif cell["lid"] or cell["v_lid"]:
         cell["lake_temperature"][0] = 273.15
-    print('Firn temperature = ', cell["firn_temperature"][0:10])
+    # print('Firn temperature = ', cell["firn_temperature"][0:10])
 
     # Conductivity below lake
     k_ice = np.zeros(cell["vert_grid"])
@@ -649,9 +672,9 @@ def calc_height_adjustment(cell, k, dt_scaling, Fl):
             sfrac_top = max(1e-2, cell["Sfrac"][0])
             if cell['Sfrac'][0] < 1e-2:
                 print('Warning - Sfrac at top of firn very low in calc_height_adjustment')
-            print('Fl = ', Fl)
-            print('kdTdz = ', kdTdz)
-            print('Net flux = ', (Fl - kdTdz))
+            # print('Fl = ', Fl)
+            # print('kdTdz = ', kdTdz)
+            # print('Net flux = ', (Fl - kdTdz))
             boundary_change_raw = (
                 (Fl - kdTdz)
                 / (sfrac_top * cell["L_ice"] * cell["rho_ice"])

@@ -49,7 +49,13 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     if cell["lid"]:
         # add to lid depth
         cell["lid_depth"] += snow_depth * snow_rho / cell["rho_ice"]
-        if snow_depth > 0 and cell['snow_on_lid'] is False:
+        cell['lid_snow_depth'] += snow_depth  # just a tracker
+        cell['snow_on_lid'] = True
+
+        if cell['lid_snow_depth'] > 0.001 and not cell["snow_on_lid"]:
+            # more than 1mm of snow on lid
+            print('Adding snow on lid')
+            print('Lid snow depth:', cell['lid_snow_depth'])
             cell['snow_on_lid'] = True
         return
     elif cell['lake']:

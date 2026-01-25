@@ -62,16 +62,16 @@ def sfc_flux(
     """
     # Positive going into ice shelf
     alpha = sfc_albedo(melt, exposed_water, lid, lake, lake_depth,
-                       snow_on_lid=snow_on_lid)
+                       snow_on_lid)
     Flat, Fsens = bulk_fluxes(
         wind, air_temp, xsurf, p_air, dew_point_temperature, lake, lid
     )
     epsilon = 0.98  # emissivity
 
     if lid:
-        frac_scaling = 0.4  # fraction of solar absorbed at lid surface
+        frac_scaling = 0.5  # fraction of solar absorbed at lid surface
     elif lake:
-        frac_scaling = 0.4  # fraction of solar absorbed at lake surface
+        frac_scaling = 0.5  # fraction of solar absorbed at lake surface
     else:
         frac_scaling = 1    # firn surface - all radiation absorbed at surface
     Q = epsilon * lw_in + ((1 - alpha) * sw_in * frac_scaling) + Flat + Fsens
@@ -79,7 +79,7 @@ def sfc_flux(
     return Q
 
 
-def sfc_albedo(melt, exposed_water, lid, lake, lake_depth, snow_on_lid=False):
+def sfc_albedo(melt, exposed_water, lid, lake, lake_depth, snow_on_lid):
     """
     Determine the effective surface albedo depending on the situation at the
     top of the ice shelf (i.e. is there exposed water, firn or snow etc.)
@@ -113,7 +113,8 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth, snow_on_lid=False):
                 # is actually higher?
                 # https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JC014161
                 # this implies (Fig. 1) that it should be ~0.6
-                alpha = 0.6  # ice lid albedo
+                alpha = 0.413  # bare dry ice lid albedo
+
             elif lake:
                 h = lake_depth
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
@@ -192,7 +193,7 @@ def bulk_fluxes(
 
     else:  # over ice/snow
         a1 = 611.21
-        a3, a4 = 22.587, 0.7
+        a3, a4 = 22.587, -0.7
         L = 2.834e6
         # saturation vapor pressure over ice
         p_v = a1 * np.exp(22.587 * (T_sfc - T_0) / (T_sfc + 0.7))

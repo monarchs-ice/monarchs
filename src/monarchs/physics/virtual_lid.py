@@ -68,7 +68,7 @@ def virtual_lid_development(
     Q = surface_fluxes.sfc_flux(
         cell["melt"],
         cell["exposed_water"],
-        cell["v_lid"],  # use virtual lid here not true lid
+        cell["lid"],  # use virtual lid here not true lid
         cell["lake"],
         cell["lake_depth"],
         lw_in,
@@ -109,20 +109,22 @@ def virtual_lid_development(
     # a conductive approach across the virtual lid rather than using the fluxes
     # until a true lid forms (at which point the real fluxes are used).
     # this stops a blowout due to low virtual lid depth
-    effective_thickness = max(cell["v_lid_depth"], 0.005)  # 5 mm minimum
-    delta_T = cell["virtual_lid_temperature"] - 273.15
-    kdTdz = (k_ice * delta_T) / effective_thickness
 
-    new_boundary_change = (kdTdz - Fu) / (cell["L_ice"] * cell["rho_ice"]) * dt
-    # new_boundary_change = (kdTdz) / (cell["L_ice"] * cell["rho_ice"]) * dt
+    # for freezing - negative *net* flux = freezing, positive = melting
+    # as convention is +ve downwards; upward flux means energy leaving the
+    # interface
+    effective_thickness = max(cell["v_lid_depth"], 1e-3)
+    delta_T = cell["virtual_lid_temperature"] - 273.15
+    conductive_flux_down = (k_ice * delta_T) / effective_thickness
+    q_net = conductive_flux_down + Fu
+    new_boundary_change = - q_net * dt / (cell["L_ice"] * cell["rho_ice"])
 
     # further freezing of the virtual lid
-    if cell["virtual_lid_temperature"] < 273.15:
-        if new_boundary_change < 0:
-            freeze_virtual_lid(cell, new_boundary_change)
+    if new_boundary_change > 0:
+        freeze_virtual_lid(cell, new_boundary_change)
     # melting of the virtual lid
     else:
-        melt_virtual_lid(cell, Q, dt)
+        melt_virtual_lid(cell, new_boundary_change)
 
     # If the lid is greater than 10 cm - now have a permanent lid.
     if cell["v_lid_depth"] > 0.1 or cell["lake_depth"] == 0:
@@ -147,7 +149,7 @@ def update_virtual_lid_temperature(
     Q = surface_fluxes.sfc_flux(
         cell["melt"],
         cell["exposed_water"],
-        cell["v_lid"],
+        cell["lid"],
         cell["lake"],
         cell["lake_depth"],
         lw_in,
@@ -178,15 +180,15 @@ def update_virtual_lid_temperature(
     return Q
 
 
-def freeze_virtual_lid(cell, new_boundary_change):
-    if (new_boundary_change * cell["rho_ice"] / cell["rho_water"]) < cell[
+def freeze_virtual_lid(cell, ice_added):
+    if (ice_added * cell["rho_ice"] / cell["rho_water"]) < cell[
         "lake_depth"
     ]:
         old_depth_grid = np.linspace(
             0, cell["lake_depth"], cell["vert_grid_lake"]
         )
         # now reduce the size of the lake due to freezing
-        cell["lake_depth"] += new_boundary_change * (
+        cell["lake_depth"] -= ice_added * (
             cell["rho_ice"] / cell["rho_water"]
         )
 
@@ -197,45 +199,49 @@ def freeze_virtual_lid(cell, new_boundary_change):
         cell["lake_temperature"] = np.interp(
             new_depth_grid, old_depth_grid, cell["lake_temperature"]
         )
-        cell["v_lid_depth"] -= new_boundary_change
-        cell["lake_temperature"][-1] = 273.15
+        cell["v_lid_depth"] += ice_added
+        cell["lake_temperature"][0] = 273.15
+        print('Partial freezing of virtual lid')
+        print('ice_added:', ice_added)
+        print('v_lid_depth:', cell["v_lid_depth"])
     # whole lake freezes
     else:
         cell["v_lid_depth"] += cell["lake_depth"] * (
             cell["rho_water"] / cell["rho_ice"]
         )
         cell["lake_depth"] = 0
-        cell["lake"] = False
+        print('Whole lake frozen into virtual lid')
+        print('ice_added:', ice_added)
 
 
-def melt_virtual_lid(cell, Q, dt):
+def melt_virtual_lid(cell, ice_added):
     cell["virtual_lid_temperature"] = 273.15
-    k_im_lid = 1000 * (
-        1.017 * 10 ** -4 + 1.695 * 10 ** -6 * cell["virtual_lid_temperature"]
-    )
-    kdTdz = ((cell["virtual_lid_temperature"] - 273.15) * abs(k_im_lid)) / (
-        cell["lake_depth"]
-        / ((cell["vert_grid_lake"] / 2) + cell["v_lid_depth"])
-    )
-    new_boundary_change = (Q - kdTdz) / (cell["L_ice"] * cell["rho_ice"]) * dt
-
-    if new_boundary_change > 0:
+    ice_removed = - ice_added #  negative ice_added means melting
+    if ice_removed > 0:
         # whole virtual lid melts
-        if new_boundary_change > cell["v_lid_depth"]:
+        if ice_removed > cell["v_lid_depth"]:
             cell["lake_depth"] += (
                 cell["v_lid_depth"] * cell["rho_ice"] / cell["rho_water"]
             )
-            cell["v_lid_depth"] = 0
+            print('Virtual lid depth before melting:', cell["v_lid_depth"])
+            print('ice_removed:', ice_removed)
             cell["total_melt"] = cell["total_melt"] + cell["v_lid_depth"]
+            cell["v_lid_depth"] = 0
+            print('Whole virtual lid melted')
         # some of the lid melts
         else:
             cell["lake_depth"] = (
                 cell["lake_depth"]
-                + new_boundary_change * cell["rho_ice"] / cell["rho_water"]
+                + ice_removed * cell["rho_ice"] / cell["rho_water"]
             )
-            cell["v_lid_depth"] = cell["v_lid_depth"] - new_boundary_change
-            cell["total_melt"] = cell["total_melt"] + new_boundary_change
+            cell["v_lid_depth"] = cell["v_lid_depth"] - ice_removed
+            cell["total_melt"] = cell["total_melt"] + ice_removed
+            cell["lake_temperature"][0] = 273.15
+
+            print('Partial melting of virtual lid')
     # check if we still have a virtual lid
     if cell["v_lid_depth"] <= 0 and cell["v_lid"]:
+        print('Whole virtual lid melted - step 2 ')
+
         cell["v_lid"] = False
         cell["v_lid_depth"] = 0

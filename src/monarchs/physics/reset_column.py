@@ -10,7 +10,7 @@ from monarchs.core.error_handling import check_for_mass_conservation
 from monarchs.physics.regrid_column import conservative_regrid
 
 
-def combine_lid_firn(cell, freeze_lake=False):
+def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     routine_name = "monarchs.physics.reset_column.combine_lid_firn"
 
     # ensure that the density is up-to-date
@@ -108,7 +108,13 @@ def combine_lid_firn(cell, freeze_lake=False):
     cell["lid_sfc_melt"] = 0.0
     cell["lake_refreeze_counter"] = 0
     cell["snow_on_lid"] = False
-
+    cell["lid_snow_depth"] = 0.0
+    # if we've combined a lid with firn due to melting on the lid surface,
+    # then we have melt on the lid surface so the albedo will be reduced
+    # compared to if it completely froze the lake
+    if surface_slush:
+        cell["melt"] = True
+        cell["exposed_water"] = True
     # get saturation of the new column explicitly rather than interpolating
     # the old values
     percolation.calc_saturation(cell, cell["vert_grid"] - 1)

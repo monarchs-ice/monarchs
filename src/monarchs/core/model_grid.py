@@ -143,6 +143,7 @@ def initialise_iceshelf(
         "t_step": 0,
         "day": 0,
         "visit_count": 0,
+        "lid_snow_depth": 0.0,
     }
     flags = {
         "has_had_lid": has_had_lid,
@@ -305,6 +306,7 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("error_flag", np.bool_),
             ("visit_count", np.int32),
             ("snow_on_lid", np.bool_),
+            ("lid_snow_depth", np.float64),
         ],
         align=True,
     )
