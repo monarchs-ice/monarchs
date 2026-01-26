@@ -320,7 +320,9 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
 
     if np.isnan(Fu):
         Fu = 0.0
-    q_net = q_ice + Fu  # Fu positive downward by convention
+
+
+    q_net = q_ice - Fu  # Fu positive downward by convention
     if np.isnan(q_ice):
         print("ERROR: monarchs.physics.lid.adjust_lid_height: Q ice = np.nan")
         cell["error_flag"] = 1

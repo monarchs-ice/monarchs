@@ -13,7 +13,7 @@ MODULE_NAME = "monarchs.physics.virtual_lid"
 
 
 def virtual_lid_development(
-    cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, Fu
+    cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, turbulent_flux_upper
 ):
     """
     When a lake undergoes freezing from the top due to the surface conditions,
@@ -115,8 +115,18 @@ def virtual_lid_development(
     # interface
     effective_thickness = max(cell["v_lid_depth"], 1e-3)
     delta_T = cell["virtual_lid_temperature"] - 273.15
+
+    # conductive flux - via our positive downwards convention, this is negative
+    # if we have a cold virtual lid (i.e. heat is flowing up, out of the interface)
+    # since interface loses energy to the lid, this causes freezing
     conductive_flux_down = (k_ice * delta_T) / effective_thickness
-    q_net = conductive_flux_down + Fu
+    # conversely, the turbulent flux from the lake (again, positive downwards) will
+    # inhibit freezing if it is negative (i.e. heat flows from the lake into the
+    # interface).
+    # the net flux at the interface is therefore (flux entering - flux leaving)
+    # with a positive downwards convention, we have to subtract the two as they are coming
+    # from different sides
+    q_net = conductive_flux_down - turbulent_flux_upper
     new_boundary_change = - q_net * dt / (cell["L_ice"] * cell["rho_ice"])
 
     # further freezing of the virtual lid

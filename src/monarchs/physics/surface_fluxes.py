@@ -113,7 +113,7 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth, snow_on_lid):
                 # is actually higher?
                 # https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JC014161
                 # this implies (Fig. 1) that it should be ~0.6
-                alpha = 0.413  # bare dry ice lid albedo
+                alpha = 0.6 # bare dry ice lid albedo
 
             elif lake:
                 h = lake_depth

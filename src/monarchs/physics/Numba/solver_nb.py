@@ -353,6 +353,9 @@ def lake_development_eqn(x, output, args):
     T_core = lake_temperature[int(vert_grid_lake / 2)]
     # fluxes +ve downwards - if T_sfc > T_core, we have a flux downward
     # which cools the lake surface - negative sign
+    # we have Q (surface flux, downwards) + longwave radiation (upwards, so
+    # negative) + turbulent flux (downwards if T_sfc < T_core, upwards if T_sfc >
+    # T_core).
     output[0] = np.array(
         [
             -0.98 * (5.670373 * 10 ** -8) * (x[0] ** 4)
@@ -434,9 +437,15 @@ def sfc_energy_virtual_lid(x, output, args):
     # set output[0] rather than just output as solution doesn't converge
     # otherwise as it expects an array
     # sign convention = fluxes positive downwards
-    T_bottom = 273.15
-    effective_thickness = max(v_lid_depth, 1e-5)
-    conduction_flux = - k_v_lid * (x[0] - T_bottom) / effective_thickness
+    T_interface = 273.15
+    effective_thickness = max(v_lid_depth, 1e-3)
+    # conductive flux from virtual lid into interface - positive downward
+    # (i.e. if lid is colder than interface, heat flows up, out of interface),
+    # represented by a negative flux
+    conduction_flux = - k_v_lid * (x[0] - T_interface) / effective_thickness
+    # so then with this positive downwards convention, we sum
+    # the surface fluxes (Q) downwards, + the conductive flux downwards,
+    # + the longwave radiation (which upwards, so negative here)
     output[0] = (
         -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
         + Q

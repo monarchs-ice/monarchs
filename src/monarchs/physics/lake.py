@@ -648,7 +648,7 @@ def lake_development(
     return Fu
 
 
-def calc_height_adjustment(cell, k, dt_scaling, Fl):
+def calc_height_adjustment(cell, k, Fl):
     routine_name = f"{MODULE_NAME}.calc_height_adjustment"
     # If lake is above freezing it will begin to melt the firn below it
     boundary_change = 0
@@ -675,10 +675,15 @@ def calc_height_adjustment(cell, k, dt_scaling, Fl):
             # print('Fl = ', Fl)
             # print('kdTdz = ', kdTdz)
             # print('Net flux = ', (Fl - kdTdz))
+
+            # Fl is positive going *into* interface, kdTdz is positive going
+            # *out of interface into the firn*, so to get the net flux we need to
+            # subtract them (e.g. if Fl is 10 W/m^2 into interface, and kdTdz is 5 W/m^2
+            # out of interface, net flux into interface is 5 W/m^2)
             boundary_change_raw = (
                 (Fl - kdTdz)
                 / (sfrac_top * cell["L_ice"] * cell["rho_ice"])
-            ) * dt_scaling * 3600
+            ) * 3600
 
             cap = cell["firn_depth"] / cell["vert_grid"]
 
