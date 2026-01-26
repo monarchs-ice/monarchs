@@ -361,7 +361,7 @@ def turbulent_mixing(cell, sw_in, dt, k):
         cell["lake_temperature"][indices] = lake_core_temp
 
     dh_change, cap_reached = calc_height_adjustment(
-        cell, k, dt_scaling, net_lower_flux_for_dh
+        cell, k, net_lower_flux_for_dh
     )
     # print('dh_change in turbulent mixing: ', dh_change)
     dh += dh_change
