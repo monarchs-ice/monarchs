@@ -133,8 +133,8 @@ def radiative_transfer(cell, sw_in):
     )
     not_absorbed_frac = (1 - sfc_absorbed_frac)  # fraction of sw_in that penetrates lake surface
     sw_penetrating = (1 - cell["albedo"]) * sw_in * not_absorbed_frac
-    print('SW in = ', sw_in)
-    print('SW penetrating = ', sw_penetrating)
+    #print('SW in = ', sw_in)
+    #print('SW penetrating = ', sw_penetrating)
     if cell["lid"]:
         # Ice has roughly the same absorption coefficient in the SWIR/NIR
         # as water, so we can assume that "sw_penetrating" is the same. The
@@ -156,15 +156,15 @@ def radiative_transfer(cell, sw_in):
             -tau_water * cell["lake_depth"]
         )
         lake_absorbed_solar = sw_penetrating - radiation_at_bottom
-    print('Transmittance = ', np.exp(-tau_ice * cell["lake_depth"]))
-    print('Lake depth = ', cell["lake_depth"])
+    #print('Transmittance = ', np.exp(-tau_ice * cell["lake_depth"]))
+    #print('Lake depth = ', cell["lake_depth"])
 
     # We aren't quite done yet. We also have to consider the albedo of the
     # firn at the bottom of the lake. From surface_fluxes, the albedo
     # of saturated firn is 0.6. So accounting for this:
     saturated_firn_albedo = 0.6
     lake_reflected_radiation = radiation_at_bottom * saturated_firn_albedo
-    print('Radiation reflected at bottom = ', lake_reflected_radiation)
+    #print('Radiation reflected at bottom = ', lake_reflected_radiation)
     radiation_at_bottom *= (1 - saturated_firn_albedo)
     # and this reflected radiation will also be absorbed again in the lake.
     lake_absorbed_solar = lake_absorbed_solar + (
@@ -177,8 +177,8 @@ def radiative_transfer(cell, sw_in):
     # contribution to the albedo.
     # Is this true? It matters if we have a lid! But I think the assumption is
     # that most radiation will be absorbed by now...?
-    print('Bottom radiation = ', radiation_at_bottom)
-    print('Lake absorbed solar = ', lake_absorbed_solar)
+    #print('Bottom radiation = ', radiation_at_bottom)
+    #print('Lake absorbed solar = ', lake_absorbed_solar)
     return lake_absorbed_solar, radiation_at_bottom
 
 
