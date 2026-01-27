@@ -3,7 +3,14 @@
 # TODO - module-level docstring, flesh out other docstrings
 import numpy as np
 from monarchs.physics.surface_fluxes import sfc_flux
-
+from monarchs.physics.constants import (
+    cp_air,
+    cp_water,
+    k_air,
+    k_water,
+    emissivity,
+    rho_ice, stefan_boltzmann
+)
 
 def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
@@ -32,17 +39,15 @@ def heateqn(
     wind,
     dz,
     dt,
-    epsilon=0.98,
-    sigma=5.670374e-8,
+    epsilon=emissivity,
+    sigma=stefan_boltzmann,
 ):
 
     # Calculate Q for the given T_sfc
     Q = sfc_flux(
-        cell["melt"],
-        cell["exposed_water"],
+        cell["albedo"],
         cell["lid"],
         cell["lake"],
-        cell["lake_depth"],
         lw_in,
         sw_in,
         air_temp,
@@ -55,10 +60,6 @@ def heateqn(
     T_old = cell["firn_temperature"][:N]
     Sfrac = cell["Sfrac"][:N]
     Lfrac = cell["Lfrac"][:N]
-    cp_air = cell["cp_air"]
-    cp_water = cell["cp_water"]
-    k_air = cell["k_air"]
-    k_water = cell["k_water"]
     k, kappa = get_k_and_kappa(
         T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
     )
@@ -109,17 +110,11 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     T_old = cell["firn_temperature"][N:]
     Sfrac = cell["Sfrac"][N:]
     Lfrac = cell["Lfrac"][N:]
-    cp_air = cell["cp_air"]
-    cp_water = cell["cp_water"]
-    k_air = cell["k_air"]
-    k_water = cell["k_water"]
     k, kappa = get_k_and_kappa(
         T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
     )
-
-    total_len = np.shape(cell["firn_temperature"])[
-        0
-    ]  # Total number of layers in the firn column
+    # Total number of layers in the firn column
+    total_len = np.shape(cell["firn_temperature"])[0]
     n = total_len - N  # Number of layers below the nonlinear region
 
     # Initialize diagonals and RHS
@@ -233,14 +228,14 @@ def heateqn_lid(
         the new firn temperature
     """
     cp_ice = 1000 * (0.00716 * cell["lid_temperature"] + 0.138)
-    cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cell["cp_air"]
+    cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cp_air
     k_lid = 1000 * (
         2.24e-03 + 5.975e-06 * ((273.15 - cell["lid_temperature"]) ** 1.156)
     )
-    kappa = k_lid / (cp * cell["rho_ice"])
-    epsilon = 0.98
+    kappa = k_lid / (cp * rho_ice)
+    epsilon = emissivity
     tau_ice = 1.5
-    sigma = 5.670374 * 10 ** -8
+    sigma = stefan_boltzmann
     rho = 917
 
     Q = sfc_flux(

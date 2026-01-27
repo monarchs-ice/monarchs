@@ -113,6 +113,7 @@ def ERA5_to_variables(
                 " key that is in your data."
             )
     var_dict["snowfall"] = era5_data.variables["sf"][start_index:end_index]
+
     try:
         var_dict["SW_surf"] = (
             era5_data.variables["ssrd"][start_index:end_index] / 3600
@@ -169,6 +170,9 @@ def ERA5_to_variables(
         var_dict["snow_dens"] = 350 * np.ones(
             np.shape(era5_data.variables["t2m"][start_index:end_index])
         ) # Kuipers Munekke 2015
+
+    # Convert snow amount from ERA5 units (in water equivalent) to actual snow depth
+    var_dict["snowfall"] = var_dict["snowfall"] * 1000 / var_dict["snow_dens"]
     era5_data.close()
     return var_dict
 

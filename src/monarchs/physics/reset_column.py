@@ -8,14 +8,14 @@ from monarchs.physics import percolation
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
 from monarchs.physics.regrid_column import conservative_regrid
-
+from monarchs.physics.constants import rho_ice, rho_water
 
 def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     routine_name = "monarchs.physics.reset_column.combine_lid_firn"
 
     # ensure that the density is up-to-date
-    cell["rho"] = (cell["Sfrac"] * cell["rho_ice"]) + (
-        cell["Lfrac"] * cell["rho_water"]
+    cell["rho"] = (cell["Sfrac"] * rho_ice) + (
+        cell["Lfrac"] * rho_water
     )
     # add virtual lid to lid if we have one - we are combining either way
     if cell["v_lid"]:
@@ -25,7 +25,7 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     original_mass = utils.calc_mass_sum(cell)
     # get effective frozen lake thickness (used only if we freeze)
     lake_depth_eff = (
-        cell["lake_depth"] * (cell["rho_water"] / cell["rho_ice"])
+        cell["lake_depth"] * (rho_water / rho_ice)
         if freeze_lake
         else cell["lake_depth"]
     )
@@ -62,7 +62,7 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
         np.concatenate(
             (
                 cell["lid_temperature"],
-                273.15 * np.ones_like(cell["lake_temperature"]),
+                cell["lake_temperature"],
                 cell["firn_temperature"],
             )
         ),
@@ -77,7 +77,7 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     )
     # Density is derived directly from the new mass-conserved fractions.
     # Interpolating rho directly causes mass errors when layer sizes change.
-    new_rho = (sfrac_new * cell["rho_ice"]) + (lfrac_new * cell["rho_water"])
+    new_rho = (sfrac_new * rho_ice) + (lfrac_new * rho_water)
     # update cell with the new combined profiles/values
     cell["firn_temperature"] = new_firn_temperature
     cell["rho"] = new_rho
@@ -105,6 +105,11 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     cell["lake_temperature"] = np.ones(cell["vert_grid_lake"]) * 273.15
     cell["lid_melt_count"] = 0
     cell["lake_depth"] = 0.0
+    if surface_slush:
+        cell["melt"] = True
+        cell["exposed_water"] = True
+        cell["lake_depth"] = cell["lid_sfc_melt"]
+
     cell["lid_sfc_melt"] = 0.0
     cell["lake_refreeze_counter"] = 0
     cell["snow_on_lid"] = False
@@ -112,9 +117,7 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     # if we've combined a lid with firn due to melting on the lid surface,
     # then we have melt on the lid surface so the albedo will be reduced
     # compared to if it completely froze the lake
-    if surface_slush:
-        cell["melt"] = True
-        cell["exposed_water"] = True
+
     # get saturation of the new column explicitly rather than interpolating
     # the old values
     percolation.calc_saturation(cell, cell["vert_grid"] - 1)
@@ -140,7 +143,7 @@ def mass_conserving_profile(
     if cell["vert_grid_lake"] > 0 and cell["lake_depth"] > 0:
         if freeze_lake:
             lake_depth_eff = cell["lake_depth"] * (
-                cell["rho_water"] / cell["rho_ice"]
+                rho_water / rho_ice
             )
         else:
             lake_depth_eff = cell["lake_depth"]

@@ -532,6 +532,7 @@ def main(model_setup, grid):
                 "column physics step. See logs for details."
             )
 
+
         # Validation - check that valid cells are actually being
         # operated upon during the single-column physics step
         visit_flag = False

@@ -10,7 +10,7 @@ from monarchs.core.error_handling import (
     check_for_mass_conservation,
     generic_error,
 )
-
+from monarchs.physics.constants import rho_ice, rho_water
 
 def _integrate_piecewise_constant(edges, values, z0, z1):
     """
@@ -181,7 +181,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     )
 
     water_height_to_add = (
-        cell["rho_ice"] / cell["rho_water"]
+        rho_ice / rho_water
     ) * rem_S_thick + rem_L_thick
 
     new_depth = old_depth - height_change

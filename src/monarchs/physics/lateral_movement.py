@@ -8,6 +8,7 @@ from numba.typed import Dict
 from numba import types
 from monarchs.core.utils import find_nearest
 from monarchs.physics.percolation import percolate, calc_saturation
+from monarchs.physics.constants import rho_ice, rho_water
 
 try:
     from numba import prange
@@ -344,7 +345,7 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     big_pi = -2.53 * 10 ** -10  # hydraulic permeability (m^2)
     eta = 1.787 * 10 ** -3  # viscosity(Pa/s)
     cell["rho"] = (
-        cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+        cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
     )
 
     # This block ensures that u is not greater than 1, which would be

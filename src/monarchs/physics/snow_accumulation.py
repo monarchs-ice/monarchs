@@ -6,10 +6,10 @@ new layers to the top of the firn column.
 
 import numpy as np
 from monarchs.core import utils
-
 from monarchs.physics.regrid_column import conservative_regrid
 from monarchs.physics.percolation import calc_saturation
 from monarchs.core.error_handling import generic_error
+from monarchs.physics.constants import rho_ice, rho_water
 
 MODULE_NAME = "monarchs.physics.snow_accumulation"
 
@@ -48,23 +48,29 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     # handle lids and lakes (no regridding of firn)
     if cell["lid"]:
         # add to lid depth
-        cell["lid_depth"] += snow_depth * snow_rho / cell["rho_ice"]
+        cell["lid_depth"] += snow_depth * snow_rho / rho_ice
         cell['lid_snow_depth'] += snow_depth  # just a tracker
-        cell['snow_on_lid'] = True
+        #print('Lid snow depth:', cell['lid_snow_depth'])
 
-        if cell['lid_snow_depth'] > 0.001 and not cell["snow_on_lid"]:
-            # more than 1mm of snow on lid
-            print('Adding snow on lid')
-            print('Lid snow depth:', cell['lid_snow_depth'])
-            cell['snow_on_lid'] = True
+        # if snow_depth > 0:
+        #     cell["snow_on_lid"] = True
+        if cell['lid_snow_depth'] > 0.01 and not cell["snow_on_lid"]:
+            # more than 1 mm of snow on lid
+            #print('Adding snow on lid')
+            #print('Lid snow depth:', cell['lid_snow_depth'])
+            cell['snow_on_lid'] = 1
         return
+
+
     elif cell['lake']:
-        # add to virtual lid depth
-        cell["v_lid_depth"] += snow_depth * snow_rho / cell["rho_ice"]
+        # add to virtual lid depth - will melt instantly if it is too warm to sustain
+        cell["v_lid_depth"] += snow_depth * snow_rho / rho_ice
+        if cell["v_lid"]:
+            cell["snow_on_lid"] = 2
         return
     # elif cell["lake"] and not cell["lid"]:
     #     # add to lake depth
-    #     cell["lake_depth"] += snow_depth * snow_rho / cell["rho_water"]
+    #     cell["lake_depth"] += snow_depth * snow_rho / rho_water
     #     # modify temperature
     #     return
 
@@ -86,7 +92,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     shifted_old_edges = old_edges + snow_depth
     source_edges = np.concatenate((np.array([0.0]), shifted_old_edges))
 
-    snow_sfrac = snow_rho / cell["rho_ice"]
+    snow_sfrac = snow_rho / rho_ice
     # ensure Sfrac doesn't exceed 1 (e.g. if input rho > 917)
     if snow_sfrac > 1.0:
         snow_sfrac = 1.0
@@ -186,19 +192,19 @@ def densification(cell, t_steps_per_day):
     T_av = 264.56010894609415
     e = np.exp(-ec / (R * cell["firn_temperature"][0]) + eg / (R * T_av))
     cell["rho"] = (
-        cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+        cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
     )
     # total annual accumulation - TODO taken direct from MATLAB, need to calc
     b = 0.4953 * (1000 / 350)
     for i in range(cell["vert_grid"]):
-        if cell["rho"][i] > cell["rho_ice"]:
-            cell["rho"][i] = cell["rho_ice"]
+        if cell["rho"][i] > rho_ice:
+            cell["rho"][i] = rho_ice
         if cell["rho"][i] < 550:
             c = 0.07
         else:
             c = 0.03
-        d_rho = c * b * g * (cell["rho_ice"] - cell["rho"][i]) * e * dt
+        d_rho = c * b * g * (rho_ice - cell["rho"][i]) * e * dt
         cell["rho"][i] = cell["rho"][i] + d_rho
-        cell["Sfrac"][i] = cell["rho"][i] / cell["rho_ice"]
+        cell["Sfrac"][i] = cell["rho"][i] / rho_ice
         if cell["Sfrac"][i] > 1:
             print("Snow accumulation has caused Sfrac to be > 1")

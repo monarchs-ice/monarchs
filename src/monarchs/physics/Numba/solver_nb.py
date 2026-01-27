@@ -12,164 +12,55 @@ can be generated according to the value of a single Boolean.
 import numpy as np
 from NumbaMinpack import hybrd, minpack_sig
 from numba import cfunc, jit
+from monarchs.physics.Numba.extract_args import pack_args
 import monarchs.physics.Numba.heateqn_nb as hnb
-from monarchs.physics import surface_fluxes
+from monarchs.physics.Numba.surface_energy_balance import lake_formation_eqn, lake_development_eqn, sfc_energy_lid, sfc_energy_virtual_lid
 
+
+# load in the compiled function address in memory rather than the
+# Python function object
 heq = hnb.heateqn.address
 heqlid = hnb.heateqn_lid.address
+dev_eqn_cfunc = cfunc(minpack_sig)(lake_development_eqn)
+form_eqn_cfunc = cfunc(minpack_sig)(lake_formation_eqn)
+dev_eqnaddress = dev_eqn_cfunc.address
+form_eqnaddress = form_eqn_cfunc.address
 
 
-@jit(nopython=True, fastmath=False)
-def args_array(
-    cell,
-    dt,
-    dz,
-    lw_in,
-    sw_in,
-    air_temp,
-    p_air,
-    dew_point_temperature,
-    wind,
-    Tsfc=273.15,
-    lid=False,
-    Sfrac_lid=np.array([np.nan]),
-    k_lid=np.nan,
-    fixed_sfc=True,
-    N=50,
-):
-    """
-    Convert the variables from an instance of the IceShelf class into the
-    format required to run NumbaMinpack.hybrd, a root finder written in Fortran
-    compatible with Numba jitted functions. This should result
-    in some speedup compared to using scipy's equivalent function fsolve.
 
-    We need to convert any non-arrays into 1d arrays with one element to
-    concatenate them into this vector, hence the "np.array([var])" syntax. This
-    is because Numba is compiled rather than interpreted; the code expects to
-    see arrays rather than floats and cannot infer types like regular Python.
 
-    Called whenever the various heat equation implemenations are used,
-    notably in heateqn, heateqn_lid and heateqn_fixedsfc, which are in turn
-    called by the relevant solver functions
 
-    Parameters
-    ----------
-    cell : core.iceshelf_class.IceShelf
-        IceShelf object containing the relevant information on the temperature,
-        etc. of the firn column
-    dt : int
-        timestep in seconds [s]
-    dz : float
-        size of each vertical grid cell [m]
-    lw_in : array_like, float, dimension(cell.vert_grid)
-        Surface downwelling longwave radiation [W m^-2]
-    sw_in : array_like, float, dimension(cell.vert_grid)
-        Surface downwelling shortwave radiation [W m^-2]
-    air_temp : array_like, float, dimension(cell.vert_grid)
-        Surface air temperature [K]
-    p_air : array_like, float, dimension(cell.vert_grid)
-        Surface air pressure [Pa]
-    dew_point_temperature :  array_like, float, dimension(cell.vert_grid)
-        Dewpoint temperature [K]
-    wind : array_like, float, dimension(cell.vert_grid)
-        Wind speed [m s^-1]
-    fixed_sfc : bool, optional
-        Boolean flag to determine whether to use the fixed surface heat
-        equation.
-    Tsfc : float, optional
-        Surface temperature to fix the surface of the firn column to,
-        if applicable (i.e. if using fixed_sfc=True)
-    lid : bool, optional
-        Boolean flag determining whether we want the lid heat equation solver.
-    Sfrac_lid : array_like, float, optional, dimension(cell.vert_grid)
-        Solid fraction of the frozen lid, if applicable.
-        Default to np.array([np.nan]), as array type, and not used in
-        non-lid cases.
-    k_lid : float, optional
-        thermal conducitvity of the frozen lid, if applicable. Default np.nan,
-        as not used in non-lid cases.
+sfc_energy_virtual_lid = cfunc(minpack_sig)(sfc_energy_virtual_lid)
+sfc_energy_lid = cfunc(minpack_sig)(sfc_energy_lid)
+sfc_energy_vlid_address = sfc_energy_virtual_lid.address
+sfc_energy_lid_address = sfc_energy_lid.address
 
-    Returns
-    -------
-    args : array_like
-        Numpy array containing the arguments we want to pass into the heat
-        equation solver.
 
-    """
-    if lid:
-        args = np.hstack(
-            (
-                np.array([cell["vert_grid_lid"]]),
-                cell['lid_temperature'],
-                Sfrac_lid,
-                np.array([k_lid]),
-                np.array([cell['cp_air']]),
-                np.array([cell['cp_water']]),
-                np.array([dt]),
-                np.array([dz]),
-                np.array([cell['melt']]),
-                np.array([cell['exposed_water']]),
-                np.array([cell.lid]),
-                np.array([cell.lake]),
-                np.array([cell['lake_depth']]),
-                np.array([lw_in]),
-                np.array([sw_in]),
-                np.array([air_temp]),
-                np.array([p_air]),
-                np.array([dew_point_temperature]),
-                np.array([wind]),
-                np.array([cell['snow_on_lid']])
-            )
-        )
-    # test = cell.firn_temperature
-    else:
-        args = np.hstack(
-            (
-                np.array([N]),
-                cell['firn_temperature'][:N],
-                cell['Sfrac'][:N],
-                cell['Lfrac'][:N],
-                np.array([cell['k_air']]),
-                np.array([cell['k_water']]),
-                np.array([cell['cp_air']]),
-                np.array([cell['cp_water']]),
-                np.array([dt]),
-                np.array([dz]),
-                np.array([cell['melt']]),
-                np.array([cell['exposed_water']]),
-                np.array([cell['lid']]),
-                np.array([cell['lake']]),
-                np.array([cell['lake_depth']]),
-                np.array([lw_in]),
-                np.array([sw_in]),
-                np.array([air_temp]),
-                np.array([p_air]),
-                np.array([dew_point_temperature]),
-                np.array([wind]),
-            )
-        )
-
-    return args
-
+################
+# MAIN SOLVERS #
+################
 
 @jit(nopython=True, fastmath=False)
-def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
+def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr"):
     """
     Numba-compatible solver function to be used within the model.
     Solves physics.Numba.heateqn.
     This loads in the relevant arguments from the cell, packages them
-    into an array form via args_array, and passes them into the hybrd solver.
+    into an array form via pack_args, and passes them into the hybrd solver.
 
     Called in <firn_column>.
 
     Parameters
     ----------
-    x : array_like, float, dimension(core.iceshelf_class.IceShelf.vert_grid)
-        numpy array containing the initial estimate of the firn column
-        temperature
-    args : array_like
-        Numpy array containing arguments to the heat equation.
-        See <firn_column> for info on the contents of this array.
+    cell: numpy structured array
+        Element of the model grid we are operating on.
+    met_data : dict
+        Dictionary containing the meteorological data for the current timestep.
+        See documentation in firn_column for details.
+    dt : int
+        Number of seconds in the current timestep [s]
+    dz : float
+        Size of each vertical point in the cell. [m]
     fixed_sfc : bool, optional
         Boolean flag to determine whether to use the fixed surface form of the
         heat equation.
@@ -205,178 +96,109 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
     """
 
     N = 50  # number of cells at top to use in hybrd implementation
-    x = x[:N]
-    cell = args[0]
-    dt = args[1]
-    dz = args[2]
-    lw_in = args[3]
-    sw_in = args[4]
-    air_temp = args[5]
-    p_air = args[6]
-    dew_point_temperature = args[7]
-    wind = args[8]
-    args = args_array(
+    x = cell["firn_temperature"][:N]
+
+    # Need to pack arguments into a single array, so we can pass them into the
+    # solver (as NumbaMinpack expects arguments as a vector) - we unpack these
+    # later in the heat equation solver
+
+    args = pack_args(
         cell,
+        met_data,
         dt,
         dz,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        fixed_sfc=fixed_sfc,
         N=N,
     )
 
     T = np.empty_like(cell["firn_temperature"])
-    # we only return root in the model (hence why in driver.py we index the
-    # function by [0], but the other info is useful for testing so can be used
-    # if calling solver directly
+
+    # fixed surface temperature case - just use the tridiagonal solver as we have a
+    # fixed surface BC
     if fixed_sfc:
-        sol = np.array([273.15])
         fvec = np.array([1.0])
         success = 1
         info = 1
         T_fixed = hnb.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T[0] = 273.15
         T[1:] = T_fixed[:]
+
+    # else, use hybrd to solve for the top N layers, then use the tridiagonal
+    # solver for the rest of the column.
     else:
         sol, fvec, success, info = hybrd(heq, x, args)
-        # sol = np.around(sol, decimals=8)
-
-        # Take our root-finding algorithm output (from first N layers),
-        # use it as the top boundary condition to the tridiagonal solver,
-        # then concatenate the two
         T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
         T[:N] = sol
         T[N:] = T_tri[:]
 
+
     T = np.around(T, decimals=8)
-    # print('Sol0 = ', sol[0])
-    # print('T = ', T)
     return T, fvec, success, info
 
 
 @jit(nopython=True, fastmath=False)
-def lake_formation_eqn(x, output, args):
+def lid_heateqn_solver(cell, met_data, dt, dz):
     """
-    Numba-compatible form of the lake formation version of the surface
-    temperature equation. Called in get_lake_solver.
+    NumbaMinpack version of the lid heat equation solver.
+    Solves physics.Numba.heateqn. Called in lid_functions.lid_development.
 
     Parameters
     ----------
-    x : array_like, float, dimension(vert_grid_lake)
-        Initial estimate of the lake temperature. [K]
-    output : array_like, float, dimension(vert_grid_lake)
-        Output array containing the lake temperature. We only actually return
-        the first element of this array.
-        This may be possible to set to float, along with x, but Numba works in
-        mysterious ways and this seems to compile and work.
+    x : array_like, float, dimension(vert_grid)
+        Initial guess at the lid column temperature. [K]
     args : array_like
-        Array of input arguments to be extracted into the relevant variables
-        (firn_depth, vert_grid, Q, k, and T1).
+        Array of arguments to pass into the function.
+        See pack_args for details.
 
     Returns
     -------
-    None.
+    root : array_like, float,
+          dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
+        Vector containing the calculated lid column temperature, either after
+        successful completion or at the end of the final iteration for an
+        unsuccessful solution. [K]
+    fvec : array_like, float,
+          dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
+        Vector containing the function evaluated at root, i.e. the raw output.
+    success : bool
+        Boolean flag determining whether the solution converged, or whether
+        there was an error.
+    info : int
+        Integer flag containing information on the status of the solution.
+        From the Minpack hybrd documentation:
+        !!  * ***info = 0*** improper input parameters.
+        !!  * ***info = 1*** relative error between two consecutive iterates
+        !!    is at most `xtol`.
+        !!  * ***info = 2*** number of calls to `fcn` has reached or exceeded
+        !!    `maxfev`.
+        !!  * ***info = 3*** `xtol` is too small. no further improvement in
+        !!    the approximate solution `x` is possible.
+        !!  * ***info = 4*** iteration is not making good progress, as
+        !!    measured by the improvement from the last
+        !!    five jacobian evaluations.
+        !!  * ***info = 5*** iteration is not making good progress, as
+        !!    measured by the improvement from the last
+        !!    ten iterations.
     """
-    firn_depth = args[0]
-    vert_grid = args[1]
-    Q = args[2]
-    k = args[3]
-    T1 = args[4]
-    # set output[0] rather than just output else we will just return our
-    # initial guess.
-    output[0] = (
-        -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
-        + Q
-        - k * (x[0] - T1) / (firn_depth / vert_grid)
+
+    eqn = heqlid
+
+    x = cell["lid_temperature"]
+
+    args = pack_args(
+        cell,
+        met_data,
+        dt,
+        dz,
     )
+
+    root, fvec, success, info = hybrd(eqn, x, args)
+
+    root = np.around(root, decimals=8)
+    return root, fvec, success, info
 
 
 @jit(nopython=True, fastmath=False)
-def lake_development_eqn(x, output, args):
-    """
-    Numba-compatible form of the lake development version of the surface
-    temperature equation. Called in get_lake_solver.
-
-    Parameters
-    ----------
-    x : array_like, float, dimension(vert_grid_lake)
-        Initial estimate of the lake temperature. [K]
-
-    args : array_like
-        Array of input arguments to be extracted into the relevant variables
-        (J, Q, vert_grid_lake and lake_temperature).
-
-    Returns
-    -------
-    output : float
-        Estimate of the surface lake temperature [K].
-    """
-    J = 0.1 * (9.8 * 5 * 10 ** -5 * (1.19 * 10 ** -7) ** 2 / 10 ** -6) ** (
-        1 / 3
-    )
-
-    vert_grid_lake = args[0]
-    melt = args[1]
-    exposed_water = args[2]
-    lid = args[3]
-    lake = args[4]
-    lake_depth = args[5]
-    lw_in = args[6]
-    sw_in = args[7]
-    air_temp = args[8]
-    p_air = args[9]
-    dew_point_temperature = args[10]
-    wind = args[11]
-    lake_temperature = np.zeros(int(vert_grid_lake))
-    for i in range(len(lake_temperature)):
-        lake_temperature[i] = args[12 + i]
-
-    Q = surface_fluxes.sfc_flux(
-        melt,
-        exposed_water,
-        lid,
-        lake,
-        lake_depth,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        x[0],
-    )
-
-    T_core = lake_temperature[int(vert_grid_lake / 2)]
-    # fluxes +ve downwards - if T_sfc > T_core, we have a flux downward
-    # which cools the lake surface - negative sign
-    # we have Q (surface flux, downwards) + longwave radiation (upwards, so
-    # negative) + turbulent flux (downwards if T_sfc < T_core, upwards if T_sfc >
-    # T_core).
-    output[0] = np.array(
-        [
-            -0.98 * (5.670373 * 10 ** -8) * (x[0] ** 4)
-            + Q
-            - np.sign(x[0] - T_core)
-            * 1000
-            * 4181
-            * J
-            * abs(x[0] - T_core) ** (4 / 3)
-        ]
-    )
-
-
-dev_eqn_cfunc = cfunc(minpack_sig)(lake_development_eqn)
-form_eqn_cfunc = cfunc(minpack_sig)(lake_formation_eqn)
-dev_eqnaddress = dev_eqn_cfunc.address
-form_eqnaddress = form_eqn_cfunc.address
-
-
-@jit(nopython=True, fastmath=False)
-def lake_solver(x, args, formation=False):
+def lake_seb_solver(cell, met_data, dt, dz, formation=False):
     """
     NumbaMinpack version of the lake solver.
     Solves core.choose_solver.dev_eqn or core.choose_solver.form_eqn, which are
@@ -415,106 +237,20 @@ def lake_solver(x, args, formation=False):
 
     else:
         eqn = dev_eqnaddress
+    if formation:
+        x = np.array([met_data["temperature"]])
+    else:
+        x = np.array([cell["lake_temperature"][0]])
+
+    args = pack_args(cell, met_data, dt, dz)
 
     root, fvec, success, info = hybrd(eqn, x, args)
     root = np.around(root, decimals=8)
+
     return root, fvec, success, info
 
-
 @jit(nopython=True, fastmath=False)
-def sfc_energy_virtual_lid(x, output, args):
-    Q = args[0]
-    k_v_lid = args[1]
-    lake_depth = args[2]
-    vert_grid_lake = args[3]
-    v_lid_depth = args[4]
-    lake_temperature = np.zeros(int(vert_grid_lake))
-    # hacky way to assign lake_temperature as the cfunc doesn't like slicing
-    # normally
-    for i in np.arange(len(lake_temperature)):
-        lake_temperature[i] = args[5 + i]
-
-    # set output[0] rather than just output as solution doesn't converge
-    # otherwise as it expects an array
-    # sign convention = fluxes positive downwards
-    T_interface = 273.15
-    effective_thickness = max(v_lid_depth, 1e-3)
-    # conductive flux from virtual lid into interface - positive downward
-    # (i.e. if lid is colder than interface, heat flows up, out of interface),
-    # represented by a negative flux
-    conduction_flux = - k_v_lid * (x[0] - T_interface) / effective_thickness
-    # so then with this positive downwards convention, we sum
-    # the surface fluxes (Q) downwards, + the conductive flux downwards,
-    # + the longwave radiation (which upwards, so negative here)
-    output[0] = (
-        -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
-        + Q
-        + conduction_flux
-    )
-
-
-@jit(nopython=True, fastmath=False)
-def sfc_energy_lid(x, output, args):
-    """
-
-    Parameters
-    ----------
-    x
-    args
-
-    Returns
-    -------
-    output : float
-
-    """
-    k_lid = args[0]
-    lid_depth = args[1]
-    vert_grid_lid = args[2]
-    sub_T = args[3]
-    melt = args[4]
-    exposed_water = args[5]
-    lid = args[6]
-    lake = args[7]
-    lake_depth = args[8]
-    lw_in = args[9]
-    sw_in = args[10]
-    air_temp = args[11]
-    p_air = args[12]
-    dew_point_temperature = args[13]
-    wind = args[14]
-    snow_on_lid = args[15]
-
-    Q = surface_fluxes.sfc_flux(
-        melt,
-        exposed_water,
-        lid,
-        lake,
-        lake_depth,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        x[0],
-        snow_on_lid,
-    )
-
-    output[0] = (
-        -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
-        + Q
-        - k_lid * (x[0] - sub_T) / (lid_depth / vert_grid_lid)
-    )
-
-
-sfc_energy_virtual_lid = cfunc(minpack_sig)(sfc_energy_virtual_lid)
-sfc_energy_lid = cfunc(minpack_sig)(sfc_energy_lid)
-sfc_energy_vlid_address = sfc_energy_virtual_lid.address
-sfc_energy_lid_address = sfc_energy_lid.address
-
-
-@jit(nopython=True, fastmath=False)
-def lid_seb_solver(x, args, v_lid=False):
+def lid_seb_solver(cell, met_data, dt, dz, k_lid, Sfrac_lid=None):
     """
     NumbaMinpack version of the lid surface energy balance solver.
     Solves .sfc_energy_lid or  sfc_energy_virtual_lid.
@@ -523,15 +259,15 @@ def lid_seb_solver(x, args, v_lid=False):
 
     Parameters
     ----------
-    x : array_like, float,
-           dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
-        Initial estimate of the lid temperature. We only use the first value
-        (i.e. the surface value). [K]
-    args : array_like
-        Array of arguments to pass into the function.
-    v_lid : bool, optional
-        Flag that asks whether we want to solve the surface energy balance
-        for a virtual lid (if True), or a true lid (if False). Default False.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    met_data : dict
+        Dictionary containing the meteorological data for the current timestep.
+        See firn_column for details.
+    dt : int
+        Number of seconds in the current timestep [s]
+    dz : float
+        Size of each vertical point in the cell. [m]
 
     Returns
     -------
@@ -561,90 +297,17 @@ def lid_seb_solver(x, args, v_lid=False):
         !!    measured by the improvement from the last
         !!    ten iterations.
     """
-    if v_lid:
+    if cell["v_lid"]:
         eqn = sfc_energy_vlid_address
 
     else:
         eqn = sfc_energy_lid_address
 
-    root, fvec, success, info = hybrd(eqn, x, args)
+    if not Sfrac_lid:
+        Sfrac_lid = np.array([1])
 
-    root = np.around(root, decimals=8)
-    return root, fvec, success, info
-
-
-@jit(nopython=True, fastmath=False)
-def lid_heateqn_solver(x, args):
-    """
-    NumbaMinpack version of the lid heat equation solver.
-    Solves physics.Numba.heateqn. Called in lid_functions.lid_development.
-
-    Parameters
-    ----------
-    x : array_like, float, dimension(vert_grid)
-        Initial guess at the lid column temperature. [K]
-    args : array_like
-        Array of arguments to pass into the function.
-        See args_array for details.
-
-    Returns
-    -------
-    root : array_like, float,
-          dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
-        Vector containing the calculated lid column temperature, either after
-        successful completion or at the end of the final iteration for an
-        unsuccessful solution. [K]
-    fvec : array_like, float,
-          dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
-        Vector containing the function evaluated at root, i.e. the raw output.
-    success : bool
-        Boolean flag determining whether the solution converged, or whether
-        there was an error.
-    info : int
-        Integer flag containing information on the status of the solution.
-        From the Minpack hybrd documentation:
-        !!  * ***info = 0*** improper input parameters.
-        !!  * ***info = 1*** relative error between two consecutive iterates
-        !!    is at most `xtol`.
-        !!  * ***info = 2*** number of calls to `fcn` has reached or exceeded
-        !!    `maxfev`.
-        !!  * ***info = 3*** `xtol` is too small. no further improvement in
-        !!    the approximate solution `x` is possible.
-        !!  * ***info = 4*** iteration is not making good progress, as
-        !!    measured by the improvement from the last
-        !!    five jacobian evaluations.
-        !!  * ***info = 5*** iteration is not making good progress, as
-        !!    measured by the improvement from the last
-        !!    ten iterations.
-    """
-
-    eqn = heqlid
-    cell = args[0]
-    dt = args[1]
-    dz = args[2]
-    lw_in = args[3]
-    sw_in = args[4]
-    air_temp = args[5]
-    p_air = args[6]
-    dew_point_temperature = args[7]
-    wind = args[8]
-    Sfrac_lid = args[-2]
-    k_lid = args[-1]
-    args = args_array(
-        cell,
-        dt,
-        dz,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        lid=True,
-        k_lid=k_lid,
-        Sfrac_lid=Sfrac_lid,
-    )
-
+    args = pack_args(cell, met_data, dt, dz, k_lid=k_lid, Sfrac_lid=Sfrac_lid)
+    x = np.array([cell['virtual_lid_temperature']])
     root, fvec, success, info = hybrd(eqn, x, args)
 
     root = np.around(root, decimals=8)

@@ -16,6 +16,7 @@ from monarchs.physics import (
     snow_accumulation,
     reset_column,
 )
+from monarchs.physics.constants import rho_ice, rho_water
 from monarchs.core.error_handling import generic_error, check_correct
 
 MODULE_NAME = "monarchs.physics.timestep"
@@ -114,8 +115,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         dz = cell["firn_depth"] / cell["vert_grid"]
         if snowfall_toggle:
             cell["rho"] = (
-                cell["Sfrac"] * cell["rho_ice"]
-                + cell["Lfrac"] * cell["rho_water"]
+                cell["Sfrac"] * rho_ice
+                + cell["Lfrac"] * rho_water
             )
             if met_data[t_step]['temperature'] > 273.15:
                 snow_T = 273.1  # sergienko thesis pg. 26
@@ -127,12 +128,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 met_data[t_step]["snow_dens"],
                 snow_T,
             )
-        sw_in = met_data[t_step]["SW_down"]
-        lw_in = met_data[t_step]["LW_down"]
-        wind = met_data[t_step]["wind"]
-        dew_point_temperature = met_data[t_step]["dew_point_temperature"]
-        air_temp = met_data[t_step]["temperature"]
-        p_air = met_data[t_step]["surf_pressure"]
+
 
         """
         Two main paths - either no exposed water, in which case the dry firn
@@ -147,40 +143,24 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     cell,
                     dt,
                     dz,
-                    lw_in,
-                    sw_in,
-                    air_temp,
-                    p_air,
-                    dew_point_temperature,
-                    wind,
+                    met_data[t_step],
                     toggle_dict,
                 )
 
         elif cell["exposed_water"]:
             # print("Exposed water present")
-            args = (
-                cell,
-                dt,
-                dz,
-                lw_in,
-                sw_in,
-                air_temp,
-                p_air,
-                dew_point_temperature,
-                wind,
-            )
-            x = cell["firn_temperature"]
+
 
             if firn_heat_toggle:
                 sol, fvec, success, info = solver.solve_firn_heateqn(
-                    x, args, fixed_sfc=True, solver_method="hybr"
+                    cell, met_data[t_step], dt, dz, fixed_sfc=True, solver_method="hybr"
                 )
                 if success:
                     cell["firn_temperature"] = sol
 
             cell["rho"] = (
-                cell["Sfrac"] * cell["rho_ice"]
-                + cell["Lfrac"] * cell["rho_water"]
+                cell["Sfrac"] * rho_ice
+                + cell["Lfrac"] * rho_water
             )
             if (
                 cell["lake"]
@@ -202,12 +182,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     lake.lake_formation(
                         cell,
                         dt,
-                        lw_in,
-                        sw_in,
-                        air_temp,
-                        p_air,
-                        dew_point_temperature,
-                        wind,
+                        met_data[t_step]
                     )
 
             elif cell["lake"] and not cell["lid"]:
@@ -216,12 +191,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     Fu = lake.lake_development(
                         cell,
                         dt,
-                        lw_in,
-                        sw_in,
-                        air_temp,
-                        p_air,
-                        dew_point_temperature,
-                        wind,
+                        met_data[t_step]
                     )
                 # TODO - add refreezing calculation here - relevant if we have
                 # lakes underneath a frozen lid that gets combined
@@ -234,12 +204,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         virtual_lid.virtual_lid_development(
                             cell,
                             dt,
-                            lw_in,
-                            sw_in,
-                            air_temp,
-                            p_air,
-                            dew_point_temperature,
-                            wind,
+                            met_data[t_step],
                             Fu,
                         )
 
@@ -257,12 +222,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     Fu = lake.lake_development(
                         cell,
                         dt,
-                        lw_in,
-                        sw_in,
-                        air_temp,
-                        p_air,
-                        dew_point_temperature,
-                        wind,
+                        met_data[t_step],
                     )
                     # TODO - - testing freezing
                     for lev in range(cell["vert_grid"]):
@@ -270,12 +230,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     lid.lid_development(
                         cell,
                         dt,
-                        lw_in,
-                        sw_in,
-                        air_temp,
-                        p_air,
-                        dew_point_temperature,
-                        wind,
+                        met_data[t_step],
                         Fu,
                     )
                 # Check for if we need to reset the column - two possible
@@ -283,11 +238,22 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 #            - or if lid melt count > 6 (i.e. lid has been
                 #              melting for half a day, and therefore has
                 #              significant slush/water on the surface)
-                if cell["lake_depth"] <= 1e-5 or (cell["lid_melt_count"] > 12):
+                if cell["lake_depth"] <= 0.1:
                     print('Combining lid and firn column')
                     print('Lid melt count:', cell["lid_melt_count"])
+                    reset_column.combine_lid_firn(cell, surface_slush=False)
+                elif (cell["lid_melt_count"] > 12):
                     reset_column.combine_lid_firn(cell, surface_slush=True)
 
+        # If we have had a reset/combine event, we may end up with a
+        # region of liquid water inside the firn. We need to ensure that this
+        # continues to freeze based on the conditions what we take to be our
+        # new "firn column" - much as it did when it was a lake under a lid.
+        # Effectively, we are mimicking the behaviour of the lid refreezing,
+        # so that the water doesn't just sit there forever.
+        if cell["reset_combine"]:
+            pass
+            #firn_column.refreeze_internal_lake(cell, dt)
         # If we have Sfrac + Lfrac > 1, we need to ensure that Lfrac is
         # adjusted accordingly.
         # We can do this via calc_saturation, which is used to similar effect
@@ -319,7 +285,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             check_correct(cell)
 
         cell["rho"] = (
-            cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+            cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
         )
 
         cell["t_step"] += 1

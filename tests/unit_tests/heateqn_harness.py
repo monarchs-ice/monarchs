@@ -50,7 +50,7 @@ def run_test(vp, scaling_factor=0.05):
     wind,
     dz,
     dt,
-    epsilon = 0.98,
+    epsilon = emissivity,
     sigma = 5.670374e-8,
     """
 

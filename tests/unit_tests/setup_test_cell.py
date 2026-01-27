@@ -16,14 +16,14 @@ def setup_cell():
     cell["lid_temperature"] = 273.15 * np.ones(
         cell["vert_grid_lid"]
     )  # Initial lid temperature profile
-    cell["rho_ice"] = 917
-    cell["rho_water"] = 1000
+    rho_ice = 917
+    rho_water = 1000
     cell["firn_depth"] = 30
-    cell["k_air"] = 0.024  # Thermal conductivity of air [W m^-1 K^-1]
-    cell["k_water"] = 0.5818  # Thermal conductivity of water [W m^-1 K^-1]
-    cell["L_ice"] = 334000  # Latent heat of fusion for ice [J kg^-1]
-    cell["cp_air"] = 1004  # Specific heat capacity of air [J kg^-1 K^-1]
-    cell["cp_water"] = 4217  # Specific heat capacity of water [J kg^-1 K^-1]
+    k_air = 0.024  # Thermal conductivity of air [W m^-1 K^-1]
+    k_water = 0.5818  # Thermal conductivity of water [W m^-1 K^-1]
+    L_ice = 334000  # Latent heat of fusion for ice [J kg^-1]
+    cp_air = 1004  # Specific heat capacity of air [J kg^-1 K^-1]
+    cp_water = 4217  # Specific heat capacity of water [J kg^-1 K^-1]
     cell["exposed_water"] = True
     cell["melt"] = True
     cell["lid_depth"] = 0.0
