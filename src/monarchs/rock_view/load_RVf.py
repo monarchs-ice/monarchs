@@ -38,9 +38,5 @@ def load_RVf(RVf_filepath):
         # Checking that all values in the grid are between 0 and 1.
         if np.any((RVf<0) | (RVf>1)):
             raise ValueError("All grid values must be between 0 and 1!")
-        
-    else:
-        print("You have not specified a rock view fraction CSV file.")
-        # Not having an RVf CSV will not terminate MONARCHS from initialising, MONARCHS will isntead set cell['RVf'] = 0 for all grid cells.
-        
+            
     return RVf
