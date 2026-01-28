@@ -15,7 +15,7 @@ def load_RVf(RVf_filepath):
     RVf_filepath :  str
         Filepath for the rock view fraction CSV.
         The file specified must be a .csv, with all values being between 0 and 1.
-        The grid must be the same size as the model grid specified in model_setup.py.
+        The grid must be the same size as the model grid specified in model_setup.py. Currently only square grids are supported.
     
     Returns
     -------
