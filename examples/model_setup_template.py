@@ -195,12 +195,12 @@ met_output_filepath = "met_data.nc"
 Rock view fraction grid
     RVf_input_filepath : str
         Path to a file of rock view fraction data to inform MONARCHS.
-         Only CSV format is supported. 
-         All values must be between 0 and 1.
-         The grid must be the same size as the model grid specified in row_amount, col_amount. Currently only square grids are supported.
-         If this is a relative filepath, then you should ensure that is relative to the folder in which
-         you are running MONARCHS from, not the source code directory.
-         # TO DO - add to model_setup_reference.rst
+        Only CSV format is supported. 
+        All values must be between 0 and 1.
+        The grid must be the same size as the model grid specified in row_amount, col_amount. Currently only square grids are supported.
+        If this is a relative filepath, then you should ensure that is relative to the folder in which
+        you are running MONARCHS from, not the source code directory.
+        # TO DO (Izzy) - add to model_setup_reference.rst
 """
 
 # RVf_input_filepath = "data/RVf_matrix.csv"
