@@ -27,3 +27,4 @@ tau_ice = 1.5  # black ice extinction coefficient
 # Cooper, M.G., et al., 2021. Spectral attenuation coefficients from
 # measurements of light transmission in bare ice on the Greenland Ice Sheet.
 # The Cryosphere, 15(4), pp.1931-1953.
+v_lid_min_thickness = 1e-3

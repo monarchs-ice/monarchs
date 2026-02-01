@@ -166,7 +166,7 @@ def radiative_transfer(cell, sw_in):
     lake_reflected_radiation = radiation_at_bottom * saturated_firn_albedo
     #print('Radiation reflected at bottom = ', lake_reflected_radiation)
     radiation_at_bottom *= (1 - saturated_firn_albedo)
-    # and this reflected radiation will also be absorbed again in the lake.
+    # and this reflected radiation will also be absorbed again  in the lake.
     lake_absorbed_solar = lake_absorbed_solar + (
         lake_reflected_radiation
         * (1 - np.exp(-tau_water * cell["lake_depth"]))
@@ -257,10 +257,10 @@ def turbulent_mixing(cell, sw_in, dt, k):
         # apply mixed core temp to interior nodes
         indices = np.arange(1, cell["vert_grid_lake"] - 1)
         cell["lake_temperature"][indices] = lake_core_temp
-        dh_change, cap_reached = calc_height_adjustment(
-            cell, k, net_lower_flux_for_dh
-        )
-        dh += dh_change
+    dh_change, cap_reached = calc_height_adjustment(
+        cell, k, net_lower_flux_for_dh
+    )
+    dh += dh_change * 3600
     if dh > (cell["firn_depth"] / cell["vert_grid"]):
         dh = cell["firn_depth"] / cell["vert_grid"]
         print('Melting entire layer')
@@ -423,7 +423,7 @@ def lake_formation(
             cell["exposed_water_refreeze_counter"] > 48
             and cell["lake_depth"] < 0.1
         ):
-            freeze_pre_lake(cell)
+            #freeze_pre_lake(cell)
             pass
 
 
@@ -487,8 +487,11 @@ def lake_development(
             cell["snow_on_lid"]
         )
         cell["lake_temperature"][0] = solver.lake_seb_solver(cell, met_data, dt, 0, formation=False)[0][0]
+        print('Lake surface temperature: ', cell["lake_temperature"][0])
         # If surface cooled below freezing, create virtual lid
         if cell["lake_temperature"][0] < 273.15:
+            print('Lake surface below freezing, creating virtual lid')
+            print(cell["lake_temperature"][0])
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15
             cell["v_lid"] = True
@@ -533,6 +536,7 @@ def lake_development(
     # this subroutine)
     if boundary_change > 0:
         regrid_column.regrid_after_melt(cell, boundary_change, lake=True)
+        cell["lake_boundary_change"] += boundary_change
     elif boundary_change < 0:
         # remove water from lake, add ice to firn
         thickness_to_add = abs(boundary_change)

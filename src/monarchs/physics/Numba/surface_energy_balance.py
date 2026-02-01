@@ -6,7 +6,7 @@ development.
 import numpy as np
 from numba import jit
 from monarchs.physics.surface_fluxes import sfc_flux
-from monarchs.physics.constants import emissivity, stefan_boltzmann, k_water, k_air
+from monarchs.physics.constants import emissivity, stefan_boltzmann, k_water, k_air, v_lid_min_thickness
 from monarchs.physics.Numba import extract_args
 ######################
 # EQUATIONS TO SOLVE #
@@ -120,7 +120,7 @@ def lake_development_eqn(x, output, args):
     # T_core).
     output[0] = np.array(
         [
-            -emissivity * (stefan_boltzmann) * (x[0] ** 4)
+            -emissivity * stefan_boltzmann * (x[0] ** 4)
             + Q
             - np.sign(x[0] - T_core)
             * 1000
@@ -133,47 +133,47 @@ def lake_development_eqn(x, output, args):
 
 @jit(nopython=True, fastmath=False)
 def sfc_energy_virtual_lid(x, output, args):
+    """
+    Surface energy balance for virtual lid using combined thermal resistance
+    through ice + water to upper lake.
 
+    Parameters
+    ----------
+    x : array_like, float
+        Surface temperature being solved for [K]
+    output : array_like, float
+        Energy balance residual
+    args : array_like
+        Input arguments
+    """
     (vert_grid, firn_depth, dt, dz, melt, albedo, exposed_water,
      lid, lid_depth, virtual_lid, virtual_lid_depth,
      lake, lake_depth, snow_on_lid) = extract_args.extract_scalars(args)
 
     (lw_in, sw_in, air_temp, p_air,
      dew_point_temperature, wind) = extract_args.extract_met_data(args)
+
     (lid_temperature, Sfrac_lid,
      k_v_lid, vert_grid_lid, v_lid_depth, v_lid_temp) = extract_args.extract_lid_variables(args)
 
+    lake_temperature, vert_grid_lake = extract_args.extract_lake_variables(args)
+
     Q = sfc_flux(
-        albedo,
-        lid,
-        lake,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        x[0],
+        albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+        dew_point_temperature, wind, x[0]
     )
 
-    # set output[0] rather than just output as solution doesn't converge
-    # otherwise as it expects an array
-    # sign convention = fluxes positive downwards
-    T_interface = 273.15
-    effective_thickness = max(v_lid_depth, 1e-5)
-    # conductive flux from virtual lid into interface - positive downward
-    # (i.e. if lid is colder than interface, heat flows up, out of interface),
-    # represented by a negative flux
-    conduction_flux = - k_v_lid * (x[0] - T_interface) / effective_thickness
-    # so then with this positive downwards convention, we sum
-    # the surface fluxes (Q) downwards, + the conductive flux downwards,
-    # + the longwave radiation (which upwards, so negative here)
+    z_water = lake_depth / (vert_grid_lake / 2)
+
+    # total thickness - taken from matlab
+    total_thickness = v_lid_depth + z_water
+    conduction = k_v_lid * (x[0] - 273.15) / total_thickness
+
     output[0] = (
-        -emissivity * stefan_boltzmann * (x[0] ** 4)
-        + Q
-        + conduction_flux
+            Q
+            - emissivity * stefan_boltzmann * (x[0] ** 4)
+            - conduction
     )
-
 
 @jit(nopython=True, fastmath=False)
 def sfc_energy_lid(x, output, args):

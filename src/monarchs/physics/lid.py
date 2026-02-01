@@ -118,7 +118,7 @@ def lid_development(
         met_data["wind"],
         x[0],
     )
-    if cell["lid_temperature"][0] < 273.15 and cell["lid_sfc_melt"] > 0:  # frozen
+    if cell["lid_temperature"][0] < 273.15: #and cell["lid_sfc_melt"] > 0:  # frozen
         # Decrement lid_melt_count if the lid is freezing.
         surface_freezing(cell, dt, Q)
     else:  # melting
@@ -247,10 +247,11 @@ def surface_melt(cell, dt, Q):
     cell["lid_snow_depth"] -= min(cell["lid_snow_depth"], lid_melt_this_timestep * (rho_ice / 350))
     #print('lid melt this timestep = ', lid_melt_this_timestep)
     #print('Total melt = ', cell["lid_sfc_melt"])
-    cell["snow_on_lid"] = 2  # wet snow
+    if cell["snow_on_lid"] == 1:
+        cell["snow_on_lid"] = 2  # now wet snow
     if cell["lid_snow_depth"] <= 0:
         cell["snow_on_lid"] = 0
-    if cell["lid_sfc_melt"] > 0.1:  # 10 cm deep
+    if cell["lid_sfc_melt"] > 0.02:  # 2 cm deep
         print('Lid surface melt exceeded 10 cm this timestep')
         cell["lid_melt_count"] += 1  # force it above the timestep.py threshold
 
@@ -321,6 +322,7 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
         Fu = 0.0
     # net fluxes at interface. fluxes are positive downwards.
     # which means we want flux down into interface (positive)
+    # minus (- Fu) as Fu is positive *downwards* also
     q_net = q_ice - Fu  # Fu positive downward by convention
     if np.isnan(q_ice):
         print("ERROR: monarchs.physics.lid.adjust_lid_height: Q ice = np.nan")

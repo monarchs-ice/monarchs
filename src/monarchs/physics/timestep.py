@@ -224,7 +224,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         dt,
                         met_data[t_step],
                     )
-                    # TODO - - testing freezing
                     for lev in range(cell["vert_grid"]):
                         percolation.calc_refreezing(cell, lev)
                     lid.lid_development(
@@ -238,7 +237,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 #            - or if lid melt count > 6 (i.e. lid has been
                 #              melting for half a day, and therefore has
                 #              significant slush/water on the surface)
-                if cell["lake_depth"] <= 0.1:
+                if cell["lake_depth"] <= 1e-5:
                     print('Combining lid and firn column')
                     print('Lid melt count:', cell["lid_melt_count"])
                     reset_column.combine_lid_firn(cell, surface_slush=False)
