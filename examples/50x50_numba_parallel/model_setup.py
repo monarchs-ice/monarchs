@@ -41,7 +41,7 @@ longmin = np.nan  # Minimum longitude to use in our DEM and met data files.
 Timestepping parameters
 """
 num_days = (
-    20  # number of days to run the model for (assuming t_steps = 24 below)
+    2  # number of days to run the model for (assuming t_steps = 24 below)
 )
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = (
@@ -75,7 +75,7 @@ met_start = 0  # Index at which to start the met data, in case you want to start
 # It will roll the array so that it fits this length.
 
 met_timestep = "hourly"
-met_output_filepath = "met_data_50x50_numba_example.nc"
+met_output_filepath = "./met_data/met_data_50x50_numba_example.nc"
 
 """
 Output parameters

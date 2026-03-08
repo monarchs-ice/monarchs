@@ -440,6 +440,7 @@ def jit_modules(fastmath=False):
         "check_for_single_column_errors",
         "check_grid_correctness",
         "get_num_cores",
+        "np",
 
     ]  # other builtins/decorators
 
@@ -450,8 +451,8 @@ def jit_modules(fastmath=False):
             # Ignore functions that are imported, are in our ignore list,
             # or have the __wrapped__ attribute
             # if function.__module__ != module.__name__:
-            #     print(f"Skipping {name} because it belongs to
-            #     {function.__module__}, not {module.__name__}")
+            #     print(f"Skipping {name} because it belongs to"
+            #           f" {function.__module__}, not {module.__name__}")
             #     continue
 
             if name in ignore_list:

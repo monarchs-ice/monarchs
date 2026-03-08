@@ -9,9 +9,9 @@ This approach was chosen to maximise usability, so that the different solvers
 can be generated according to the value of a single Boolean.
 """
 
-import numpy as np
 from scipy.optimize import fsolve, root
 from monarchs.physics import heateqn, surface_fluxes
+import numpy as np
 
 
 def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
