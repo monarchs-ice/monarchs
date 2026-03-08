@@ -2,14 +2,13 @@
 
 # TODO - module-level docstring
 import numpy as np
+from monarchs.physics.constants import emissivity, sfc_absorbed_frac
 
 
 def sfc_flux(
-    melt,
-    exposed_water,
+    alpha,
     lid,
     lake,
-    lake_depth,
     lw_in,
     sw_in,
     air_temp,
@@ -17,7 +16,6 @@ def sfc_flux(
     dew_point_temperature,
     wind,
     xsurf,
-    snow_on_lid=False
 ):
     """
     Calculate the surface heat flux from the input shortwave and longwave
@@ -25,20 +23,14 @@ def sfc_flux(
 
     Parameters
     ----------
-    melt : bool
-        Flag which indicates whether melting has occurred.
-        Used here to determine surface albedo.
-    exposed_water : bool
-        Flag which describes whether there is exposed water at the surface.
-        Used here to determine surface albedo.
+    alpha: float
+        Surface albedo.
     lid : bool
         Flag which indicates whether there is a lid at the surface due to
-        refreezing. Used here to determine surface albedo.
+        refreezing. Used here to determine which form of bulk fluxes to use.
     lake : bool
         Flag which indicates whether there is a lake present. Used here to
-        determine surface albedo.
-    lake_depth : float
-        Depth of the lake (in vertical points?)
+        determine which form of bulk fluxes to use.
     lw_in : float
         Incoming longwave radiation. [W m^-2].
     sw_in : float
@@ -60,18 +52,17 @@ def sfc_flux(
         Surface energy flux. [W m^-2].
 
     """
-    # Positive going into ice shelf
-    alpha = sfc_albedo(melt, exposed_water, lid, lake, lake_depth,
-                       snow_on_lid)
+
+    # positive going into ice shelf 
     Flat, Fsens = bulk_fluxes(
         wind, air_temp, xsurf, p_air, dew_point_temperature, lake, lid
     )
-    epsilon = 0.98  # emissivity
+    epsilon = emissivity  # emissivity
 
     if lid:
-        frac_scaling = 0.5  # fraction of solar absorbed at lid surface
+        frac_scaling = sfc_absorbed_frac  # fraction of solar absorbed at lid surface
     elif lake:
-        frac_scaling = 0.5  # fraction of solar absorbed at lake surface
+        frac_scaling = sfc_absorbed_frac  # fraction of solar absorbed at lake surface
     else:
         frac_scaling = 1    # firn surface - all radiation absorbed at surface
     Q = epsilon * lw_in + ((1 - alpha) * sw_in * frac_scaling) + Flat + Fsens
@@ -79,11 +70,21 @@ def sfc_flux(
     return Q
 
 
-def sfc_albedo(melt, exposed_water, lid, lake, lake_depth, snow_on_lid):
+def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_lid):
     """
     Determine the effective surface albedo depending on the situation at the
     top of the ice shelf (i.e. is there exposed water, firn or snow etc.)
 
+    TODO - two-band albedo scheme. We split SW radiative transfer into
+    a "skin" absorption (SWIR/NIR) and that which penetrates (visible).
+    Currently though, we use a single-value reflectance, which is
+    somewhere between the SWIR and visible values. A better
+    approach would be to split this.
+
+    TODO - We also want to better consider how the albedo changes.
+    Right now, we have a bunch of switches. This is mostly fine, but
+    there is more likely to be a smooth transition between reflectances
+    over time than hard swaps like this.
 
     Parameters
     ----------
@@ -105,7 +106,6 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth, snow_on_lid):
         Effective surface albedo for shortwave radiation.
 
     """
-    #     TODO - snow albedo, add later
     if melt:
         if exposed_water:
             if lid:
@@ -114,12 +114,14 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth, snow_on_lid):
                 # https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JC014161
                 # this implies (Fig. 1) that it should be ~0.6
                 alpha = 0.6 # bare dry ice lid albedo
-
             elif lake:
                 h = lake_depth
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
                     -539 + 20000 * np.exp(3.6 * h)
                 )  # lake albedo
+                if virtual_lid:
+                    # TODO - more sophisticated treatment of virtual lid albedo
+                    alpha = max(alpha, 0.2) # minimum albedo for virtual lid
             else:
                 alpha = 0.6  # saturated firn albedo
         else:
@@ -127,8 +129,10 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth, snow_on_lid):
     else:
         alpha = 0.867  # dry snow albedo
 
-    if snow_on_lid:
+    if snow_on_lid == 1:
         alpha = 0.867  # snow albedo
+    elif snow_on_lid == 2:
+        alpha = 0.6 # wet snow albedo
 
     return alpha
 

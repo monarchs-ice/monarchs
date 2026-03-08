@@ -1,252 +1,317 @@
-""" """
+"""
+NumbaMinpack requires all arguments to be passed as a single flat array.
+This module provides functions to pack and unpack model variables
+into/from such a flat array, supporting variable grid sizes and optional arrays.
 
-# TODO - module-level docstring
+This is done using a mapping of indices for each scalar variable in the packed array,
+as well as pointers to the start of variable-length arrays (e.g. firn temperature, lid temperature).
+
+The intent here is to ensure that we just have one set of logic to move data from
+the Python structured array format into the flat array format required by NumbaMinpack,
+and one set of functions we can use and re-use to extract the relevant parameters from
+this packed array.
+
+The indices defined below is the "canonical" mapping of model variables to positions
+in the packed args array. If you want to use a new variable inside
+the heat equation solver (or equivalently surface fluxes, since this is called inside
+the heat equation solver), you need to add it here.
+
+We define functions to extract the specific parameters we need, which is determined by the needs
+of the specific physics functions.
+"""
+
 import numpy as np
-from numba import jit
+from numba import jit, carray
+
+# Define indices for various parameters in the packed args array.
+# Model scalars
+IDX_N_GRID = 0
+IDX_MELT = 1
+IDX_EXPOSED_WATER = 2
+IDX_LID = 3
+IDX_LID_DEPTH = 4
+IDX_LAKE = 5
+IDX_LAKE_DEPTH = 6
+IDX_SNOW_LID = 7
+IDX_ALBEDO = 8
+IDX_DT = 9
+IDX_DZ = 10
+IDX_K_LID_SCALAR = 11
+IDX_SFRAC_LID_SCALAR = 12
+IDX_V_LID = 13
+IDX_V_LID_DEPTH = 14
+IDX_FIRN_DEPTH = 15
+IDX_V_LID_TEMP = 16
+# just makes calcing next indices easier - add your index(es) to the end of the list above
+# and update IDX_SCALARS_END accordingly
+IDX_SCALARS_END = 17
+
+# Atmospheric data
+IDX_LW_IN = IDX_SCALARS_END + 1
+IDX_SW_IN = IDX_SCALARS_END + 2
+IDX_AIR_TEMP = IDX_SCALARS_END + 3
+IDX_P_AIR = IDX_SCALARS_END + 4
+IDX_DP_TEMP = IDX_SCALARS_END + 5
+IDX_WIND = IDX_SCALARS_END + 6
+# Size of the header portion of the args array, i.e. how many scalar
+# variables are we packing in. We can increase this if we add more scalars!
+HEADER_SIZE = 25
 
 
-def extract_args_firn(args):
+# Array data. The data inside these indices (e.g. arr[22]) will be the start points
+# of the corresponding arrays. e.g. arr[PTR_LID_T] will be the start of the lid temperature array.
+# Since this is of variable length, we then need to assign PTR_LAKE_T as PTR_LID_T + N_lid, etc.
+# So arr[23] i.e. arr[PTR_LAKE_T] will be e.g. 32 if N_lid is 10.
+PTR_LID_T = HEADER_SIZE
+PTR_LAKE_T = HEADER_SIZE + 1
+PTR_FIRN_T = HEADER_SIZE + 2
+PTR_SFRAC = HEADER_SIZE + 3
+PTR_LFRAC = HEADER_SIZE + 4
+
+PTR_SIZE = HEADER_SIZE + 5
+
+
+@jit(nopython=True, fastmath=False)
+def pack_args(cell, met_data, dt, dz, N=False, k_lid=np.nan, Sfrac_lid=np.nan):
     """
-    NumbaMinpack gives large performance boosts, but has very crude
-    syntax which requires us to place all of our arguments to heateqn in
-    a single vector. This function retrieves the relevant
-    arrays from the "args" vector and separates them into
-    physically-meaningful variables.
+    Convert the variables from the model grid into a unified flat buffer.
+    Uses a 'Table of Contents' (pointers) in the header to allow for
+    variable grid sizes and optional arrays.
 
     Parameters
     ----------
-    args : float64[:]
-     Input vector of arguments. Generated using args_array from
-     physics.solver.
-
-    Returns
-    -------
-    T : float64[:]
-     Temperature of each vertical point. [K].
-    Sfrac : float64[:]
-     Solid fraction of each vertical point. [unitless]
-    Lfrac : float64[:]
-     Liquid fraction in each vertical point. [unitless]
-    k_air : float64
-     Thermal conductivity of air.
-    k_water : float64
-     Thermal conductivity of water.
-    cp_air : float64
-     Heat capacity of air.
-    cp_water : float64
-     Heat capacity of air.
-    dt : float64
-     Timestep. [s]
-    dz : float64
-     Change in firn height with respect to a step in vertical point [m]
-    melt : Bool
-     Flag which indicates whether melting has occurred.
-    exposed_water : Bool
-     Flag which describes whether there is exposed water at the surface.
-    lid : Bool
-     Flag which indicates whether there is a lid at the surface due to
-     refreezing.
-    lake : Bool
-     Flag which indicates whether there is a lake present.
-    lake_depth : float64
-     Depth of the lake (in vertical points?)
-    lw_in : float64
-     Incoming longwave radiation. [W m^-2].
-    sw_in : float64
-     Incoming shortwave (solar) radiation. [W m^-2].
-    air_temp : float64
-     Surface-layer air temperature. [K].
-    p_air : float64
-     Surface-layer air pressure. [hPa].
-    dew_point_temperature : float64
-     Dew-point temperature. [K].
-    wind : float64
-     Wind speed. [m s^-1].
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    met_data : dict
+        Dictionary containing the meteorological data for the current timestep.
+        See firn_column for details.
+    dt : float
+        Number of seconds in each timestep. [s]
+    dz : float
+        Change in firn height with respect to a step in vertical point [m]
+    N : int, optional
+        Number of vertical grid points in the firn column. If not provided,
+        uses cell["vert_grid"]. Used for the non-fixed-surface heat
+        equation solver. Default is False.
+    k_lid : float, optional
+        Thermal conductivity of the lid. Default is np.nan.
+    Sfrac_lid : float, optional
+        Solid fraction of the lid. Default is np.nan.
 
     """
+    if not N:
+        N = cell["vert_grid"]
 
-    # -1 doesnt work so use 0 and convert to int as we use it for indexing
-    vert_grid = np.int32(args[0])
+    if not np.isfinite(k_lid):
+        k_lid = 0
+    # get array lengths of variable-length arrays
+    len_lid = len(cell['lid_temperature'])
+    len_lake = len(cell['lake_temperature'])
+    len_firn = N
 
-    # initialise vectors and write into them - Numba doesn't like it if
-    # we assign them directly for some reason, but this has no impact on
-    # performance
-    T = np.zeros(vert_grid)
-    for i in range(vert_grid):
-        T[i] = args[i + 1]
-    Sfrac = np.zeros(vert_grid)
-    for i in range(vert_grid):
-        Sfrac[i] = args[vert_grid + i + 1]
-    Lfrac = np.zeros(vert_grid)
-    for i in range(vert_grid):
-        Lfrac[i] = args[(vert_grid * 2) + i + 1]
+    # these are used to create pointers to
+    # the start of each array in the args vector
+    # which are put into e.g. args[PTR_LID_T]
+    DATA_START = PTR_SIZE
+    p_lid = DATA_START
+    p_lake = p_lid + len_lid
+    p_firn = p_lake + len_lake
+    p_sfrac = p_firn + len_firn
+    p_lfrac = p_sfrac + len_firn
+    total_size = p_lfrac + len_firn
 
-    # find index corresponding to where our vertically-resolved variables
-    # are all read in - the following are all length-1
-    arrind = 3 * vert_grid + 1
-    k_air = args[arrind]
-    k_water = args[arrind + 1]
-    cp_air = args[arrind + 2]
-    cp_water = args[arrind + 3]
-    dt = args[arrind + 4]
-    dz = args[arrind + 5]
+    args = np.zeros(total_size)
 
-    # we had to convert these to floats for the purposes of
-    # reading them in as args needed a unified datatype - now recast them
-    # to the original dtypes.
-    melt = bool(np.round(args[arrind + 6]))
-    exposed_water = bool(np.round(args[arrind + 7]))
-    lid = bool(np.round(args[arrind + 8]))
-    lake = bool(np.round(args[arrind + 9]))
-    lake_depth = args[arrind + 10]
-    lw_in = args[arrind + 11]
-    sw_in = args[arrind + 12]
-    air_temp = args[arrind + 13]
-    p_air = args[arrind + 14]
-    dew_point_temperature = args[arrind + 15]
-    wind = args[arrind + 16]
+    # scalars - these are just the actual values
+    args[IDX_FIRN_DEPTH] = cell['firn_depth']
+    args[IDX_N_GRID] = N
+    args[IDX_MELT] = cell['melt']
+    args[IDX_EXPOSED_WATER] = cell['exposed_water']
+    args[IDX_LID] = cell['lid']
+    args[IDX_LAKE] = cell['lake']
+    args[IDX_LAKE_DEPTH] = cell['lake_depth']
+    args[IDX_SNOW_LID] = cell['snow_on_lid']
+    args[IDX_ALBEDO] = cell['albedo']
+    args[IDX_DT] = dt
+    args[IDX_DZ] = dz
+    args[IDX_K_LID_SCALAR] = k_lid
+    args[IDX_LID_DEPTH] = cell['lid_depth']
+    args[IDX_V_LID_DEPTH] = cell['v_lid_depth']
+    args[IDX_V_LID] = cell['v_lid']
+    args[IDX_V_LID_TEMP] = cell['virtual_lid_temperature']
+    # meteorological/atmospheric data - again, the actual values
+    args[IDX_LW_IN] = met_data['LW_down']
+    args[IDX_SW_IN] = met_data['SW_down']
+    args[IDX_AIR_TEMP] = met_data['temperature']
+    args[IDX_P_AIR] = met_data['surf_pressure']
+    args[IDX_DP_TEMP] = met_data['dew_point_temperature']
+    args[IDX_WIND] = met_data['wind']
 
-    return (
-        T,
-        Sfrac,
-        Lfrac,
-        k_air,
-        k_water,
-        cp_air,
-        cp_water,
-        dt,
-        dz,
-        melt,
-        exposed_water,
-        lid,
-        lake,
-        lake_depth,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-    )
+    # pointers - indices for the start of each array
+    # kind of like a table of contents
+    args[PTR_LID_T] = p_lid
+    args[PTR_LAKE_T] = p_lake
+    args[PTR_FIRN_T] = p_firn
+    args[PTR_SFRAC] = p_sfrac
+    args[PTR_LFRAC] = p_lfrac
 
+    # fill these arrays now
+    args[p_lid: p_lake] = cell['lid_temperature']
+    args[p_lake: p_firn] = cell['lake_temperature']
+    args[p_firn: p_sfrac] = cell['firn_temperature'][:N]
+    args[p_sfrac: p_lfrac] = cell['Sfrac'][:N]
+    args[p_lfrac: total_size] = cell['Lfrac'][:N]
 
-def extract_args_lid(args):
+    return args
+
+@jit(nopython=True, fastmath=False)
+def extract_scalars(args):
     """
-    NumbaMinpack gives large performance boosts, but has very crude
-    syntax which requires us to place all of our arguments to heateqn in
-    a single vector. This function retrieves the relevant
-    arrays from the "args" vector and separates them into
-    physically-meaningful variables.
+    Extract only the scalar parameters from the packed args array.
 
     Parameters
     ----------
-    args : float64[:]
-        Input vector of arguments. Generated using args_array from
-        <module_name>.
+    args: np.ndarray
+        Unified flat buffer containing model variables.
 
     Returns
     -------
-    T : float64[:]
-        Temperature of each vertical point. [K].
-    Sfrac : float64[:]
-        Solid fraction of each vertical point. [unitless]
-    k_air : float64
-        Thermal conductivity of air.
-    k_water : float64
-        Thermal conductivity of water.
-    cp_air : float64
-        Heat capacity of air.
-    cp_water : float64
-        Heat capacity of air.
-    dt : float64
-        Timestep. [s]
-    dz : float64
-        Change in firn height with respect to a step in vertical point?
-    melt : Bool
-        Flag which indicates whether melting has occurred.
-    exposed_water : Bool
-        Flag which describes whether there is exposed water at the surface.
-    lid : Bool
-        Flag which indicates whether there is a lid at the surface due to
-        refreezing.
-    lake : Bool
-        Flag which indicates whether there is a lake present.
-    lake_depth : float64
-        Depth of the lake (in vertical points?)
-    lw_in : float64
-        Incoming longwave radiation. [W m^-2].
-    sw_in : float64
-        Incoming shortwave (solar) radiation. [W m^-2].
-    air_temp : float64
-        Surface-layer air temperature. [K].
-    p_air : float64
-        Surface-layer air pressure. [hPa].
-    dew_point_temperature : float64
-        Dew-point temperature. [K].
-    wind : float64
-        Wind speed. [m s^-1].
+
+    """
+    # extract scalar values from header
+    vert_grid = int(args[IDX_N_GRID])
+    firn_depth = args[IDX_FIRN_DEPTH]
+    dt = args[IDX_DT]
+    dz = args[IDX_DZ]
+    melt = args[IDX_MELT]
+    albedo = args[IDX_ALBEDO]
+    exposed_water = args[IDX_EXPOSED_WATER]
+    lid = args[IDX_LID]
+    lid_depth = args[IDX_LID_DEPTH]
+    virtual_lid = args[IDX_V_LID]
+    virtual_lid_depth = args[IDX_V_LID_DEPTH]
+    lake = args[IDX_LAKE]
+    lake_depth = args[IDX_LAKE_DEPTH]
+    snow_on_lid = args[IDX_SNOW_LID]
+
+
+
+    return (
+        vert_grid, firn_depth, dt, dz, melt, albedo, exposed_water,
+        lid, lid_depth, virtual_lid, virtual_lid_depth, lake, lake_depth, snow_on_lid
+    )
+
+@jit(nopython=True, fastmath=False)
+def extract_met_data(args):
+    """
+    Extract only the meteorological data from the packed args array.
+
+    Parameters
+    ----------
+    args: np.ndarray
+        Unified flat buffer containing model variables.
+
+    Returns
+    -------
 
     """
 
-    # -1 doesnt work so use 0 and convert to int as we use it for indexing
-    vert_grid = np.int32(args[0])
+    args = carray(args, (10000,))
+    lw_in = args[IDX_LW_IN]
+    sw_in = args[IDX_SW_IN]
+    air_temp = args[IDX_AIR_TEMP]
+    p_air = args[IDX_P_AIR]
+    dew_point_temperature = args[IDX_DP_TEMP]
+    wind = args[IDX_WIND]
+    return lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
 
-    # initialise vectors and write into them - Numba doesn't like it if
-    # we assign them directly for some reason, but this has no impact on
-    # performance
-    T = np.zeros(vert_grid)
-    for i in range(vert_grid):
-        T[i] = args[i + 1]
-    Sfrac = np.zeros(vert_grid)
-    for i in range(vert_grid):
-        Sfrac[i] = args[vert_grid + i + 1]
+@jit(nopython=True, fastmath=False)
+def extract_firn_arrays(args):
+    """
+    Extract only the variable-length firn arrays from the packed args array.
 
-    # find index corresponding to where our vertically-resolved variables
-    # are all read in - the following are all length-1
-    arrind = 2 * vert_grid + 1
-    k_lid = args[arrind]
-    cp_air = args[arrind + 1]
-    cp_water = args[arrind + 2]
-    dt = args[arrind + 3]
-    dz = args[arrind + 4]
+    Parameters
+    ----------
+    args: np.ndarray
+        Unified flat buffer containing model variables.
 
-    # we had to convert these to floats for the purposes of
-    # reading them in as args needed a unified datatype - now recast them
-    # to the original dtypes.
-    melt = bool(np.round(args[arrind + 5]))
-    exposed_water = bool(np.round(args[arrind + 6]))
-    lid = bool(np.round(args[arrind + 7]))
-    lake = bool(np.round(args[arrind + 8]))
-    lake_depth = args[arrind + 9]
-    lw_in = args[arrind + 10]
-    sw_in = args[arrind + 11]
-    air_temp = args[arrind + 12]
-    p_air = args[arrind + 13]
-    dew_point_temperature = args[arrind + 14]
-    wind = args[arrind + 15]
-    snow_on_lid = args[arrind + 16]
-    return (
-        T,
-        Sfrac,
-        k_lid,
-        cp_air,
-        cp_water,
-        dt,
-        dz,
-        melt,
-        exposed_water,
-        lid,
-        lake,
-        lake_depth,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        snow_on_lid
-    )
+    Returns
+    -------
 
+    """
+    # args here is likely a pointer (float64*)
+    # We must wrap it to use slicing.
+    # We pick a large enough size (e.g., 10000) or pass the total size in.
+    args = carray(args, (2000,))
+    # extract pointers for variable-length arrays
+    p_firn = int(args[PTR_FIRN_T])
+    p_sfrac = int(args[PTR_SFRAC])
+    p_lfrac = int(args[PTR_LFRAC])
+    N = int(args[IDX_N_GRID])
+    # slice using the pointers
+    T_firn = args[p_firn: p_firn + N]
+    Sfrac = args[p_sfrac: p_sfrac + N]
+    # lfrac is last variable so goes to end
+    Lfrac = args[p_lfrac:p_lfrac + N]
 
-extract_args_firn = jit(extract_args_firn, nopython=True, fastmath=False)
-extract_args_lid = jit(extract_args_lid, nopython=True, fastmath=False)
+    return T_firn, Sfrac, Lfrac
+
+@jit(nopython=True, fastmath=False)
+def extract_lid_variables(args):
+    """
+    Extract only the variable-length lid arrays from the packed args array.
+
+    Parameters
+    ----------
+    args: np.ndarray
+        Unified flat buffer containing model variables.
+
+    Returns
+    -------
+
+    """
+    # args here is likely a pointer (float64*)
+    # We must wrap it to use slicing.
+    # We pick a large enough size (e.g., 10000) or pass the total size in.
+    args = carray(args, (5000,))
+    # extract pointers for variable-length arrays
+    p_lid = int(args[PTR_LID_T])
+    p_lake = int(args[PTR_LAKE_T])
+
+    # slice using the pointers
+    T_lid = args[p_lid: p_lake]
+    Sfrac_lid = args[IDX_SFRAC_LID_SCALAR]
+    k_lid = args[IDX_K_LID_SCALAR]
+    v_lid_depth = args[IDX_V_LID_DEPTH]
+    v_lid_temperature = args[IDX_V_LID_TEMP]
+    vert_grid_lid = len(T_lid)
+
+    return T_lid, Sfrac_lid, k_lid, vert_grid_lid, v_lid_depth, v_lid_temperature
+
+@jit(nopython=True, fastmath=False)
+def extract_lake_variables(args):
+    """
+    Extract only the variable-length lake arrays from the packed args array.
+
+    Parameters
+    ----------
+    args: np.ndarray
+        Unified flat buffer containing model variables.
+
+    Returns
+    -------
+
+    """
+    # args here is likely a pointer (float64*)
+    # We must wrap it to use slicing.
+    # We pick a large enough size (e.g., 10000) or pass the total size in.
+    args = carray(args, (2000,))
+    # extract pointers for variable-length arrays
+    p_lake = int(args[int(PTR_LAKE_T)])
+    p_firn = int(args[int(PTR_FIRN_T)])
+
+    # slice using the pointers
+    T_lake = args[p_lake: p_firn]
+    vert_grid_lake = len(T_lake)
+
+    return T_lake, vert_grid_lake,

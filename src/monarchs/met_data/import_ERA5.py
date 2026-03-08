@@ -67,108 +67,113 @@ def ERA5_to_variables(
                     " compensate."
                 )
 
-        var_dict["long"] = np.asarray(era5_data.variables["longitude"][:])
-        var_dict["lat"] = np.asarray(era5_data.variables["latitude"][:])
+    var_dict["long"] = era5_data.variables["longitude"][:]
+    var_dict["lat"] = era5_data.variables["latitude"][:]
+    try:
+        var_dict["time"] = era5_data.variables["time"][start_index:end_index]
+    except KeyError:
         try:
-            var_dict["time"] = era5_data.variables["time"][start_index:end_index]
-        except KeyError:
-            try:
-                var_dict["time"] = era5_data.variables["valid_time"][
-                    start_index:end_index
-                ]
-            except KeyError:
-                raise KeyError(
-                    "Time variable 'time' or 'valid_time' not found in the input"
-                    " ERA5 netCDF. Check your input data,or amend"
-                    " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
-                    " key that is in your data."
-                )
-        var_dict["wind"] = np.sqrt(
-            era5_data.variables["u10"][start_index:end_index] ** 2
-            + era5_data.variables["v10"][start_index:end_index] ** 2
-        )
-        var_dict["temperature"] = era5_data.variables["t2m"][start_index:end_index]
-        try:
-            var_dict["dew_point_temperature"] = era5_data.variables["d2m"][
+            var_dict["time"] = era5_data.variables["valid_time"][
                 start_index:end_index
             ]
         except KeyError:
-            var_dict["dew_point_temperature"] = (
-                0.95 * var_dict["temperature"][start_index:end_index]
+            raise KeyError(
+                "Time variable 'time' or 'valid_time' not found in the input"
+                " ERA5 netCDF. Check your input data,or amend"
+                " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
+                " key that is in your data."
             )
+    var_dict["wind"] = np.sqrt(
+        era5_data.variables["u10"][start_index:end_index] ** 2
+        + era5_data.variables["v10"][start_index:end_index] ** 2
+    )
+    var_dict["temperature"] = era5_data.variables["t2m"][start_index:end_index]
+    try:
+        var_dict["dew_point_temperature"] = era5_data.variables["d2m"][
+            start_index:end_index
+        ]
+    except KeyError:
+        var_dict["dew_point_temperature"] = (
+            0.95 * var_dict["temperature"][start_index:end_index]
+        )
+    try:
+        var_dict["pressure"] = (
+            era5_data.variables["sp"][start_index:end_index] / 100
+        )
+    except KeyError:
         try:
             var_dict["pressure"] = (
-                era5_data.variables["sp"][start_index:end_index] / 100
+                era5_data.variables["msl"][start_index:end_index] / 100
             )
         except KeyError:
-            try:
-                var_dict["pressure"] = (
-                    era5_data.variables["msl"][start_index:end_index] / 100
-                )
-            except KeyError:
-                raise KeyError(
-                    "Pressure variable 'sp' or 'msl' not found in the input ERA5"
-                    " netCDF. Check your input data,or amend"
-                    " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
-                    " key that is in your data."
-                )
-        var_dict["snowfall"] = era5_data.variables["sf"][start_index:end_index]
+            raise KeyError(
+                "Pressure variable 'sp' or 'msl' not found in the input ERA5"
+                " netCDF. Check your input data,or amend"
+                " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
+                " key that is in your data."
+            )
+    var_dict["snowfall"] = era5_data.variables["sf"][start_index:end_index]
+
+    try:
+        var_dict["SW_surf"] = (
+            era5_data.variables["ssrd"][start_index:end_index] / 3600
+        )
+    except KeyError:
         try:
             var_dict["SW_surf"] = (
-                era5_data.variables["ssrd"][start_index:end_index] / 3600
+                era5_data.variables["ssrdc"][start_index:end_index] / 3600
+            )
+            print(
+                "Reading in clear-sky rather than all-sky radiation data since"
+                " ssrd was not in the input netCDF"
             )
         except KeyError:
-            try:
-                var_dict["SW_surf"] = (
-                    era5_data.variables["ssrdc"][start_index:end_index] / 3600
-                )
-                print(
-                    "Reading in clear-sky rather than all-sky radiation data since"
-                    " ssrd was not in the input netCDF"
-                )
-            except KeyError:
-                raise KeyError(
-                    'Downwelling shortwave radiation variable "ssrd" or "ssrdc"'
-                    " not found in the input ERA5 netCDF. Check your input data,"
-                    " or amend <monarchs.met_data.import_ERA5.ERA5_to_variables>"
-                    " to use the key that is in your data."
-                )
+            raise KeyError(
+                'Downwelling shortwave radiation variable "ssrd" or "ssrdc"'
+                " not found in the input ERA5 netCDF. Check your input data,"
+                " or amend <monarchs.met_data.import_ERA5.ERA5_to_variables>"
+                " to use the key that is in your data."
+            )
+    try:
+        var_dict["LW_surf"] = (
+            era5_data.variables["strd"][start_index:end_index] / 3600
+        )
+    except KeyError:
         try:
+            print(
+                "Reading in clear-sky rather than all-sky radiation data since"
+                " strd was not in the input netCDF"
+            )
             var_dict["LW_surf"] = (
-                era5_data.variables["strd"][start_index:end_index] / 3600
+                era5_data.variables["strdc"][start_index:end_index] / 3600
             )
         except KeyError:
-            try:
-                print(
-                    "Reading in clear-sky rather than all-sky radiation data since"
-                    " strd was not in the input netCDF"
-                )
-                var_dict["LW_surf"] = (
-                    era5_data.variables["strdc"][start_index:end_index] / 3600
-                )
-            except KeyError:
-                raise KeyError(
-                    'Downwelling longwave radiation variable "strd" or "strdc" not'
-                    " found in the input ERA5 netCDF. Check your input data, or"
-                    " amend <monarchs.met_data.import_ERA5.ERA5_to_variables> to"
-                    " use the key that is in your data."
-                )
-        try:
-            var_dict["snow_albedo"] = era5_data.variables["asn"][
-                start_index:end_index
-            ]
-        except KeyError:
-            var_dict["snow_albedo"] = 0.85 * np.ones(
-                np.shape(era5_data.variables["t2m"][start_index:end_index])
+            raise KeyError(
+                'Downwelling longwave radiation variable "strd" or "strdc" not'
+                " found in the input ERA5 netCDF. Check your input data, or"
+                " amend <monarchs.met_data.import_ERA5.ERA5_to_variables> to"
+                " use the key that is in your data."
             )
-        try:
-            var_dict["snow_dens"] = era5_data.variables["rsn"][
-                start_index:end_index
-            ]
-        except KeyError:
-            var_dict["snow_dens"] = 350 * np.ones(
-                np.shape(era5_data.variables["t2m"][start_index:end_index])
-            ) # Kuipers Munekke 2015
+    try:
+        var_dict["snow_albedo"] = era5_data.variables["asn"][
+            start_index:end_index
+        ]
+    except KeyError:
+        var_dict["snow_albedo"] = 0.85 * np.ones(
+            np.shape(era5_data.variables["t2m"][start_index:end_index])
+        )
+    try:
+        var_dict["snow_dens"] = era5_data.variables["rsn"][
+            start_index:end_index
+        ]
+    except KeyError:
+        var_dict["snow_dens"] = 350 * np.ones(
+            np.shape(era5_data.variables["t2m"][start_index:end_index])
+        ) # Kuipers Munekke 2015
+
+    # Convert snow amount from ERA5 units (in water equivalent) to actual snow depth
+    var_dict["snowfall"] = var_dict["snowfall"] #* 1000 / var_dict["snow_dens"]
+    era5_data.close()
     return var_dict
 
 
@@ -361,10 +366,12 @@ def generate_met_dem_diagnostic_plots(
     fig2.colorbar(cont, extend="both")
     plt.show()
 
+
 def get_met_bounds_from_DEM(
     model_setup, era5_grid, lat_array, lon_array, diagnostic_plots=False
 ):
     from monarchs.dem_utils.load_dem import export_DEM
+    from monarchs.core.utils import find_nearest
 
     bounds = [
         "bbox_top_right",
@@ -378,7 +385,6 @@ def get_met_bounds_from_DEM(
             bdict[bound] = np.nan
         else:
             bdict[bound] = getattr(model_setup, bound)
-
     iheights, ilats, ilons, dx, dy = export_DEM(
         model_setup.DEM_path,
         top_right=bdict["bbox_top_right"],
@@ -388,7 +394,6 @@ def get_met_bounds_from_DEM(
         num_points=model_setup.row_amount,
         input_crs=model_setup.input_crs,
     )
-
     print("Loading in lat/long bounds from DEM")
 
     # Build 2-D index maps using vectorised nearest-neighbour (same result as

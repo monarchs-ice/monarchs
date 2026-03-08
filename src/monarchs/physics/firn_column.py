@@ -14,6 +14,7 @@ from monarchs.core.error_handling import (
     check_for_mass_conservation,
     generic_error,
 )
+from monarchs.physics.constants import rho_ice, rho_water, emissivity, stefan_boltzmann, L_ice, k_water, rho_air, cp_air, cp_water, k_air
 
 MODULE_NAME = "monarchs.physics.firn_column"
 
@@ -22,12 +23,7 @@ def firn_column(
     cell,
     dt,
     dz,
-    lw_in,
-    sw_in,
-    air_temp,
-    p_air,
-    dew_point_temperature,
-    wind,
+    met_data,
     toggle_dict,
 ):
     """
@@ -58,19 +54,22 @@ def firn_column(
         Number of seconds in the current timestep [s]
     dz : float
         Height of each vertical point in the cell. [m]
-    lw_in : float
-        Downwelling longwave radiation at the current timestep. [W m^-2]
-    sw_in : float
-        Downwelling shortwave radiation at the current timestep. [W m^-2]
-    air_temp : float
-        Surface air temperature at the current timestep. [K]
-    p_air : float
-        Surface air pressure at the current timestep. [Pa]
-    dew_point_temperature : float
-        Dewpoint temperature of the air at the surface at the current
-        timestep. [K]
-    wind : float
-        Wind speed at the surface at the current timestep. [m s^-1]
+    met_data : dict
+        Dictionary containing the meteorological data for the current timestep.
+        This contains the following keys:
+            lw_in : float
+                Downwelling longwave radiation at the current timestep. [W m^-2]
+            sw_in : float
+                Downwelling shortwave radiation at the current timestep. [W m^-2]
+            air_temp : float
+                Surface air temperature at the current timestep. [K]
+            p_air : float
+                Surface air pressure at the current timestep. [Pa]
+            dew_point_temperature : float
+                Dewpoint temperature of the air at the surface at the current
+                timestep. [K]
+            wind : float
+                Wind speed at the surface at the current timestep. [m s^-1]
     toggle_dict : dict
         Dictionary containing some switches that affect the running of
         the model.
@@ -85,30 +84,28 @@ def firn_column(
     percolation_toggle = toggle_dict["percolation_toggle"]
     perc_time_toggle = toggle_dict["perc_time_toggle"]
     # initial guess for the heat equation solver
-    x = cell["firn_temperature"]
 
     # Solve the 1D heat equation. This needs to account for the top boundary
     # condition, which is driven by the meteorology/surface fluxes, so we need
-    # to pass these variables into the solver. Since we are using a Numba cfunc
-    # to solve the heat equation, we need to pack the arguments into a
-    # single vector.
-    args = [
-        cell,
-        dt,
-        dz,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-    ]
+    # to pass these variables into the solver.
+
     # Hard-coding "hybr" as the MINPACK solver method, as other methods are not
     # supported by the Numba cfunc.
     # If you are running with Scipy, you could consider changing this or adding
     # it as a namelist parameter.
+
+    # Update cell albedo
+    cell["albedo"] = surface_fluxes.sfc_albedo(
+        cell["melt"],
+        cell["exposed_water"],
+        cell["lid"],
+        cell["lake"],
+        cell["v_lid"],
+        cell["lake_depth"],
+        cell["snow_on_lid"]
+    )
     root, _, success, _ = solver.solve_firn_heateqn(
-        x, args, fixed_sfc=False, solver_method="hybr"
+         cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr"
     )
     # If the solver didn't fail (e.g. due to too many iterations), and we have
     # a surface temperature above the freezing point, then melt will occur.
@@ -117,19 +114,9 @@ def firn_column(
     # for the height change that occurs due to melting.
     if (root[0] > 273.15) and success:
         dz = cell["firn_depth"] / cell["vert_grid"]
-        args = (
-            cell,
-            dt,
-            dz,
-            lw_in,
-            sw_in,
-            air_temp,
-            p_air,
-            dew_point_temperature,
-            wind,
-        )
+
         root_fs, _, success_fixedsfc, _ = solver.solve_firn_heateqn(
-            x, args, fixed_sfc=True, solver_method="hybr"
+            cell, met_data, dt, dz, fixed_sfc=True, solver_method="hybr"
         )
         # if *this* solver works, then update the firn temperature and regrid
         # the firn column, accounting for the melt.
@@ -140,15 +127,10 @@ def firn_column(
             height_change = calc_height_change(
                 cell,
                 dt,
-                lw_in,
-                sw_in,
-                air_temp,
-                p_air,
-                dew_point_temperature,
-                wind,
+                met_data,
                 root,
             )
-            print('Height change due to melt:', height_change)
+            # print('height change:', height_change)
             if np.isnan(height_change):
                 message = (
                     "Height change is NaN - likely due to unrealistic "
@@ -176,7 +158,7 @@ def firn_column(
         percolation.percolate(cell, dt, perc_time_toggle=perc_time_toggle)
     # Update density to reflect newly calculated solid/liquid fractions
     cell["rho"] = (
-        cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
+        cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
     )
 
     # Test for mass conservation - if we lose mass, then there is an issue with
@@ -188,12 +170,7 @@ def firn_column(
 def calc_height_change(
     cell,
     timestep,
-    lw_in,
-    sw_in,
-    air_temp,
-    p_air,
-    dew_point_temperature,
-    wind,
+    met_data,
     surface_temp,
 ):
     """
@@ -205,19 +182,9 @@ def calc_height_change(
         Element of the model grid we are operating on.
     timestep : float
         Number of seconds in each timestep. [s]
-    lw_in : float
-        Downwelling longwave radiation at the current timestep. [W m^-2]
-    sw_in : float
-        Downwelling shortwave radiation at the current timestep. [W m^-2]
-    air_temp : float
-        Surface air temperature at the current timestep. [K]
-    p_air : float
-        Surface air pressure at the current timestep. [Pa]
-    dew_point_temperature : float
-        Dewpoint temperature of the air at the surface at the current
-        timestep. [K]
-    wind : float
-        Wind speed at the surface at the current timestep. [m s^-1]
+    met_data : dict
+        Dictionary containing the meteorological data for the current timestep.
+        See firn_column for details.
     surf_T : float
         Calculated surface temperature of the firn from the initial (non-fixed
         surface) implementation of the heat equation. [K]
@@ -228,8 +195,9 @@ def calc_height_change(
         Change in firn height as a result of melting. [m]
     """
     routine_name = f"{MODULE_NAME}.calc_height_change"
-    epsilon = 0.98
-    sigma = 5.670373 * 10 ** -8
+    epsilon = emissivity
+    sigma = stefan_boltzmann
+
     dz = cell["firn_depth"] / cell["vert_grid"]
     L_fus = 334000
     if (
@@ -252,18 +220,27 @@ def calc_height_change(
         )
         ** 1.156
     )
-    Q = surface_fluxes.sfc_flux(
+    # Update cell albedo
+    cell["albedo"] = surface_fluxes.sfc_albedo(
         cell["melt"],
         cell["exposed_water"],
         cell["lid"],
         cell["lake"],
+        cell["v_lid"],
         cell["lake_depth"],
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
+        cell["snow_on_lid"]
+    )
+    # now calculate surface flux
+    Q = surface_fluxes.sfc_flux(
+        cell["albedo"],
+        cell["lid"],
+        cell["lake"],
+        met_data["LW_down"],
+        met_data["SW_down"],
+        met_data["temperature"],
+        met_data["surf_pressure"],
+        met_data["dew_point_temperature"],
+        met_data["wind"],
         surface_temp[0],
     )
 
@@ -281,24 +258,18 @@ def calc_height_change(
             Q
             - epsilon
             * sigma
-            # * (
-            #     1.5
-            #     * (
-            #         cell["firn_temperature"][0]
-            #         - 0.5 * cell["firn_temperature"][1]
-            #     )
-            * 0.98 * (cell["firn_temperature"][0]
+            * (cell["firn_temperature"][0]
             )
             ** 4
             - k_sfc * dtdz
         )
-        / (cell["rho_ice"] * (cell["Sfrac"][0] * L_fus))
+        / (rho_ice * (cell["Sfrac"][0] * L_fus))
         * timestep
     )
-    cell["firn_boundary_change"] += dHdt
     # Melt maximum one layer per timestep to avoid instability
     if dHdt > (cell["firn_depth"] / cell["vert_grid"]):
         dHdt = cell["firn_depth"] / cell["vert_grid"]
+    cell["firn_boundary_change"] += dHdt
 
     if 0 > dHdt > -0.01:
         dHdt = 0
@@ -312,3 +283,4 @@ def calc_height_change(
         message = "Height change during melt is NaN"
         generic_error(cell, routine_name, message)
     return dHdt
+

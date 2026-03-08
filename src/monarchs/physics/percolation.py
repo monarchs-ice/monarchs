@@ -7,6 +7,12 @@ firn column.
 # TODO - refactor/split up percolation, rename
 import numpy as np
 from monarchs.core.error_handling import generic_error
+from monarchs.physics.constants import (
+    rho_ice,
+    rho_water,
+    L_ice,
+    pore_closure
+)
 
 MODULE_NAME = "monarchs.physics.percolation"
 
@@ -15,7 +21,7 @@ def calc_solid_mass(cell):
     """Calculate the mass of the solid part of the column."""
     return np.sum(
         cell["Sfrac"]
-        * cell["rho_ice"]
+        * rho_ice
         * (cell["firn_depth"] / cell["vert_grid"])
     )
 
@@ -24,7 +30,7 @@ def calc_liquid_mass(cell):
     """Calculate the mass of the liquid part of the column."""
     return np.sum(
         cell["Lfrac"]
-        * cell["rho_water"]
+        * rho_water
         * (cell["firn_depth"] / cell["vert_grid"])
     )
 
@@ -83,8 +89,8 @@ def percolate(
                     calc_refreezing(cell, v_lev)
 
                 if (
-                    cell["Sfrac"][v_lev] * cell["rho_ice"]
-                    > cell["pore_closure"]
+                    cell["Sfrac"][v_lev] * rho_ice
+                    > pore_closure
                 ):
                     cell["ice_lens"] = True
                     cell["saturation"][v_lev] = True
@@ -175,20 +181,19 @@ def calc_refreezing(cell, v_lev):
     T_change_max = 273.15 - cell["firn_temperature"][v_lev]
     cp = 7.16 * cell["firn_temperature"][v_lev] + 138
     excess_water = 0
-
     if cell["Sfrac"][v_lev] == 0:
-        T_change_all = 1000000  # for testing
+        T_change_all = 10000 # arbitrarily high number
     else:
         T_change_all = (
             cell["Lfrac"][v_lev]
-            * cell["L_ice"]
-            * cell["rho_water"]
-            / (cell["rho_ice"] * cp * cell["Sfrac"][v_lev])
+            * L_ice
+            * rho_water
+            / (rho_ice * cp * cell["Sfrac"][v_lev])
         )  # T change if all water freezes
     Vol_Rfrz_Max = (
         (1 - cell["Sfrac"][v_lev])
         * (cell["firn_depth"] / cell["vert_grid"])
-        / (cell["rho_water"] / cell["rho_ice"])
+        / (rho_water / rho_ice)
     )  # Volume available in the cell for refreezing, accounting for expansion
     # of water
 
@@ -207,12 +212,12 @@ def calc_refreezing(cell, v_lev):
     # some of this water from the above will refreeze
     if T_change_all >= T_change_max:  # but not all water will refreeze
         Vol_Change = (
-            cell["rho_ice"]
+            rho_ice
             * cp
             * cell["Sfrac"][v_lev]
             * T_change_max
             * (cell["firn_depth"] / cell["vert_grid"])
-            / (cell["L_ice"] * cell["rho_water"])
+            / (L_ice * rho_water)
         )
         if Vol_Change > Vol_Rfrz_Max:
             Vol_Change = Vol_Rfrz_Max
@@ -231,12 +236,12 @@ def calc_refreezing(cell, v_lev):
             generic_error(cell, routine_name, message)
 
         cell["Sfrac"][v_lev] = cell["Sfrac"][v_lev] + Vol_Change * (
-            cell["rho_water"] / cell["rho_ice"]
+            rho_water / rho_ice
         ) / (cell["firn_depth"] / cell["vert_grid"])
 
     else:  # All water refreezes in this layer
         cell["Sfrac"][v_lev] = cell["Sfrac"][v_lev] + cell["Lfrac"][v_lev] * (
-            cell["rho_water"] / cell["rho_ice"]
+            rho_water / rho_ice
         )
         cell["firn_temperature"][v_lev] = (
             cell["firn_temperature"][v_lev] + T_change_all
@@ -416,14 +421,14 @@ def perc_time(cell, v_lev):
     # mean grain size
     delta = 0.001
     # specific gravity of the firn
-    rho_s_star = cell["Sfrac"][v_lev] * cell["rho_ice"] / cell["rho_water"]
+    rho_s_star = cell["Sfrac"][v_lev] * rho_ice / rho_water
     # specific permeability
     perm_s = 0.077 * delta ** 2 * np.exp(-7.8 * rho_s_star)
     # viscosity
     eta = 0.001787
 
     # pressure gradient, assuming no lake above
-    delta_p = cell["rho_water"] / (
+    delta_p = rho_water / (
         cell["firn_depth"] / cell["vert_grid"] / cell["Lfrac"][v_lev]
     )
     u = -perm_s / eta * delta_p

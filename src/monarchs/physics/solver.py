@@ -9,9 +9,10 @@ This approach was chosen to maximise usability, so that the different solvers
 can be generated according to the value of a single Boolean.
 """
 
+import numpy as np
 from scipy.optimize import fsolve, root
 from monarchs.physics import heateqn, surface_fluxes
-import numpy as np
+from monarchs.physics.constants import rho_ice, rho_water, emissivity, stefan_boltzmann
 
 
 def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
@@ -19,7 +20,7 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
     scipy.optimize.fsolve-compatible solver function to be used within the
     model. Solves physics.heateqn.
     This loads in the relevant arguments from the cell, packages them
-    into an array form via args_array, and passes them into the hybrd solver.
+    into an array form via pack_args, and passes them into the hybrd solver.
 
 
     Called in <firn_column>.
@@ -153,7 +154,7 @@ def lake_formation_eqn(x, args):
     T1 = args[4]
     output = np.array(
         [
-            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+            -emissivity * stefan_boltzmann * x[0] ** 4
             + Q
             - k * (-T1 + x[0]) / (firn_depth / vert_grid)
         ]
@@ -185,11 +186,8 @@ def lake_development_eqn(x, args):
     )
 
     vert_grid_lake = args[0]
-    melt = args[1]
-    exposed_water = args[2]
     lid = args[3]
     lake = args[4]
-    lake_depth = args[5]
     lw_in = args[6]
     sw_in = args[7]
     air_temp = args[8]
@@ -201,11 +199,9 @@ def lake_development_eqn(x, args):
         lake_temperature[i] = args[12 + i]
 
     Q = surface_fluxes.sfc_flux(
-        melt,
-        exposed_water,
+        albedo,
         lid,
         lake,
-        lake_depth,
         lw_in,
         sw_in,
         air_temp,
@@ -218,7 +214,7 @@ def lake_development_eqn(x, args):
     T_core = lake_temperature[int(vert_grid_lake / 2)]
     output = np.array(
         [
-            -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+            -emissivity * stefan_boltzmann * x[0] ** 4
             + Q
             + (
                 np.sign(T_core - x[0])
@@ -232,7 +228,7 @@ def lake_development_eqn(x, args):
     return output
 
 
-def lake_solver(x, args, formation=False):
+def lake_seb_solver(cell, met_data, dt, dz, formation=False):
     """
     Scipy version of the lake solver.
     Solves lake_development_eqn or lake_formation0_eqn.
@@ -304,7 +300,7 @@ def sfc_energy_virtual_lid(x, args):
     # an array
     output = np.zeros(1)
     output[0] = (
-        -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
+        -emissivity * stefan_boltzmann * (x[0] ** 4)
         + Q
         - k_v_lid
         * (-lake_temperature[1] + x[0])
@@ -331,11 +327,8 @@ def sfc_energy_lid(x, args):
     lid_depth = args[1]
     vert_grid_lid = args[2]
     sub_T = args[3]
-    melt = args[4]
-    exposed_water = args[5]
     lid = args[6]
     lake = args[7]
-    lake_depth = args[8]
     lw_in = args[9]
     sw_in = args[10]
     air_temp = args[11]
@@ -345,11 +338,9 @@ def sfc_energy_lid(x, args):
 
     output = np.zeros(1)
     Q = surface_fluxes.sfc_flux(
-        melt,
-        exposed_water,
+        albedo,
         lid,
         lake,
-        lake_depth,
         lw_in,
         sw_in,
         air_temp,
@@ -360,14 +351,14 @@ def sfc_energy_lid(x, args):
     )
 
     output[0] = (
-        -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+        -emissivity * stefan_boltzmann * x[0] ** 4
         + Q
         - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
     )
     return output
 
 
-def lid_seb_solver(x, args, v_lid=False):
+def lid_seb_solver(cell, met_data, dt, dz, k_lid):
     """
     scipy.optimise.fsolve version of the lid surface energy balance solver.
     Solves sfc_energy_lid or
@@ -412,7 +403,7 @@ def lid_seb_solver(x, args, v_lid=False):
     return root, infodict, ier, mesg
 
 
-def lid_heateqn_solver(x, args):
+def lid_heateqn_solver(cell, met_data, dt, dz):
     """
     scipy.optimize.fsolve version of the lid heat equation solver. Solves
     physics.heateqn_lid. Called in lid.lid_development.
@@ -422,7 +413,7 @@ def lid_heateqn_solver(x, args):
     x : array_like, float, dimension(cell.vert_grid_lid)
         Initial guess at the lid column temperature. [K]
     args : array_like
-        Array of arguments to pass into the function. See args_array for
+        Array of arguments to pass into the function. See pack_args for
         details.
 
     Returns

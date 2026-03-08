@@ -16,15 +16,25 @@ import numpy as np
 from numba import cfunc, njit
 from NumbaMinpack import minpack_sig
 from monarchs.physics.Numba import extract_args
-from monarchs.physics import surface_fluxes
+from monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics.constants import (
+    cp_air,
+    cp_water,
+    k_air,
+    k_water,
+    emissivity,
+    rho_ice,
+    rho_water,
+    rho_air, stefan_boltzmann,
+    ice_extinction_coefficient,
+    sfc_absorbed_frac,
+)
 
 
 @njit
 def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
-    rho_ice = 917.0
-    rho_water = 1000.0
-    rho_air = 1.29
+
     air_frac = 1.0 - sfrac - lfrac
     k_ice = np.zeros(np.shape(T), dtype=np.float64)
     k_ice[T < 273.15] = 1000 * (
@@ -50,10 +60,6 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     T_old = cell["firn_temperature"][N:]
     Sfrac = cell["Sfrac"][N:]
     Lfrac = cell["Lfrac"][N:]
-    cp_air = cell["cp_air"]
-    cp_water = cell["cp_water"]
-    k_air = cell["k_air"]
-    k_water = cell["k_water"]
     k, kappa = get_k_and_kappa(
         T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
     )
@@ -159,40 +165,21 @@ def heateqn(x, output, args):
     """
 
     # separate "args" into the relevant variables
-    (
-        T,
-        Sfrac,
-        Lfrac,
-        k_air,
-        k_water,
-        cp_air,
-        cp_water,
-        dt,
-        dz,
-        melt,
-        exposed_water,
+    (N, firn_depth, dt, dz, melt, albedo, exposed_water,
+        lid, lid_depth, virtual_lid, virtual_lid_depth, lake, lake_depth, snow_on_lid) = extract_args.extract_scalars(args)
+
+    (lw_in, sw_in, air_temp, p_air,
+     dew_point_temperature, wind)  = extract_args.extract_met_data(args)
+
+    T, Sfrac, Lfrac = extract_args.extract_firn_arrays(args)
+
+    epsilon = emissivity
+    sigma = stefan_boltzmann
+
+    Q = sfc_flux(
+        albedo,
         lid,
         lake,
-        lake_depth,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-    ) = extract_args.extract_args_firn(args)
-
-    N = np.int32(args[0])
-
-    epsilon = 0.98
-    sigma = 5.670374e-8
-
-    Q = surface_fluxes.sfc_flux(
-        melt,
-        exposed_water,
-        lid,
-        lake,
-        lake_depth,
         lw_in,
         sw_in,
         air_temp,
@@ -247,56 +234,39 @@ def heateqn_lid(x, output, args):
         Vector describing arguments to the system of equations being solved.
         This comprises many of the attributes of an IceShelf instance, and
         some physical variables such as specific humidity, wind etc.
-        See extract_args_lid for more details.
+        See extract_args for more details.
 
     Returns
     -------
     None (output is handled by the solver)
 
     """
-    vert_grid_lid = np.int32(args[0])
 
     # separate "args" into the relevant variables
-    (
-        lid_temperature,
-        Sfrac_lid,
-        k_lid,
-        cp_air,
-        cp_water,
-        dt,
-        dz,
-        melt,
-        exposed_water,
-        lid,
-        lake,
-        lake_depth,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        snow_on_lid
-    ) = extract_args.extract_args_lid(args)
+    (vert_grid, firn_depth, dt, dz, melt, albedo, exposed_water,
+     lid, lid_depth, virtual_lid, virtual_lid_depth, lake, lake_depth, snow_on_lid) = extract_args.extract_scalars(args)
+    (lw_in, sw_in, air_temp, p_air,
+     dew_point_temperature, wind) = extract_args.extract_met_data(args)
+    (lid_temperature, Sfrac_lid,
+     k_lid, vert_grid_lid, v_lid_depth, v_lid_temp) = extract_args.extract_lid_variables(args)
 
     k_lid = 1000 * (
         2.24e-03 + 5.975e-06 * ((273.15 - lid_temperature) ** 1.156)
     )
 
     cp_ice = 1000 * (0.00716 * lid_temperature + 0.138)
-    cp = Sfrac_lid * cp_ice
+    cp = cp_ice
     rho = 917
     # thermal diffusivity [m^2 s^-1]
     kappa = k_lid / (cp * rho)
-    epsilon = 0.98
-    sigma = 5.670374 * (10 ** -8)
-    tau_ice = 1.5
-    Q = surface_fluxes.sfc_flux(
-        melt,
-        exposed_water,
+    epsilon = emissivity
+    sigma = stefan_boltzmann
+    tau_ice = ice_extinction_coefficient
+
+    Q = sfc_flux(
+        albedo,
         lid,
         lake,
-        lake_depth,
         lw_in,
         sw_in,
         air_temp,
@@ -304,18 +274,15 @@ def heateqn_lid(x, output, args):
         dew_point_temperature,
         wind,
         x[0],
-        snow_on_lid,
     )
     output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (
         Q - epsilon * sigma * x[0] ** 4
     )
     # SW radiation baked into surface flux already
-    albedo = surface_fluxes.sfc_albedo(
-        melt, exposed_water, lid, lake, lake_depth, snow_on_lid
-    )
+
     # fraction of the remaining radiation absorbed at surface layer - baked
     # into surface flux Q.
-    sfc_abs_frac = 0.5
+    sfc_abs_frac = sfc_absorbed_frac
 
     for idx in np.arange(1, vert_grid_lid - 1):
         z_depth = idx * dz
@@ -338,7 +305,6 @@ def heateqn_lid(x, output, args):
                 + dT_solar
             )
         )
-
     output[-1] = x[vert_grid_lid - 1] - 273.15
 
 

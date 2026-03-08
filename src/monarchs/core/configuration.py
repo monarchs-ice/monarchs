@@ -386,6 +386,7 @@ def jit_modules(fastmath=False):
     `use_numba` was `True`) which was causing an error.
     """
     # pylint: disable=import-outside-toplevel
+    print("\nmonarchs.core.configuration.jit_modules: Applying Numba jit decorator")
     from numba import njit
     from monarchs.physics import (
         surface_fluxes,
@@ -444,9 +445,11 @@ def jit_modules(fastmath=False):
 
     ]  # other builtins/decorators
 
+
     for module in module_list:
         functions_list = getmembers(module, isfunction)
-
+        print(module)
+        print(functions_list)
         for name, function in functions_list:
             # Ignore functions that are imported, are in our ignore list,
             # or have the __wrapped__ attribute
@@ -468,6 +471,7 @@ def jit_modules(fastmath=False):
     # we import these here since we need the other functions to first be
     # jit-decorated
     # pylint: disable=import-outside-toplevel
+
     from monarchs.physics import solver
     from monarchs.physics.Numba import solver_nb as numba_solver
 

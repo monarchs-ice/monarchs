@@ -2,12 +2,19 @@ import numpy as np
 from monarchs.physics import surface_fluxes, solver
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
+from monarchs.physics.constants import (
+    L_ice,
+    rho_ice,
+    rho_water,
+    emissivity,
+    stefan_boltzmann,
+)
 
 MODULE_NAME = "monarchs.physics.lid"
 
 
 def lid_development(
-    cell, dt, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, Fu
+    cell, dt, met_data, Fu
 ):
     """
     Once a permanent lid forms, it can refreeze the lake below. This function
@@ -59,85 +66,68 @@ def lid_development(
     # If this is the first time we have a lid for the current state,
     # then initialise its temperature profile
     if not cell["has_had_lid"]:
-        seb_args = np.array(
-            [
-                k_lid_seb,
-                cell["lid_depth"],
-                cell["vert_grid_lid"],
-                cell["lid_temperature"][0],
-                cell["melt"],
-                cell["exposed_water"],
-                cell["lid"],
-                cell["lake"],
-                cell["lake_depth"],
-                lw_in,
-                sw_in,
-                air_temp,
-                p_air,
-                dew_point_temperature,
-                wind,
-            ]
-        )
-        initialise_lid(cell, seb_args)
+        initialise_lid(cell, met_data, dt, 0, k_lid_seb)
 
     # Assume no water present in lid or snow above it
-    Sfrac_lid = np.ones(cell["vert_grid_lid"])
     k_ice, _ = calc_k_and_cp(cell)
-    k_lid_mean = np.mean(k_ice)
     # Determine if the lid is melting or freezing at the surface. We adjust
     # cell["lid_melt_count"] accordingly. If this is above a certain threshold,
     # then we have too much melt at the surface, and the lid and firn are later
     # combined into one profile (see `combine_lid_firn` and `timestep.py`).
-    x = cell["lid_temperature"]
     dz = cell["lid_depth"] / cell["vert_grid_lid"]
-    heateqn_args = (
-        cell,
-        dt,
-        dz,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        Sfrac_lid,
-        k_lid_mean,
+
+    # Update cell albedo
+    cell["albedo"] = surface_fluxes.sfc_albedo(
+        cell["melt"],
+        cell["exposed_water"],
+        cell["lid"],
+        cell["lake"],
+        cell["v_lid"],
+        cell["lake_depth"],
+        cell["snow_on_lid"]
     )
     # Solve the heat equation for the lid (including surface energy balance)
     # Force lake-lid boundary temperature to 273.15 before and after.
     cell["lid_temperature"][-1] = 273.15
     cell["lid_temperature"], ierr, success, info = solver.lid_heateqn_solver(
-        x, heateqn_args
+        cell, met_data, dt, dz,
     )
     cell["lid_temperature"] = np.clip(cell["lid_temperature"], 0, 273.15)
     cell["lid_temperature"][-1] = 273.15
 
     x = cell["lid_temperature"]
-    Q = surface_fluxes.sfc_flux(
+    # Update cell albedo
+    cell["albedo"] = surface_fluxes.sfc_albedo(
         cell["melt"],
         cell["exposed_water"],
         cell["lid"],
         cell["lake"],
+        cell["v_lid"],
         cell["lake_depth"],
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        x[0],
-        snow_on_lid=cell['snow_on_lid']
+        cell["snow_on_lid"]
     )
-    if cell["lid_temperature"][0] < 273.15:  # frozen
+    Q = surface_fluxes.sfc_flux(
+        cell["albedo"],
+        cell["lid"],
+        cell["lake"],
+        met_data["LW_down"],
+        met_data["SW_down"],
+        met_data["temperature"],
+        met_data["surf_pressure"],
+        met_data["dew_point_temperature"],
+        met_data["wind"],
+        x[0],
+    )
+    if cell["lid_temperature"][0] < 273.15: #and cell["lid_sfc_melt"] > 0:  # frozen
         # Decrement lid_melt_count if the lid is freezing.
-        k_lid = surface_freezing(cell)
+        surface_freezing(cell, dt, Q)
     else:  # melting
         # if lid_temperature_sfc >= 273.15 i.e. melting.
         # Melting on the lid is not taken into account here. However the level
         # of melting that would take place is monitored to check the
         # assumption that this is not important. We iterate lid_melt_count
         # here to track how many timesteps the lid has melted.
-        k_lid = surface_melt(cell, dt, Q)
+        surface_melt(cell, dt, Q)
 
     # Adjust lid and lake heights. The lid can only ever grow, not shrink.
     # This is because a) basal melt is not considered, and b) any surface
@@ -145,10 +135,10 @@ def lid_development(
     # of lids on top of lakes. This is an area for future development.
     # As mentioned above, if we have too much surface melt, then we reset
     # the profile to a firn column only.
-    adjust_lid_height(cell, dt, Fu, k_lid)
+    adjust_lid_height(cell, dt, Fu, k_ice)
     new_mass = utils.calc_mass_sum(cell)
     check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
-    if np.any(np.isnan(k_lid)):
+    if np.any(np.isnan(k_ice)):
         print("ERROR: monarchs.physics.lid.lid_development: k_lid = NaN")
         cell["error_flag"] = 1
     # If the lid has shrunk to < 10cm, then revert it back to a virtual lid.
@@ -165,7 +155,7 @@ def lid_development(
         cell["error_flag"] = 1
 
 
-def surface_freezing(cell):
+def surface_freezing(cell, dt, Q):
     """
     Determine the thermal conductivity of the lid when the surface temperature
     is below freezing. If the model is in this state, then we decrement
@@ -180,15 +170,25 @@ def surface_freezing(cell):
     -------
     k_lid - float - thermal conductivity of the lid [W m^-1 K^-1]
     """
-    temp_diff = np.maximum(0.0, 273.15 - cell["lid_temperature"])
-    k_lid = 1000 * (2.24 * 10 ** -3 + 5.975 * 10 ** -6 * (temp_diff) ** 1.156)
-    if cell["lid_melt_count"] > 0:
-        # decrement the melt count if the lid is frozen
+    # calculate the amount of freezing at the surface
+    k_lid, _ = calc_k_and_cp(cell)
+    kdTdz = (
+        (cell["lid_temperature"][0] - cell["lid_temperature"][1])
+        * abs(k_lid[0])
+        / (
+            cell["lid_depth"] / (cell["vert_grid_lid"])
+        )
+    )
+    freezing_amount = (Q - kdTdz - (emissivity * stefan_boltzmann * cell["lid_temperature"][0] ** 4)) / (L_ice * rho_ice) * dt
+    cell["lid_sfc_melt"] -= min(cell["lid_sfc_melt"], np.abs(freezing_amount))
+    #print('Froze this timestep = ', freezing_amount)
+
+    if cell["lid_sfc_melt"] < 0.1:
         cell["lid_melt_count"] -= 1
-    # ensure it doesn't go below 0
+    if cell["lid_sfc_melt"] < 0:
+        cell["lid_sfc_melt"] = 0.0
     if cell["lid_melt_count"] < 0:
         cell["lid_melt_count"] = 0
-    return k_lid
 
 
 def surface_melt(cell, dt, Q):
@@ -216,21 +216,21 @@ def surface_melt(cell, dt, Q):
     original_mass = utils.calc_mass_sum(cell)
     # Switch to determine if this is being run as part of the initial lid
     # formation - if so then don't iterate the melt (but the rest is the same)
-    cell["lid_melt_count"] += 1
-    k_lid = 1000 * (
-        1.017 * 10 ** -4 + 1.695 * 10 ** -6 * cell["lid_temperature"]
-    )
+    # cell["lid_melt_count"] += 1
+    k_lid, _ = calc_k_and_cp(cell)
     kdTdz = (
-        (cell["lid_temperature"][0] - 273.15)
+        (cell["lid_temperature"][0] - cell["lid_temperature"][1])
         * abs(k_lid[0])
         / (
-            cell["lid_depth"] / (cell["vert_grid_lid"] / 2)
-            + cell["lid_sfc_melt"]
+            cell["lid_depth"] / (cell["vert_grid_lid"])
         )
     )
-    cell["lid_sfc_melt"] += (
-        (Q - kdTdz) / (cell["L_ice"] * cell["rho_ice"])
-    ) * dt
+#     lid_melt_this_timestep = (
+#         (Q - kdTdz - emissivity * stefan_boltzmann * cell["lid_temperature"][0] ** 4) / (L_ice * rho_ice) * dt
+# ) / (L_ice * rho_ice)
+#     ) * dt
+    lid_melt_this_timestep = (Q - kdTdz - (emissivity * stefan_boltzmann * cell["lid_temperature"][0] ** 4)) * dt / (L_ice * rho_ice)
+    cell["lid_sfc_melt"] += lid_melt_this_timestep
     cell["lid_temperature"][0] = 273.15
 
     # TODO - Currently we just *track* the amount of lid surface melt.
@@ -244,15 +244,16 @@ def surface_melt(cell, dt, Q):
     new_mass = utils.calc_mass_sum(cell)
     check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
     # melting lid surface removes snow, so albedo reduces
-    cell["snow_on_lid"] = False
-    cell["lid_snow_depth"] = 0.0
-
-    # if cell["lid_sfc_melt"] > cell["lid_snow_depth"]:# * snow_rho / cell["rho_water"]:
-    #     cell["snow_on_lid"] = False
-    #     cell["lid_snow_depth"] = 0.0
-
-
-    return k_lid
+    cell["lid_snow_depth"] -= min(cell["lid_snow_depth"], lid_melt_this_timestep * (rho_ice / 350))
+    #print('lid melt this timestep = ', lid_melt_this_timestep)
+    #print('Total melt = ', cell["lid_sfc_melt"])
+    if cell["snow_on_lid"] == 1:
+        cell["snow_on_lid"] = 2  # now wet snow
+    if cell["lid_snow_depth"] <= 0:
+        cell["snow_on_lid"] = 0
+    if cell["lid_sfc_melt"] > 0.02:  # 2 cm deep
+        print('Lid surface melt exceeded 10 cm this timestep')
+        cell["lid_melt_count"] += 1  # force it above the timestep.py threshold
 
 
 def calc_k_and_cp(cell):
@@ -317,34 +318,33 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
     T_int = 273.15
     T_above = cell["lid_temperature"][-2]
     q_ice = k_ice[-1] * (T_above - T_int) / dz_i  # positive downwards
-
     if np.isnan(Fu):
         Fu = 0.0
-
-
+    # net fluxes at interface. fluxes are positive downwards.
+    # which means we want flux down into interface (positive)
+    # minus (- Fu) as Fu is positive *downwards* also
     q_net = q_ice - Fu  # Fu positive downward by convention
     if np.isnan(q_ice):
         print("ERROR: monarchs.physics.lid.adjust_lid_height: Q ice = np.nan")
         cell["error_flag"] = 1
     # - sign as freezing - flux is upwards (negative) when freezing,
     # but want dh to be positive when lid grows
-    dh = - (q_net / (cell["rho_ice"] * cell["L_ice"])) * dt
+    dh = - (q_net / (rho_ice * L_ice)) * dt
     if dh <= 0:
         cell["lid_boundary_change"] += dh
         cell["lake_boundary_change"] -= dh
         return
 
     # Limit so lake doesn't go negative
-    max_dh = cell["lake_depth"] * (cell["rho_water"] / cell["rho_ice"])
+    max_dh = cell["lake_depth"] * (rho_water / rho_ice)
     dh = min(dh, max_dh)
-    print('Lid height change = ', dh)
     cell["lid_depth"] += dh
-    cell["lake_depth"] -= dh * (cell["rho_ice"] / cell["rho_water"])
+    cell["lake_depth"] -= dh * (rho_ice / rho_water)
     cell["lid_boundary_change"] += dh
     cell["lake_boundary_change"] -= dh
 
 
-def initialise_lid(cell, seb_args):
+def initialise_lid(cell, met_data, dt, dz, k_lid):
     """
     Check to determine if a lid has been formed previously - if not, then
     initialise the lid by calculating its surface energy balance
@@ -367,7 +367,8 @@ def initialise_lid(cell, seb_args):
 
     # need the [0][0] as we want the first
     # element of the output array for initialisation
-    cell["lid_temperature"][0] = solver.lid_seb_solver(x, seb_args)[0][0]
+    cell["lid_temperature"][0] = solver.lid_seb_solver(cell, met_data, dt, dz, k_lid
+    )[0][0]
     # assume it is linear from surface to bottom of lid at 0C
     cell["lid_temperature"] = np.linspace(
         cell["lid_temperature"][0], 273.15, cell["vert_grid_lid"]

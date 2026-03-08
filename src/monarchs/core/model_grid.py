@@ -134,6 +134,7 @@ def initialise_iceshelf(
     }
 
     model_scalars = {
+        "albedo": 0.0,
         "ice_lens_depth": ice_lens_depth,
         "lid_depth": lid_depth,
         "lake_depth": lake_depth,
@@ -157,7 +158,7 @@ def initialise_iceshelf(
         "ice_lens": ice_lens,
         "reset_combine": False,
         "error_flag": False,
-        "snow_on_lid": False,
+        "snow_on_lid": 0,
     }
     counters = {
         "lid_melt_count": lid_melt_count,
@@ -166,16 +167,7 @@ def initialise_iceshelf(
         "lake_refreeze_counter": 0,
     }
 
-    constants = {
-        "rho_ice": 917,
-        "rho_water": 1000,
-        "L_ice": 334000,
-        "pore_closure": 830,
-        "k_air": 0.022,
-        "cp_air": 1004,
-        "k_water": 0.5818,
-        "cp_water": 4217,
-    }
+
 
     # for water direction - 8 possible directions
     diagnostics = {
@@ -206,7 +198,6 @@ def initialise_iceshelf(
 
     list_of_dicts = [
         diagnostics,
-        constants,
         flags,
         counters,
         fixed_model_values,
@@ -256,6 +247,7 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("firn_temperature", np.float64, vert_grid_size),
             ("Sfrac", np.float64, vert_grid_size),
             ("Lfrac", np.float64, vert_grid_size),
+            ("albedo", np.float64),
             ("meltflag", np.float64, vert_grid_size),
             ("saturation", np.float64, vert_grid_size),
             ("lake_temperature", np.float64, vert_grid_lake),
@@ -272,14 +264,7 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("lid_depth", np.float64),
             ("ice_lens", np.bool_),
             ("ice_lens_depth", np.int32),
-            ("rho_ice", np.float64),
-            ("rho_water", np.float64),
-            ("L_ice", np.float64),
             ("pore_closure", np.float64),
-            ("k_air", np.float64),
-            ("cp_air", np.float64),
-            ("k_water", np.float64),
-            ("cp_water", np.float64),
             ("v_lid_depth", np.float64),
             ("has_had_lid", np.bool_),
             ("melt_hours", np.int32),
@@ -289,7 +274,6 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("total_melt", np.float64),
             ("t_step", np.int32),
             ("day", np.int32),
-            ("log", "U256"),
             ("snow_added", np.float64),
             ("reset_combine", np.bool_),
             ("valid_cell", np.bool_),
@@ -305,7 +289,7 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("lake_refreeze_counter", np.int32),
             ("error_flag", np.bool_),
             ("visit_count", np.int32),
-            ("snow_on_lid", np.bool_),
+            ("snow_on_lid", np.int32),
             ("lid_snow_depth", np.float64),
         ],
         align=True,
