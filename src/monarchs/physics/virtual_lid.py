@@ -101,10 +101,11 @@ def virtual_lid_development(
 
     # want only root, not fvec etc, and root is an array of one element so
     # extract out first elem
+    print('Temp before v lid seb solver:', cell["virtual_lid_temperature"])
     cell["virtual_lid_temperature"] = solver.lid_seb_solver(
         x, args, v_lid=True
     )[0][0]
-
+    print('Temp after v lid seb solver:', cell["virtual_lid_temperature"])
     k_ice = 2.24
     # a conductive approach across the virtual lid rather than using the fluxes
     # until a true lid forms (at which point the real fluxes are used).

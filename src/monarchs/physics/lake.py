@@ -219,6 +219,8 @@ def radiative_transfer(cell, sw_in):
     """
     if cell['lid'] or cell['v_lid']:
         lid_flag = True
+    else:
+        lid_flag = False
     albedo = surface_fluxes.sfc_albedo(
         cell["melt"],
         cell["exposed_water"],
@@ -314,6 +316,8 @@ def turbulent_mixing(cell, sw_in, dt, k):
     if cell["lake_depth"] < 0.1:
         return 0, 0
     lake_absorbed_solar, radiation_at_bottom = radiative_transfer(cell, sw_in)
+    print('Lake absorbed solar in turbulent mixing: ', lake_absorbed_solar)
+    print('Radiation at bottom in turbulent mixing: ', radiation_at_bottom)
     # factor by which you want to scale the temporal resolution of this
     # calculation. it is very slow (taking up to half of the overall
     # model runtime when not using Numba).
@@ -360,9 +364,11 @@ def turbulent_mixing(cell, sw_in, dt, k):
         indices = np.arange(1, cell["vert_grid_lake"] - 1)
         cell["lake_temperature"][indices] = lake_core_temp
 
+    print('Net lower flux for dh in turbulent mixing: ', net_lower_flux_for_dh)
     dh_change, cap_reached = calc_height_adjustment(
         cell, k, net_lower_flux_for_dh
     )
+    print('dh_change in turbulent mixing: ', dh_change)
     # print('dh_change in turbulent mixing: ', dh_change)
     dh += dh_change
     if dh > (cell["firn_depth"] / cell["vert_grid"]):
@@ -471,10 +477,12 @@ def lake_formation(
         p_air,
         dew_point_temperature,
         wind,
-        x[0],
+        cell["firn_temperature"][0],
     )
 
+    print('Q in lake formation: ', Q)
     old_T_sfc = sfc_energy_lake_formation(air_temp, Q, k, cell)
+    print('Old T sfc in lake formation: ', old_T_sfc)
     # Check for conservation of mass
     new_mass = utils.calc_mass_sum(cell)
     errflag = check_for_mass_conservation(
@@ -574,6 +582,14 @@ def lake_development(
     original_mass = utils.calc_mass_sum(cell)
     if not cell["v_lid"] and not cell["lid"]:
         # Solve lake surface temperature
+        print('Albedo = ', surface_fluxes.sfc_albedo(
+            cell["melt"],
+            cell["exposed_water"],
+            cell["lid"],
+            cell["lake"],
+            cell["lake_depth"],
+            cell["snow_on_lid"],
+        ))
         cell["lake_temperature"][0] = sfc_energy_lake(
             cell,
             lw_in,
@@ -583,7 +599,7 @@ def lake_development(
             dew_point_temperature,
             wind,
         )
-
+        print('Lake temperature after sfc energy lake: ', cell["lake_temperature"][0])
         # If surface cooled below freezing, create virtual lid
         if cell["lake_temperature"][0] < 273.15:
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
@@ -622,8 +638,9 @@ def lake_development(
     # Compute dh using the actual fluxes over the timestep rather
     # than the instantaneous flux at the end of the timestep * dt
     """ Height change calculation is embedded in turbulent_mixing """
+    print('SW down = ', sw_in)
     Fu, boundary_change = turbulent_mixing(cell, sw_in, dt, k)
-
+    print('Fu, boundary_change after turbulent mixing: ', Fu, boundary_change)
     # Regrid the firn column to account for the change in boundary
     # (which is subtracted from the firn and added to the lake in
     # this subroutine)

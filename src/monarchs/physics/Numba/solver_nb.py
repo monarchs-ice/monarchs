@@ -254,7 +254,6 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
 
     T = np.around(T, decimals=8)
     # print('Sol0 = ', sol[0])
-    # print('T = ', T)
     return T, fvec, success, info
 
 
@@ -289,7 +288,7 @@ def lake_formation_eqn(x, output, args):
     # set output[0] rather than just output else we will just return our
     # initial guess.
     output[0] = (
-        -0.98 * 5.670373 * 10 ** -8 * x[0] ** 4
+        -0.98 * 5.670374 * 10 ** -8 * x[0] ** 4
         + Q
         - k * (x[0] - T1) / (firn_depth / vert_grid)
     )
@@ -358,7 +357,7 @@ def lake_development_eqn(x, output, args):
     # T_core).
     output[0] = np.array(
         [
-            -0.98 * (5.670373 * 10 ** -8) * (x[0] ** 4)
+            -0.98 * (5.670374 * 10 ** -8) * (x[0] ** 4)
             + Q
             - np.sign(x[0] - T_core)
             * 1000
@@ -447,7 +446,7 @@ def sfc_energy_virtual_lid(x, output, args):
     # the surface fluxes (Q) downwards, + the conductive flux downwards,
     # + the longwave radiation (which upwards, so negative here)
     output[0] = (
-        -0.98 * 5.670373 * (10 ** -8) * (x[0] ** 4)
+        -0.98 * 5.670374 * (10 ** -8) * (x[0] ** 4)
         + Q
         + conduction_flux
     )

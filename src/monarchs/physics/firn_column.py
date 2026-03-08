@@ -148,7 +148,7 @@ def firn_column(
                 wind,
                 root,
             )
-
+            print('Height change due to melt:', height_change)
             if np.isnan(height_change):
                 message = (
                     "Height change is NaN - likely due to unrealistic "
