@@ -12,59 +12,72 @@ can be generated according to the value of a single Boolean.
 import numpy as np
 from scipy.optimize import fsolve, root
 from monarchs.physics import heateqn, surface_fluxes
-from monarchs.physics.constants import rho_ice, rho_water, emissivity, stefan_boltzmann
+from monarchs.physics.constants import (
+    emissivity,
+    stefan_boltzmann,
+    k_air,
+    k_water,
+)
 
 
-def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
+def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr", toggle_dict=None):
     """
-    scipy.optimize.fsolve-compatible solver function to be used within the
-    model. Solves physics.heateqn.
-    This loads in the relevant arguments from the cell, packages them
-    into an array form via pack_args, and passes them into the hybrd solver.
+    Dispatcher for firn heat equation solver.
 
+    Routes to either the Newton–tridiagonal solver (if use_newton_solver=True)
+    or the scipy hybr solver (default, legacy path).
 
-    Called in <firn_column>.
+    This function now uses the modern call signature matching the benchmarks:
+    solve_firn_heateqn(cell, met_data, dt, dz, ...) rather than the old
+    scipy.optimize.fsolve interface.
+
+    Called in <firn_column>, <timestep>, <lake>.
 
     Parameters
     ----------
-    x : array_like, float, dimension(cell.vert_grid)
-        numpy array containing the initial estimate of the firn column
-        temperature
-    args : array_like
-        Numpy array containing arguments to the heat equation.
-        See <firn_column> for info on the contents of this array.
+    cell : structured array
+        Element of the model grid we are operating on
+    met_data : structured array
+        Meteorological data for current timestep (LW_down, SW_down, temperature,
+        surf_pressure, dew_point_temperature, wind)
+    dt : float
+        Timestep [s]
+    dz : float
+        Layer thickness [m]
     fixed_sfc : bool, optional
-        Boolean flag to determine whether to use the fixed surface form of the
-         heat equation.
+        If True, use fixed surface temperature (273.15 K). Default False.
+    solver_method : str, optional
+        Solver method (ignored, accepted for backwards compatibility). Default "hybr".
+    toggle_dict : dict, optional
+        Toggle dictionary containing use_newton_solver flag. If None, defaults
+        to scipy path. Default None.
 
     Returns
     -------
-    root : array_like, float, dimension(cell.vert_grid)
-        Vector containing the calculated firn column temperature, either after
-        successful completion or
-        at the end of the final iteration for an unsuccessful solution. [K]
+    T : array_like, float
+        Temperature profile [K]
     infodict : dict
-        A dictionary of optional outputs, such as the number of Jacobian
-        iterations, etc.
-        See scipy.optimize.fsolve documentation for more details on the content
-        of infodict.
+        Diagnostic info dict
     ier : int
-        An integer flag. Set to 1 if a solution was found, otherwise refer to
-        mesg for more information.
+        Success flag (1 if converged)
     mesg : str
-        If no solution is found, mesg details the cause of failure.
-
-
+        Status message
     """
-    cell = args[0]
-    dt = args[1]
-    dz = args[2]
-    lw_in = args[3]
-    sw_in = args[4]
-    air_temp = args[5]
-    p_air = args[6]
-    dew_point_temperature = args[7]
-    wind = args[8]
+    # Route to Newton solver if toggled
+    if toggle_dict is not None and toggle_dict.get("use_newton_solver", False):
+        from monarchs.physics import solver_newton
+        solver_newton.warmup()  # Initialize surface_fluxes reference
+        return solver_newton.solve_firn_heateqn(
+            cell, met_data, dt, dz, fixed_sfc=fixed_sfc, solver_method=solver_method
+        )
+
+    # Legacy scipy path (default, for backward compatibility)
+    lw_in = met_data["LW_down"]
+    sw_in = met_data["SW_down"]
+    air_temp = met_data["temperature"]
+    p_air = met_data["surf_pressure"]
+    dew_point_temperature = met_data["dew_point_temperature"]
+    wind = met_data["wind"]
 
     if fixed_sfc:
         infodict = {}
@@ -73,16 +86,25 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
         T_tri = heateqn.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T = np.concatenate((np.array([273.15]), T_tri))
     else:
-        # Run the top 2% of the column in the root-finding algorithm.
-        N = int(np.floor(cell["vert_grid"] * 0.02))
-        # we need at least 3 points to actually solve the equation at all.
-        # Hard-code a minimum N of 10 points (which would be 2% of a 500-point
-        # grid). Testing (and physical reasoning) indicates that this is more
-        # than enough points to resolve this top boundary part, and we can
-        # solve the rest using the much cheaper tridiagonal solver.
-        if N < 10:
-            N = 10
-        x = x[:N]
+        # Optional mode: solve the full column with scipy/root and skip
+        # tridiagonal propagation entirely.
+        full_column_minpack = (
+            toggle_dict is not None
+            and toggle_dict.get("full_column_minpack_solver", False)
+        )
+        if full_column_minpack:
+            N = int(cell["vert_grid"])
+        else:
+            # Run the top 2% of the column in the root-finding algorithm.
+            N = int(np.floor(cell["vert_grid"] * 0.02))
+            # we need at least 3 points to actually solve the equation at all.
+            # Hard-code a minimum N of 10 points (which would be 2% of a 500-point
+            # grid). Testing (and physical reasoning) indicates that this is more
+            # than enough points to resolve this top boundary part, and we can
+            # solve the rest using the much cheaper tridiagonal solver.
+            if N < 10:
+                N = 10
+        x = cell["firn_temperature"][:N]
         x = np.asarray(x)
 
         temp_cell = cell.copy()
@@ -110,7 +132,8 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
             )
 
         if N == cell["vert_grid"]:
-            return soldict.x, soldict.success, soldict.message, soldict.success
+            # Preserve legacy return ordering: (T, infodict, ier, mesg)
+            return soldict.x, soldict, soldict.success, soldict.message
         else:
             sol = soldict.x
 
@@ -129,34 +152,45 @@ def solve_firn_heateqn(x, args, fixed_sfc=False, solver_method="hybr"):
     return T, infodict, ier, mesg
 
 
+######################
+# EQUATIONS TO SOLVE #
+######################
+
 def lake_formation_eqn(x, args):
     """
     Scipy-compatible form of the lake formation version of the surface
-    temperature equation. Called in get_lake_solver.
+    temperature equation.  Called in lake_seb_solver.
 
     Parameters
     ----------
-    x : array_like, float, dimension(vert_grid_lake)
-        Initial estimate of the lake temperature. [K]
-    args : array_like
-        Array of input arguments to be extracted into the relevant variables
-        (firn_depth, vert_grid, Q, k, and T1).
+    x : array_like, float, shape (1,)
+        Current estimate of the lake surface temperature [K].
+    args : tuple
+        ``(Q, k, T1, firn_depth, vert_grid)`` where
+
+        Q : float
+            Pre-computed surface energy flux evaluated at the initial firn
+            surface temperature [W m^-2].
+        k : float
+            Effective thermal conductivity of the top firn layer [W m^-1 K^-1].
+        T1 : float
+            Temperature of the second firn layer (used as sub-surface BC) [K].
+        firn_depth : float
+            Total firn column depth [m].
+        vert_grid : int
+            Number of vertical grid points in the firn column.
 
     Returns
     -------
-    output : float
-        Estimate of the surface lake temperature [K].
+    output : array_like, float, shape (1,)
+        Residual of the surface energy balance equation.
     """
-    firn_depth = args[0]
-    vert_grid = args[1]
-    Q = args[2]
-    k = args[3]
-    T1 = args[4]
+    Q, k, T1, firn_depth, vert_grid = args
     output = np.array(
         [
             -emissivity * stefan_boltzmann * x[0] ** 4
             + Q
-            - k * (-T1 + x[0]) / (firn_depth / vert_grid)
+            - k * (x[0] - T1) / (firn_depth / vert_grid)
         ]
     )
     return output
@@ -165,38 +199,36 @@ def lake_formation_eqn(x, args):
 def lake_development_eqn(x, args):
     """
     Scipy-compatible form of the lake development version of the surface
-    temperature equation. Called in get_lake_solver.
+    temperature equation.  Called in lake_seb_solver.
 
     Parameters
     ----------
-    x : array_like, float, dimension(vert_grid_lake)
-        Initial estimate of the lake temperature. [K]
-
-    args : array_like
-        Array of input arguments to be extracted into the relevant variables
-        (J, Q, vert_grid_lake and lake_temperature).
+    x : array_like, float, shape (1,)
+        Current estimate of the lake surface temperature [K].
+    args : tuple
+        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+        dew_point_temperature, wind, lake_temperature, vert_grid_lake)``
 
     Returns
     -------
-    output : float
-        Estimate of the surface lake temperature [K].
+    output : array_like, float, shape (1,)
+        Residual of the surface energy balance equation.
     """
-    J = 0.1 * (9.8 * 5 * 10 ** -5 * (1.19 * 10 ** -7) ** 2 / 10 ** -6) ** (
-        1 / 3
-    )
+    J = 0.1 * (9.8 * 5e-5 * (1.19e-7) ** 2 / 1e-6) ** (1 / 3)
 
-    vert_grid_lake = args[0]
-    lid = args[3]
-    lake = args[4]
-    lw_in = args[6]
-    sw_in = args[7]
-    air_temp = args[8]
-    p_air = args[9]
-    dew_point_temperature = args[10]
-    wind = args[11]
-    lake_temperature = np.zeros(int(vert_grid_lake))
-    for i in range(len(lake_temperature)):
-        lake_temperature[i] = args[12 + i]
+    (
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        lake_temperature,
+        vert_grid_lake,
+    ) = args
 
     Q = surface_fluxes.sfc_flux(
         albedo,
@@ -216,127 +248,51 @@ def lake_development_eqn(x, args):
         [
             -emissivity * stefan_boltzmann * x[0] ** 4
             + Q
-            + (
-                np.sign(T_core - x[0])
-                * 1000
-                * 4181
-                * J
-                * abs(T_core - x[0]) ** (4 / 3)
-            )
+            + np.sign(T_core - x[0])
+            * 1000
+            * 4181
+            * J
+            * abs(T_core - x[0]) ** (4 / 3)
         ]
     )
     return output
 
 
-def lake_seb_solver(cell, met_data, dt, dz, formation=False):
-    """
-    Scipy version of the lake solver.
-    Solves lake_development_eqn or lake_formation0_eqn.
-
-    Parameters
-    ----------
-    x : array_like, float, dimension(cell.vert_grid_lake)
-        Initial estimate of the lake temperature profile. We only use the first
-        element in the solver here (in both the lake formation and lake
-        development cases).
-    args : array_like
-        Array of input arguments to the solver. See documentation for form_eqn
-        and dev_eqn for details.
-    formation : bool
-        Flag to determine whether we want the lake *formation* equation, or the
-        lake *development* equation.
-        Defaults to the development equation, unless specified.
-
-    Returns
-    -------
-    root : float,
-        Calculated lake surface temperature, either after successful completion
-        or at the end of the final iteration for an unsuccessful solution. [K]
-    infodict : dict
-        A dictionary of optional outputs, such as the number of Jacobian
-        iterations, etc.
-        See scipy.optimize.fsolve documentation for more details on the content
-        of infodict.
-    ier : int
-        An integer flag. Set to 1 if a solution was found, otherwise refer to
-        mesg for more information.
-    mesg : str
-        If no solution is found, mesg details the cause of failure.
-    """
-    if formation:
-        eqn = lake_formation_eqn
-    else:
-        eqn = lake_development_eqn
-    root, ier, mesg, infodict = fsolve(eqn, x, args=args, full_output=True)
-    root = np.around(root, decimals=8)
-    return root, infodict, ier, mesg
-
-
 def sfc_energy_virtual_lid(x, args):
     """
+    Surface energy balance for the virtual lid.
+    Called in lid_seb_solver when ``cell["v_lid"]`` is True.
 
     Parameters
     ----------
-    x
-    args
+    x : array_like, float, shape (1,)
+        Current estimate of the virtual-lid surface temperature [K].
+    args : tuple
+        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+        dew_point_temperature, wind, k_v_lid, lake_depth,
+        vert_grid_lake, v_lid_depth)``
 
     Returns
     -------
-    output : float
+    output : array_like, float, shape (1,)
+        Residual of the surface energy balance equation.
     """
-    Q = args[0]
-    k_v_lid = args[1]
-    lake_depth = args[2]
-    vert_grid_lake = args[3]
-    v_lid_depth = args[4]
-    lake_temperature = np.zeros(int(vert_grid_lake))
-    # hacky way to assign lake_temperature as the cfunc doesn't like slicing
-    # normally
-    for i in np.arange(len(lake_temperature)):
-        lake_temperature[i] = args[5 + i]
+    (
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        k_v_lid,
+        lake_depth,
+        vert_grid_lake,
+        v_lid_depth,
+    ) = args
 
-    # set output[0] rather than just output as solution doesn't converge
-    # otherwise as it expects
-    # an array
-    output = np.zeros(1)
-    output[0] = (
-        -emissivity * stefan_boltzmann * (x[0] ** 4)
-        + Q
-        - k_v_lid
-        * (-lake_temperature[1] + x[0])
-        / (lake_depth / ((vert_grid_lake) / 2) + v_lid_depth)
-    )
-
-    return output
-
-
-def sfc_energy_lid(x, args):
-    """
-
-    Parameters
-    ----------
-    x
-    args
-
-    Returns
-    -------
-    output : float
-
-    """
-    k_lid = args[0]
-    lid_depth = args[1]
-    vert_grid_lid = args[2]
-    sub_T = args[3]
-    lid = args[6]
-    lake = args[7]
-    lw_in = args[9]
-    sw_in = args[10]
-    air_temp = args[11]
-    p_air = args[12]
-    dew_point_temperature = args[13]
-    wind = args[14]
-
-    output = np.zeros(1)
     Q = surface_fluxes.sfc_flux(
         albedo,
         lid,
@@ -350,101 +306,312 @@ def sfc_energy_lid(x, args):
         x[0],
     )
 
+    # Combined thermal resistance: virtual-lid ice + half-lake water column
+    total_thickness = v_lid_depth + lake_depth / (vert_grid_lake / 2)
+    conduction = k_v_lid * (x[0] - 273.15) / total_thickness
+
+    output = np.zeros(1)
+    output[0] = Q - emissivity * stefan_boltzmann * x[0] ** 4 - conduction
+    return output
+
+
+def sfc_energy_lid(x, args):
+    """
+    Surface energy balance for the frozen lid.
+    Called in lid_seb_solver when ``cell["v_lid"]`` is False.
+
+    Parameters
+    ----------
+    x : array_like, float, shape (1,)
+        Current estimate of the lid surface temperature [K].
+    args : tuple
+        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+        dew_point_temperature, wind, k_lid, lid_depth,
+        vert_grid_lid, sub_T)``
+
+        sub_T : float
+            Temperature of the first lid layer used as the sub-surface
+            boundary condition [K].
+
+    Returns
+    -------
+    output : array_like, float, shape (1,)
+        Residual of the surface energy balance equation.
+    """
+    (
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        k_lid,
+        lid_depth,
+        vert_grid_lid,
+        sub_T,
+    ) = args
+
+    Q = surface_fluxes.sfc_flux(
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        x[0],
+    )
+
+    output = np.zeros(1)
     output[0] = (
         -emissivity * stefan_boltzmann * x[0] ** 4
         + Q
-        - k_lid * (-sub_T + x[0]) / (lid_depth / vert_grid_lid)
+        - k_lid * (x[0] - sub_T) / (lid_depth / vert_grid_lid)
     )
     return output
 
 
-def lid_seb_solver(cell, met_data, dt, dz, k_lid):
+######################
+# DISPATCH FUNCTIONS #
+######################
+
+def lake_seb_solver(cell, met_data, dt, dz, formation=False):
     """
-    scipy.optimise.fsolve version of the lid surface energy balance solver.
-    Solves sfc_energy_lid or
-    sfc_energy_virtual_lid.
+    Scipy version of the lake solver.
+    Solves lake_development_eqn or lake_formation_eqn.
+
+    Values are read directly from ``cell`` and ``met_data``, consistent with
+    the Numba solver in solver_nb.py.
+
+    Parameters
+    ----------
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    met_data : dict
+        Meteorological data for the current timestep.
+    dt : float
+        Timestep [s].
+    dz : float
+        Layer thickness [m].
+    formation : bool, optional
+        If True, solve the lake *formation* equation; otherwise solve the lake
+        *development* equation.  Default False.
+
+    Returns
+    -------
+    sol : array_like, float
+        Calculated lake surface temperature [K].
+    infodict : dict
+        Diagnostic output from fsolve.
+    ier : int
+        1 if a solution was found, otherwise see mesg.
+    mesg : str
+        Status message from fsolve.
+    """
+    lw_in = met_data["LW_down"]
+    sw_in = met_data["SW_down"]
+    air_temp = met_data["temperature"]
+    p_air = met_data["surf_pressure"]
+    dew_point_temperature = met_data["dew_point_temperature"]
+    wind = met_data["wind"]
+
+    if formation:
+        eqn = lake_formation_eqn
+        # Initial guess: air temperature (matches solver_nb.py)
+        x = np.array([air_temp])
+        # Compute effective thermal conductivity of the top firn layer,
+        # matching the Numba lake_formation_eqn physics exactly.
+        T0 = float(cell["firn_temperature"][0])
+        sfrac0 = float(cell["Sfrac"][0])
+        lfrac0 = float(cell["Lfrac"][0])
+        k_ice = 1000.0 * (2.24e-3 + 5.975e-6 * (273.15 - T0) ** 1.156)
+        k = sfrac0 * k_ice + lfrac0 * k_water + (1.0 - sfrac0 - lfrac0) * k_air
+        T1 = float(cell["firn_temperature"][1])
+        # Q is evaluated at the current firn surface temperature (treated as
+        # a constant in the formation equation, matching the Numba version).
+        Q = surface_fluxes.sfc_flux(
+            cell["albedo"],
+            cell["lid"],
+            cell["lake"],
+            lw_in,
+            sw_in,
+            air_temp,
+            p_air,
+            dew_point_temperature,
+            wind,
+            T0,
+        )
+        args = (Q, k, T1, float(cell["firn_depth"]), float(cell["vert_grid"]))
+    else:
+        eqn = lake_development_eqn
+        x = np.array([cell["lake_temperature"][0]])
+        args = (
+            cell["albedo"],
+            cell["lid"],
+            cell["lake"],
+            lw_in,
+            sw_in,
+            air_temp,
+            p_air,
+            dew_point_temperature,
+            wind,
+            cell["lake_temperature"],
+            int(cell["vert_grid_lake"]),
+        )
+
+    # fsolve calls func(x, *args), so we wrap our args tuple in a
+    # single-element tuple to preserve the (x, args) function signature.
+    sol, infodict, ier, mesg = fsolve(eqn, x, args=(args,), full_output=True)
+    sol = np.around(sol, decimals=8)
+    return sol, infodict, ier, mesg
+
+
+def lid_seb_solver(cell, met_data, dt, dz, k_lid, Sfrac_lid=None):
+    """
+    Scipy version of the lid surface energy balance solver.
+    Solves sfc_energy_lid or sfc_energy_virtual_lid.
+
+    Values are read directly from ``cell`` and ``met_data``, consistent with
+    the Numba solver in solver_nb.py.
+
     Called in virtual_lid and lid.lid_development.
 
     Parameters
     ----------
-    x : array_like, float, dimension(cell.vert_grid_lid)
-        Initial estimate of the lid temperature. We only use the first value
-        (i.e. the surface value). [K]
-    args : array_like
-        Array of arguments to pass into the function.
-    v_lid : bool, optional
-        Flag that asks whether we want to solve the surface energy balance for
-        a virtual lid (if True), or
-        a true lid (if False). Default False.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    met_data : dict
+        Meteorological data for the current timestep.
+    dt : float
+        Timestep [s].
+    dz : float
+        Layer thickness [m].
+    k_lid : float
+        Thermal conductivity of the lid [W m^-1 K^-1].
+    Sfrac_lid : array_like, optional
+        Solid fraction of the lid.  Unused in the scipy path but accepted for
+        API parity with solver_nb.py.
 
     Returns
     -------
-    root : float
-        the calculated lid surface temperature, either after successful
-        completion or at the end of the final iteration for an unsuccessful
-        solution. [K]
+    sol : array_like, float
+        Calculated lid surface temperature [K].
     infodict : dict
-        A dictionary of optional outputs, such as the number of Jacobian
-        iterations, etc.
-        See scipy.optimize.fsolve documentation for more details on the content
-        of infodict.
+        Diagnostic output from fsolve.
     ier : int
-        An integer flag. Set to 1 if a solution was found, otherwise refer to
-        mesg for more information.
+        1 if a solution was found, otherwise see mesg.
     mesg : str
-        If no solution is found, mesg details the cause of failure.
+        Status message from fsolve.
     """
-    if v_lid:
+    lw_in = met_data["LW_down"]
+    sw_in = met_data["SW_down"]
+    air_temp = met_data["temperature"]
+    p_air = met_data["surf_pressure"]
+    dew_point_temperature = met_data["dew_point_temperature"]
+    wind = met_data["wind"]
+
+    # Initial guess: current virtual-lid surface temperature (matches solver_nb.py)
+    x = np.array([float(cell["virtual_lid_temperature"])])
+
+    if cell["v_lid"]:
         eqn = sfc_energy_virtual_lid
+        args = (
+            cell["albedo"],
+            cell["lid"],
+            cell["lake"],
+            lw_in,
+            sw_in,
+            air_temp,
+            p_air,
+            dew_point_temperature,
+            wind,
+            float(k_lid),
+            float(cell["lake_depth"]),
+            int(cell["vert_grid_lake"]),
+            float(cell["v_lid_depth"]),
+        )
     else:
         eqn = sfc_energy_lid
-    root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
-    root = np.around(root, decimals=8)
-    return root, infodict, ier, mesg
+        # sub_T: first element of the lid temperature array, used as the
+        # sub-surface BC (matches Numba sfc_energy_lid which reads
+        # lid_temperature[0] from the packed args).
+        sub_T = float(cell["lid_temperature"][0])
+        args = (
+            cell["albedo"],
+            cell["lid"],
+            cell["lake"],
+            lw_in,
+            sw_in,
+            air_temp,
+            p_air,
+            dew_point_temperature,
+            wind,
+            float(k_lid),
+            float(cell["lid_depth"]),
+            int(cell["vert_grid_lid"]),
+            sub_T,
+        )
+
+    # fsolve calls func(x, *args), so wrap args tuple to preserve (x, args) signature.
+    sol, infodict, ier, mesg = fsolve(eqn, x, args=(args,), full_output=True)
+    sol = np.around(sol, decimals=8)
+    return sol, infodict, ier, mesg
 
 
 def lid_heateqn_solver(cell, met_data, dt, dz):
     """
-    scipy.optimize.fsolve version of the lid heat equation solver. Solves
-    physics.heateqn_lid. Called in lid.lid_development.
+    Scipy version of the lid heat equation solver.
+    Solves heateqn.heateqn_lid.
+
+    Values are read directly from ``cell`` and ``met_data``, consistent with
+    the Numba solver in solver_nb.py.
+
+    Called in lid.lid_development.
 
     Parameters
     ----------
-    x : array_like, float, dimension(cell.vert_grid_lid)
-        Initial guess at the lid column temperature. [K]
-    args : array_like
-        Array of arguments to pass into the function. See pack_args for
-        details.
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    met_data : dict
+        Meteorological data for the current timestep.
+    dt : float
+        Timestep [s].
+    dz : float
+        Layer thickness [m].
 
     Returns
     -------
-    root : array_like, float, dimension(cell.vert_grid_lid)
-        Vector containing the calculated lid column temperature, either after
-        successful completion or at the end of the final iteration for an
-        unsuccessful solution. [K]
+    sol : array_like, float, dimension(cell.vert_grid_lid)
+        Calculated lid column temperature [K].
     infodict : dict
-        A dictionary of optional outputs, such as the number of Jacobian
-        iterations, etc.
-        See scipy.optimize.fsolve documentation for more details on the content
-        of infodict.
+        Diagnostic output from fsolve.
     ier : int
-        An integer flag. Set to 1 if a solution was found, otherwise refer to
-        mesg for more information.
+        1 if a solution was found, otherwise see mesg.
     mesg : str
-        If no solution is found, mesg details the cause of failure.
+        Status message from fsolve.
     """
+    lw_in = met_data["LW_down"]
+    sw_in = met_data["SW_down"]
+    air_temp = met_data["temperature"]
+    p_air = met_data["surf_pressure"]
+    dew_point_temperature = met_data["dew_point_temperature"]
+    wind = met_data["wind"]
+
     eqn = heateqn.heateqn_lid
-    cell = args[0]
-    dt = args[1]
-    dz = args[2]
-    lw_in = args[3]
-    sw_in = args[4]
-    air_temp = args[5]
-    p_air = args[6]
-    dew_point_temperature = args[7]
-    wind = args[8]
-    Sfrac_lid = args[-2]
-    k_lid = args[-1]
+    x = cell["lid_temperature"].copy()
+
+    # Sfrac_lid: assume all-ice lid (solid fraction = 1).
+    # k_lid is recomputed internally by heateqn_lid from cell["lid_temperature"],
+    # so the value passed here is overwritten; we pass ones as a placeholder.
+    n_lid = int(cell["vert_grid_lid"])
+    Sfrac_lid = np.ones(n_lid, dtype=np.float64)
+    k_lid_placeholder = np.ones(n_lid, dtype=np.float64)
+
     args = (
         cell,
         dt,
@@ -455,9 +622,10 @@ def lid_heateqn_solver(cell, met_data, dt, dz):
         p_air,
         dew_point_temperature,
         wind,
-        k_lid,
+        k_lid_placeholder,
         Sfrac_lid,
     )
-    root, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
-    root = np.around(root, decimals=8)
-    return root, infodict, ier, mesg
+
+    sol, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
+    sol = np.around(sol, decimals=8)
+    return sol, infodict, ier, mesg

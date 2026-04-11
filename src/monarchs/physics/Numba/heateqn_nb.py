@@ -212,6 +212,43 @@ def heateqn(x, output, args):
     )
 
 
+def heateqn_fixed_sfc(x, output, args):
+    """
+    Fixed-surface variant of the firn heat equation residual for NumbaMinpack.
+
+    Uses a Dirichlet surface condition T[0] = 273.15 K and solves the full
+    column with the same interior diffusion physics as ``heateqn``.
+    """
+    (N, firn_depth, dt, dz, melt, albedo, exposed_water,
+        lid, lid_depth, virtual_lid, virtual_lid_depth, lake, lake_depth, snow_on_lid) = extract_args.extract_scalars(args)
+
+    (lw_in, sw_in, air_temp, p_air,
+     dew_point_temperature, wind) = extract_args.extract_met_data(args)
+
+    T, Sfrac, Lfrac = extract_args.extract_firn_arrays(args)
+
+    k, kappa = get_k_and_kappa(
+        T, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
+    )
+
+    output[0] = x[0] - 273.15
+
+    for idx in np.arange(1, N - 1, 1):
+        output[idx] = (
+            T[idx]
+            - x[idx]
+            + dt
+            * (kappa[idx] / dz ** 2)
+            * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+        )
+
+    output[N - 1] = (
+        T[N - 1]
+        - x[N - 1]
+        + dt * (kappa[N - 1] / dz ** 2) * (-x[N - 1] + x[N - 2])
+    )
+
+
 def heateqn_lid(x, output, args):
     """
     Heat equation solver function for a frozen lid. To be passed into
@@ -309,4 +346,5 @@ def heateqn_lid(x, output, args):
 
 
 heateqn = cfunc(minpack_sig)(heateqn)
+heateqn_fixed_sfc = cfunc(minpack_sig)(heateqn_fixed_sfc)
 heateqn_lid = cfunc(minpack_sig)(heateqn_lid)

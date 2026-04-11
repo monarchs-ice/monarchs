@@ -161,9 +161,16 @@ def freeze_virtual_lid(cell, ice_added):
             0, cell["lake_depth"], cell["vert_grid_lake"]
         )
         # now reduce the size of the lake due to freezing
+        _old_lake_depth = cell["lake_depth"]
         cell["lake_depth"] -= ice_added * (
             rho_ice / rho_water
         )
+        # print(
+        #     "LAKE_DEPTH_CHANGE virtual_lid:freeze_partial",
+        #     "day", cell["day"], "t_step", cell["t_step"],
+        #     "row", cell["row"], "col", cell["column"],
+        #     "old", _old_lake_depth, "new", cell["lake_depth"],
+        # )
 
         # new grid - same # of vertical points, but with a reduced value
         new_depth_grid = np.linspace(
@@ -182,7 +189,14 @@ def freeze_virtual_lid(cell, ice_added):
         cell["v_lid_depth"] += cell["lake_depth"] * (
             rho_water / rho_ice
         )
+        _old_lake_depth = cell["lake_depth"]
         cell["lake_depth"] = 0
+        # print(
+        #     "LAKE_DEPTH_CHANGE virtual_lid:freeze_full",
+        #     "day", cell["day"], "t_step", cell["t_step"],
+        #     "row", cell["row"], "col", cell["column"],
+        #     "old", _old_lake_depth, "new", cell["lake_depth"],
+        # )
         #print('Whole lake frozen into virtual lid')
         #print('ice_added:', ice_added)
 
@@ -193,8 +207,15 @@ def melt_virtual_lid(cell, ice_added):
     if ice_removed > 0:
         # whole virtual lid melts
         if ice_removed > cell["v_lid_depth"]:
+            _old_lake_depth = cell["lake_depth"]
             cell["lake_depth"] += (
                 cell["v_lid_depth"] * rho_ice / rho_water
+            )
+            print(
+                "LAKE_DEPTH_CHANGE virtual_lid:melt_full",
+                "day", cell["day"], "t_step", cell["t_step"],
+                "row", cell["row"], "col", cell["column"],
+                "old", _old_lake_depth, "new", cell["lake_depth"],
             )
             #print('Virtual lid depth before melting:', cell["v_lid_depth"])
             #print('ice_removed:', ice_removed)
@@ -203,9 +224,16 @@ def melt_virtual_lid(cell, ice_added):
             print('Whole virtual lid melted')
         # some of the lid melts
         else:
+            _old_lake_depth = cell["lake_depth"]
             cell["lake_depth"] = (
                 cell["lake_depth"]
                 + ice_removed * rho_ice / rho_water
+            )
+            print(
+                "LAKE_DEPTH_CHANGE virtual_lid:melt_partial",
+                "day", cell["day"], "t_step", cell["t_step"],
+                "row", cell["row"], "col", cell["column"],
+                "old", _old_lake_depth, "new", cell["lake_depth"],
             )
             cell["v_lid_depth"] = cell["v_lid_depth"] - ice_removed
             cell["total_melt"] = cell["total_melt"] + ice_removed

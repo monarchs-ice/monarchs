@@ -228,7 +228,6 @@ def surface_melt(cell, dt, Q):
 #     lid_melt_this_timestep = (
 #         (Q - kdTdz - emissivity * stefan_boltzmann * cell["lid_temperature"][0] ** 4) / (L_ice * rho_ice) * dt
 # ) / (L_ice * rho_ice)
-#     ) * dt
     lid_melt_this_timestep = (Q - kdTdz - (emissivity * stefan_boltzmann * cell["lid_temperature"][0] ** 4)) * dt / (L_ice * rho_ice)
     cell["lid_sfc_melt"] += lid_melt_this_timestep
     cell["lid_temperature"][0] = 273.15
@@ -339,7 +338,15 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
     max_dh = cell["lake_depth"] * (rho_water / rho_ice)
     dh = min(dh, max_dh)
     cell["lid_depth"] += dh
+    _old_lake_depth = cell["lake_depth"]
     cell["lake_depth"] -= dh * (rho_ice / rho_water)
+    # print(
+    #     "LAKE_DEPTH_CHANGE lid:adjust_lid_height",
+    #     "day", cell["day"], "t_step", cell["t_step"],
+    #     "row", cell["row"], "col", cell["column"],
+    #     "old", _old_lake_depth, "new", cell["lake_depth"],
+    #     "dh", dh,
+    # )
     cell["lid_boundary_change"] += dh
     cell["lake_boundary_change"] -= dh
 

@@ -80,6 +80,9 @@ def setup_toggle_dict(model_setup):
         "densification_toggle": model_setup.densification_toggle,
         "ignore_errors": model_setup.ignore_errors,
         "use_mpi": model_setup.use_mpi,
+        "use_newton_solver": model_setup.use_newton_solver,
+        "full_column_minpack_solver": model_setup.full_column_minpack_solver,
+        "minpack_n_50": getattr(model_setup, "minpack_n_50", False),
     }
 
     if model_setup.use_numba:
@@ -687,8 +690,12 @@ def main(model_setup, grid):
         start = time.perf_counter()
         met_start_idx = (day + 1) * model_setup.t_steps_per_day % met_data_len
         met_end_idx = (day + 2) * model_setup.t_steps_per_day % met_data_len
-        if met_start_idx > met_end_idx:
-            met_end_idx = met_data_len
+        if met_start_idx >= met_end_idx:
+            # Handle modulo wrap-around (including equality) so we never pass
+            # an empty time window into initialise_met_data.
+            met_end_idx = min(
+                met_start_idx + model_setup.t_steps_per_day, met_data_len
+            )
         met_data_grid, met_data_len, snow_added = update_met_conditions(
             model_setup,
             grid,

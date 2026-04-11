@@ -104,11 +104,38 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     cell["lid_temperature"] = np.ones(cell["vert_grid_lid"]) * 273.15
     cell["lake_temperature"] = np.ones(cell["vert_grid_lake"]) * 273.15
     cell["lid_melt_count"] = 0
-    cell["lake_depth"] = 0.0
+    # Explicitly set lake_depth to 0.0 with proper dtype to eliminate floating-point residuals
+    # that could cause divergence between different solver paths (e.g., Newton vs MinPACK).
+    _old_lake_depth = cell["lake_depth"]
+    cell["lake_depth"] = np.float64(0.0)
+    # print(
+    #     "LAKE_DEPTH_CHANGE reset_column:combine_reset",
+    #     "day", cell["day"], "t_step", cell["t_step"],
+    #     "row", cell["row"], "col", cell["column"],
+    #     "old", _old_lake_depth, "new", cell["lake_depth"],
+    #     "surface_slush", surface_slush,
+    # )
     if surface_slush:
         cell["melt"] = True
         cell["exposed_water"] = True
+        print("Surface slush enabled: setting melt and exposed_water to True")
+        print('Lid sfc melt before reset:', cell['lid_sfc_melt'])
+        _old_lake_depth = cell["lake_depth"]
         cell["lake_depth"] = cell["lid_sfc_melt"]
+        # print(
+        #     "LAKE_DEPTH_CHANGE reset_column:combine_surface_slush",
+        #     "day", cell["day"], "t_step", cell["t_step"],
+        #     "row", cell["row"], "col", cell["column"],
+        #     "old", _old_lake_depth, "new", cell["lake_depth"],
+        #     "lid_sfc_melt", cell["lid_sfc_melt"],
+        # )
+    # # Remove near-zero residual water depths after combine to keep state
+    # # deterministic across solver implementations.
+    # if (not cell["lake"]) and cell["lake_depth"] <= 1e-5:
+    #     cell["lake_depth"] = np.float64(0.0)
+    #     # No physically meaningful surface water remains.
+    #     cell["exposed_water"] = False
+    #     cell["melt"] = False
 
     cell["lid_sfc_melt"] = 0.0
     cell["lake_refreeze_counter"] = 0
@@ -118,9 +145,48 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     # then we have melt on the lid surface so the albedo will be reduced
     # compared to if it completely froze the lake
 
+    print(
+        "RESET_COMBINE_STATE before",
+        "day", cell["day"], "t_step", cell["t_step"],
+        "row", cell["row"], "col", cell["column"],
+        "lake", cell["lake"], "lake_depth", cell["lake_depth"],
+        "lid_depth", cell["lid_depth"], "v_lid_depth", cell["v_lid_depth"],
+        "top_Sfrac", cell["Sfrac"][0], "top_Lfrac", cell["Lfrac"][0],
+        "max_oversat", np.max(cell["Sfrac"] + cell["Lfrac"] - 1.0),
+    )
+
     # get saturation of the new column explicitly rather than interpolating
-    # the old values
+    # the old values.
+    # NOTE: calc_saturation can write to cell["lake_depth"] if it finds excess
+    # water at the surface (v_lev==0 path). After a combine, lake=False and any
+    # such write is a phantom caused by tiny Lfrac overshoots from conservative
+    # regridding, not real surface water. We zero it out unconditionally here
+    # because lake=False has already been set above.
+    print(
+        "RESET_COMBINE_STATE pre_calc_saturation",
+        "day", cell["day"], "t_step", cell["t_step"],
+        "row", cell["row"], "col", cell["column"],
+        "lake", cell["lake"], "lake_depth", cell["lake_depth"],
+        "top_Sfrac", cell["Sfrac"][0], "top_Lfrac", cell["Lfrac"][0],
+        "max_oversat", np.max(cell["Sfrac"] + cell["Lfrac"] - 1.0),
+    )
     percolation.calc_saturation(cell, cell["vert_grid"] - 1)
+    print(
+        "RESET_COMBINE_STATE post_calc_saturation",
+        "day", cell["day"], "t_step", cell["t_step"],
+        "row", cell["row"], "col", cell["column"],
+        "lake", cell["lake"], "lake_depth", cell["lake_depth"],
+        "top_Sfrac", cell["Sfrac"][0], "top_Lfrac", cell["Lfrac"][0],
+        "max_oversat", np.max(cell["Sfrac"] + cell["Lfrac"] - 1.0),
+    )
+    if not cell["lake"]:
+        cell["lake_depth"] = np.float64(0.0)
+        # print(
+        #     "LAKE_DEPTH_CHANGE reset_column:post_calc_saturation_zero_no_lake",
+        #     "day", cell["day"], "t_step", cell["t_step"],
+        #     "row", cell["row"], "col", cell["column"],
+        #     "new", cell["lake_depth"],
+        # )
 
     # validate mass conservation
     new_mass = utils.calc_mass_sum(cell)

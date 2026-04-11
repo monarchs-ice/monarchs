@@ -8,6 +8,7 @@ contained in percolation.py.
 # pylint: disable=broad-exception-raised, raise-missing-from
 # TODO - flesh out module-level docstring
 import numpy as np
+import os
 from monarchs.physics import percolation, surface_fluxes, solver, regrid_column
 from monarchs.core import utils
 from monarchs.core.error_handling import (
@@ -105,7 +106,8 @@ def firn_column(
         cell["snow_on_lid"]
     )
     root, _, success, _ = solver.solve_firn_heateqn(
-         cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr"
+         cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr",
+         toggle_dict=toggle_dict
     )
     # If the solver didn't fail (e.g. due to too many iterations), and we have
     # a surface temperature above the freezing point, then melt will occur.
@@ -116,7 +118,8 @@ def firn_column(
         dz = cell["firn_depth"] / cell["vert_grid"]
 
         root_fs, _, success_fixedsfc, _ = solver.solve_firn_heateqn(
-            cell, met_data, dt, dz, fixed_sfc=True, solver_method="hybr"
+            cell, met_data, dt, dz, fixed_sfc=True, solver_method="hybr",
+            toggle_dict=toggle_dict
         )
         # if *this* solver works, then update the firn temperature and regrid
         # the firn column, accounting for the melt.
@@ -185,9 +188,10 @@ def calc_height_change(
     met_data : dict
         Dictionary containing the meteorological data for the current timestep.
         See firn_column for details.
-    surf_T : float
-        Calculated surface temperature of the firn from the initial (non-fixed
-        surface) implementation of the heat equation. [K]
+    surface_temp : array_like, float
+        Calculated surface temperature profile of the firn from the initial
+        (non-fixed surface) implementation of the heat equation. surface_temp[0]
+        is the unfixed surface temperature [K], retained for diagnostic output.
 
     Returns
     -------
@@ -230,7 +234,13 @@ def calc_height_change(
         cell["lake_depth"],
         cell["snow_on_lid"]
     )
-    # now calculate surface flux
+    # Evaluate the surface flux at the melting-point temperature (273.15 K).
+    # The surface is held at 273.15 K during the fixed-surface solve, so Q and
+    # every other term in the Stefan-condition formula must be evaluated at
+    # the same temperature to be physically consistent and resolution-independent.
+    # Using the unfixed surface temperature here (which varies with grid
+    # resolution) introduces a spurious resolution dependence in dHdt.
+    T_melt = cell["firn_temperature"][0]  # = 273.15 after the fixed-surface solve
     Q = surface_fluxes.sfc_flux(
         cell["albedo"],
         cell["lid"],
@@ -241,14 +251,24 @@ def calc_height_change(
         met_data["surf_pressure"],
         met_data["dew_point_temperature"],
         met_data["wind"],
-        surface_temp[0],
+        T_melt,
     )
 
     # Strictly speaking, since the MONARCHS grid is defined from the surface
     # downward, this is actually the "wrong" way round. It is simpler
     # conceptually for this function to consider the
     # height change rather than depth change, so dz is kept positive here.
-    dtdz = (cell["firn_temperature"][0] - cell["firn_temperature"][1]) / dz
+    #
+    # Use a second-order one-sided finite difference for the surface temperature
+    # gradient:  (3·T₀ − 4·T₁ + T₂) / (2·dz)
+    # This is O(dz²) accurate vs the O(dz) two-point formula, giving a much
+    # better estimate of the true surface gradient and reducing the resolution
+    # dependence of dHdt.
+    dtdz = (
+        3 * cell["firn_temperature"][0]
+        - 4 * cell["firn_temperature"][1]
+        + cell["firn_temperature"][2]
+    ) / (2 * dz)
 
     # # If the surface is very empty, just melt one layer
     # if cell["Sfrac"][0] < 0.1:
@@ -282,5 +302,29 @@ def calc_height_change(
     elif np.isnan(dHdt):
         message = "Height change during melt is NaN"
         generic_error(cell, routine_name, message)
+
+
+    rad_out = epsilon * sigma * (cell["firn_temperature"][0] ** 4)
+    cond_term = k_sfc * dtdz
+    denom = rho_ice * (cell["Sfrac"][0] * L_fus)
+    line = (
+        "MELT_DIAG,"
+        f"day={int(cell['day'])},"
+        f"t_step={int(cell['t_step'])},"
+        f"vpf={int(cell['vert_grid'])},"
+        f"dz={float(dz)},"
+        f"Q={float(Q)},"
+        f"rad_out={float(rad_out)},"
+        f"kgrad={float(cond_term)},"
+        f"denom={float(denom)},"
+        f"dHdt={float(dHdt)},"
+        f"Sfrac0={float(cell['Sfrac'][0])},"
+        f"T0_fixed={float(cell['firn_temperature'][0])},"
+        f"T1_fixed={float(cell['firn_temperature'][1])},"
+        f"T2_fixed={float(cell['firn_temperature'][2])},"
+        f"T0_unfixed={float(surface_temp[0])}"
+    )
+    print(line)
+
     return dHdt
 

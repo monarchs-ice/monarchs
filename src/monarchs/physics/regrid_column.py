@@ -211,7 +211,15 @@ def regrid_after_melt(cell, height_change, lake=False):
     overflow = water_height_to_add - take
 
     if lake and overflow > 0.0:
+        _old_lake_depth = cell["lake_depth"]
         cell["lake_depth"] += overflow
+        # print(
+        #     "LAKE_DEPTH_CHANGE regrid_column:regrid_after_melt_overflow",
+        #     "day", cell["day"], "t_step", cell["t_step"],
+        #     "row", cell["row"], "col", cell["column"],
+        #     "old", _old_lake_depth, "new", cell["lake_depth"],
+        #     "overflow", overflow,
+        # )
         overflow = 0.0
 
     if not lake and overflow > 0.0:
@@ -309,3 +317,4 @@ def regrid_after_freeze(cell, height_change):
     # Note: Mass HAS increased because we moved mass from Lake to Firn.
     # We can't check conservation against 'mass_before' of the firn only.
     # We trust the inputs.
+

@@ -364,9 +364,23 @@ def calc_saturation(cell, v_lev_in, end=False):
                     cell["meltflag"][0] = 0
                     excess_water = cell["Lfrac"][0] - Lfrac_max
                     cell["Lfrac"][0] = Lfrac_max
-                    cell["lake_depth"] += excess_water * (
+                    _old_lake_depth = cell["lake_depth"]
+                    _dh_lake = excess_water * (
                         cell["firn_depth"] / cell["vert_grid"]
                     )  # convert to a height in m
+                    cell["lake_depth"] += _dh_lake
+                    # print(
+                    #     "LAKE_DEPTH_CHANGE percolation:calc_saturation_surface_overflow",
+                    #     "day", cell["day"], "t_step", cell["t_step"],
+                    #     "row", cell["row"], "col", cell["column"],
+                    #     "old", _old_lake_depth, "new", cell["lake_depth"],
+                    #     "delta", _dh_lake, "end", end,
+                    #     "lake", cell["lake"], "exposed_water", cell["exposed_water"],
+                    #     "top_Sfrac", cell["Sfrac"][0],
+                    #     "top_Lfrac", cell["Lfrac"][0],
+                    #     "top_Lfrac_max", (1.0 - cell["Sfrac"][0]),
+                    #     "sat1", cell["saturation"][1],
+                    # )
                     if cell["lake"] and cell["lake_depth"] < 0:
                         message = "Lake depth is negative - problem..."
                         generic_error(cell, routine_name, message)

@@ -96,15 +96,33 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     cell["firn_boundary_change"] = 0
     cell["lake_boundary_change"] = 0
     cell["lid_boundary_change"] = 0
-
     if np.isnan(cell["firn_temperature"]).any():
         message = "NaN in firn temperature"
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
         # Validation of model state at the start of the timestep
         if cell["lake_depth"] <= 1e-5 and cell["lake"]:
+            _old_lake_depth = cell["lake_depth"]
             cell["lake"] = False
             cell["lake_depth"] = 0
+            # print(
+            #     "LAKE_DEPTH_CHANGE timestep:start lake->false",
+            #     "day", cell["day"], "t_step", t_step,
+            #     "row", cell["row"], "col", cell["column"],
+            #     "old", _old_lake_depth, "new", cell["lake_depth"],
+            # )
+        # Keep state consistent across solver paths: if there is no lake,
+        # tiny residual lake_depth values are numerical noise.
+        if (not cell["lake"]) and (not cell["exposed_water"]) and cell["lake_depth"] <= 1e-5:
+            _old_lake_depth = cell["lake_depth"]
+            cell["lake_depth"] = 0.0
+            # if cell["lake_depth"] != _old_lake_depth:
+                # print(
+                #     "LAKE_DEPTH_CHANGE timestep:start normalize_no_lake",
+                #     "day", cell["day"], "t_step", t_step,
+                #     "row", cell["row"], "col", cell["column"],
+                #     "old", _old_lake_depth, "new", cell["lake_depth"],
+                # )
         if cell["lid_depth"] <= 0 and cell["lid"]:
             cell["lid"] = False
             cell["lid_depth"] = 0
@@ -153,7 +171,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
             if firn_heat_toggle:
                 sol, fvec, success, info = solver.solve_firn_heateqn(
-                    cell, met_data[t_step], dt, dz, fixed_sfc=True, solver_method="hybr"
+                    cell, met_data[t_step], dt, dz, fixed_sfc=True, solver_method="hybr",
+                    toggle_dict=toggle_dict
                 )
                 if success:
                     cell["firn_temperature"] = sol
@@ -170,8 +189,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 and cell["v_lid_depth"] <= 0
             ):
                 cell["lake"] = False
-                cell["lake_depth"] = 0
-
             if cell["lake_depth"] == 0:
                 cell["exposed_water"] = False
 
@@ -211,6 +228,17 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     # if virtual lid freezes the entire lake (possible if
                     # lateral movement), then combine (virtual) lid and
                     # lake profiles.
+                    # Use max() to explicitly clamp tiny floating-point residuals to 0,
+                    # ensuring both solver paths behave identically when lake is nearly frozen.
+                    _old_lake_depth = cell["lake_depth"]
+                    cell["lake_depth"] = max(0.0, cell["lake_depth"])
+                    # if cell["lake_depth"] != _old_lake_depth:
+                        # print(
+                        #     "LAKE_DEPTH_CHANGE timestep:v_lid clamp_nonnegative",
+                        #     "day", cell["day"], "t_step", t_step,
+                        #     "row", cell["row"], "col", cell["column"],
+                        #     "old", _old_lake_depth, "new", cell["lake_depth"],
+                        # )
                     if cell["lake_depth"] <= 1e-5:
                         reset_column.combine_lid_firn(cell, freeze_lake=False)
 
@@ -237,6 +265,16 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 #            - or if lid melt count > 6 (i.e. lid has been
                 #              melting for half a day, and therefore has
                 #              significant slush/water on the surface)
+                # Clamp lake_depth to 0 to avoid solver-path-dependent floating-point residuals.
+                _old_lake_depth = cell["lake_depth"]
+                cell["lake_depth"] = max(0.0, cell["lake_depth"])
+                # if cell["lake_depth"] != _old_lake_depth:
+                    # print(
+                    #     "LAKE_DEPTH_CHANGE timestep:lid clamp_nonnegative",
+                    #     "day", cell["day"], "t_step", t_step,
+                    #     "row", cell["row"], "col", cell["column"],
+                    #     "old", _old_lake_depth, "new", cell["lake_depth"],
+                    # )
                 if cell["lake_depth"] <= 1e-5:
                     print('Combining lid and firn column')
                     print('Lid melt count:', cell["lid_melt_count"])
@@ -280,6 +318,21 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     " calculation."
                 )
                 generic_error(cell, routine_name, message)
+
+        # Final single-column consistency cleanup for this timestep.
+        # calc_saturation can run late in the loop and write tiny surface
+        # residuals; if lake is not active these are numerical noise.
+        if (not cell["lake"]) and (not cell["exposed_water"]) and cell["lake_depth"] <= 1e-5:
+            _old_lake_depth = cell["lake_depth"]
+            cell["lake_depth"] = 0.0
+            # if cell["lake_depth"] != _old_lake_depth:
+                # print(
+                #     "LAKE_DEPTH_CHANGE timestep:end normalize_no_lake",
+                #     "day", cell["day"], "t_step", t_step,
+                #     "row", cell["row"], "col", cell["column"],
+                #     "old", _old_lake_depth, "new", cell["lake_depth"],
+                # )
+
         if not ignore_errors:
             check_correct(cell)
 

@@ -239,11 +239,9 @@ def heateqn_lid(
     rho = 917
 
     Q = sfc_flux(
-        cell["melt"],
-        cell["exposed_water"],
+        cell["albedo"],
         cell["lid"],
         cell["lake"],
-        cell["lake_depth"],
         lw_in,
         sw_in,
         air_temp,

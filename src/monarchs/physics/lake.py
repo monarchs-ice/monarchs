@@ -25,41 +25,69 @@ MODULE_NAME = "monarchs.physics.lake"
 
 
 
-def freeze_pre_lake(cell):
+def freeze_pre_lake(cell, dt=None, surface_flux=None):
     """
-    Refreeze a shallow 'pre-lake' (exposed water film) into the firn column, conserving mass.
+    Refreeze all or part of a shallow exposed-water film into the firn column.
 
-    Converts the entire lake water depth H_w to an equivalent ice thickness
-    H_i = H_w * (rho_water / rho_ice), adds that thickness at the surface
-    (pure ice), and removes the lake water. Uses the same regridding
-    routine as other freezing events to keep all state arrays consistent.
+    If ``dt`` and a negative ``surface_flux`` are provided, the refreezing is
+    limited by the latent heat that can be removed during this timestep.
+    Otherwise the entire exposed-water depth is frozen.
     """
-    # Clear exposed-water flags/counters up-front
-    cell["exposed_water"] = False
-    cell["exposed_water_refreeze_counter"] = 0
+    routine_name = f"{MODULE_NAME}.freeze_pre_lake"
+    mass_before = utils.calc_mass_sum(cell)
 
-    # Nothing to do if the pre-lake is already zero
-    H_w = float(max(0.0, cell["lake_depth"]))
-    if H_w == 0.0:
-        return
+    if (
+        not cell["exposed_water"]
+        or cell["lake_depth"] <= 0.0
+        or cell["lake_depth"] >= 0.1
+        or cell["lid"]
+        or cell["v_lid"]
+    ):
+        return 0.0
 
-    # Equivalent ice thickness to add at the surface (mass conservation)
-    H_i = H_w * (rho_water / rho_ice)
+    water_depth = float(cell["lake_depth"])
+    water_to_freeze = water_depth
+    if dt is not None and surface_flux is not None:
+        if surface_flux >= 0.0:
+            return 0.0
+        water_to_freeze = min(
+            water_depth,
+            (-surface_flux * dt) / (rho_water * L_ice),
+        )
 
-    # Remove all lake water and mark no lake
-    cell["lake_depth"] = 0.0
-    cell["lake"] = False
+    if water_to_freeze <= 0.0:
+        return 0.0
 
-    # Add a solid-ice layer of thickness H_i on top of the firn column.
-    # This routine handles firn_depth, temperature, Sfrac/Lfrac, rho, etc.
-    regrid_column.regrid_after_freeze(cell, H_i)
+    ice_to_add = water_to_freeze * (rho_water / rho_ice)
+    old_lake_depth = cell["lake_depth"]
+    cell["lake_depth"] = max(0.0, water_depth - water_to_freeze)
+    # print(
+    #     "LAKE_DEPTH_CHANGE lake:freeze_pre_lake",
+    #     "day", cell["day"], "t_step", cell["t_step"],
+    #     "row", cell["row"], "col", cell["column"],
+    #     "old", old_lake_depth, "new", cell["lake_depth"],
+    #     "water_frozen", water_to_freeze,
+    #     "ice_added", ice_to_add,
+    #     "surface_flux", surface_flux,
+    #     "dt", dt,
+    # )
 
-    # Newly formed surface ice should be at the melting point (freshwater)
+    regrid_column.regrid_after_freeze(cell, ice_to_add)
     cell["firn_temperature"][0] = 273.15
-
-    # If any lid flags were left over from previous states, ensure they're off
+    cell["lake"] = False
+    cell["lid"] = False
     cell["v_lid"] = False
-    cell["lid"]   = False
+
+    if cell["lake_depth"] <= 1e-12:
+        cell["lake_depth"] = 0.0
+        cell["exposed_water"] = False
+        cell["exposed_water_refreeze_counter"] = 0
+    else:
+        cell["exposed_water"] = True
+
+    mass_after = utils.calc_mass_sum(cell)
+    check_for_mass_conservation(cell, mass_before, mass_after, routine_name)
+    return water_to_freeze
 
 
 def radiative_transfer(cell, sw_in):
@@ -233,7 +261,7 @@ def turbulent_mixing(cell, sw_in, dt, k):
             * 1000
             * 4181
             * J
-            * abs(cell["lake_temperature"][0] - lake_core_temp) ** (4 / 3)
+            * abs(cell["lake_temperature"][0] - lake_core_temp) **  (4 / 3)
         )
 
         flux_lower = (
@@ -241,7 +269,7 @@ def turbulent_mixing(cell, sw_in, dt, k):
             * 1000
             * 4181
             * J
-            * abs(lake_core_temp - 273.15) ** (4 / 3)
+            * abs(lake_core_temp - 273.15) **  (4 / 3)
         )
         # temp change
         # signs - positive downward into lake
@@ -347,7 +375,8 @@ def lake_formation(
         cell["snow_on_lid"]
     )
     root, _, success, _ = solver.solve_firn_heateqn(
-        cell, met_data, dt, dz, fixed_sfc=True, solver_method="hybr"
+        cell, met_data, dt, dz, fixed_sfc=True, solver_method="hybr",
+        toggle_dict=None  # lake.py does not yet have toggle_dict in scope
     )
     if success:
         cell["firn_temperature"] = root
@@ -415,16 +444,21 @@ def lake_formation(
         # we want to put this water into the lake.
         percolation.calc_saturation(cell, 0)
 
-    # If we have 48h of no melt and the surface temp is below freezing then we
-    # refreeze the exposed water if it is less than 10cm deep
+    # If exposed water is present but the surface is freezing, refreeze as much
+    # of the shallow film as the negative surface energy balance allows.
     else:
-        cell["exposed_water_refreeze_counter"] += 1
         if (
-            cell["exposed_water_refreeze_counter"] > 48
+            cell["exposed_water"]
+            and cell["lake_depth"] > 0.0
             and cell["lake_depth"] < 0.1
+            and not cell["lake"]
+            and not cell["lid"]
+            and not cell["v_lid"]
         ):
-            #freeze_pre_lake(cell)
-            pass
+            cell["exposed_water_refreeze_counter"] += 1
+            freeze_pre_lake(cell, dt=dt, surface_flux=Q)
+        else:
+            cell["exposed_water_refreeze_counter"] = 0
 
 
     cell["vertical_profile"] = np.linspace(
@@ -541,7 +575,15 @@ def lake_development(
         # remove water from lake, add ice to firn
         thickness_to_add = abs(boundary_change)
         water_loss = thickness_to_add * (rho_ice / rho_water)
+        _old_lake_depth = cell["lake_depth"]
         cell["lake_depth"] -= water_loss
+        # print(
+        #     "LAKE_DEPTH_CHANGE lake:lake_development_freeze_branch",
+        #     "day", cell["day"], "t_step", cell["t_step"],
+        #     "row", cell["row"], "col", cell["column"],
+        #     "old", _old_lake_depth, "new", cell["lake_depth"],
+        #     "water_loss", water_loss,
+        # )
         regrid_column.regrid_after_freeze(cell, thickness_to_add)
         cell["lake_boundary_change"] += boundary_change
     # Set end=False since we only care about the top cell, and in this

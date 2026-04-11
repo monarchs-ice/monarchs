@@ -251,6 +251,9 @@ def create_defaults_for_missing_flags(model_setup):
         "catchment_outflow",
         "load_precalculated_met_data",
         "dump_checkpoint_frequency",
+        "use_newton_solver",
+        "full_column_minpack_solver",
+        "minpack_n_50",
     ]
     for attr in optional_args_to_true:
         if not hasattr(model_setup, attr):
