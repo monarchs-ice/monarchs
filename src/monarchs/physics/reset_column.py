@@ -118,8 +118,6 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     if surface_slush:
         cell["melt"] = True
         cell["exposed_water"] = True
-        print("Surface slush enabled: setting melt and exposed_water to True")
-        print('Lid sfc melt before reset:', cell['lid_sfc_melt'])
         _old_lake_depth = cell["lake_depth"]
         cell["lake_depth"] = cell["lid_sfc_melt"]
         # print(
@@ -145,15 +143,6 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     # then we have melt on the lid surface so the albedo will be reduced
     # compared to if it completely froze the lake
 
-    print(
-        "RESET_COMBINE_STATE before",
-        "day", cell["day"], "t_step", cell["t_step"],
-        "row", cell["row"], "col", cell["column"],
-        "lake", cell["lake"], "lake_depth", cell["lake_depth"],
-        "lid_depth", cell["lid_depth"], "v_lid_depth", cell["v_lid_depth"],
-        "top_Sfrac", cell["Sfrac"][0], "top_Lfrac", cell["Lfrac"][0],
-        "max_oversat", np.max(cell["Sfrac"] + cell["Lfrac"] - 1.0),
-    )
 
     # get saturation of the new column explicitly rather than interpolating
     # the old values.
@@ -162,23 +151,7 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     # such write is a phantom caused by tiny Lfrac overshoots from conservative
     # regridding, not real surface water. We zero it out unconditionally here
     # because lake=False has already been set above.
-    print(
-        "RESET_COMBINE_STATE pre_calc_saturation",
-        "day", cell["day"], "t_step", cell["t_step"],
-        "row", cell["row"], "col", cell["column"],
-        "lake", cell["lake"], "lake_depth", cell["lake_depth"],
-        "top_Sfrac", cell["Sfrac"][0], "top_Lfrac", cell["Lfrac"][0],
-        "max_oversat", np.max(cell["Sfrac"] + cell["Lfrac"] - 1.0),
-    )
     percolation.calc_saturation(cell, cell["vert_grid"] - 1)
-    print(
-        "RESET_COMBINE_STATE post_calc_saturation",
-        "day", cell["day"], "t_step", cell["t_step"],
-        "row", cell["row"], "col", cell["column"],
-        "lake", cell["lake"], "lake_depth", cell["lake_depth"],
-        "top_Sfrac", cell["Sfrac"][0], "top_Lfrac", cell["Lfrac"][0],
-        "max_oversat", np.max(cell["Sfrac"] + cell["Lfrac"] - 1.0),
-    )
     if not cell["lake"]:
         cell["lake_depth"] = np.float64(0.0)
         # print(
