@@ -172,7 +172,7 @@ def ERA5_to_variables(
             ) # Kuipers Munekke 2015
 
         # Convert snow amount from ERA5 units (in water equivalent) to actual snow depth
-        var_dict["snowfall"] = var_dict["snowfall"] #* 1000 / var_dict["snow_dens"]
+        var_dict["snowfall"] = var_dict["snowfall"] * 1000 / var_dict["snow_dens"]
     return var_dict
 
 
