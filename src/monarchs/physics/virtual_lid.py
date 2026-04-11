@@ -211,12 +211,12 @@ def melt_virtual_lid(cell, ice_added):
             cell["lake_depth"] += (
                 cell["v_lid_depth"] * rho_ice / rho_water
             )
-            print(
-                "LAKE_DEPTH_CHANGE virtual_lid:melt_full",
-                "day", cell["day"], "t_step", cell["t_step"],
-                "row", cell["row"], "col", cell["column"],
-                "old", _old_lake_depth, "new", cell["lake_depth"],
-            )
+            #print(
+            #    "LAKE_DEPTH_CHANGE virtual_lid:melt_full",
+            #    "day", cell["day"], "t_step", cell["t_step"],
+            #    "row", cell["row"], "col", cell["column"],
+            #    "old", _old_lake_depth, "new", cell["lake_depth"],
+            #)
             #print('Virtual lid depth before melting:', cell["v_lid_depth"])
             #print('ice_removed:', ice_removed)
             cell["total_melt"] = cell["total_melt"] + cell["v_lid_depth"]
@@ -229,12 +229,12 @@ def melt_virtual_lid(cell, ice_added):
                 cell["lake_depth"]
                 + ice_removed * rho_ice / rho_water
             )
-            print(
-                "LAKE_DEPTH_CHANGE virtual_lid:melt_partial",
-                "day", cell["day"], "t_step", cell["t_step"],
-                "row", cell["row"], "col", cell["column"],
-                "old", _old_lake_depth, "new", cell["lake_depth"],
-            )
+            #print(
+            #    "LAKE_DEPTH_CHANGE virtual_lid:melt_partial",
+            #    "day", cell["day"], "t_step", cell["t_step"],
+            #    "row", cell["row"], "col", cell["column"],
+            #    "old", _old_lake_depth, "new", cell["lake_depth"],
+            #)
             cell["v_lid_depth"] = cell["v_lid_depth"] - ice_removed
             cell["total_melt"] = cell["total_melt"] + ice_removed
             cell["lake_temperature"][0] = 273.15
