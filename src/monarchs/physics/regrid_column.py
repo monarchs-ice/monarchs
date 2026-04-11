@@ -184,6 +184,11 @@ def regrid_after_melt(cell, height_change, lake=False):
         rho_ice / rho_water
     ) * rem_S_thick + rem_L_thick
 
+    # Accumulate total firn melt in water-equivalent metres.
+    # This is the mass-correct conversion: solid fraction × (rho_ice/rho_water)
+    # plus any liquid fraction already present in the melted layer.
+    cell["firn_melt_cumulative"] += water_height_to_add
+
     new_depth = old_depth - height_change
     new_edges = np.linspace(height_change, old_depth, nz + 1)
     if height_change > old_depth / nz:

@@ -178,6 +178,7 @@ def initialise_iceshelf(
         "snow_added": 0,
         "total_melt": total_melt,
         "lid_sfc_melt": lid_sfc_melt,
+        "firn_melt_cumulative": 0.0,
     }
 
     hourly_diagnostics = {}  # Placeholder for future use
@@ -291,6 +292,7 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("visit_count", np.int32),
             ("snow_on_lid", np.int32),
             ("lid_snow_depth", np.float64),
+            ("firn_melt_cumulative", np.float64),
         ],
         align=True,
     )

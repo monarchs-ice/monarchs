@@ -20,7 +20,8 @@ SAFE_IMPORTS = {
     "argparse",
     "flow_plot",
     "cProfile",
-    "sys"
+    "sys",
+    "pstats"
 }
 MODULE_NAME = "monarchs.core.load_model_setup"
 

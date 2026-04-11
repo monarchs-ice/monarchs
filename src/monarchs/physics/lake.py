@@ -18,7 +18,9 @@ from monarchs.physics.constants import (
     k_air,
     k_water, sfc_absorbed_frac,
     tau_water,
-    tau_ice
+    tau_ice,
+    stefan_boltzmann,
+    emissivity,
 )
 
 MODULE_NAME = "monarchs.physics.lake"
@@ -140,8 +142,8 @@ def radiative_transfer(cell, sw_in):
     # firn-lake boundary. In this case, what happens?
     # I think that the boundary will basically absorb everything, minus some
     # fraction that will be reflected. I am assuming this will be based
-    # on the saturated firn albedo (0.6). 
-    # We also need to consider that the lake water will be turbid, and 
+    # on the saturated firn albedo (0.6).
+    # We also need to consider that the lake water will be turbid, and
     # not pure (it will be grainy meltwater). So we should use a higher
     # absorption coefficient than pure water.
 
@@ -424,7 +426,7 @@ def lake_formation(
             dHdt = cell["firn_depth"] / cell["vert_grid"]
         else:
             dHdt = (
-                (Q - kdTdz)
+                (Q - emissivity * stefan_boltzmann * (273.15**4) - kdTdz)
                 / (cell["Sfrac"][0] * L_ice * rho_ice)
                 * dt
             )
