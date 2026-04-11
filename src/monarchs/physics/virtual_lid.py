@@ -95,10 +95,10 @@ def virtual_lid_development(
     q_net = flux_total
 
 
-    print('Updated virtual lid temperature:', cell["virtual_lid_temperature"])
-    print('Q net at virtual lid interface:', q_net)
+    #print('Updated virtual lid temperature:', cell["virtual_lid_temperature"])
+    #print('Q net at virtual lid interface:', q_net)
     new_boundary_change = - q_net * dt / (L_ice * rho_ice)
-    print('New boundary change virtual lid (m):', new_boundary_change)
+    #print('New boundary change virtual lid (m):', new_boundary_change)
 
     # further freezing of the virtual lid
     if new_boundary_change > 0:
@@ -221,7 +221,7 @@ def melt_virtual_lid(cell, ice_added):
             #print('ice_removed:', ice_removed)
             cell["total_melt"] = cell["total_melt"] + cell["v_lid_depth"]
             cell["v_lid_depth"] = 0
-            print('Whole virtual lid melted')
+            #print('Whole virtual lid melted')
         # some of the lid melts
         else:
             _old_lake_depth = cell["lake_depth"]

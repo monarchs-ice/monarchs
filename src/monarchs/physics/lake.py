@@ -291,7 +291,7 @@ def turbulent_mixing(cell, sw_in, dt, k):
     dh += dh_change * 3600
     if dh > (cell["firn_depth"] / cell["vert_grid"]):
         dh = cell["firn_depth"] / cell["vert_grid"]
-        print('Melting entire layer')
+        #print('Melting entire layer')
     # print('dh in turbulent mixing: ', dh)
     # print('dh in turbulent mixing (original calc): ', dh_change * 3600)
     # return both the bottom flux (W/m^2) and the cumulative energy moved there (J/m^2)
@@ -521,11 +521,11 @@ def lake_development(
             cell["snow_on_lid"]
         )
         cell["lake_temperature"][0] = solver.lake_seb_solver(cell, met_data, dt, 0, formation=False)[0][0]
-        print('Lake surface temperature: ', cell["lake_temperature"][0])
+        #print('Lake surface temperature: ', cell["lake_temperature"][0])
         # If surface cooled below freezing, create virtual lid
         if cell["lake_temperature"][0] < 273.15:
-            print('Lake surface below freezing, creating virtual lid')
-            print(cell["lake_temperature"][0])
+            #print('Lake surface below freezing, creating virtual lid')
+            #print(cell["lake_temperature"][0])
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15
             cell["v_lid"] = True
@@ -563,7 +563,7 @@ def lake_development(
     # than the instantaneous flux at the end of the timestep * dt
     """ Height change calculation is embedded in turbulent_mixing """
     Fu, boundary_change = turbulent_mixing(cell, met_data["SW_down"], dt, k)
-    print('Boundary change in lake development: ', boundary_change)
+    #print('Boundary change in lake development: ', boundary_change)
 
     # Regrid the firn column to account for the change in boundary
     # (which is subtracted from the firn and added to the lake in
