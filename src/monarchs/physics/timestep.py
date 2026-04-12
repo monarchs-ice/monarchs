@@ -237,7 +237,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         #     "old", _old_lake_depth, "new", cell["lake_depth"],
                         # )
                     if cell["lake_depth"] <= 1e-5:
-                        print('Resetting column')
+                        #print('Resetting column')
                         reset_column.combine_lid_firn(cell, freeze_lake=False)
 
             elif cell["lake"] and cell["lid"]:
