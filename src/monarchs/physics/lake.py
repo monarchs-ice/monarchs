@@ -411,7 +411,7 @@ def lake_formation(
         met_data["surf_pressure"],
         met_data["dew_point_temperature"],
         met_data["wind"],
-        cell["firn_temperature"][0],
+        x[0],
     )
 
 
@@ -433,7 +433,7 @@ def lake_formation(
             dHdt = cell["firn_depth"] / cell["vert_grid"]
         else:
             dHdt = (
-                (Q - (emissivity * stefan_boltzmann * (cell["firn_temperature"][0]**4)) - kdTdz)
+                (Q - kdTdz) #(emissivity * stefan_boltzmann * (cell["firn_temperature"][0]**4)) - kdTdz)
                 / (cell["Sfrac"][0] * L_ice * rho_ice)
                 * dt
             )

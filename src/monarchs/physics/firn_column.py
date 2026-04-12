@@ -234,12 +234,6 @@ def calc_height_change(
         cell["lake_depth"],
         cell["snow_on_lid"]
     )
-    # Evaluate the surface flux at the melting-point temperature (273.15 K).
-    # The surface is held at 273.15 K during the fixed-surface solve, so Q and
-    # every other term in the Stefan-condition formula must be evaluated at
-    # the same temperature to be physically consistent and resolution-independent.
-    # Using the unfixed surface temperature here (which varies with grid
-    # resolution) introduces a spurious resolution dependence in dHdt.
     T_melt = cell["firn_temperature"][0]  # = 273.15 after the fixed-surface solve
     Q = surface_fluxes.sfc_flux(
         cell["albedo"],
@@ -251,7 +245,7 @@ def calc_height_change(
         met_data["surf_pressure"],
         met_data["dew_point_temperature"],
         met_data["wind"],
-        T_melt,
+        surface_temp[0],
     )
 
     # Strictly speaking, since the MONARCHS grid is defined from the surface

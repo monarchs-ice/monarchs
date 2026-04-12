@@ -251,7 +251,7 @@ def surface_melt(cell, dt, Q):
     if cell["lid_snow_depth"] <= 0:
         cell["snow_on_lid"] = 0
     if cell["lid_sfc_melt"] > 0.02:  # 2 cm deep
-        print('Lid surface melt exceeded 2 cm this timestep')
+        #print('Lid surface melt exceeded 2 cm this timestep')
         cell["lid_melt_count"] += 1  # force it above the timestep.py threshold
 
 
