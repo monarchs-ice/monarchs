@@ -243,7 +243,7 @@ def get_xy_distance(latitudes, longitudes):
         dx_metres, ((0, 1), (0, 0)), mode="edge"
     )  # Pad last column
 
-    print("Grid cell sizes computed for all points!")
+    #print("Grid cell sizes computed for all points!")
     return dx_metres, dy_metres
 
 

@@ -405,6 +405,8 @@ def print_model_end_of_timestep_messages(
     print("Lid depth = ", get_2d_grid(grid, "lid_depth"))
     print("Number of lakes = ", np.sum(get_2d_grid(grid, "lake")))
     print("Number of lids = ", np.sum(get_2d_grid(grid, "lid")))
+    print("Max lake depth = ", np.max(get_2d_grid(grid, "lake_depth")))
+    print("Max lid depth = ", np.max(get_2d_grid(grid, "lid_depth")))
     # ensure that output is flushed to the console immediately rather than
     # being buffered.
     # Mostly a fix for output not updating when running with Slurm.
