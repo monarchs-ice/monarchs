@@ -384,7 +384,7 @@ def lake_formation(
         cell["firn_temperature"] = root
 
     x = cell["lake_temperature"]
-    print('before', x[0])
+    #print('before', x[0])
     # x[0] = 273.15
 
     # Update cell albedo
@@ -399,7 +399,6 @@ def lake_formation(
     )
 
     old_T_sfc = solver.lake_seb_solver(cell, met_data, dt, dz, formation=True)[0][0]
-    print('after', old_T_sfc)
     Q = surface_fluxes.sfc_flux(
         cell["albedo"],
         cell["lid"],
