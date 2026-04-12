@@ -241,9 +241,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         reset_column.combine_lid_firn(cell, freeze_lake=False)
 
             elif cell["lake"] and cell["lid"]:
-                print('lid lake')
-                print(cell["lake_depth"])
-                print(cell["lid_depth"])
                 if lid_development_toggle:
                     # turn virtual lid off if full lid present
                     cell["v_lid"] = False
