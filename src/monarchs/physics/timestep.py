@@ -197,7 +197,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     lake.lake_formation(
                         cell,
                         dt,
-                        met_data[t_step]
+                        met_data[t_step],
+                        toggle_dict,
                     )
 
             elif cell["lake"] and not cell["lid"]:
@@ -205,7 +206,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     Fu = lake.lake_development(
                         cell,
                         dt,
-                        met_data[t_step]
+                        met_data[t_step],
+                        toggle_dict,
                     )
                 # TODO - add refreezing calculation here - relevant if we have
                 # lakes underneath a frozen lid that gets combined
@@ -248,6 +250,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         cell,
                         dt,
                         met_data[t_step],
+                        toggle_dict,
                     )
                     for lev in range(cell["vert_grid"]):
                         percolation.calc_refreezing(cell, lev)

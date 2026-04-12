@@ -285,8 +285,10 @@ def turbulent_mixing(cell, sw_in, dt, k):
         # (flux_lower positive downward => energy leaving lake if positive)
 
         # apply mixed core temp to interior nodes
-        indices = np.arange(1, cell["vert_grid_lake"] - 1)
-        cell["lake_temperature"][indices] = lake_core_temp
+        # NOTE: do NOT use np.arange here — allocating an array on every one
+        # of the 3600 substeps is a significant Numba overhead.
+        for _idx in range(1, int(cell["vert_grid_lake"]) - 1):
+            cell["lake_temperature"][_idx] = lake_core_temp
     dh_change, cap_reached = calc_height_adjustment(
         cell, k, net_lower_flux_for_dh
     )
@@ -301,7 +303,7 @@ def turbulent_mixing(cell, sw_in, dt, k):
 
 
 def lake_formation(
-    cell, dt, met_data
+    cell, dt, met_data, toggle_dict=None
 ):
     """
     Generate a lake, and track its evolution until we reach the point where
@@ -342,7 +344,7 @@ def lake_formation(
     cp_ice = np.zeros(cell["vert_grid"])
     k_ice = np.zeros(cell["vert_grid"])
     air = np.zeros(cell["vert_grid"])
-    for i in np.arange(0, cell["vert_grid"]):
+    for i in range(int(cell["vert_grid"])):
         if cell["firn_temperature"][i] > 273.15:
             cp_ice[i] = 4186.8
             k_ice[i] = 1000 * (
@@ -378,7 +380,7 @@ def lake_formation(
     )
     root, _, success, _ = solver.solve_firn_heateqn(
         cell, met_data, dt, dz, fixed_sfc=True, solver_method="hybr",
-        toggle_dict=None  # lake.py does not yet have toggle_dict in scope
+        toggle_dict=toggle_dict
     )
     if success:
         cell["firn_temperature"] = root
@@ -483,7 +485,7 @@ def lake_formation(
 
 
 def lake_development(
-    cell, dt, met_data
+    cell, dt, met_data, toggle_dict=None
 ):
     """
     Once a lake of at least 10 cm deep is present this function calculates
@@ -549,7 +551,7 @@ def lake_development(
 
     # Conductivity below lake
     k_ice = np.zeros(cell["vert_grid"])
-    for i in np.arange(0, cell["vert_grid"]):
+    for i in range(int(cell["vert_grid"])):
         if cell["firn_temperature"][i] > 273.15:
             k_ice[i] = 1000.0 * (
                 1.017e-4 + 1.695e-6 * cell["firn_temperature"][i]
@@ -627,8 +629,7 @@ def calc_height_adjustment(cell, k, Fl):
             # on the solid fraction of the top cell
             # Limit sfrac_top to a minimum of 1e-2 to avoid zero division error
             sfrac_top = max(1e-2, cell["Sfrac"][0])
-            if cell['Sfrac'][0] < 1e-2:
-                print('Warning - Sfrac at top of firn very low in calc_height_adjustment')
+            # (low-Sfrac guard: cap applied below — print removed, fires every capped-melt step)
             # print('Fl = ', Fl)
             # print('kdTdz = ', kdTdz)
             # print('Net flux = ', (Fl - kdTdz))
@@ -649,7 +650,6 @@ def calc_height_adjustment(cell, k, Fl):
             if abs(boundary_change_raw) > cap:
                 boundary_change = np.sign(boundary_change_raw) * cap
                 cap_reached = True
-                print('Cap reached in calc_height_adjustment')
             else:
                 boundary_change = boundary_change_raw
 
