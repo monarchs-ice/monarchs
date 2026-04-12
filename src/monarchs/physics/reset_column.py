@@ -80,6 +80,8 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     new_rho = (sfrac_new * rho_ice) + (lfrac_new * rho_water)
     # update cell with the new combined profiles/values
     cell["firn_temperature"] = new_firn_temperature
+    # clip firn temperature to 273.15
+    cell["firn_temperature"] = np.clip(cell["firn_temperature"], 0, 273.15)
     cell["rho"] = new_rho
     cell["Sfrac"] = sfrac_new
     cell["Lfrac"] = lfrac_new

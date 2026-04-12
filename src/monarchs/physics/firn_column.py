@@ -324,6 +324,7 @@ def calc_height_change(
         f"T2_fixed={float(cell['firn_temperature'][2])},"
         f"T0_unfixed={float(surface_temp[0])}"
     )
+    print(line)
 
     return dHdt
 

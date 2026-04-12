@@ -21,8 +21,6 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     vertical profile accounting for this height change.
     This meltwater is either converted into surface liquid water fraction,
     or if there is a lake, into lake height.
-    code Code
-
 
     Parameters
     ----------

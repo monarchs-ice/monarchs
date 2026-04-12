@@ -166,8 +166,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 )
 
         elif cell["exposed_water"]:
-            # print("Exposed water present")
-
 
             if firn_heat_toggle:
                 sol, fvec, success, info = solver.solve_firn_heateqn(
@@ -203,7 +201,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     )
 
             elif cell["lake"] and not cell["lid"]:
-
                 if lake_development_toggle:
                     Fu = lake.lake_development(
                         cell,
@@ -212,9 +209,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     )
                 # TODO - add refreezing calculation here - relevant if we have
                 # lakes underneath a frozen lid that gets combined
-                if firn_heat_toggle:
-                    for lev in range(cell["vert_grid"]):
-                        percolation.calc_refreezing(cell, lev)
+                # if firn_heat_toggle:
+                #     for lev in range(cell["vert_grid"]):
+                #         percolation.calc_refreezing(cell, lev)
 
                 if cell["v_lid"]:
                     if lid_development_toggle:
@@ -240,10 +237,13 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         #     "old", _old_lake_depth, "new", cell["lake_depth"],
                         # )
                     if cell["lake_depth"] <= 1e-5:
+                        print('Resetting column')
                         reset_column.combine_lid_firn(cell, freeze_lake=False)
 
             elif cell["lake"] and cell["lid"]:
-
+                print('lid lake')
+                print(cell["lake_depth"])
+                print(cell["lid_depth"])
                 if lid_development_toggle:
                     # turn virtual lid off if full lid present
                     cell["v_lid"] = False

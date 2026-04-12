@@ -384,6 +384,9 @@ def lake_formation(
         cell["firn_temperature"] = root
 
     x = cell["lake_temperature"]
+    print('before', x[0])
+    # x[0] = 273.15
+
     # Update cell albedo
     cell["albedo"] = surface_fluxes.sfc_albedo(
         cell["melt"],
@@ -394,6 +397,9 @@ def lake_formation(
         cell["lake_depth"],
         cell["snow_on_lid"]
     )
+
+    old_T_sfc = solver.lake_seb_solver(cell, met_data, dt, dz, formation=True)[0][0]
+    print('after', old_T_sfc)
     Q = surface_fluxes.sfc_flux(
         cell["albedo"],
         cell["lid"],
@@ -404,10 +410,9 @@ def lake_formation(
         met_data["surf_pressure"],
         met_data["dew_point_temperature"],
         met_data["wind"],
-        x[0],
+        cell["firn_temperature"][0],
     )
 
-    old_T_sfc = solver.lake_seb_solver(cell, met_data, dt, dz, formation=True)[0][0]
 
     # Check for conservation of mass
     new_mass = utils.calc_mass_sum(cell)
@@ -416,6 +421,7 @@ def lake_formation(
     )
 
     if old_T_sfc >= 273.15 and Q > 0:  # melting occurring at the surface
+
         kdTdz = (
             (cell["firn_temperature"][0] - cell["firn_temperature"][1])
             * abs(k[0])
@@ -426,7 +432,7 @@ def lake_formation(
             dHdt = cell["firn_depth"] / cell["vert_grid"]
         else:
             dHdt = (
-                (Q - emissivity * stefan_boltzmann * (273.15**4) - kdTdz)
+                (Q - (emissivity * stefan_boltzmann * (cell["firn_temperature"][0]**4)) - kdTdz)
                 / (cell["Sfrac"][0] * L_ice * rho_ice)
                 * dt
             )
