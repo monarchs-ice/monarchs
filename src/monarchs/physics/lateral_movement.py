@@ -840,7 +840,7 @@ def handle_invalid_neighbour_cell(
             outflow_proportion=outflow_proportion,
         )
         if water_out > 0:
-            print(f"Moved {float(water_out)} units of water into the land")
+            #print(f"Moved {float(water_out)} units of water into the land")
             return water_out, False
         else:
             # no water moved, but still invalid, so skip
