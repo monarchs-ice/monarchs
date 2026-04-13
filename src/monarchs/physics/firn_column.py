@@ -245,7 +245,7 @@ def calc_height_change(
         met_data["surf_pressure"],
         met_data["dew_point_temperature"],
         met_data["wind"],
-        surface_temp[0],
+        273.15
     )
 
     # Strictly speaking, since the MONARCHS grid is defined from the surface
@@ -258,12 +258,7 @@ def calc_height_change(
     # This is O(dz²) accurate vs the O(dz) two-point formula, giving a much
     # better estimate of the true surface gradient and reducing the resolution
     # dependence of dHdt.
-    dtdz = (
-        3 * cell["firn_temperature"][0]
-        - 4 * cell["firn_temperature"][1]
-        + cell["firn_temperature"][2]
-    ) / (2 * dz)
-
+    dtdz = (cell["firn_temperature"][0] - cell["firn_temperature"][1]) / dz
     # # If the surface is very empty, just melt one layer
     # if cell["Sfrac"][0] < 0.1:
     #     dHdt = cell["firn_depth"] / cell["vert_grid"]

@@ -113,15 +113,15 @@ def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_
                 # is actually higher?
                 # https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JC014161
                 # this implies (Fig. 1) that it should be ~0.6
-                alpha = 0.413 # bare dry ice lid albedo
+                alpha = 0.6 # bare dry ice lid albedo
             elif lake:
                 h = lake_depth
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
                     -539 + 20000 * np.exp(3.6 * h)
                 )  # lake albedo
-                if virtual_lid:
+                #if virtual_lid:
                     # TODO - more sophisticated treatment of virtual lid albedo
-                    alpha = max(alpha, 0.2) # minimum albedo for virtual lid
+                    #alpha = max(alpha, 0.2) # minimum albedo for virtual lid
             else:
                 alpha = 0.6  # saturated firn albedo
         else:

@@ -387,7 +387,7 @@ def lake_formation(
 
     x = cell["lake_temperature"]
     #print('before', x[0])
-    # x[0] = 273.15
+    x[0] = 273.15
 
     # Update cell albedo
     cell["albedo"] = surface_fluxes.sfc_albedo(
@@ -411,7 +411,7 @@ def lake_formation(
         met_data["surf_pressure"],
         met_data["dew_point_temperature"],
         met_data["wind"],
-        x[0],
+        273.15,
     )
 
 
@@ -433,7 +433,7 @@ def lake_formation(
             dHdt = cell["firn_depth"] / cell["vert_grid"]
         else:
             dHdt = (
-                (Q - kdTdz) #(emissivity * stefan_boltzmann * (cell["firn_temperature"][0]**4)) - kdTdz)
+                (Q - (emissivity * stefan_boltzmann * (cell["firn_temperature"][0]**4)) - kdTdz)
                 / (cell["Sfrac"][0] * L_ice * rho_ice)
                 * dt
             )
