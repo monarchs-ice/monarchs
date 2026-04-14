@@ -359,10 +359,17 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     # is an array
     else:
         cell_density = cell["rho"]
-        u = (
-            big_pi / eta * (m / cell_size) * cell_density * -9.8
-        )  # flow speed (m/s)
-        water_frac = u * timestep / cell_size
+        # FIX: Previously this included (m / cell_size) which is the hydraulic
+        # gradient. But since water_to_move is later multiplied by Δh (the
+        # water level difference), including the gradient here caused Δh to
+        # be counted twice, giving water_to_move ∝ Δh² instead of ∝ Δh.
+        # 
+        # Now we compute the hydraulic conductivity K without the gradient:
+        # K = k * rho * g / eta  [m/s]
+        # And water_frac = K * dt / L is dimensionless.
+        # When multiplied by Δh downstream, we get water_to_move ∝ Δh (correct).
+        K = np.abs(big_pi / eta * cell_density * 9.8)  # hydraulic conductivity [m/s]
+        water_frac = K * timestep / cell_size  # dimensionless
         water_frac[np.where(water_frac > 1)] = 1
 
         # JE - added flow_speed_scaling variable here.
