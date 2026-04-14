@@ -359,21 +359,11 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     # is an array
     else:
         cell_density = cell["rho"]
-        # FIX: Previously this included (m / cell_size) which is the hydraulic
-        # gradient. But since water_to_move is later multiplied by Δh (the
-        # water level difference), including the gradient here caused Δh to
-        # be counted twice, giving water_to_move ∝ Δh² instead of ∝ Δh.
-        # 
-        # Now we compute the hydraulic conductivity K without the gradient:
-        # K = k * rho * g / eta  [m/s]
-        # And water_frac = K * dt / L is dimensionless.
-        # When multiplied by Δh downstream, we get water_to_move ∝ Δh (correct).
-        K = np.abs(big_pi / eta * cell_density * 9.8)  # hydraulic conductivity [m/s]
-        water_frac = K * timestep / cell_size  # dimensionless
-        water_frac[np.where(water_frac > 1)] = 1
+        u = (
+            big_pi / eta * (m / cell_size) * cell_density * -9.8
+        )  # flow speed (m/s)
+        water_frac = (u * timestep / cell_size) * flow_speed_scaling
 
-        # JE - added flow_speed_scaling variable here.
-        water_frac = water_frac * flow_speed_scaling
     water_frac = np.clip(water_frac, a_min=0, a_max=1)
     return water_frac
 
@@ -473,11 +463,18 @@ def calc_available_water_ice_lens(
         ]
     vp = cell["vertical_profile"][::-1]
     move_from_index = find_nearest(vp, lowest_water_level)
-    water_to_move = (
-        water_frac[move_from_index]
-        * (cell["water_level"] - neighbour_cell["water_level"])
-        / (split + 1)
-    )
+
+    available_water = np.sum(cell["water"][:move_from_index + 1])
+    water_to_move = (water_frac[move_from_index] * available_water) / (split + 1)
+    target_drop = (cell["water_level"] - neighbour_cell["water_level"]) / (split + 1)
+
+    porosity = 1.0 - cell["Sfrac"][move_from_index]
+    if porosity <= 0.05:
+        porosity = 0.05
+
+    target_volume = target_drop * porosity
+
+    water_to_move = min(water_to_move, target_volume)
 
     if water_to_move < 0:
         if water_to_move > -1e-8:
@@ -713,7 +710,7 @@ def move_from_ice_lens(
         # Otherwise - remove all of it from that cell and go up one.
         else:
             temporary_cell["water"][idx] -= cell["water"][idx] / (split + 1)
-            water_to_move -= cell["water"][idx] / split
+            water_to_move -= cell["water"][idx] / (split + 1)
             if not grid[row + n_s_index][col + w_e_index]["lake"]:
                 temporary_neighbour["water"][move_to_index] += cell["water"][
                     idx
