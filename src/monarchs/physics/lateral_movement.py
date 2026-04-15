@@ -706,7 +706,7 @@ def move_from_ice_lens(
         # Otherwise - remove all of it from that cell and go up one.
         else:
             temporary_cell["water"][idx] -= cell["water"][idx] / (split + 1)
-            water_to_move -= cell["water"][idx] / split
+            water_to_move -= cell["water"][idx] / (split + 1)
             if not grid[row + n_s_index][col + w_e_index]["lake"]:
                 temporary_neighbour["water"][move_to_index] += cell["water"][
                     idx
@@ -1271,7 +1271,7 @@ def move_water(
                     # Perform an extra saturation calculation so we don't
                     # end up with unphysical liquid fraction
                     for k in np.arange(cell["vert_grid"])[::-1]:
-                        calc_saturation(cell, k, end=True)
+                        calc_saturation(cell, k, end=False)
 
     print("\nLateral water movement diagnostics:")
     print("Starting water total = ", total_water)

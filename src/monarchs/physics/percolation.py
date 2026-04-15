@@ -78,6 +78,17 @@ def percolate(
         v_lev = len(cell["firn_temperature"]) - (point + 1)
         # starts search for flagged cells from bottom
 
+        # first check if the cell itself is saturated
+        if (
+                cell["Sfrac"][v_lev] * rho_ice
+                > pore_closure
+        ):
+            cell["ice_lens"] = True
+            cell["saturation"][v_lev] = True
+
+            if v_lev < cell["ice_lens_depth"]:
+                cell["ice_lens_depth"] = v_lev
+
         if cell["meltflag"][v_lev] and cell["Lfrac"][v_lev] != 0:
             time_remaining = timestep
 
@@ -88,16 +99,7 @@ def percolate(
                 if not lateral_refreeze_flag:
                     calc_refreezing(cell, v_lev)
 
-                if (
-                    cell["Sfrac"][v_lev] * rho_ice
-                    > pore_closure
-                ):
-                    cell["ice_lens"] = True
-                    cell["saturation"][v_lev] = True
-
-                    if v_lev < cell["ice_lens_depth"]:
-                        cell["ice_lens_depth"] = v_lev
-
+                if cell["saturation"][v_lev]:
                     calc_saturation(cell, v_lev)
                     time_remaining = 0
 
@@ -105,6 +107,11 @@ def percolate(
                     cell["saturation"][v_lev] == 1
                     or cell["ice_lens_depth"] == v_lev
                 ):
+                    calc_saturation(cell, v_lev)
+                    time_remaining = 0
+
+                elif cell["Lfrac"][v_lev] >= (1 - cell["Sfrac"][v_lev]) - 1e-9:
+                    cell["saturation"][v_lev] = 1
                     calc_saturation(cell, v_lev)
                     time_remaining = 0
 
@@ -304,20 +311,21 @@ def calc_saturation(cell, v_lev_in, end=False):
     if Lfrac_max < 0:
         Lfrac_max = 0
 
+    # FIX 1: Change > to >= to capture the "exactly full" case
     if (
-        cell["Lfrac"][v_lev] > Lfrac_max
-    ):  # There is currently too much water in this grid cell
+            cell["Lfrac"][v_lev] >= Lfrac_max
+    ):
         excess_water = cell["Lfrac"][v_lev] - Lfrac_max
         cell["Lfrac"][v_lev] = Lfrac_max  # cell is now saturated
-        # if we are doing this just to force cells to have physical amounts
-        # of water at the final step, say that this is meltwater that can
-        # percolate at the next step.
 
-        if end and not cell["saturation"][v_lev + 1]:
-            cell["meltflag"][v_lev] = 1
-            # cell["saturation"][v_lev] = 0
-        else:
-            cell["saturation"][v_lev] = 1
+        # FIX 2: We must set saturation to 1 if the cell is full,
+        # otherwise update_water_level() cannot see the water table.
+        # We still keep your meltflag logic for the next timestep.
+        cell["saturation"][v_lev] = 1
+
+        if end and v_lev < (cell["vert_grid"] - 1):
+            if not cell["saturation"][v_lev + 1]:
+                cell["meltflag"][v_lev] = 1
 
         if excess_water > 0:
             # Fill cells with water from the ice lens upward
@@ -325,22 +333,16 @@ def calc_saturation(cell, v_lev_in, end=False):
                 cell["Lfrac"][v_lev] = cell["Lfrac"][v_lev] + excess_water
                 Lfrac_max = 1 - cell["Sfrac"][v_lev]
 
-                if cell["Lfrac"][v_lev] > Lfrac_max:
-                    # Recalculate excess water and set the current vertical
-                    # level water to the maximum.
+                if cell["Lfrac"][v_lev] >= Lfrac_max:  # FIX 3: Use >= here too
                     excess_water = cell["Lfrac"][v_lev] - Lfrac_max
                     cell["Lfrac"][v_lev] = Lfrac_max
-                    # if we are doing this just to force cells to have physical
-                    # amounts of water at the final step, say that this is
-                    # meltwater that can percolate at the next step.
+
+                    cell["saturation"][v_lev] = 1  # Always set if full
+
                     if end and not cell["saturation"][v_lev + 1]:
                         cell["meltflag"][v_lev] = 1
-                        # cell["saturation"][v_lev] = 0
-                    else:
-                        cell["saturation"][v_lev] = 1
 
                     v_lev = v_lev - 1
-                # cell has space for all the water, no need to move any more
                 else:
                     break
 
