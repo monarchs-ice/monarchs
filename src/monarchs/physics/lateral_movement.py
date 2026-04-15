@@ -342,7 +342,7 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     #      - centre to centre, is probably fine assuming size of adjacent cells
     #      - is the same, but could implement a fix at some point.
 
-    big_pi = -2.53 * 10 ** -10  # hydraulic permeability (m^2)
+    big_pi = 2.53 * 10 ** -10  # hydraulic permeability (m^2)
     eta = 1.787 * 10 ** -3  # viscosity(Pa/s)
     cell["rho"] = (
         cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
@@ -360,10 +360,13 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     else:
         cell_density = cell["rho"]
         u = (
-            big_pi / eta * (m / cell_size) * cell_density * -9.8
+            big_pi / eta * (m / cell_size) * cell_density * 9.8
         )  # flow speed (m/s)
-        water_frac = (u * timestep / cell_size) * flow_speed_scaling
+        water_frac = u * timestep / cell_size
+        water_frac[np.where(water_frac > 1)] = 1
 
+        # JE - added flow_speed_scaling variable here.
+        water_frac = water_frac * flow_speed_scaling
     water_frac = np.clip(water_frac, a_min=0, a_max=1)
     return water_frac
 
@@ -463,18 +466,11 @@ def calc_available_water_ice_lens(
         ]
     vp = cell["vertical_profile"][::-1]
     move_from_index = find_nearest(vp, lowest_water_level)
-
-    available_water = np.sum(cell["water"][:move_from_index + 1])
-    water_to_move = (water_frac[move_from_index] * available_water) / (split + 1)
-    target_drop = (cell["water_level"] - neighbour_cell["water_level"]) / (split + 1)
-
-    porosity = 1.0 - cell["Sfrac"][move_from_index]
-    if porosity <= 0.05:
-        porosity = 0.05
-
-    target_volume = target_drop * porosity
-
-    water_to_move = min(water_to_move, target_volume)
+    water_to_move = (
+        water_frac[move_from_index]
+        * (cell["water_level"] - neighbour_cell["water_level"])
+        / (split + 1)
+    )
 
     if water_to_move < 0:
         if water_to_move > -1e-8:
@@ -710,7 +706,7 @@ def move_from_ice_lens(
         # Otherwise - remove all of it from that cell and go up one.
         else:
             temporary_cell["water"][idx] -= cell["water"][idx] / (split + 1)
-            water_to_move -= cell["water"][idx] / (split + 1)
+            water_to_move -= cell["water"][idx] / split
             if not grid[row + n_s_index][col + w_e_index]["lake"]:
                 temporary_neighbour["water"][move_to_index] += cell["water"][
                     idx
