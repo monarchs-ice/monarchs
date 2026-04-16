@@ -17,7 +17,7 @@ dependencies = [
     'netCDF4',
     'cartopy',
     'matplotlib',
-    'Pillow',
+    'Pillow >= 12.1.1',
     'imagecodecs',
     'pathos',
     'rioxarray',
