@@ -13,6 +13,7 @@ def setup_output(
         "firn_depth",
         "lake_depth",
         "lid_depth",
+        "daily_melt",
     ),
     vert_grid_size=False,
 ):
@@ -120,6 +121,7 @@ def update_model_output(
         "firn_depth",
         "lake_depth",
         "lid_depth",
+        "daily_melt",
     ),
     hourly=False,
     t_step=0,

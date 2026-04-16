@@ -41,6 +41,7 @@ def initialise_iceshelf(
     exposed_water_refreeze_counter=0,
     virtual_lid_temperature=273.15,
     total_melt=0.0,
+    daily_melt=0.0,
     valid_cells=True,
     lat=0,
     lon=0,
@@ -128,6 +129,7 @@ def initialise_iceshelf(
     iceshelf["has_had_lid"][:] = has_had_lid
     iceshelf["lid_melt_count"][:] = lid_melt_count
     iceshelf["total_melt"][:] = total_melt
+    iceshelf["daily_melt"][:] = daily_melt
     iceshelf["rho_ice"][:] = 917
     iceshelf["rho_water"][:] = 1000
     iceshelf["L_ice"][:] = 334000
@@ -218,6 +220,7 @@ def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
             ("lid_sfc_melt", np.float64),
             ("lid_melt_count", np.int32),
             ("total_melt", np.float64),
+            ("daily_melt", np.float64),
             ("t_step", np.int32),
             ("day", np.int32),
             ("log", "U256"),

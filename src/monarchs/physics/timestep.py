@@ -87,6 +87,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         T_air = met_data['temperature'][t_step]
         p_air = met_data['surf_pressure'][t_step]
 
+        cell["daily_melt"]=0.0
+
         """
         # Two main paths - either no exposed water, in which case the dry firn evolves, or we have exposed water,
         # in which case there are further branches depending on whether lakes or lids have formed yet.

@@ -226,6 +226,7 @@ def regrid_after_melt(cell, height_change, lake=False):
         print(cell["row"])
         raise ValueError("NaN in firn temperature after regridding")
 
+    cell["daily_melt"] += meltwater
     cell["Lfrac"][0] += meltwater
     if lake:
         if cell["Lfrac"][0] + cell["Sfrac"][0] > 1:
