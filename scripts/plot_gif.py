@@ -6,9 +6,9 @@ from matplotlib.animation import ArtistAnimation
 
 matplotlib.use("TkAgg")
 dumppath = (
-    r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\progress.nc"
+    "/path/to/progress_file"
 )
-diagpath = r"C:\Users\jdels\Documents\Work\MONARCHS_runs\ARCHER2_10year\model_output.nc"
+diagpath  = "/path/to/model_output_file"
 
 
 # Load in the data - just focusing on lake depth from the diagnostics file
