@@ -119,20 +119,20 @@ def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
                     -539 + 20000 * np.exp(3.6 * h)
                 )  # lake albedo
-                if virtual_lid:
-                    # TODO - more sophisticated treatment of virtual lid albedo
-                    alpha = max(alpha, 0.2) # minimum albedo for virtual lid
+                # if virtual_lid:
+                #     # TODO - more sophisticated treatment of virtual lid albedo
+                #     alpha = max(alpha, 0.2) # minimum albedo for virtual lid
             else:
                 alpha = 0.6  # saturated firn albedo
         else:
             alpha = 0.6  # wet snow albedo
     else:
         alpha = 0.867  # dry snow albedo
-
-    if snow_on_lid == 1:
-        alpha = 0.867  # snow albedo
-    elif snow_on_lid == 2:
-        alpha = 0.6 # wet snow albedo
+    #
+    # if snow_on_lid == 1:
+    #     alpha = 0.867  # snow albedo
+    # elif snow_on_lid == 2:
+    #     alpha = 0.6 # wet snow albedo
 
     return alpha
 
