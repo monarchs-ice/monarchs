@@ -76,13 +76,6 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
 
     factor = np.float64(dt / dz ** 2)
 
-    # First row: connect to top nonlinear region
-    i = 0
-    alpha = factor * kappa[i]
-    B[i] = 1 + 2 * alpha
-    C[i] = -alpha
-    D[i] = T_old[i] + alpha * T_bc_top
-
     # Interior rows
     # First row: connect to top nonlinear region
     i = 0
@@ -201,14 +194,14 @@ def heateqn(x, output, args):
             T[idx]
             - x[idx]
             + dt
-            * (kappa[idx] / dz ** 2)
-            * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+            * (kappa[idx])
+            * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz ** 2
         )
     # neumann boundary condition at the bottom
     output[N - 1] = (
         T[N - 1]
         - x[N - 1]
-        + dt * (kappa[N - 1] / dz ** 2) * (-x[N - 1] + x[N - 2])
+        + dt * (kappa[N - 1]) * (-x[N - 1] + x[N - 2]) / dz ** 2
     )
 
 
@@ -282,12 +275,11 @@ def heateqn_lid(x, output, args):
 
     # fraction of the remaining radiation absorbed at surface layer - baked
     # into surface flux Q.
-    sfc_abs_frac = sfc_absorbed_frac
 
     for idx in np.arange(1, vert_grid_lid - 1):
         z_depth = idx * dz
-        flux_in = sw_in * (1 - albedo) * (1 - sfc_abs_frac) * np.exp(-tau_ice * z_depth)
-        flux_out = sw_in * (1 - albedo) * (1 - sfc_abs_frac) * np.exp(-tau_ice * (z_depth + dz))
+        flux_in = sw_in * (1 - albedo) * (1 - sfc_absorbed_frac) * np.exp(-tau_ice * z_depth)
+        flux_out = sw_in * (1 - albedo) * (1 - sfc_absorbed_frac) * np.exp(-tau_ice * (z_depth + dz))
         sw_absorbed_in_layer = flux_in - flux_out
         # convert source to temperature change contribution: S / (rho * cp)
         # units: [W/m2] / ([kg/m3] * [J/kg/K] * m) = [J/s/m2] / [J/m2/K] = K/s

@@ -607,32 +607,34 @@ def main(model_setup, grid):
 
         # Validation - check that valid cells are actually being
         # operated upon during the single-column physics step
-        visit_flag = False
-        for i in range(len(grid)):
-            for j in range(len(grid[0])):
-                if grid[i][j]["valid_cell"] and (
-                    grid[i][j]["visit_count"] != visit_grid[i][j] + 1
-                ):
-                    print(
-                        "i = ",
-                        i,
-                        "j = ",
-                        j,
-                        "old visit count = ",
-                        visit_grid[i][j],
-                        "new visit count = ",
-                        grid[i][j]["visit_count"],
-                    )
-                    visit_flag = True
-        if visit_flag:
-            raise ValueError(
-                "Cells not being visited in single-column physics step"
+        if model_setup.single_column_toggle:
+            visit_flag = False
+            for i in range(len(grid)):
+                for j in range(len(grid[0])):
+                    if grid[i][j]["valid_cell"] and (
+                        grid[i][j]["visit_count"] != visit_grid[i][j] + 1
+                    ):
+                        print(
+                            "i = ",
+                            i,
+                            "j = ",
+                            j,
+                            "old visit count = ",
+                            visit_grid[i][j],
+                            "new visit count = ",
+                            grid[i][j]["visit_count"],
+                        )
+                        visit_flag = True
+            if visit_flag:
+                raise ValueError(
+                    "Cells not being visited in single-column physics step"
+                )
+
+            print("Single-column physics finished")
+            print(
+                f"Single column physics time: {time.perf_counter() - start:.2f}s"
             )
 
-        print("Single-column physics finished")
-        print(
-            f"Single column physics time: {time.perf_counter() - start:.2f}s"
-        )
         start_serial = time.perf_counter()
         if model_setup.dump_data_pre_lateral_movement:
             if model_setup.dump_format == "NETCDF4":

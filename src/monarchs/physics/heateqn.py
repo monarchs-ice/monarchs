@@ -9,12 +9,17 @@ from monarchs.physics.constants import (
     k_air,
     k_water,
     emissivity,
-    rho_ice, stefan_boltzmann
+    rho_ice,
+    rho_water,
+    rho_air,
+    stefan_boltzmann,
+    sfc_absorbed_frac
 )
 
 def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
-    rho = sfrac * 917 + lfrac * 1000
+
+    air_frac = 1.0 - sfrac - lfrac
     k_ice = np.zeros(np.shape(T), dtype=np.float64)
     k_ice[T < 273.15] = 1000 * (
         2.24e-03 + 5.975e-06 * ((273.15 - T[T < 273.15]) ** 1.156)
@@ -22,9 +27,15 @@ def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     k_ice[T >= 273.15] = 2.24
     k = sfrac * k_ice + (1 - sfrac - lfrac) * k_air + lfrac * k_water
     cp_ice = 7.16 * T + 138
-    cp = sfrac * cp_ice + (1 - sfrac - lfrac) * cp_air + lfrac * cp_water
-    # thermal diffusivity [m^2 s^-1]
-    kappa = k / (cp * rho)
+    cv_ice = sfrac * rho_ice * cp_ice
+    cv_water = lfrac * rho_water * cp_water
+    cv_air = air_frac * rho_air * cp_air
+
+    C_vol = cv_ice + cv_water + cv_air
+
+    # Avoid divide by zero if C_vol is somehow 0
+    # Diffusivity [m^2 s^-1]
+    kappa = k / C_vol
     return k, kappa
 
 
@@ -56,10 +67,10 @@ def heateqn(
         wind,
         x[0],
     )
-    N = len(x)
-    T_old = cell["firn_temperature"][:N]
-    Sfrac = cell["Sfrac"][:N]
-    Lfrac = cell["Lfrac"][:N]
+    T_old = cell["firn_temperature"]
+    Sfrac = cell["Sfrac"]
+    Lfrac = cell["Lfrac"]
+
     k, kappa = get_k_and_kappa(
         T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
     )
@@ -189,6 +200,7 @@ def heateqn_lid(
     wind,
     k_lid,
     Sfrac_lid,
+    albedo
 ):
     """
     Solve the heat equation for the frozen lid, similarly to the calculation
@@ -239,11 +251,9 @@ def heateqn_lid(
     rho = 917
 
     Q = sfc_flux(
-        cell["melt"],
-        cell["exposed_water"],
+        cell["albedo"],
         cell["lid"],
         cell["lake"],
-        cell["lake_depth"],
         lw_in,
         sw_in,
         air_temp,
@@ -254,16 +264,15 @@ def heateqn_lid(
     )
 
     output = np.zeros(cell["vert_grid_lid"])
-    input_sw = np.zeros(cell["vert_grid_lid"])
     output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (
         Q - epsilon * sigma * x[0] ** 4
     )
     idx = np.arange(1, cell["vert_grid_lid"] - 1)
     z_depth = idx * dz
-    flux_in = sw_in * 0.6 * np.exp(-tau_ice * z_depth)
-    flux_out = sw_in * 0.6 * np.exp(-tau_ice * z_depth + dz)
+    flux_in = sw_in * (1 - cell["albedo"]) * (1 - sfc_absorbed_frac) * np.exp(-tau_ice * z_depth)
+    flux_out = sw_in * (1 - cell["albedo"]) *  (1 - sfc_absorbed_frac) * np.exp(-tau_ice * (z_depth + dz))
     sw_absorbed_in_layer = flux_in - flux_out
-    dT_solar = sw_absorbed_in_layer / (rho * cp[idx])
+    dT_solar = sw_absorbed_in_layer / (rho * cp[idx] * dz)
 
     output[idx] = (
         cell["lid_temperature"][idx]

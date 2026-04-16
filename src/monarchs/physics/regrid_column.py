@@ -244,42 +244,27 @@ def regrid_after_freeze(cell, height_change):
 
     mass_before = utils.calc_mass_sum(cell)
 
-    # 1. Create the new ice layer properties
-    # This layer is pure ice (Sfrac=1, Lfrac=0) at Freezing Point
+    # new layer properties - pure ice
     new_ice_Sfrac = 1.0
     new_ice_Lfrac = 0.0
     new_ice_Temp = 273.15
 
-    # 2. Define the new grid
-    # We are ADDING material to the top of the firn (interface with lake)
-    # Since z=0 is the interface, this pushes the existing firn DOWN.
-    # Actually, usually z=0 is the top.
-    # If the lake freezes at the bottom, the firn gets thicker.
-    # The new material sits at z=0 to z=height_change relative to the OLD grid?
-    # No, we usually redefine z=0 as the new interface.
 
+    # Define the new grid
     nz = int(cell["vert_grid"])
     old_depth = float(cell["firn_depth"])
     new_depth = old_depth + height_change
 
-    # Old grid (stretched to start after the new ice)
-    # The existing material exists from [0 to old_depth] in old coords.
-    # In new coords, it exists from [height_change to new_depth].
-
-    # Source:
-    # [New Ice (0 to h)] + [Old Firn (h to new_depth)]
-
-    # Construct Source Arrays
-    # 1. Edges
+    # edges of old data
     old_edges = np.linspace(0, old_depth, nz + 1)
     shifted_old_edges = old_edges + height_change
     source_edges = np.concatenate((np.array([0.0]), shifted_old_edges))
 
-    # 2. Values
+    # add values to larger arrays of Sfrac and Lfrac
     source_Sfrac = np.concatenate((np.array([new_ice_Sfrac]), cell["Sfrac"]))
     source_Lfrac = np.concatenate((np.array([new_ice_Lfrac]), cell["Lfrac"]))
 
-    # 3. Temp (Centers)
+    # temperature calculated via cell centres not boundaries
     old_centers = 0.5 * (old_edges[:-1] + old_edges[1:])
     shifted_old_centers = old_centers + height_change
     new_layer_center = height_change / 2.0
@@ -289,11 +274,11 @@ def regrid_after_freeze(cell, height_change):
     source_temps = np.concatenate(
         (np.array([new_ice_Temp]), cell["firn_temperature"]))
 
-    # Target Grid (Regular spacing over new_depth)
+    # new grid
     target_edges = np.linspace(0, new_depth, nz + 1)
     target_centers = 0.5 * (target_edges[:-1] + target_edges[1:])
 
-    # Regrid
+    # apply the regridding
     cell["Sfrac"] = conservative_regrid(source_edges, source_Sfrac,
                                         target_edges)
     cell["Lfrac"] = conservative_regrid(source_edges, source_Lfrac,
@@ -304,8 +289,8 @@ def regrid_after_freeze(cell, height_change):
     cell["firn_depth"] = new_depth
     cell["vertical_profile"] = np.linspace(0, new_depth, nz)
 
-    # Mass Check
     mass_after = utils.calc_mass_sum(cell)
-    # Note: Mass HAS increased because we moved mass from Lake to Firn.
-    # We can't check conservation against 'mass_before' of the firn only.
-    # We trust the inputs.
+
+    check_for_mass_conservation(
+        cell, mass_before, mass_after, "monarchs.physics.regrid_after_melt"
+    )

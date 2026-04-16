@@ -25,43 +25,6 @@ MODULE_NAME = "monarchs.physics.lake"
 
 
 
-def freeze_pre_lake(cell):
-    """
-    Refreeze a shallow 'pre-lake' (exposed water film) into the firn column, conserving mass.
-
-    Converts the entire lake water depth H_w to an equivalent ice thickness
-    H_i = H_w * (rho_water / rho_ice), adds that thickness at the surface
-    (pure ice), and removes the lake water. Uses the same regridding
-    routine as other freezing events to keep all state arrays consistent.
-    """
-    # Clear exposed-water flags/counters up-front
-    cell["exposed_water"] = False
-    cell["exposed_water_refreeze_counter"] = 0
-
-    # Nothing to do if the pre-lake is already zero
-    H_w = float(max(0.0, cell["lake_depth"]))
-    if H_w == 0.0:
-        return
-
-    # Equivalent ice thickness to add at the surface (mass conservation)
-    H_i = H_w * (rho_water / rho_ice)
-
-    # Remove all lake water and mark no lake
-    cell["lake_depth"] = 0.0
-    cell["lake"] = False
-
-    # Add a solid-ice layer of thickness H_i on top of the firn column.
-    # This routine handles firn_depth, temperature, Sfrac/Lfrac, rho, etc.
-    regrid_column.regrid_after_freeze(cell, H_i)
-
-    # Newly formed surface ice should be at the melting point (freshwater)
-    cell["firn_temperature"][0] = 273.15
-
-    # If any lid flags were left over from previous states, ensure they're off
-    cell["v_lid"] = False
-    cell["lid"]   = False
-
-
 def radiative_transfer(cell, sw_in):
 
     """
@@ -439,6 +402,79 @@ def lake_formation(
     if np.isnan(cell["lake_depth"]):
         print("Error - lake depth is NaN (end of timestep)")
         cell["error_flag"] = 1
+
+
+
+def freeze_pre_lake(cell):
+    """
+    Refreeze a shallow 'pre-lake' (exposed water film) into the firn column, conserving mass.
+
+    Converts the entire lake water depth H_w to an equivalent ice thickness
+    H_i = H_w * (rho_water / rho_ice), adds that thickness at the surface
+    (pure ice), and removes the lake water. Uses the same regridding
+    routine as other freezing events to keep all state arrays consistent.
+    """
+    # Clear exposed-water flags/counters up-front
+    cell["exposed_water"] = False
+    cell["exposed_water_refreeze_counter"] = 0
+
+    # Nothing to do if the pre-lake is already zero
+    H_w = float(max(0.0, cell["lake_depth"]))
+    if H_w == 0.0:
+        return
+
+    # Equivalent ice thickness to add at the surface (mass conservation)
+    H_i = H_w * (rho_water / rho_ice)
+
+    # Remove all lake water and mark no lake
+    cell["lake_depth"] = 0.0
+    cell["lake"] = False
+
+    # Add a solid-ice layer of thickness H_i on top of the firn column.
+    # This routine handles firn_depth, temperature, Sfrac/Lfrac, rho, etc.
+    regrid_column.regrid_after_freeze(cell, H_i)
+
+    # Newly formed surface ice should be at the melting point (freshwater)
+    cell["firn_temperature"][0] = 273.15
+
+    # If any lid flags were left over from previous states, ensure they're off
+    cell["v_lid"] = False
+    cell["lid"]   = False
+
+def freeze_pre_lake(cell):
+    """
+    Refreeze a shallow 'pre-lake' (exposed water film) into the firn column, conserving mass.
+
+    Converts the entire lake water depth H_w to an equivalent ice thickness
+    H_i = H_w * (rho_water / rho_ice), adds that thickness at the surface
+    (pure ice), and removes the lake water. Uses the same regridding
+    routine as other freezing events to keep all state arrays consistent.
+    """
+    # Clear exposed-water flags/counters up-front
+    cell["exposed_water"] = False
+    cell["exposed_water_refreeze_counter"] = 0
+
+    # Nothing to do if the pre-lake is already zero
+    H_w = float(max(0.0, cell["lake_depth"]))
+    if H_w == 0.0:
+        return
+
+    # Equivalent ice thickness to add at the surface
+    H_i = H_w * (rho_water / rho_ice)
+
+    cell["lake_depth"] = 0.0
+    cell["lake"] = False
+
+    # Add a solid-ice layer of thickness H_i on top of the firn column and regrid
+    # accordingly
+    regrid_column.regrid_after_freeze(cell, H_i)
+
+    # Newly formed surface ice should be at the melting point (freshwater)
+    cell["firn_temperature"][0] = 273.15
+
+    # reset flags
+    cell["v_lid"] = False
+    cell["lid"]   = False
 
 
 def lake_development(

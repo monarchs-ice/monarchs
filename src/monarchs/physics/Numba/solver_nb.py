@@ -95,9 +95,8 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
 
     """
 
-    N = 50  # number of cells at top to use in hybrd implementation
-    x = cell["firn_temperature"][:N]
-
+    N = cell["vert_grid"]
+    x = cell["firn_temperature"]
     # Need to pack arguments into a single array, so we can pass them into the
     # solver (as NumbaMinpack expects arguments as a vector) - we unpack these
     # later in the heat equation solver
@@ -109,7 +108,6 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
         dz,
         N=N,
     )
-
     T = np.empty_like(cell["firn_temperature"])
 
     # fixed surface temperature case - just use the tridiagonal solver as we have a
@@ -126,10 +124,12 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
     # solver for the rest of the column.
     else:
         sol, fvec, success, info = hybrd(heq, x, args)
-        T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
-        T[:N] = sol
-        T[N:] = T_tri[:]
-
+        if N == len(cell["firn_temperature"]):
+            T[:N] = sol
+        else:
+            T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
+            T[:N] = sol
+            T[N:] = T_tri[:]
 
     T = np.around(T, decimals=8)
     return T, fvec, success, info
