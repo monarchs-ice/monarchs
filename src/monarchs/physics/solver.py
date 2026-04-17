@@ -68,7 +68,6 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
         mesg = "Fixed surface temperature"
         T_tri = heateqn.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T = np.concatenate((np.array([273.15]), T_tri))
-        print('T fixed = ', T_tri[:20])
     else:
 
         N = cell["vert_grid"]
@@ -100,7 +99,6 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
             )
 
         if N == cell["vert_grid"]:
-            print('T free = ', soldict.x[:5])
             return soldict.x, soldict, soldict.success, soldict.message
         else:
             sol = soldict.x

@@ -240,18 +240,8 @@ def lake_formation(
         Element of the model grid we are operating on.
     dt : int
         Number of seconds in the timestep, most likely 3600 (i.e. 1 hour) [s]
-    lw_in : float
-        Downwelling longwave radiation at the surface. [W m^-2]
-    sw_in : float
-        Downwelling shortwave radiation at the surface [W m^-2]
-    air_temp : float
-        Surface air temperature. [K]
-    p_air : float
-        Surface air pressure. [Pa]
-    dew_point_temperature : float
-        Dewpoint temperature of the air at the surface. [K]
-    wind : float
-        Wind speed at the surface. [m s^-1]
+    met_data: numpy structured array
+        Structured array containing meteorological data used in the model.
     Returns
     -------
     None (amends cell inplace).

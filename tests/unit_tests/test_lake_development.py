@@ -15,6 +15,7 @@ def extra_cell_setup(cell):
     cell["rho"] = cell["Sfrac"] * 917 + cell["Lfrac"] * 1000  # Density profile
     cell["saturation"] = np.ones(cell["vert_grid"])
     cell["meltflag"] = np.zeros(cell["vert_grid"])
+    cell["snow_on_lid"] = 0
     return cell
 def test_lake_development():
 
@@ -25,11 +26,28 @@ def test_lake_development():
     dew_point_temperature = 265
     wind = 5
     dt = 3600
+    # create a mock structured array for met_data
+    met_dtype = [
+        ("LW_down", "f8"),
+        ("SW_down", "f8"),
+        ("temperature", "f8"),
+        ("surf_pressure", "f8"),
+        ("dew_point_temperature", "f8"),
+        ("wind", "f8"),
+    ]
+    met_data = np.zeros(1, dtype=met_dtype)
+    met_data[0]["LW_down"] = LW_surf
+    met_data[0]["SW_down"] = SW_surf
+    met_data[0]["temperature"] = air_temp
+    met_data[0]["surf_pressure"] = p_air
+    met_data[0]["dew_point_temperature"] = dew_point_temperature
+    met_data[0]["wind"] = wind
+
     cell = setup_cell()
     cell['vert_grid'] = 500
     cell = extra_cell_setup(cell)
     lake.lake_development(
-        cell, dt, LW_surf, SW_surf, air_temp, p_air, dew_point_temperature, wind
+        cell, dt, met_data[0]
     )
     print(cell["lake_depth"])
     lake_depth_lowres = cell["lake_depth"]
@@ -39,7 +57,7 @@ def test_lake_development():
     cell['vert_grid'] = 2000
     cell = extra_cell_setup(cell)
     lake.lake_development(
-        cell, dt, LW_surf, SW_surf, air_temp, p_air, dew_point_temperature, wind
+        cell, dt, met_data[0]
     )
     print(cell["lake_depth"])
     lake_depth_highres = cell["lake_depth"]

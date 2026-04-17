@@ -64,30 +64,24 @@ met_output_filepath = "output/met_data_1d_testcase.nc"
 # (row_amount, col_amount, len(met_data["LW_surf"])))
 met_data = {}
 spinup_timesteps = 0 * 24
-hot_timesteps = 30 * 24
+hot_timesteps = 60 * 24
 cold_timesteps = 80 * 24  # 1720
 met_data["LW_surf"] = np.concatenate(
     [
-        np.linspace(100, 800, spinup_timesteps),
-        800 * np.ones(hot_timesteps),
-        50 * np.ones(cold_timesteps),
-        800 * np.ones(hot_timesteps),
+        500 * np.ones(hot_timesteps),
+        100 * np.ones(cold_timesteps),
     ]
 )  # Incoming longwave radiation. [W m^-2].
 met_data["SW_surf"] = np.concatenate(
     [
-        np.linspace(100, 800, spinup_timesteps),
         800 * np.ones(hot_timesteps),
         100 * np.ones(cold_timesteps),
-        800 * np.ones(hot_timesteps),
     ]
 )  # Incoming shortwave (solar) radiation. [W m^-2].
 met_data["temperature"] = np.concatenate(
     [
-        np.linspace(250, 267, spinup_timesteps),
-        267 * np.ones(hot_timesteps),
+        275 * np.ones(hot_timesteps),
         250 * np.ones(cold_timesteps),
-        800 * np.ones(hot_timesteps),
     ]
 )  # Surface-layer air temperature. [K].
 met_data["pressure"] = 1000 * np.ones(
@@ -98,7 +92,6 @@ met_data["dew_point_temperature"] = np.concatenate(
         np.linspace(100, 800, spinup_timesteps),
         265 * np.ones(hot_timesteps),
         240 * np.ones(cold_timesteps),
-        265 * np.ones(hot_timesteps),
     ]
 )  # Dew-point temperature. [K].
 met_data["wind"] = 5 * np.ones(
@@ -134,8 +127,10 @@ lateral_movement_toggle = False
 firn_column_toggle = True
 lake_development_toggle = True
 lid_development_toggle = True
-load_precalculated_met_data = True
+load_precalculated_met_data = False
 perc_time_toggle = True
+use_numba = False
+
 """
 Dumping and reloading parameters
 """
@@ -145,7 +140,6 @@ dump_filepath = f"output/1d_testcase_dump_{vertical_points_firn}.nc"
 reload_from_dump = (
     False  # Flag to determine whether to reload the state or not
 )
-use_numba = True
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
