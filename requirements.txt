@@ -1,0 +1,19 @@
+numpy
+scipy
+# optional requirement for running in parallel without MPI or Numba
+pathos>=0.3.2
+dask
+# optional requirement for loading in ERA5 climatology data
+netCDF4
+# optional requirements for loading in DEM data
+Pillow>=12.1.1
+imagecodecs
+# optional requirement for outputting model progress
+h5py
+# optional requirements for Numba compatibility
+numba>=0.59
+# optional requirements for plotting
+matplotlib>=3.8.2
+cartopy
+pyproj
+rioxarray
