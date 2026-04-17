@@ -91,7 +91,8 @@ def setup_toggle_dict(model_setup):
 
         # pylint: enable=import-outside-toplevel
         num_dict = Dict.empty(
-            key_type=types.unicode_type, value_type=types.boolean,
+            key_type=types.unicode_type,
+            value_type=types.boolean,
         )
         for key, value in toggle_dict.items():
             num_dict[key] = value
@@ -182,6 +183,7 @@ def get_snow_sum(met_data_grid, grid, met_start_idx, met_end_idx, snow_added):
 
     return snow_added
 
+
 def update_met_conditions(
     model_setup, grid, met_start_idx, met_end_idx, start=False, snow_added=0
 ):
@@ -211,15 +213,13 @@ def update_met_conditions(
         if start:
             met_start_idx = met_start_idx % met_data_len
 
-        has_index_maps = "lat_idx" in met_data.variables and "lon_idx" in met_data.variables
+        has_index_maps = (
+            "lat_idx" in met_data.variables and "lon_idx" in met_data.variables
+        )
 
         if has_index_maps:
-            lat_idx = np.asarray(
-                met_data.variables["lat_idx"][:], dtype=np.int32
-            )
-            lon_idx = np.asarray(
-                met_data.variables["lon_idx"][:], dtype=np.int32
-            )
+            lat_idx = np.asarray(met_data.variables["lat_idx"][:], dtype=np.int32)
+            lon_idx = np.asarray(met_data.variables["lon_idx"][:], dtype=np.int32)
 
             def _expand(var):
                 """Read a coarse variable and expand it to the fine model grid."""
@@ -263,13 +263,20 @@ def update_met_conditions(
             def _read(var):
                 return met_data.variables[var][met_start_idx:met_end_idx].data
 
-            if "cell_latitude" in met_data.variables and "cell_longitude" in met_data.variables:
+            if (
+                "cell_latitude" in met_data.variables
+                and "cell_longitude" in met_data.variables
+            ):
                 cell_lat = met_data.variables["cell_latitude"][:].data
                 cell_lon = met_data.variables["cell_longitude"][:].data
             # dummy values if no lat/long specified
             else:
-                cell_lat = np.full((model_setup.row_amount, model_setup.col_amount), np.nan)
-                cell_lon = np.full((model_setup.row_amount, model_setup.col_amount), np.nan)
+                cell_lat = np.full(
+                    (model_setup.row_amount, model_setup.col_amount), np.nan
+                )
+                cell_lon = np.full(
+                    (model_setup.row_amount, model_setup.col_amount), np.nan
+                )
 
         met_data_dtype = get_spec()
         met_data_grid = initialise_met_data(
@@ -295,8 +302,14 @@ def update_met_conditions(
 
         for key in met_data.variables.keys():
             if key not in (
-                "cell_latitude", "cell_longitude", "lat_idx", "lon_idx",
-                "coarse_lat", "coarse_lon", "fine_lat", "fine_lon",
+                "cell_latitude",
+                "cell_longitude",
+                "lat_idx",
+                "lon_idx",
+                "coarse_lat",
+                "coarse_lon",
+                "fine_lat",
+                "fine_lon",
             ):
                 if met_end_idx > len(met_data[key]):
                     raise IndexError(
@@ -400,8 +413,8 @@ def print_model_end_of_timestep_messages(
     print("Lid depth = ", get_2d_grid(grid, "lid_depth", mask_invalid=True))
     print("Number of lakes = ", np.sum(get_2d_grid(grid, "lake")))
     print("Number of lids = ", np.sum(get_2d_grid(grid, "lid")))
-    print('Max lake depth = ', np.max(get_2d_grid(grid, "lake_depth")))
-    print('Max lid depth = ', np.max(get_2d_grid(grid, "lid_depth")))
+    print("Max lake depth = ", np.max(get_2d_grid(grid, "lake_depth")))
+    print("Max lid depth = ", np.max(get_2d_grid(grid, "lid_depth")))
     # ensure that output is flushed to the console immediately rather than
     # being buffered.
     # Mostly a fix for output not updating when running with Slurm.
@@ -529,9 +542,7 @@ def main(model_setup, grid):
         met_end_idx,
         first_iteration,
         reload_dump_success,
-    ) = check_for_reload_from_dump(
-        model_setup, grid, met_start_idx, met_end_idx
-    )
+    ) = check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx)
 
     if model_setup.save_output and not reload_dump_success:
         setup_output(
@@ -604,7 +615,6 @@ def main(model_setup, grid):
                 "column physics step. See logs for details."
             )
 
-
         # Validation - check that valid cells are actually being
         # operated upon during the single-column physics step
         if model_setup.single_column_toggle:
@@ -631,16 +641,12 @@ def main(model_setup, grid):
                 )
 
             print("Single-column physics finished")
-            print(
-                f"Single column physics time: {time.perf_counter() - start:.2f}s"
-            )
+            print(f"Single column physics time: {time.perf_counter() - start:.2f}s")
 
         start_serial = time.perf_counter()
         if model_setup.dump_data_pre_lateral_movement:
             if model_setup.dump_format == "NETCDF4":
-                dump_state(
-                    model_setup.dump_filepath, grid, met_start_idx, met_end_idx
-                )
+                dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
             elif model_setup.dump_format == "pickle":
                 with open(model_setup.dump_filepath, "wb") as outfile:
                     pickle.dump(grid, outfile)
@@ -705,15 +711,11 @@ def main(model_setup, grid):
         if model_setup.dump_data and day % model_setup.dump_timestep == 0:
             print(f"Dumping model state to {model_setup.dump_filepath}...")
             if model_setup.dump_format == "NETCDF4":
-                dump_state(
-                    model_setup.dump_filepath, grid, met_start_idx, met_end_idx
-                )
+                dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
             elif model_setup.dump_format == "pickle":
                 with open(model_setup.dump_filepath, "wb") as outfile:
                     pickle.dump(grid, outfile)
-            print(
-                f"Dumping model state time: {time.perf_counter() - start:.2f}s"
-            )
+            print(f"Dumping model state time: {time.perf_counter() - start:.2f}s")
 
         """ Model output """
         start = time.perf_counter()
@@ -726,9 +728,7 @@ def main(model_setup, grid):
                 vars_to_save=model_setup.vars_to_save,
                 vert_grid_size=output_grid_size,
             )
-        print(
-            f"Updating model output time: {time.perf_counter() - start:.2f}s"
-        )
+        print(f"Updating model output time: {time.perf_counter() - start:.2f}s")
         print(f"Serial time total: {time.perf_counter() - start_serial:.2f}s")
         print(
             f"Total time for day {day + 1}:"
@@ -742,9 +742,7 @@ def main(model_setup, grid):
                     model_setup.num_days,
                     model_setup.dump_checkpoint_frequency,
                 )
-                print(
-                    f"Writing model state as an extra checkpoint at timestep {day}"
-                )
+                print(f"Writing model state as an extra checkpoint at timestep {day}")
                 if day in dump_checkpoints:
                     dump_state(
                         model_setup.dump_filepath + str(day),
@@ -766,10 +764,7 @@ def initialise_model_data(model_setup):
     func_name = "monarchs.core.driver.initialise_model_data"
     # Load in the initial firn profile, either from a whole DEM, or a
     # user-defined subset
-    if (
-        hasattr(model_setup, "lat_bounds")
-        and model_setup.lat_bounds.lower() == "dem"
-    ):
+    if hasattr(model_setup, "lat_bounds") and model_setup.lat_bounds.lower() == "dem":
         (
             firn_temperature,
             rho,
@@ -795,22 +790,15 @@ def initialise_model_data(model_setup):
         ) = initial_conditions.initialise_firn_profile(
             model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
         )
-        lat_array = (
-            np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
-        )
-        lon_array = (
-            np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
-        )
+        lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
+        lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
 
     # Set up meteorological data, from either ERA5-format input ("ERA5") or
     # user-defined values from their model configuration ("user_defined")
     if model_setup.met_data_source == "ERA5":
         setup_met_data_flag = True
         if model_setup.load_precalculated_met_data:
-            print(
-                f"{func_name}: Loading in pre-calculated"
-                " MONARCHS format met data"
-            )
+            print(f"{func_name}: Loading in pre-calculated" " MONARCHS format met data")
             # check the file actually exists first
             if not os.path.exists(model_setup.met_output_filepath):
                 print(
@@ -823,9 +811,7 @@ def initialise_model_data(model_setup):
                 setup_met_data_flag = False
 
         if setup_met_data_flag:
-            setup_met_data.met_data_from_era5(
-                model_setup, lat_array, lon_array
-            )
+            setup_met_data.met_data_from_era5(model_setup, lat_array, lon_array)
     elif model_setup.met_data_source == "user_defined":
         setup_met_data.prescribed_met_data(model_setup)
 

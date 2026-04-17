@@ -8,6 +8,8 @@ from scipy.interpolate import RegularGridInterpolator
 from monarchs.met_data.index_map import apply_index_map, build_coarse_index_map
 
 MODULE_NAME = "monarchs.met_data.import_ERA5"
+
+
 def ERA5_to_variables(
     era5_input, met_timestep, total_days, start_index=0, chunk_size=365
 ):
@@ -42,7 +44,7 @@ def ERA5_to_variables(
 
     start_index = int(start_index)
     end_index = int(end_index)
-    era5_data =  netCDF4.Dataset(era5_input)
+    era5_data = netCDF4.Dataset(era5_input)
     errflag = False
     try:
         if len(era5_data.variables["time"]) < end_index:
@@ -74,9 +76,7 @@ def ERA5_to_variables(
         var_dict["time"] = era5_data.variables["time"][start_index:end_index]
     except KeyError:
         try:
-            var_dict["time"] = era5_data.variables["valid_time"][
-                start_index:end_index
-            ]
+            var_dict["time"] = era5_data.variables["valid_time"][start_index:end_index]
         except KeyError:
             raise KeyError(
                 f"{MODULE_NAME}.{routine_name}: Time variable 'time' or 'valid_time' not found in the input"
@@ -98,9 +98,7 @@ def ERA5_to_variables(
             0.95 * var_dict["temperature"][start_index:end_index]
         )
     try:
-        var_dict["pressure"] = (
-            era5_data.variables["sp"][start_index:end_index] / 100
-        )
+        var_dict["pressure"] = era5_data.variables["sp"][start_index:end_index] / 100
     except KeyError:
         try:
             var_dict["pressure"] = (
@@ -116,9 +114,7 @@ def ERA5_to_variables(
     var_dict["snowfall"] = era5_data.variables["sf"][start_index:end_index]
 
     try:
-        var_dict["SW_surf"] = (
-            era5_data.variables["ssrd"][start_index:end_index] / 3600
-        )
+        var_dict["SW_surf"] = era5_data.variables["ssrd"][start_index:end_index] / 3600
     except KeyError:
         try:
             var_dict["SW_surf"] = (
@@ -136,12 +132,11 @@ def ERA5_to_variables(
                 " to use the key that is in your data."
             )
     try:
-        var_dict["LW_surf"] = (
-            era5_data.variables["strd"][start_index:end_index] / 3600
-        )
+        var_dict["LW_surf"] = era5_data.variables["strd"][start_index:end_index] / 3600
     except KeyError:
         try:
-            print(f"{MODULE_NAME}.{routine_name}: "
+            print(
+                f"{MODULE_NAME}.{routine_name}: "
                 "Reading in clear-sky rather than all-sky radiation data since"
                 " strd was not in the input netCDF"
             )
@@ -149,31 +144,28 @@ def ERA5_to_variables(
                 era5_data.variables["strdc"][start_index:end_index] / 3600
             )
         except KeyError:
-            raise KeyError(f"{MODULE_NAME}.{routine_name}: "
+            raise KeyError(
+                f"{MODULE_NAME}.{routine_name}: "
                 "Downwelling longwave radiation variable `strd` or `strdc` not"
                 " found in the input ERA5 netCDF. Check your input data, or"
                 " amend <monarchs.met_data.import_ERA5.ERA5_to_variables> to"
                 " use the key that is in your data."
             )
     try:
-        var_dict["snow_albedo"] = era5_data.variables["asn"][
-            start_index:end_index
-        ]
+        var_dict["snow_albedo"] = era5_data.variables["asn"][start_index:end_index]
     except KeyError:
         var_dict["snow_albedo"] = 0.85 * np.ones(
             np.shape(era5_data.variables["t2m"][start_index:end_index])
         )
     try:
-        var_dict["snow_dens"] = era5_data.variables["rsn"][
-            start_index:end_index
-        ]
+        var_dict["snow_dens"] = era5_data.variables["rsn"][start_index:end_index]
     except KeyError:
         var_dict["snow_dens"] = 350 * np.ones(
             np.shape(era5_data.variables["t2m"][start_index:end_index])
-        ) # Kuipers Munekke 2015
+        )  # Kuipers Munekke 2015
 
     # Convert snow amount from ERA5 units (in water equivalent) to actual snow depth
-    var_dict["snowfall"] = var_dict["snowfall"] #* 1000 / var_dict["snow_dens"]
+    var_dict["snowfall"] = var_dict["snowfall"]  # * 1000 / var_dict["snow_dens"]
     era5_data.close()
     return var_dict
 
@@ -215,12 +207,10 @@ def grid_subset(
     """
     var_dict = dict(var_dict)
     lat_indices = np.where(
-        (var_dict["lat"] <= lat_upper_bound)
-        & (var_dict["lat"] > lat_lower_bound)
+        (var_dict["lat"] <= lat_upper_bound) & (var_dict["lat"] > lat_lower_bound)
     )[0]
     long_indices = np.where(
-        (var_dict["long"] <= long_upper_bound)
-        & (var_dict["long"] >= long_lower_bound)
+        (var_dict["long"] <= long_upper_bound) & (var_dict["long"] >= long_lower_bound)
     )[0]
     for key in var_dict.keys():
         if key in ["time"]:
@@ -268,24 +258,16 @@ def interpolate_grid(var_dict, num_rows, num_cols):
             (var_dict["time"][:], var_dict["lat"], var_dict["long"][:]),
             var_dict[key][:, :, :],
         )
-        new_lat = np.linspace(
-            var_dict["lat"][-1], var_dict["lat"][0], num_cols
-        )
-        new_long = np.linspace(
-            var_dict["long"][0], var_dict["long"][-1], num_rows
-        )
-        X, Y, Z = np.meshgrid(
-            var_dict["time"], new_lat, new_long, indexing="ij"
-        )
+        new_lat = np.linspace(var_dict["lat"][-1], var_dict["lat"][0], num_cols)
+        new_long = np.linspace(var_dict["long"][0], var_dict["long"][-1], num_rows)
+        X, Y, Z = np.meshgrid(var_dict["time"], new_lat, new_long, indexing="ij")
         var_dict[key] = interp((X, Y, Z))
     var_dict["lat"] = new_lat
     var_dict["long"] = new_long
     return var_dict
 
 
-def generate_met_dem_diagnostic_plots(
-    old_era5_grid, era5_grid, ilats, ilons, iheights
-):
+def generate_met_dem_diagnostic_plots(old_era5_grid, era5_grid, ilats, ilons, iheights):
     """
     Generate diagnostic plots to visualise the regridding of ERA5 data onto the
     DEM mesh.
@@ -415,7 +397,7 @@ def get_met_bounds_from_DEM(
     # ── Update lat/long in the grid to the DEM geographic coords,
     #    but leave all met variables at coarse resolution ─────────────────
     era5_grid = dict(era5_grid)
-    era5_grid["lat"]  = lat_array
+    era5_grid["lat"] = lat_array
     era5_grid["long"] = lon_array
     era5_grid["coarse_lat"] = coarse_lat
     era5_grid["coarse_lon"] = coarse_lon
@@ -427,12 +409,8 @@ def get_met_bounds_from_DEM(
         for var in era5_grid.keys():
             if var in ["lat", "long", "time"]:
                 continue
-            expanded[var] = apply_index_map(
-                era5_grid[var], lat_indices, lon_indices
-            )
-        generate_met_dem_diagnostic_plots(
-            era5_grid, expanded, ilats, ilons, iheights
-        )
+            expanded[var] = apply_index_map(era5_grid[var], lat_indices, lon_indices)
+        generate_met_dem_diagnostic_plots(era5_grid, expanded, ilats, ilons, iheights)
 
     return era5_grid, lat_indices, lon_indices
 
@@ -443,9 +421,7 @@ if __name__ == "__main__":
     ERA5_vars = ERA5_to_variables(ERA5_input)
     row_amount = 5
     col_amount = 5
-    ERA5_vars_subset_interpolated = interpolate_grid(
-        ERA5_vars, row_amount, col_amount
-    )
+    ERA5_vars_subset_interpolated = interpolate_grid(ERA5_vars, row_amount, col_amount)
     import cartopy.crs as ccrs
 
     fig, ax = plt.subplots()

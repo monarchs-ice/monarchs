@@ -25,7 +25,8 @@ from monarchs.physics.constants import (
     emissivity,
     rho_ice,
     rho_water,
-    rho_air, stefan_boltzmann,
+    rho_air,
+    stefan_boltzmann,
     tau_ice,
     sfc_absorbed_frac,
 )
@@ -60,9 +61,7 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     T_old = cell["firn_temperature"][N:]
     Sfrac = cell["Sfrac"][N:]
     Lfrac = cell["Lfrac"][N:]
-    k, kappa = get_k_and_kappa(
-        T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
-    )
+    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
     # total number of layers in the firn column
     total_len = np.shape(cell["firn_temperature"])[0]
     # number of layers below the nonlinear region
@@ -74,7 +73,7 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     C = np.zeros(n - 1, dtype=np.float64)  # super-diagonal (upper)
     D = np.zeros(n, dtype=np.float64)  # RHS vector
 
-    factor = np.float64(dt / dz ** 2)
+    factor = np.float64(dt / dz**2)
 
     # Interior rows
     # First row: connect to top nonlinear region
@@ -158,11 +157,26 @@ def heateqn(x, output, args):
     """
 
     # separate "args" into the relevant variables
-    (N, firn_depth, dt, dz, melt, albedo, exposed_water,
-        lid, lid_depth, virtual_lid, virtual_lid_depth, lake, lake_depth, snow_on_lid) = extract_args.extract_scalars(args)
+    (
+        N,
+        firn_depth,
+        dt,
+        dz,
+        melt,
+        albedo,
+        exposed_water,
+        lid,
+        lid_depth,
+        virtual_lid,
+        virtual_lid_depth,
+        lake,
+        lake_depth,
+        snow_on_lid,
+    ) = extract_args.extract_scalars(args)
 
-    (lw_in, sw_in, air_temp, p_air,
-     dew_point_temperature, wind)  = extract_args.extract_met_data(args)
+    lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind = (
+        extract_args.extract_met_data(args)
+    )
 
     T, Sfrac, Lfrac = extract_args.extract_firn_arrays(args)
 
@@ -182,9 +196,7 @@ def heateqn(x, output, args):
         x[0],
     )
 
-    k, kappa = get_k_and_kappa(
-        T, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
-    )
+    k, kappa = get_k_and_kappa(T, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
     # Surface temperature equation (residual)
     output[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
 
@@ -193,15 +205,11 @@ def heateqn(x, output, args):
         output[idx] = (
             T[idx]
             - x[idx]
-            + dt
-            * (kappa[idx])
-            * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz ** 2
+            + dt * (kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2
         )
     # neumann boundary condition at the bottom
     output[N - 1] = (
-        T[N - 1]
-        - x[N - 1]
-        + dt * (kappa[N - 1]) * (-x[N - 1] + x[N - 2]) / dz ** 2
+        T[N - 1] - x[N - 1] + dt * (kappa[N - 1]) * (-x[N - 1] + x[N - 2]) / dz**2
     )
 
 
@@ -236,16 +244,30 @@ def heateqn_lid(x, output, args):
     """
 
     # separate "args" into the relevant variables
-    (vert_grid, firn_depth, dt, dz, melt, albedo, exposed_water,
-     lid, lid_depth, virtual_lid, virtual_lid_depth, lake, lake_depth, snow_on_lid) = extract_args.extract_scalars(args)
-    (lw_in, sw_in, air_temp, p_air,
-     dew_point_temperature, wind) = extract_args.extract_met_data(args)
-    (lid_temperature, Sfrac_lid,
-     k_lid, vert_grid_lid, v_lid_depth, v_lid_temp) = extract_args.extract_lid_variables(args)
-
-    k_lid = 1000 * (
-        2.24e-03 + 5.975e-06 * ((273.15 - lid_temperature) ** 1.156)
+    (
+        vert_grid,
+        firn_depth,
+        dt,
+        dz,
+        melt,
+        albedo,
+        exposed_water,
+        lid,
+        lid_depth,
+        virtual_lid,
+        virtual_lid_depth,
+        lake,
+        lake_depth,
+        snow_on_lid,
+    ) = extract_args.extract_scalars(args)
+    lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind = (
+        extract_args.extract_met_data(args)
     )
+    lid_temperature, Sfrac_lid, k_lid, vert_grid_lid, v_lid_depth, v_lid_temp = (
+        extract_args.extract_lid_variables(args)
+    )
+
+    k_lid = 1000 * (2.24e-03 + 5.975e-06 * ((273.15 - lid_temperature) ** 1.156))
 
     cp_ice = 1000 * (0.00716 * lid_temperature + 0.138)
     cp = cp_ice
@@ -267,9 +289,7 @@ def heateqn_lid(x, output, args):
         wind,
         x[0],
     )
-    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (
-        Q - epsilon * sigma * x[0] ** 4
-    )
+    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
     # SW radiation baked into surface flux already
 
     # fraction of the remaining radiation absorbed at surface layer - baked
@@ -277,8 +297,15 @@ def heateqn_lid(x, output, args):
 
     for idx in np.arange(1, vert_grid_lid - 1):
         z_depth = idx * dz
-        flux_in = sw_in * (1 - albedo) * (1 - sfc_absorbed_frac) * np.exp(-tau_ice * z_depth)
-        flux_out = sw_in * (1 - albedo) * (1 - sfc_absorbed_frac) * np.exp(-tau_ice * (z_depth + dz))
+        flux_in = (
+            sw_in * (1 - albedo) * (1 - sfc_absorbed_frac) * np.exp(-tau_ice * z_depth)
+        )
+        flux_out = (
+            sw_in
+            * (1 - albedo)
+            * (1 - sfc_absorbed_frac)
+            * np.exp(-tau_ice * (z_depth + dz))
+        )
         sw_absorbed_in_layer = flux_in - flux_out
         # convert source to temperature change contribution: S / (rho * cp)
         # units: [W/m2] / ([kg/m3] * [J/kg/K] * m) = [J/s/m2] / [J/m2/K] = K/s
@@ -286,15 +313,8 @@ def heateqn_lid(x, output, args):
         output[idx] = (
             lid_temperature[idx]
             - x[idx]
-            + dt
-            *
-                (
-                    (kappa[idx])
-                    * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
-                    / dz ** 2
-                )
-                + dt *  dT_solar
-
+            + dt * ((kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2)
+            + dt * dT_solar
         )
     output[-1] = x[vert_grid_lid - 1] - 273.15
 

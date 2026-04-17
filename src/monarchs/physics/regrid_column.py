@@ -12,6 +12,7 @@ from monarchs.core.error_handling import (
 )
 from monarchs.physics.constants import rho_ice, rho_water
 
+
 def _integrate_piecewise_constant(edges, values, z0, z1):
     """
     Integrate layer-by-layer, assuming piecewise-constant values.
@@ -168,7 +169,9 @@ def regrid_after_melt(cell, height_change, lake=False):
     nz = int(cell["vert_grid"])
 
     if height_change > old_depth:
-        message = "Height change must be less than the column depth. Got {height_change}"
+        message = (
+            "Height change must be less than the column depth. Got {height_change}"
+        )
         generic_error(cell, routine_name, message)
 
     old_edges = np.linspace(0.0, old_depth, nz + 1)
@@ -180,9 +183,7 @@ def regrid_after_melt(cell, height_change, lake=False):
         old_edges, cell["Lfrac"], 0.0, height_change
     )
 
-    water_height_to_add = (
-        rho_ice / rho_water
-    ) * rem_S_thick + rem_L_thick
+    water_height_to_add = (rho_ice / rho_water) * rem_S_thick + rem_L_thick
 
     new_depth = old_depth - height_change
     new_edges = np.linspace(height_change, old_depth, nz + 1)
@@ -202,9 +203,7 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     dz_new = new_depth / nz
     # max pore space available in the top cell (as height)
-    top_cell_space = max(
-        0.0, (1.0 - (cell["Sfrac"][0] + cell["Lfrac"][0])) * dz_new
-    )
+    top_cell_space = max(0.0, (1.0 - (cell["Sfrac"][0] + cell["Lfrac"][0])) * dz_new)
 
     take = min(top_cell_space, water_height_to_add)
     cell["Lfrac"][0] += take / dz_new
@@ -227,9 +226,7 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     mass_after = utils.calc_mass_sum(cell)
     tol = max(1e-2, 1e-10 * mass_before)
-    check_for_mass_conservation(
-        cell, mass_before, mass_after, routine_name
-    )
+    check_for_mass_conservation(cell, mass_before, mass_after, routine_name)
 
 
 def regrid_after_freeze(cell, height_change):
@@ -260,7 +257,6 @@ def regrid_after_freeze(cell, height_change):
     new_ice_Lfrac = 0.0
     new_ice_Temp = 273.15
 
-
     # Define the new grid
     nz = int(cell["vert_grid"])
     old_depth = float(cell["firn_depth"])
@@ -280,28 +276,21 @@ def regrid_after_freeze(cell, height_change):
     shifted_old_centers = old_centers + height_change
     new_layer_center = height_change / 2.0
 
-    source_centers = np.concatenate(
-        (np.array([new_layer_center]), shifted_old_centers))
-    source_temps = np.concatenate(
-        (np.array([new_ice_Temp]), cell["firn_temperature"]))
+    source_centers = np.concatenate((np.array([new_layer_center]), shifted_old_centers))
+    source_temps = np.concatenate((np.array([new_ice_Temp]), cell["firn_temperature"]))
 
     # new grid
     target_edges = np.linspace(0, new_depth, nz + 1)
     target_centers = 0.5 * (target_edges[:-1] + target_edges[1:])
 
     # apply the regridding
-    cell["Sfrac"] = conservative_regrid(source_edges, source_Sfrac,
-                                        target_edges)
-    cell["Lfrac"] = conservative_regrid(source_edges, source_Lfrac,
-                                        target_edges)
-    cell["firn_temperature"] = np.interp(target_centers, source_centers,
-                                         source_temps)
+    cell["Sfrac"] = conservative_regrid(source_edges, source_Sfrac, target_edges)
+    cell["Lfrac"] = conservative_regrid(source_edges, source_Lfrac, target_edges)
+    cell["firn_temperature"] = np.interp(target_centers, source_centers, source_temps)
 
     cell["firn_depth"] = new_depth
     cell["vertical_profile"] = np.linspace(0, new_depth, nz)
 
     mass_after = utils.calc_mass_sum(cell)
 
-    check_for_mass_conservation(
-        cell, mass_before, mass_after, routine_name
-    )
+    check_for_mass_conservation(cell, mass_before, mass_after, routine_name)

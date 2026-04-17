@@ -50,16 +50,12 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             " Neither a path to a DEM or a firn depth profile exists. Please"
             " specify this in your model configuration file."
         )
-    valid_cells = np.ones(
-        (model_setup.row_amount, model_setup.col_amount), dtype=bool
-    )
+    valid_cells = np.ones((model_setup.row_amount, model_setup.col_amount), dtype=bool)
     if hasattr(model_setup, "firn_max_height"):
         if model_setup.max_height_handler == "clip":
             firn_depth = np.clip(firn_depth, 0, model_setup.firn_max_height)
         elif model_setup.max_height_handler == "filter":
-            valid_cells[
-                np.where(firn_depth > model_setup.firn_max_height)
-            ] = False
+            valid_cells[np.where(firn_depth > model_setup.firn_max_height)] = False
             # with np.printoptions(threshold=np.inf):
             # print(
             #    f"{func_name}:"
@@ -76,9 +72,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                 firn_depth, a_min=model_setup.firn_min_height, a_max=None
             )
         elif model_setup.min_height_handler == "filter":
-            valid_cells[
-                np.where(firn_depth < model_setup.firn_min_height)
-            ] = False
+            valid_cells[np.where(firn_depth < model_setup.firn_min_height)] = False
             with np.printoptions(threshold=np.inf):
                 print(
                     f"{func_name}:"
@@ -140,9 +134,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     if hasattr(model_setup, "T_init") and model_setup.rho_init != "default":
         temperature = model_setup.T_init
     else:
-        t_init = np.linspace(253.15, 263.15, model_setup.vertical_points_firn)[
-            ::-1
-        ]
+        t_init = np.linspace(253.15, 263.15, model_setup.vertical_points_firn)[::-1]
         temperature = np.zeros(
             (
                 model_setup.row_amount,
@@ -216,9 +208,7 @@ def check_for_isolated_cells(valid_cells):
                 neighbours[1, 1] = 2
                 # if there are no valid neighbours, mark this cell as invalid
                 # and move on
-                if not np.any(neighbours == 1) and not np.any(
-                    neighbours == -999
-                ):
+                if not np.any(neighbours == 1) and not np.any(neighbours == -999):
                     valid_cells[i, j] = False
     return valid_cells
 

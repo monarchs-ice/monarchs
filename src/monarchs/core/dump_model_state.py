@@ -52,9 +52,7 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
     with Dataset(fname, clobber=True, mode="w") as data:
         data.createDimension("vert_grid", size=grid["vert_grid"][0][0])
         data.createDimension("vert_grid_lid", size=grid["vert_grid_lid"][0][0])
-        data.createDimension(
-            "vert_grid_lake", size=grid["vert_grid_lake"][0][0]
-        )
+        data.createDimension("vert_grid_lake", size=grid["vert_grid_lake"][0][0])
         data.createDimension("direction", size=8)
         data.createDimension("x", size=len(grid))
         data.createDimension("y", size=len(grid[0]))
@@ -123,9 +121,7 @@ def reload_from_dump(fname, dtype, keys="all"):
         # Determine which keys to load
         scalars = ["met_start_idx", "met_end_idx"]
         if keys == "all":
-            desired_keys = [
-                key for key in data.variables.keys() if key not in scalars
-            ]
+            desired_keys = [key for key in data.variables.keys() if key not in scalars]
         else:
             desired_keys = keys
 

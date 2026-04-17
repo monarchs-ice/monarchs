@@ -72,9 +72,7 @@ def loop_over_grid_numba(
         # disable pylint warnings as Numba is compiled and the linter
         # cannot see its members
 
-        nthreads = (
-            numba.config.NUMBA_DEFAULT_NUM_THREADS
-        )  # pylint: disable=no-member
+        nthreads = numba.config.NUMBA_DEFAULT_NUM_THREADS  # pylint: disable=no-member
 
     numba.set_num_threads(nthreads)
     # append everything to a new 1D instance of a Numba typed list, flatten,
@@ -89,6 +87,10 @@ def loop_over_grid_numba(
     for i in prange(row_amount * col_amount):
 
         timestep_loop(
-            flat_grid[i], dt, met_data[i], t_steps_per_day, toggle_dict,
+            flat_grid[i],
+            dt,
+            met_data[i],
+            t_steps_per_day,
+            toggle_dict,
         )
     return np.reshape(flat_grid, (row_amount, col_amount))  # reshape

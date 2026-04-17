@@ -20,7 +20,9 @@ from monarchs.physics.constants import (
 )
 
 
-def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr", toggle_dict=None):
+def solve_firn_heateqn(
+    cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr", toggle_dict=None
+):
     """
     Dispatcher for firn heat equation solver.
 
@@ -74,7 +76,6 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
         x = cell["firn_temperature"][:N]
         x = np.asarray(x)
 
-
         soldict = root(
             heateqn.heateqn,
             x,
@@ -126,8 +127,18 @@ def lake_formation_eqn(x, args):
     Refactored lake formation eqn with dynamic surface flux.
     """
     (
-        albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
-        dew_point_temperature, wind, k, T1, dz
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        k,
+        T1,
+        dz,
     ) = args
 
     # Calculate Q dynamically based on the solver's current guess x[0]
@@ -146,11 +157,7 @@ def lake_formation_eqn(x, args):
 
     # Now the residual accounts for changes in sensible/latent heat
     output = np.array(
-        [
-            -emissivity * stefan_boltzmann * x[0] ** 4
-            + Q
-            - k * (x[0] - T1) / dz
-        ]
+        [-emissivity * stefan_boltzmann * x[0] ** 4 + Q - k * (x[0] - T1) / dz]
     )
     return output
 
@@ -207,11 +214,7 @@ def lake_development_eqn(x, args):
         [
             -emissivity * stefan_boltzmann * x[0] ** 4
             + Q
-            + np.sign(T_core - x[0])
-            * 1000
-            * 4181
-            * J
-            * abs(T_core - x[0]) ** (4 / 3)
+            + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
         ]
     )
     return output
@@ -339,6 +342,7 @@ def sfc_energy_lid(x, args):
 # DISPATCH FUNCTIONS #
 ######################
 
+
 def lake_seb_solver(cell, met_data, dt, dz, formation=False):
     """
     Scipy version of the lake solver.
@@ -406,15 +410,23 @@ def lake_seb_solver(cell, met_data, dt, dz, formation=False):
             wind,
             k,
             T1,
-            dz_firn
+            dz_firn,
         )
     else:
         eqn = lake_development_eqn
         x = np.array([cell["lake_temperature"][0]])
         args = (
-            cell["albedo"], cell["lid"], cell["lake"],
-            lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind,
-            cell["lake_temperature"], int(cell["vert_grid_lake"]),
+            cell["albedo"],
+            cell["lid"],
+            cell["lake"],
+            lw_in,
+            sw_in,
+            air_temp,
+            p_air,
+            dew_point_temperature,
+            wind,
+            cell["lake_temperature"],
+            int(cell["vert_grid_lake"]),
         )
 
     # solve the equation

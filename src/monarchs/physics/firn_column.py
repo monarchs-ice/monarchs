@@ -14,7 +14,18 @@ from monarchs.core.error_handling import (
     check_for_mass_conservation,
     generic_error,
 )
-from monarchs.physics.constants import rho_ice, rho_water, emissivity, stefan_boltzmann, L_ice, k_water, rho_air, cp_air, cp_water, k_air
+from monarchs.physics.constants import (
+    rho_ice,
+    rho_water,
+    emissivity,
+    stefan_boltzmann,
+    L_ice,
+    k_water,
+    rho_air,
+    cp_air,
+    cp_water,
+    k_air,
+)
 
 MODULE_NAME = "monarchs.physics.firn_column"
 
@@ -102,10 +113,10 @@ def firn_column(
         cell["lake"],
         cell["v_lid"],
         cell["lake_depth"],
-        cell["snow_on_lid"]
+        cell["snow_on_lid"],
     )
     root, _, success, _ = solver.solve_firn_heateqn(
-         cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr"
+        cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr"
     )
     # If the solver didn't fail (e.g. due to too many iterations), and we have
     # a surface temperature above the freezing point, then melt will occur.
@@ -157,9 +168,7 @@ def firn_column(
     if percolation_toggle:
         percolation.percolate(cell, dt, perc_time_toggle=perc_time_toggle)
     # Update density to reflect newly calculated solid/liquid fractions
-    cell["rho"] = (
-        cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
-    )
+    cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
 
     # Test for mass conservation - if we lose mass, then there is an issue with
     # the regridding.
@@ -211,13 +220,10 @@ def calc_height_change(
     ):
         cell["firn_temperature"][1] = 273.15
     k_sfc = (
-        1000 * 2.24 * 10 ** -3
+        1000 * 2.24 * 10**-3
         + 5.975
-        * 10 ** -6
-        * (
-            273.15
-            - (cell["firn_temperature"][0] + cell["firn_temperature"][1]) / 2
-        )
+        * 10**-6
+        * (273.15 - (cell["firn_temperature"][0] + cell["firn_temperature"][1]) / 2)
         ** 1.156
     )
     # Update cell albedo
@@ -228,7 +234,7 @@ def calc_height_change(
         cell["lake"],
         cell["v_lid"],
         cell["lake_depth"],
-        cell["snow_on_lid"]
+        cell["snow_on_lid"],
     )
     # now calculate surface flux
     Q = surface_fluxes.sfc_flux(
@@ -241,7 +247,7 @@ def calc_height_change(
         met_data["surf_pressure"],
         met_data["dew_point_temperature"],
         met_data["wind"],
-        cell["firn_temperature"][0]
+        cell["firn_temperature"][0],
     )
 
     # Strictly speaking, since the MONARCHS grid is defined from the surface
@@ -254,15 +260,7 @@ def calc_height_change(
     # if cell["Sfrac"][0] < 0.1:
     #     dHdt = cell["firn_depth"] / cell["vert_grid"]
     dHdt = (
-        (
-            Q
-            - epsilon
-            * sigma
-            * (cell["firn_temperature"][0]
-            )
-            ** 4
-            - k_sfc * dtdz
-        )
+        (Q - epsilon * sigma * (cell["firn_temperature"][0]) ** 4 - k_sfc * dtdz)
         / (rho_ice * (cell["Sfrac"][0] * L_fus))
         * timestep
     )
@@ -283,4 +281,3 @@ def calc_height_change(
         message = "Height change during melt is NaN"
         generic_error(cell, routine_name, message)
     return dHdt
-

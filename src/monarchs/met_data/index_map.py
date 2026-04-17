@@ -2,10 +2,10 @@ import numpy as np
 
 
 def build_coarse_index_map(
-    coarse_lats: np.ndarray,          # shape (n_clat,)
-    coarse_lons: np.ndarray,          # shape (n_clon,)
-    fine_lats_2d: np.ndarray,         # shape (num_rows, num_cols)  ← full 2-D from DEM
-    fine_lons_2d: np.ndarray,         # shape (num_rows, num_cols)  ← full 2-D from DEM
+    coarse_lats: np.ndarray,  # shape (n_clat,)
+    coarse_lons: np.ndarray,  # shape (n_clon,)
+    fine_lats_2d: np.ndarray,  # shape (num_rows, num_cols)  ← full 2-D from DEM
+    fine_lons_2d: np.ndarray,  # shape (num_rows, num_cols)  ← full 2-D from DEM
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Expand a coarse ERA5 array to the model grid using a pre-built index map.
@@ -41,9 +41,9 @@ def build_coarse_index_map(
 
 
 def apply_index_map_1d(
-    coarse_array: np.ndarray,   # shape (time, n_clat, n_clon)
-    lat_idx: np.ndarray,        # shape (num_cols,) - index per fine lat
-    lon_idx: np.ndarray,        # shape (num_rows,) - index per fine lon
+    coarse_array: np.ndarray,  # shape (time, n_clat, n_clon)
+    lat_idx: np.ndarray,  # shape (num_cols,) - index per fine lat
+    lon_idx: np.ndarray,  # shape (num_rows,) - index per fine lon
 ) -> np.ndarray:
     """
     Expand a coarse ERA5 array to a separable (regular) fine grid using
@@ -64,9 +64,9 @@ def apply_index_map_1d(
 
 
 def apply_index_map(
-    coarse_array: np.ndarray,   # shape (time, n_clat, n_clon)
-    lat_idx: np.ndarray,        # shape (num_rows, num_cols)
-    lon_idx: np.ndarray,        # shape (num_rows, num_cols)
+    coarse_array: np.ndarray,  # shape (time, n_clat, n_clon)
+    lat_idx: np.ndarray,  # shape (num_rows, num_cols)
+    lon_idx: np.ndarray,  # shape (num_rows, num_cols)
 ) -> np.ndarray:
     """
     Expand a coarse ERA5 array to a non-separable model grid.

@@ -39,8 +39,8 @@ def export_gaussian_dem(num_points=20, diagnostic_plots=False):
         sigma = 0.3
         height = (
             1
-            / (2 * np.pi * sigma ** 2)
-            * np.exp(-((x - mu_x) ** 2 + (y - mu_y) ** 2) / (2 * sigma ** 2))
+            / (2 * np.pi * sigma**2)
+            * np.exp(-((x - mu_x) ** 2 + (y - mu_y) ** 2) / (2 * sigma**2))
         )
         return 1 - height
 
@@ -52,9 +52,7 @@ def export_gaussian_dem(num_points=20, diagnostic_plots=False):
     scale = len(heights) / num_points
 
     interpolated_heights = interpolate_func_to_dem(heights, scale)
-    interpolated_heights = (
-        interpolated_heights + interpolated_heights[::-1, ::-1]
-    ) / 2
+    interpolated_heights = (interpolated_heights + interpolated_heights[::-1, ::-1]) / 2
     if diagnostic_plots:
         plt.figure(figsize=(4, 2))
         plt.imshow(interpolated_heights, vmin=0, vmax=1)

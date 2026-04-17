@@ -128,9 +128,7 @@ def initialise_iceshelf(
         "lake_temperature": validated_values["lake_temperature"],
         "lid_temperature": validated_values["lid_temperature"],
         "water": validated_values["water"],
-        "vertical_profile": np.moveaxis(
-            np.linspace(0, firn_depth, vert_grid), 0, -1
-        ),
+        "vertical_profile": np.moveaxis(np.linspace(0, firn_depth, vert_grid), 0, -1),
     }
 
     model_scalars = {
@@ -166,8 +164,6 @@ def initialise_iceshelf(
         "exposed_water_refreeze_counter": exposed_water_refreeze_counter,
         "lake_refreeze_counter": 0,
     }
-
-
 
     # for water direction - 8 possible directions
     diagnostics = {

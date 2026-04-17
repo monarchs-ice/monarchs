@@ -20,7 +20,7 @@ SAFE_IMPORTS = {
     "argparse",
     "flow_plot",
     "cProfile",
-    "sys"
+    "sys",
 }
 MODULE_NAME = "monarchs.core.load_model_setup"
 
@@ -36,9 +36,7 @@ class ModelSetup:
         print(f"Loading model setup from {self.script_path}")
         # Run validation checks before we use importlib to load it in.
         self.validate_model_setup()
-        spec = importlib.util.spec_from_file_location(
-            "model_setup", self.script_path
-        )
+        spec = importlib.util.spec_from_file_location("model_setup", self.script_path)
         config_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(config_module)
 
@@ -56,24 +54,19 @@ class ModelSetup:
         Run the validation checks. If any of them fail, print out all the
         errors found for each.
         """
-        method_name = (
-            "monarchs.core.load_model_setup.ModelSetup.validate_model_setup"
-        )
+        method_name = "monarchs.core.load_model_setup.ModelSetup.validate_model_setup"
         self.check_file_exists()
         self.check_for_key_variables()
         self.check_for_unexpected_imports()
         if self.errors:
             error_message = "\n".join(self.errors)
             raise ValueError(
-                f"{method_name}: Errors found in model setup:\n"
-                f"{error_message}"
+                f"{method_name}: Errors found in model setup:\n" f"{error_message}"
             )
 
     def check_file_exists(self):
         """Check to see whether the user-provided runscript works."""
-        method_name = (
-            "monarchs.core.load_model_setup.ModelSetup.check_file_exists"
-        )
+        method_name = "monarchs.core.load_model_setup.ModelSetup.check_file_exists"
         try:
             with open(self.script_path, "r", encoding="utf-8") as file:
                 file.read()
@@ -146,8 +139,7 @@ class ModelSetup:
         to execute, then add it to SAFE_IMPORTS below.
         """
         method_name = (
-            "monarchs.core.load_model_setup.ModelSetup."
-            "check_for_unexpected_imports"
+            "monarchs.core.load_model_setup.ModelSetup." "check_for_unexpected_imports"
         )
 
         with open(self.script_path, "r", encoding="utf-8") as f:

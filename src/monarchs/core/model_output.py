@@ -46,9 +46,7 @@ def setup_output(fname, grid, vars_to_save=DEFAULT_VARS, vert_grid_size=False):
         for key in vars_loop:
             var = get_2d_grid(grid, key, index="all")
             dtype = convert_bool_dtypes(var)
-            create_variable(
-                data, key, var, dtype, grid, vert_grid_size=vert_grid_size
-            )
+            create_variable(data, key, var, dtype, grid, vert_grid_size=vert_grid_size)
 
 
 def add_lat_long(vars_to_save):
@@ -191,15 +189,17 @@ def interpolate_model_output(grid, vert_grid_size, var):
         3D variable to interpolate, with shape (x, y, z).
     """
     new_var = np.zeros(
-        (len(grid["firn_depth"]), len(grid["firn_depth"][0]), vert_grid_size,)
+        (
+            len(grid["firn_depth"]),
+            len(grid["firn_depth"][0]),
+            vert_grid_size,
+        )
     )
     for i in range(len(grid["firn_depth"])):
         for j in range(len(grid["firn_depth"][i])):
             new_var[i][j] = np.interp(
                 np.linspace(0, grid["firn_depth"][i][j], vert_grid_size),
-                np.linspace(
-                    0, grid["firn_depth"][i][j], grid["vert_grid"][i][j]
-                ),
+                np.linspace(0, grid["firn_depth"][i][j], grid["vert_grid"][i][j]),
                 var[i][j],
             )
     var = new_var

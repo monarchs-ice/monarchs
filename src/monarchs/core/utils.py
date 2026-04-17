@@ -63,16 +63,8 @@ def calc_mass_sum(cell):
         Amount of mass in the system, in arbitrary units.
     """
     total_mass = (
-        np.sum(
-            cell["Sfrac"]
-            * rho_ice
-            * (cell["firn_depth"] / cell["vert_grid"])
-        )
-        + np.sum(
-            cell["Lfrac"]
-            * rho_water
-            * (cell["firn_depth"] / cell["vert_grid"])
-        )
+        np.sum(cell["Sfrac"] * rho_ice * (cell["firn_depth"] / cell["vert_grid"]))
+        + np.sum(cell["Lfrac"] * rho_water * (cell["firn_depth"] / cell["vert_grid"]))
         + cell["lake_depth"] * rho_water
         + cell["lid_depth"] * rho_ice
         + cell["v_lid_depth"] * rho_ice
@@ -211,18 +203,13 @@ def check_energy_conservation(grid):
     for row in grid:
         for cell in row:
             if cell["valid_cell"]:
-                cp_ice = 1000 * (
-                    7.16 * 10 ** -3 * cell["firn_temperature"] + 0.138
-                )
+                cp_ice = 1000 * (7.16 * 10**-3 * cell["firn_temperature"] + 0.138)
                 cp = (
                     cp_water * cell["Lfrac"]
                     + 1004 * (1 - cell["Sfrac"] - cell["Lfrac"])
                     + cp_ice * cell["Sfrac"]
                 )
-                cell["rho"] = (
-                    cell["Sfrac"] * rho_ice
-                    + cell["Lfrac"] * rho_water
-                )
+                cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
                 energy += cell["rho"] * cell["firn_temperature"] * cp
     print("Total energy = ", np.sum(energy))
 

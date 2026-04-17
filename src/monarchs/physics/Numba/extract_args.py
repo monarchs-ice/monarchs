@@ -105,8 +105,8 @@ def pack_args(cell, met_data, dt, dz, N=False, k_lid=np.nan, Sfrac_lid=np.nan):
     if not np.isfinite(k_lid):
         k_lid = 0
     # get array lengths of variable-length arrays
-    len_lid = len(cell['lid_temperature'])
-    len_lake = len(cell['lake_temperature'])
+    len_lid = len(cell["lid_temperature"])
+    len_lake = len(cell["lake_temperature"])
     len_firn = N
 
     # these are used to create pointers to
@@ -123,29 +123,29 @@ def pack_args(cell, met_data, dt, dz, N=False, k_lid=np.nan, Sfrac_lid=np.nan):
     args = np.zeros(total_size)
 
     # scalars - these are just the actual values
-    args[IDX_FIRN_DEPTH] = cell['firn_depth']
+    args[IDX_FIRN_DEPTH] = cell["firn_depth"]
     args[IDX_N_GRID] = N
-    args[IDX_MELT] = cell['melt']
-    args[IDX_EXPOSED_WATER] = cell['exposed_water']
-    args[IDX_LID] = cell['lid']
-    args[IDX_LAKE] = cell['lake']
-    args[IDX_LAKE_DEPTH] = cell['lake_depth']
-    args[IDX_SNOW_LID] = cell['snow_on_lid']
-    args[IDX_ALBEDO] = cell['albedo']
+    args[IDX_MELT] = cell["melt"]
+    args[IDX_EXPOSED_WATER] = cell["exposed_water"]
+    args[IDX_LID] = cell["lid"]
+    args[IDX_LAKE] = cell["lake"]
+    args[IDX_LAKE_DEPTH] = cell["lake_depth"]
+    args[IDX_SNOW_LID] = cell["snow_on_lid"]
+    args[IDX_ALBEDO] = cell["albedo"]
     args[IDX_DT] = dt
     args[IDX_DZ] = dz
     args[IDX_K_LID_SCALAR] = k_lid
-    args[IDX_LID_DEPTH] = cell['lid_depth']
-    args[IDX_V_LID_DEPTH] = cell['v_lid_depth']
-    args[IDX_V_LID] = cell['v_lid']
-    args[IDX_V_LID_TEMP] = cell['virtual_lid_temperature']
+    args[IDX_LID_DEPTH] = cell["lid_depth"]
+    args[IDX_V_LID_DEPTH] = cell["v_lid_depth"]
+    args[IDX_V_LID] = cell["v_lid"]
+    args[IDX_V_LID_TEMP] = cell["virtual_lid_temperature"]
     # meteorological/atmospheric data - again, the actual values
-    args[IDX_LW_IN] = met_data['LW_down']
-    args[IDX_SW_IN] = met_data['SW_down']
-    args[IDX_AIR_TEMP] = met_data['temperature']
-    args[IDX_P_AIR] = met_data['surf_pressure']
-    args[IDX_DP_TEMP] = met_data['dew_point_temperature']
-    args[IDX_WIND] = met_data['wind']
+    args[IDX_LW_IN] = met_data["LW_down"]
+    args[IDX_SW_IN] = met_data["SW_down"]
+    args[IDX_AIR_TEMP] = met_data["temperature"]
+    args[IDX_P_AIR] = met_data["surf_pressure"]
+    args[IDX_DP_TEMP] = met_data["dew_point_temperature"]
+    args[IDX_WIND] = met_data["wind"]
 
     # pointers - indices for the start of each array
     # kind of like a table of contents
@@ -156,13 +156,14 @@ def pack_args(cell, met_data, dt, dz, N=False, k_lid=np.nan, Sfrac_lid=np.nan):
     args[PTR_LFRAC] = p_lfrac
 
     # fill these arrays now
-    args[p_lid: p_lake] = cell['lid_temperature']
-    args[p_lake: p_firn] = cell['lake_temperature']
-    args[p_firn: p_sfrac] = cell['firn_temperature'][:N]
-    args[p_sfrac: p_lfrac] = cell['Sfrac'][:N]
-    args[p_lfrac: total_size] = cell['Lfrac'][:N]
+    args[p_lid:p_lake] = cell["lid_temperature"]
+    args[p_lake:p_firn] = cell["lake_temperature"]
+    args[p_firn:p_sfrac] = cell["firn_temperature"][:N]
+    args[p_sfrac:p_lfrac] = cell["Sfrac"][:N]
+    args[p_lfrac:total_size] = cell["Lfrac"][:N]
 
     return args
+
 
 @jit(nopython=True, fastmath=False)
 def extract_scalars(args):
@@ -194,12 +195,23 @@ def extract_scalars(args):
     lake_depth = args[IDX_LAKE_DEPTH]
     snow_on_lid = args[IDX_SNOW_LID]
 
-
-
     return (
-        vert_grid, firn_depth, dt, dz, melt, albedo, exposed_water,
-        lid, lid_depth, virtual_lid, virtual_lid_depth, lake, lake_depth, snow_on_lid
+        vert_grid,
+        firn_depth,
+        dt,
+        dz,
+        melt,
+        albedo,
+        exposed_water,
+        lid,
+        lid_depth,
+        virtual_lid,
+        virtual_lid_depth,
+        lake,
+        lake_depth,
+        snow_on_lid,
     )
+
 
 @jit(nopython=True, fastmath=False)
 def extract_met_data(args):
@@ -225,6 +237,7 @@ def extract_met_data(args):
     wind = args[IDX_WIND]
     return lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind
 
+
 @jit(nopython=True, fastmath=False)
 def extract_firn_arrays(args):
     """
@@ -249,12 +262,13 @@ def extract_firn_arrays(args):
     p_lfrac = int(args[PTR_LFRAC])
     N = int(args[IDX_N_GRID])
     # slice using the pointers
-    T_firn = args[p_firn: p_firn + N]
-    Sfrac = args[p_sfrac: p_sfrac + N]
+    T_firn = args[p_firn : p_firn + N]
+    Sfrac = args[p_sfrac : p_sfrac + N]
     # lfrac is last variable so goes to end
-    Lfrac = args[p_lfrac:p_lfrac + N]
+    Lfrac = args[p_lfrac : p_lfrac + N]
 
     return T_firn, Sfrac, Lfrac
+
 
 @jit(nopython=True, fastmath=False)
 def extract_lid_variables(args):
@@ -279,7 +293,7 @@ def extract_lid_variables(args):
     p_lake = int(args[PTR_LAKE_T])
 
     # slice using the pointers
-    T_lid = args[p_lid: p_lake]
+    T_lid = args[p_lid:p_lake]
     Sfrac_lid = args[IDX_SFRAC_LID_SCALAR]
     k_lid = args[IDX_K_LID_SCALAR]
     v_lid_depth = args[IDX_V_LID_DEPTH]
@@ -287,6 +301,7 @@ def extract_lid_variables(args):
     vert_grid_lid = len(T_lid)
 
     return T_lid, Sfrac_lid, k_lid, vert_grid_lid, v_lid_depth, v_lid_temperature
+
 
 @jit(nopython=True, fastmath=False)
 def extract_lake_variables(args):
@@ -311,7 +326,10 @@ def extract_lake_variables(args):
     p_firn = int(args[int(PTR_FIRN_T)])
 
     # slice using the pointers
-    T_lake = args[p_lake: p_firn]
+    T_lake = args[p_lake:p_firn]
     vert_grid_lake = len(T_lake)
 
-    return T_lake, vert_grid_lake,
+    return (
+        T_lake,
+        vert_grid_lake,
+    )

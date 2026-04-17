@@ -114,21 +114,17 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
         dz = cell["firn_depth"] / cell["vert_grid"]
         if snowfall_toggle:
-            cell["rho"] = (
-                cell["Sfrac"] * rho_ice
-                + cell["Lfrac"] * rho_water
-            )
-            if met_data[t_step]['temperature'] > 273.15:
+            cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
+            if met_data[t_step]["temperature"] > 273.15:
                 snow_T = 273.1  # sergienko thesis pg. 26
             else:
-                snow_T = met_data[t_step]['temperature']
+                snow_T = met_data[t_step]["temperature"]
             snow_accumulation.snowfall(
                 cell,
                 met_data[t_step]["snowfall"],
                 met_data[t_step]["snow_dens"],
                 snow_T,
             )
-
 
         """
         Two main paths - either no exposed water, in which case the dry firn
@@ -150,7 +146,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         elif cell["exposed_water"]:
             # print("Exposed water present")
 
-
             if firn_heat_toggle:
                 sol, fvec, success, info = solver.solve_firn_heateqn(
                     cell, met_data[t_step], dt, dz, fixed_sfc=True, solver_method="hybr"
@@ -158,10 +153,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 if success:
                     cell["firn_temperature"] = sol
 
-            cell["rho"] = (
-                cell["Sfrac"] * rho_ice
-                + cell["Lfrac"] * rho_water
-            )
+            cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
             if (
                 cell["lake"]
                 and not cell["lid"]
@@ -175,25 +167,15 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             if cell["lake_depth"] == 0:
                 cell["exposed_water"] = False
 
-
-
             if not cell["lake"]:
                 if lake_development_toggle:
-                    print('Lake formation')
-                    lake.lake_formation(
-                        cell,
-                        dt,
-                        met_data[t_step]
-                    )
+                    print("Lake formation")
+                    lake.lake_formation(cell, dt, met_data[t_step])
 
             elif cell["lake"] and not cell["lid"]:
 
                 if lake_development_toggle:
-                    Fu = lake.lake_development(
-                        cell,
-                        dt,
-                        met_data[t_step]
-                    )
+                    Fu = lake.lake_development(cell, dt, met_data[t_step])
                 # TODO - add refreezing calculation here - relevant if we have
                 # lakes underneath a frozen lid that gets combined
                 if firn_heat_toggle:
@@ -239,10 +221,10 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 #              melting for half a day, and therefore has
                 #              significant slush/water on the surface)
                 if cell["lake_depth"] <= 1e-5:
-                    print('Combining lid and firn column')
-                    print('Lid melt count:', cell["lid_melt_count"])
+                    print("Combining lid and firn column")
+                    print("Lid melt count:", cell["lid_melt_count"])
                     reset_column.combine_lid_firn(cell, surface_slush=False)
-                elif (cell["lid_melt_count"] > 12):
+                elif cell["lid_melt_count"] > 12:
                     reset_column.combine_lid_firn(cell, surface_slush=True)
 
         # TODO:
@@ -283,16 +265,12 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         if not ignore_errors:
             check_correct(cell)
 
-        cell["rho"] = (
-            cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
-        )
+        cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
 
         cell["t_step"] += 1
         # Update vertical profile to ensure we account for any firn depth
         # changes
-        cell["vertical_profile"] = np.linspace(
-            0, cell["firn_depth"], cell["vert_grid"]
-        )
+        cell["vertical_profile"] = np.linspace(0, cell["firn_depth"], cell["vert_grid"])
     # If firn depth goes below 5, then we now consider this cell to be
     # invalid. This prevents situations where points where water concentrates
     # and melts through the firn column causing the whole model to crash.
@@ -301,9 +279,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     # the potential for unphysical conditions.
     if cell["firn_depth"] < 5:
         print("Firn depth below 5 m - setting cell to invalid")
-        print(
-            "Location of firn depth below 5 m - ", cell["row"], cell["column"]
-        )
+        print("Location of firn depth below 5 m - ", cell["row"], cell["column"])
         cell["valid_cell"] = False
 
     cell["day"] += 1

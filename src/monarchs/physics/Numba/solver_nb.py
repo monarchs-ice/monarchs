@@ -14,8 +14,12 @@ from NumbaMinpack import hybrd, minpack_sig
 from numba import cfunc, jit
 from monarchs.physics.Numba.extract_args import pack_args
 import monarchs.physics.Numba.heateqn_nb as hnb
-from monarchs.physics.Numba.surface_energy_balance import lake_formation_eqn, lake_development_eqn, sfc_energy_lid, sfc_energy_virtual_lid
-
+from monarchs.physics.Numba.surface_energy_balance import (
+    lake_formation_eqn,
+    lake_development_eqn,
+    sfc_energy_lid,
+    sfc_energy_virtual_lid,
+)
 
 # load in the compiled function address in memory rather than the
 # Python function object
@@ -27,9 +31,6 @@ dev_eqnaddress = dev_eqn_cfunc.address
 form_eqnaddress = form_eqn_cfunc.address
 
 
-
-
-
 sfc_energy_virtual_lid = cfunc(minpack_sig)(sfc_energy_virtual_lid)
 sfc_energy_lid = cfunc(minpack_sig)(sfc_energy_lid)
 sfc_energy_vlid_address = sfc_energy_virtual_lid.address
@@ -39,6 +40,7 @@ sfc_energy_lid_address = sfc_energy_lid.address
 ################
 # MAIN SOLVERS #
 ################
+
 
 @jit(nopython=True, fastmath=False)
 def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr"):
@@ -248,6 +250,7 @@ def lake_seb_solver(cell, met_data, dt, dz, formation=False):
 
     return root, fvec, success, info
 
+
 @jit(nopython=True, fastmath=False)
 def lid_seb_solver(cell, met_data, dt, dz, k_lid, Sfrac_lid=None):
     """
@@ -306,7 +309,7 @@ def lid_seb_solver(cell, met_data, dt, dz, k_lid, Sfrac_lid=None):
         Sfrac_lid = np.array([1])
 
     args = pack_args(cell, met_data, dt, dz, k_lid=k_lid, Sfrac_lid=Sfrac_lid)
-    x = np.array([cell['virtual_lid_temperature']])
+    x = np.array([cell["virtual_lid_temperature"]])
     root, fvec, success, info = hybrd(eqn, x, args)
 
     root = np.around(root, decimals=8)

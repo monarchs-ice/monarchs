@@ -140,10 +140,7 @@ def loop_over_grid(
             )  # Use "threads" for I/O-bound tasks
             end_compute = time.time()
             print(f"Execution time: {end_compute - start_compute:.2f}s")
-            print(
-                "Total time (submit + exec):"
-                f" {end_compute - start_submit:.2f}s"
-            )
+            print("Total time (submit + exec):" f" {end_compute - start_submit:.2f}s")
             results = [
                 item for sublist in results for item in sublist
             ]  # Flatten results

@@ -31,9 +31,7 @@ def neighbourhood_check(grid, target_row, target_col):
                 print(f"  Meltflag status at surface = ", cell["meltflag"][:5])
                 print(f"  Exposed water flag = ", cell["exposed_water"])
                 if not cell["valid_cell"]:
-                    print(
-                        "  WARNING: Cell is marked INVALID before physics starts."
-                    )
+                    print("  WARNING: Cell is marked INVALID before physics starts.")
                 print("-------------------------")
             except IndexError:
                 print(f"Cell [{r}, {c}] is OUT OF BOUNDS")

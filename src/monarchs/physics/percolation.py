@@ -7,37 +7,22 @@ firn column.
 # TODO - refactor/split up percolation, rename
 import numpy as np
 from monarchs.core.error_handling import generic_error
-from monarchs.physics.constants import (
-    rho_ice,
-    rho_water,
-    L_ice,
-    pore_closure
-)
+from monarchs.physics.constants import rho_ice, rho_water, L_ice, pore_closure
 
 MODULE_NAME = "monarchs.physics.percolation"
 
 
 def calc_solid_mass(cell):
     """Calculate the mass of the solid part of the column."""
-    return np.sum(
-        cell["Sfrac"]
-        * rho_ice
-        * (cell["firn_depth"] / cell["vert_grid"])
-    )
+    return np.sum(cell["Sfrac"] * rho_ice * (cell["firn_depth"] / cell["vert_grid"]))
 
 
 def calc_liquid_mass(cell):
     """Calculate the mass of the liquid part of the column."""
-    return np.sum(
-        cell["Lfrac"]
-        * rho_water
-        * (cell["firn_depth"] / cell["vert_grid"])
-    )
+    return np.sum(cell["Lfrac"] * rho_water * (cell["firn_depth"] / cell["vert_grid"]))
 
 
-def percolate(
-    cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=True
-):
+def percolate(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=True):
     """
     Main function to handle percolation of water within the firn column.
     This percolation is performed from the bottom up, i.e. we iterate from the
@@ -88,10 +73,7 @@ def percolate(
                 if not lateral_refreeze_flag:
                     calc_refreezing(cell, v_lev)
 
-                if (
-                    cell["Sfrac"][v_lev] * rho_ice
-                    > pore_closure
-                ):
+                if cell["Sfrac"][v_lev] * rho_ice > pore_closure:
                     cell["ice_lens"] = True
                     cell["saturation"][v_lev] = True
 
@@ -101,10 +83,7 @@ def percolate(
                     calc_saturation(cell, v_lev)
                     time_remaining = 0
 
-                elif (
-                    cell["saturation"][v_lev] == 1
-                    or cell["ice_lens_depth"] == v_lev
-                ):
+                elif cell["saturation"][v_lev] == 1 or cell["ice_lens_depth"] == v_lev:
                     calc_saturation(cell, v_lev)
                     time_remaining = 0
 
@@ -182,7 +161,7 @@ def calc_refreezing(cell, v_lev):
     cp = 7.16 * cell["firn_temperature"][v_lev] + 138
     excess_water = 0
     if cell["Sfrac"][v_lev] == 0:
-        T_change_all = 10000 # arbitrarily high number
+        T_change_all = 10000  # arbitrarily high number
     else:
         T_change_all = (
             cell["Lfrac"][v_lev]
@@ -198,16 +177,12 @@ def calc_refreezing(cell, v_lev):
     # of water
 
     # is there excess water?
-    if Vol_Rfrz_Max < cell["Lfrac"][v_lev] * (
-        cell["firn_depth"] / cell["vert_grid"]
-    ):
+    if Vol_Rfrz_Max < cell["Lfrac"][v_lev] * (cell["firn_depth"] / cell["vert_grid"]):
         excess_water = (
             cell["Lfrac"][v_lev] * (cell["firn_depth"] / cell["vert_grid"])
             - Vol_Rfrz_Max
         )
-        cell["Lfrac"][v_lev] = Vol_Rfrz_Max / (
-            cell["firn_depth"] / cell["vert_grid"]
-        )
+        cell["Lfrac"][v_lev] = Vol_Rfrz_Max / (cell["firn_depth"] / cell["vert_grid"])
 
     # some of this water from the above will refreeze
     if T_change_all >= T_change_max:  # but not all water will refreeze
@@ -223,9 +198,7 @@ def calc_refreezing(cell, v_lev):
             Vol_Change = Vol_Rfrz_Max
         cell["firn_temperature"][v_lev] = 273.15
         if cell["Lfrac"][v_lev] - Vol_Change < 0:
-            Vol_Change = cell["Lfrac"][v_lev] * (
-                cell["firn_depth"] / cell["vert_grid"]
-            )
+            Vol_Change = cell["Lfrac"][v_lev] * (cell["firn_depth"] / cell["vert_grid"])
             cell["Lfrac"][v_lev] = 0
         else:
             cell["Lfrac"][v_lev] = cell["Lfrac"][v_lev] - Vol_Change / (
@@ -243,9 +216,7 @@ def calc_refreezing(cell, v_lev):
         cell["Sfrac"][v_lev] = cell["Sfrac"][v_lev] + cell["Lfrac"][v_lev] * (
             rho_water / rho_ice
         )
-        cell["firn_temperature"][v_lev] = (
-            cell["firn_temperature"][v_lev] + T_change_all
-        )
+        cell["firn_temperature"][v_lev] = cell["firn_temperature"][v_lev] + T_change_all
         cell["Lfrac"][v_lev] = 0
     if cell["Lfrac"][v_lev] < 0:
         message = f"Lfrac < 0 in refreezing calculation at v_lev {v_lev}"
@@ -370,11 +341,7 @@ def calc_saturation(cell, v_lev_in, end=False):
                     if cell["lake"] and cell["lake_depth"] < 0:
                         message = "Lake depth is negative - problem..."
                         generic_error(cell, routine_name, message)
-                elif (
-                    cell["Lfrac"][0] > Lfrac_max
-                    and cell["Lfrac"][0] > 0
-                    and end
-                ):
+                elif cell["Lfrac"][0] > Lfrac_max and cell["Lfrac"][0] > 0 and end:
                     # In this case, this has happened likely because the
                     # regridding algorithm has resulted in the surface cell
                     # having too much water.
@@ -423,7 +390,7 @@ def perc_time(cell, v_lev):
     # specific gravity of the firn
     rho_s_star = cell["Sfrac"][v_lev] * rho_ice / rho_water
     # specific permeability
-    perm_s = 0.077 * delta ** 2 * np.exp(-7.8 * rho_s_star)
+    perm_s = 0.077 * delta**2 * np.exp(-7.8 * rho_s_star)
     # viscosity
     eta = 0.001787
 

@@ -7,14 +7,18 @@ import numpy as np
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
 from monarchs.physics import surface_fluxes, solver
-from monarchs.physics.constants import L_ice, rho_ice, rho_water, v_lid_min_thickness, k_water
+from monarchs.physics.constants import (
+    L_ice,
+    rho_ice,
+    rho_water,
+    v_lid_min_thickness,
+    k_water,
+)
+
 MODULE_NAME = "monarchs.physics.virtual_lid"
 
 
-
-def virtual_lid_development(
-        cell, dt, met_data, turbulent_flux_upper
-):
+def virtual_lid_development(cell, dt, met_data, turbulent_flux_upper):
     """
     When a lake undergoes freezing from the top due to the surface conditions,
     a lid forms. However, the depth of this lid can oscillate significantly
@@ -72,7 +76,7 @@ def virtual_lid_development(
         cell["lake"],
         cell["v_lid"],
         cell["lake_depth"],
-        cell["snow_on_lid"]
+        cell["snow_on_lid"],
     )
 
     # Surface energy balance calculation to determine the virtual lid
@@ -81,7 +85,6 @@ def virtual_lid_development(
     # Calculate flux at the ice-water interface (at 273.15K) to determine
     # freezing/melting rate.
     z_water = cell["lake_depth"] / (cell["vert_grid_lake"] / 2)
-
 
     # Total thermal path length through ice + water
     total_thickness = cell["v_lid_depth"] + z_water
@@ -93,11 +96,10 @@ def virtual_lid_development(
     # Net flux at interface: negative (upward heat loss) causes freezing
     q_net = flux_total
 
-
-    print('Updated virtual lid temperature:', cell["virtual_lid_temperature"])
-    print('Q net at virtual lid interface:', q_net)
-    new_boundary_change = - q_net * dt / (L_ice * rho_ice)
-    print('New boundary change virtual lid (m):', new_boundary_change)
+    print("Updated virtual lid temperature:", cell["virtual_lid_temperature"])
+    print("Q net at virtual lid interface:", q_net)
+    new_boundary_change = -q_net * dt / (L_ice * rho_ice)
+    print("New boundary change virtual lid (m):", new_boundary_change)
 
     # further freezing of the virtual lid
     if new_boundary_change > 0:
@@ -121,9 +123,8 @@ def virtual_lid_development(
     new_mass = utils.calc_mass_sum(cell)
     check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
 
-def update_virtual_lid_temperature(
-    cell, met_data, dt
-):
+
+def update_virtual_lid_temperature(cell, met_data, dt):
     # Update cell albedo
     cell["albedo"] = surface_fluxes.sfc_albedo(
         cell["melt"],
@@ -132,12 +133,11 @@ def update_virtual_lid_temperature(
         cell["lake"],
         cell["v_lid"],
         cell["lake_depth"],
-        cell["snow_on_lid"]
+        cell["snow_on_lid"],
     )
 
     k_v_lid = 1000 * (
-        2.24e-3
-        + 5.975e-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
+        2.24e-3 + 5.975e-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
     )
 
     cell["virtual_lid_temperature"] = solver.lid_seb_solver(
@@ -145,23 +145,14 @@ def update_virtual_lid_temperature(
     )[0][0]
 
 
-
 def freeze_virtual_lid(cell, ice_added):
-    if (ice_added * rho_ice / rho_water) < cell[
-        "lake_depth"
-    ]:
-        old_depth_grid = np.linspace(
-            0, cell["lake_depth"], cell["vert_grid_lake"]
-        )
+    if (ice_added * rho_ice / rho_water) < cell["lake_depth"]:
+        old_depth_grid = np.linspace(0, cell["lake_depth"], cell["vert_grid_lake"])
         # now reduce the size of the lake due to freezing
-        cell["lake_depth"] -= ice_added * (
-            rho_ice / rho_water
-        )
+        cell["lake_depth"] -= ice_added * (rho_ice / rho_water)
 
         # new grid - same # of vertical points, but with a reduced value
-        new_depth_grid = np.linspace(
-            0, cell["lake_depth"], cell["vert_grid_lake"]
-        )
+        new_depth_grid = np.linspace(0, cell["lake_depth"], cell["vert_grid_lake"])
         cell["lake_temperature"] = np.interp(
             new_depth_grid, old_depth_grid, cell["lake_temperature"]
         )
@@ -170,31 +161,24 @@ def freeze_virtual_lid(cell, ice_added):
 
     # whole lake freezes
     else:
-        cell["v_lid_depth"] += cell["lake_depth"] * (
-            rho_water / rho_ice
-        )
+        cell["v_lid_depth"] += cell["lake_depth"] * (rho_water / rho_ice)
         cell["lake_depth"] = 0
 
 
 def melt_virtual_lid(cell, ice_added):
     cell["virtual_lid_temperature"] = 273.15
-    ice_removed = - ice_added #  negative ice_added means melting
+    ice_removed = -ice_added  #  negative ice_added means melting
     if ice_removed > 0:
         # whole virtual lid melts
         if ice_removed > cell["v_lid_depth"]:
-            cell["lake_depth"] += (
-                cell["v_lid_depth"] * rho_ice / rho_water
-            )
+            cell["lake_depth"] += cell["v_lid_depth"] * rho_ice / rho_water
 
             cell["total_melt"] = cell["total_melt"] + cell["v_lid_depth"]
             cell["v_lid_depth"] = 0
-            print('Whole virtual lid melted')
+            print("Whole virtual lid melted")
         # some of the lid melts
         else:
-            cell["lake_depth"] = (
-                cell["lake_depth"]
-                + ice_removed * rho_ice / rho_water
-            )
+            cell["lake_depth"] = cell["lake_depth"] + ice_removed * rho_ice / rho_water
             cell["v_lid_depth"] = cell["v_lid_depth"] - ice_removed
             cell["total_melt"] = cell["total_melt"] + ice_removed
             cell["lake_temperature"][0] = 273.15

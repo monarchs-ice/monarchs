@@ -14,9 +14,7 @@ except ImportError:
         yield
 
 
-def check_for_mass_conservation(
-    cell, original_mass, new_mass, routine_name, tol=1e-6
-):
+def check_for_mass_conservation(cell, original_mass, new_mass, routine_name, tol=1e-6):
     """
     Check for mass conservation in the grid. We use this instead of
     using standard asserts or if cond: raise ValueError, since
@@ -132,7 +130,9 @@ def check_for_single_column_errors(grid):
                 print("----------------------------------------")
                 print("monarchs.core.utils.check_for_single_column_errors:")
                 print(
-                    "Error detected in cell at [", int(cell["row"]), ",",
+                    "Error detected in cell at [",
+                    int(cell["row"]),
+                    ",",
                 )
                 print(" ", int(cell["column"]), "]")
                 print("after the single-column physics step. ")
@@ -175,12 +175,10 @@ def check_correct(cell):
     if np.any(cell["Sfrac"][cell["Sfrac"] < -0.01]) or np.any(
         cell["Sfrac"][cell["Sfrac"] > 1.01]
     ):
-        print(
-            f"""{np.max(cell["Sfrac"])} at level
+        print(f"""{np.max(cell["Sfrac"])} at level
             {np.where((cell["Sfrac"] > 1) | (cell["Sfrac"] < 0))},
              x = {cell["column"]}, y = {cell["row"]}
-"""
-        )
+""")
         print("Minimum Sfrac = ", np.min(cell["Sfrac"]))
         generic_error(cell, func_name, "Sfrac must be between 0 and 1")
     # Set total to look at all but the top layer. The top layer can sometimes
@@ -196,8 +194,7 @@ def check_correct(cell):
         print("Lfrac :", cell["Lfrac"][np.where(total > 1)])
         print(
             "Sfrac + Lfrac:",
-            cell["Lfrac"][np.where(total > 1)]
-            + cell["Sfrac"][np.where(total > 1)],
+            cell["Lfrac"][np.where(total > 1)] + cell["Sfrac"][np.where(total > 1)],
         )
         generic_error(
             cell,
@@ -211,7 +208,8 @@ def check_correct(cell):
         print("Sfrac :", cell["Sfrac"][0])
         print("Lfrac :", cell["Lfrac"][0])
         print(
-            "Sfrac + Lfrac:", cell["Lfrac"][0] + cell["Sfrac"][0],
+            "Sfrac + Lfrac:",
+            cell["Lfrac"][0] + cell["Sfrac"][0],
         )
         generic_error(
             cell,

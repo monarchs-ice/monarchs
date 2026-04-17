@@ -8,7 +8,7 @@ from monarchs.physics.constants import (
     bare_ice_albedo,
     saturated_firn_albedo,
     wet_snow_albedo,
-    dry_snow_albedo
+    dry_snow_albedo,
 )
 
 
@@ -60,7 +60,7 @@ def sfc_flux(
 
     """
 
-    # positive going into ice shelf 
+    # positive going into ice shelf
     Flat, Fsens = bulk_fluxes(
         wind, air_temp, xsurf, p_air, dew_point_temperature, lake, lid
     )
@@ -71,7 +71,7 @@ def sfc_flux(
     elif lake:
         frac_scaling = sfc_absorbed_frac  # fraction of solar absorbed at lake surface
     else:
-        frac_scaling = 1    # firn surface - all radiation absorbed at surface
+        frac_scaling = 1  # firn surface - all radiation absorbed at surface
     Q = epsilon * lw_in + ((1 - alpha) * sw_in * frac_scaling) + Flat + Fsens
 
     return Q
@@ -120,7 +120,7 @@ def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_
                 # is actually higher?
                 # https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JC014161
                 # this implies (Fig. 1) that it should be ~0.6
-                alpha = bare_ice_albedo # bare dry ice lid albedo
+                alpha = bare_ice_albedo  # bare dry ice lid albedo
             elif lake:
                 h = lake_depth
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
@@ -146,9 +146,7 @@ def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_
     return alpha
 
 
-def bulk_fluxes(
-    wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid
-):
+def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid):
     """
     Calculate the latent and sensible heat fluxes given the wind speed and
     surface meteorology.
@@ -187,7 +185,7 @@ def bulk_fluxes(
     b = 20
     # Height windspeed is measured at
     dz = 10
-    CT0 = 1.3 * 10 ** -3
+    CT0 = 1.3 * 10**-3
     c = 1961 * b * CT0
     # J kg−1 K−1 From section 12 of documentation in docstring
     R_dry = 287.0597
@@ -223,7 +221,7 @@ def bulk_fluxes(
     if wind == 0:
         Ri = 0
     else:
-        Ri = g * (air_temp - T_sfc) * dz / (air_temp * wind ** 2)
+        Ri = g * (air_temp - T_sfc) * dz / (air_temp * wind**2)
     if Ri < 0:
         CT = CT0 * (1 - 2 * b * Ri / (1 + c * abs(Ri) ** 0.5))
     else:

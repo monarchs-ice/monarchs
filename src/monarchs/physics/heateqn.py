@@ -14,8 +14,9 @@ from monarchs.physics.constants import (
     rho_air,
     stefan_boltzmann,
     sfc_absorbed_frac,
-    tau_ice
+    tau_ice,
 )
+
 
 def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
@@ -72,28 +73,24 @@ def heateqn(
     Sfrac = cell["Sfrac"]
     Lfrac = cell["Lfrac"]
 
-    k, kappa = get_k_and_kappa(
-        T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
-    )
+    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
 
     residual = np.zeros_like(x)
     # Surface temperature equation (residual)
     # residual[0] = k[0] *  - (Q - epsilon * sigma * x[0] ** 4)
-    residual[0] = k[0] * ((x[0] - x[1]) / dz) - (
-        Q - epsilon * sigma * x[0] ** 4
-    )
+    residual[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
     # Calculate the temperature profile for the first 10 layers
     idx = np.arange(1, len(x) - 1)
 
     residual[idx] = (
         cell["firn_temperature"][idx]
         - x[idx]
-        + dt * kappa[idx] * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz ** 2
+        + dt * kappa[idx] * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2
     )
     residual[-1] = (
         cell["firn_temperature"][len(x) - 1]
         - x[len(x) - 1]
-        + dt * (kappa[len(x) - 1]) * (-x[len(x) - 1] + x[len(x) - 2]) / dz ** 2
+        + dt * (kappa[len(x) - 1]) * (-x[len(x) - 1] + x[len(x) - 2]) / dz**2
     )
 
     return residual
@@ -121,9 +118,7 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     T_old = cell["firn_temperature"][N:]
     Sfrac = cell["Sfrac"][N:]
     Lfrac = cell["Lfrac"][N:]
-    k, kappa = get_k_and_kappa(
-        T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water
-    )
+    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
     # Total number of layers in the firn column
     total_len = np.shape(cell["firn_temperature"])[0]
     n = total_len - N  # Number of layers below the nonlinear region
@@ -134,7 +129,7 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     C = np.zeros(n - 1, dtype=np.float64)
     D = np.zeros(n, dtype=np.float64)
 
-    factor = np.float64(dt / dz ** 2)
+    factor = np.float64(dt / dz**2)
 
     # First row: connect to top nonlinear region
     i = 0
@@ -261,21 +256,28 @@ def heateqn_lid(
     )
 
     output = np.zeros(cell["vert_grid_lid"])
-    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (
-        Q - epsilon * sigma * x[0] ** 4
-    )
+    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
     idx = np.arange(1, cell["vert_grid_lid"] - 1)
     z_depth = idx * dz
-    flux_in = sw_in * (1 - cell["albedo"]) * (1 - sfc_absorbed_frac) * np.exp(-tau_ice * z_depth)
-    flux_out = sw_in * (1 - cell["albedo"]) *  (1 - sfc_absorbed_frac) * np.exp(-tau_ice * (z_depth + dz))
+    flux_in = (
+        sw_in
+        * (1 - cell["albedo"])
+        * (1 - sfc_absorbed_frac)
+        * np.exp(-tau_ice * z_depth)
+    )
+    flux_out = (
+        sw_in
+        * (1 - cell["albedo"])
+        * (1 - sfc_absorbed_frac)
+        * np.exp(-tau_ice * (z_depth + dz))
+    )
     sw_absorbed_in_layer = flux_in - flux_out
     dT_solar = sw_absorbed_in_layer / (rho * cp[idx] * dz)
 
     output[idx] = (
         cell["lid_temperature"][idx]
         - x[idx]
-        + dt
-        * ((kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz ** 2)
+        + dt * ((kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2)
         + dt * dT_solar
     )
     output[-1] = x[cell["vert_grid_lid"] - 1] - 273.15

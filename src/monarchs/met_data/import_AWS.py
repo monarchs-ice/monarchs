@@ -28,11 +28,7 @@ def import_AWS_Wisc(aws, start_year, start_month, end_year, end_month):
     wind = []
     for file_month in range(start_month, 13):
         data = np.loadtxt(
-            "Wisc_AWS/"
-            + aws
-            + str(start_year)
-            + str("%02d" % file_month)
-            + "q3h.txt",
+            "Wisc_AWS/" + aws + str(start_year) + str("%02d" % file_month) + "q3h.txt",
             skiprows=2,
         )
         temp = np.append(temp, data[:, 5])
@@ -55,11 +51,7 @@ def import_AWS_Wisc(aws, start_year, start_month, end_year, end_month):
             wind = np.append(wind, data[:, 7])
     for file_month in range(1, end_month + 1):
         data = np.loadtxt(
-            "Wisc_AWS/"
-            + aws
-            + str(end_year)
-            + str("%02d" % file_month)
-            + "q3h.txt",
+            "Wisc_AWS/" + aws + str(end_year) + str("%02d" % file_month) + "q3h.txt",
             skiprows=2,
         )
         temp = np.append(temp, data[:, 5])

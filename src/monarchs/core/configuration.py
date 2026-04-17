@@ -95,9 +95,7 @@ def handle_incompatible_flags(model_setup):
     """
     func_name = "monarchs.core.configuration.handle_incompatible_flags"
     print("\n")
-    if hasattr(model_setup, "lat_bounds") and not hasattr(
-        model_setup, "DEM_path"
-    ):
+    if hasattr(model_setup, "lat_bounds") and not hasattr(model_setup, "DEM_path"):
         if model_setup.lat_bounds.lower() == "dem":
             raise ValueError(
                 f"{func_name}: You"
@@ -106,9 +104,7 @@ def handle_incompatible_flags(model_setup):
             )
     dump_attrs = ["dump_data", "reload_from_dump"]
     for attr in dump_attrs:
-        if hasattr(model_setup, attr) and not hasattr(
-            model_setup, "dump_filepath"
-        ):
+        if hasattr(model_setup, attr) and not hasattr(model_setup, "dump_filepath"):
             if getattr(model_setup, attr) is True:
                 raise NameError(
                     f"{func_name}:"
@@ -117,9 +113,7 @@ def handle_incompatible_flags(model_setup):
                     " dump into via the <dump_filepath> attribute."
                 )
     for attr in dump_attrs:
-        if hasattr(model_setup, attr) and not hasattr(
-            model_setup, "output_filepath"
-        ):
+        if hasattr(model_setup, attr) and not hasattr(model_setup, "output_filepath"):
             if getattr(model_setup, attr) is True:
                 raise NameError(
                     f"{func_name}:"
@@ -172,10 +166,7 @@ def handle_invalid_values(model_setup):
         "trust-ncg",
         "broyden1",
     ]
-    if (
-        hasattr(model_setup, "solver")
-        and model_setup.solver not in valid_solvers
-    ):
+    if hasattr(model_setup, "solver") and model_setup.solver not in valid_solvers:
         raise ValueError(
             f"m{func_name}:"
             f" solver must be one of {valid_solvers}, not {model_setup.solver}"
@@ -316,16 +307,14 @@ def create_defaults_for_missing_flags(model_setup):
     vardict["input_crs"] = 3031
     vardict["cores"] = "all"
     vardict["solver"] = "hybr"
-    vardict[
-        "dask_scheduler"
-    ] = "processes"  # set to "distributed" if using HPC across multiple nodes
+    vardict["dask_scheduler"] = (
+        "processes"  # set to "distributed" if using HPC across multiple nodes
+    )
     vardict["flow_speed_scaling"] = 1.0
     vardict["outflow_proportion"] = 1.0
     if hasattr(model_setup, "met_input_filepath"):
         vardict["met_data_source"] = "ERA5"
-    elif hasattr(model_setup, "met_data") and isinstance(
-        model_setup.met_data, dict
-    ):
+    elif hasattr(model_setup, "met_data") and isinstance(model_setup.met_data, dict):
         vardict["met_data_source"] = "user_defined"
     else:
         raise ValueError(
@@ -442,9 +431,7 @@ def jit_modules(fastmath=False):
         "check_grid_correctness",
         "get_num_cores",
         "np",
-
     ]  # other builtins/decorators
-
 
     for module in module_list:
         functions_list = getmembers(module, isfunction)

@@ -49,13 +49,13 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     if cell["lid"]:
         # add to lid depth
         cell["lid_depth"] += snow_depth * snow_rho / rho_ice
-        cell['lid_snow_depth'] += snow_depth  # just a tracker
+        cell["lid_snow_depth"] += snow_depth  # just a tracker
 
         # currently this branch doesnt change anything, the flag is not used
         # but could be used to track ice lid albedo with snow on top
-        if cell['lid_snow_depth'] > 0.01 and not cell["snow_on_lid"]:
+        if cell["lid_snow_depth"] > 0.01 and not cell["snow_on_lid"]:
             # more than 1 cm of snow on lid
-            cell['snow_on_lid'] = 1
+            cell["snow_on_lid"] = 1
         return
 
     # TODO - would snow sit on top and start forming a "virtual lid"? if conditions are
@@ -106,12 +106,8 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     # new snow center is at half the snow depth
     snow_center = snow_depth / 2.0
 
-    source_centers = np.concatenate(
-        (np.array([snow_center]), shifted_old_centers)
-    )
-    source_temps = np.concatenate(
-        (np.array([snow_T]), cell["firn_temperature"])
-    )
+    source_centers = np.concatenate((np.array([snow_center]), shifted_old_centers))
+    source_temps = np.concatenate((np.array([snow_T]), cell["firn_temperature"]))
 
     # new grid (after height change)
     new_total_depth = old_depth + snow_depth
@@ -188,9 +184,7 @@ def densification(cell, t_steps_per_day):
     R = 8.3144598
     T_av = 264.56010894609415
     e = np.exp(-ec / (R * cell["firn_temperature"][0]) + eg / (R * T_av))
-    cell["rho"] = (
-        cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
-    )
+    cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
     # total annual accumulation - TODO taken direct from MATLAB, need to calc
     b = 0.4953 * (1000 / 350)
     for i in range(cell["vert_grid"]):

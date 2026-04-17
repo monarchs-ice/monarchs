@@ -128,9 +128,7 @@ def export_DEM(
     input_raster = rioxarray.open_rasterio(tiffname).rio.reproject("EPSG:3031")
     # Get the lat/long coordinates of the DEM
 
-    transformer = Transformer.from_crs(
-        input_crs, CRS.from_epsg(4326), always_xy=True
-    )
+    transformer = Transformer.from_crs(input_crs, CRS.from_epsg(4326), always_xy=True)
     x, y = np.meshgrid(input_raster.x.values, input_raster.y.values)
     x_flat, y_flat = x.flatten(), y.flatten()
     lon_array, lat_array = transformer.transform(x_flat, y_flat)
@@ -224,24 +222,16 @@ def get_xy_distance(latitudes, longitudes):
     # Compute dy (North-South size of each grid cell in metres)
     lat1_dy = lat_grid[:, :-1]  # Take all but last row
     lat2_dy = lat_grid[:, 1:]  # Take all but first row
-    dy_metres = geod.inv(lon_grid[:, :-1], lat1_dy, lon_grid[:, :-1], lat2_dy)[
-        -1
-    ]
+    dy_metres = geod.inv(lon_grid[:, :-1], lat1_dy, lon_grid[:, :-1], lat2_dy)[-1]
 
     # Compute dx (East-West size of each grid cell in metres)
     lon1_dx = lon_grid[:-1, :]  # Take all but last column
     lon2_dx = lon_grid[1:, :]  # Take all but first column
-    dx_metres = geod.inv(lon1_dx, lat_grid[:-1, :], lon2_dx, lat_grid[:-1, :])[
-        -1
-    ]
+    dx_metres = geod.inv(lon1_dx, lat_grid[:-1, :], lon2_dx, lat_grid[:-1, :])[-1]
 
     # Convert dx/dy to full-sized arrays by padding (so they match raster size)
-    dy_metres = np.pad(
-        dy_metres, ((0, 0), (0, 1)), mode="edge"
-    )  # Pad last row
-    dx_metres = np.pad(
-        dx_metres, ((0, 1), (0, 0)), mode="edge"
-    )  # Pad last column
+    dy_metres = np.pad(dy_metres, ((0, 0), (0, 1)), mode="edge")  # Pad last row
+    dx_metres = np.pad(dx_metres, ((0, 1), (0, 0)), mode="edge")  # Pad last column
 
     return dx_metres, dy_metres
 
@@ -344,7 +334,11 @@ def generate_diagnostic_plots(
     bounds = np.arange(0, 500, 1)
 
     cont = ax1.contourf(
-        lons, lats, heights, cmap=cmap, transform=ccrs.PlateCarree(),
+        lons,
+        lats,
+        heights,
+        cmap=cmap,
+        transform=ccrs.PlateCarree(),
     )
     # levels=bounds, vmin=0, vmax=50)
     ax1.coastlines()
