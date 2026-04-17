@@ -448,8 +448,6 @@ def jit_modules(fastmath=False):
 
     for module in module_list:
         functions_list = getmembers(module, isfunction)
-        print(module)
-        print(functions_list)
         for name, function in functions_list:
             # Ignore functions that are imported, are in our ignore list,
             # or have the __wrapped__ attribute

@@ -80,7 +80,7 @@ def calc_mass_sum(cell):
     return total_mass
 
 
-def get_2d_grid(grid, attr, index=False):
+def get_2d_grid(grid, attr, index=False, mask_invalid=False):
     """
     Helper function to get a printout of a variable from the model grid,
     at a user-specified index.
@@ -97,6 +97,8 @@ def get_2d_grid(grid, attr, index=False):
         the index (i.e. height) at which you want to print out.
         Defaults to False, which the code interprets as the surface
         (index 0).
+    mask_invalid : bool, optional
+        If True, mask out values where cell['valid_cell'] is False (set to np.nan).
 
     Returns
     -------
@@ -105,26 +107,30 @@ def get_2d_grid(grid, attr, index=False):
     """
     if not index:
         index = 0
-    var = [None] * len(grid)
 
     if not isinstance(grid, np.ndarray):
         for row_idx, row in enumerate(grid):
-            var[row_idx] = [None] * len(row)
             for col_idx, cell in enumerate(row):
-                var[row_idx][col_idx] = getattr(cell, attr)
-
+                value = getattr(cell, attr)
+                if mask_invalid and (not cell["valid_cell"]):
+                    if isinstance(value, np.ndarray):
+                        value = np.full_like(value, np.nan)
+                    else:
+                        value = np.nan
+                grid[row_idx][col_idx] = value
     else:
         for row_idx, row in enumerate(grid):
-            var[row_idx] = [None] * len(row)
             for col_idx, _ in enumerate(row):
-                var[row_idx][col_idx] = grid[attr][row_idx][col_idx]
+                value = grid[attr][row_idx][col_idx]
+                # Cannot mask in this case, as we don't have cell['valid_cell']
+                grid[row_idx][col_idx] = value
     if index == "all":
-        return np.array(var)
+        return np.array(grid)
 
     try:
-        return np.array(var)[:, :, index]
+        return np.array(grid)[:, :, index]
     except IndexError:
-        return np.array(var)[:, :]
+        return np.array(grid)[:, :]
 
 
 def find_nearest(a, a0):

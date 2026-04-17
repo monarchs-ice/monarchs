@@ -5,22 +5,20 @@ from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 import numpy as np
 from monarchs.met_data.import_ERA5 import (
     ERA5_to_variables,
-    interpolate_grid,
     grid_subset,
     get_met_bounds_from_DEM,
 )
 
 # TODO - make CHUNKSIZE model_setup variable rather than constant?
 CHUNKSIZE = 365  # days
-
+MODULE_NAME = "monarchs.met_data.setup_met_data"
 
 def met_data_from_era5(model_setup, lat_array=False, lon_array=False,
-                       interpolated=False):
+                       ):
     """
     Convert ERA5 input data into a netCDF in MONARCHS format.
-
     """
-    #     TODO - docstring, refactor to break up with a few helper functions
+    # TODO - docstring, refactor to break up with a few helper functions
     func_name = "monarchs.core.initial_conditions.met_data_from_era5"
     # Determine the timestep index - either a string (in which case convert to int),
     # or int directly
@@ -42,7 +40,7 @@ def met_data_from_era5(model_setup, lat_array=False, lon_array=False,
         model_setup.num_days, chunk_size=CHUNKSIZE
     )
     for year in range(num_model_years):
-        start_index = year * CHUNKSIZE * 24 / index
+        start_index = year * CHUNKSIZE * 24 // index
 
         era5_grid = process_year(
             model_setup, year, index, lat_array, lon_array
@@ -55,20 +53,13 @@ def met_data_from_era5(model_setup, lat_array=False, lon_array=False,
         print(
             f"{func_name}: Writing data for" f" year {year + 1} into netCDF..."
         )
-        if interpolated:
-            write_to_netcdf_full(
-                model_setup.met_output_filepath,
-                era5_grid,
-                model_setup,
-                start_index=start_index,
-            )
-        else:
-            write_to_netcdf(
-                model_setup.met_output_filepath,
-                era5_grid,
-                model_setup,
-                start_index=start_index,
-            )
+
+        write_to_netcdf(
+            model_setup.met_output_filepath,
+            era5_grid,
+            model_setup,
+            start_index=start_index,
+        )
 
     # end of loop over years
     print(
@@ -83,12 +74,10 @@ def process_year(model_setup, year, index, lat_array, lon_array):
     Process a single year of ERA5 data, returning the coarse-resolution ERA5
     dict with index maps attached, ready for write_to_netcdf.
 
-    For regular lat/lon grids, 1-D index maps are built from linearly-spaced
-    fine coordinate vectors (matching what interpolate_grid previously produced).
-
-    For polar stereographic grids (lat_bounds == "dem"), get_met_bounds_from_DEM
-    already contains the nearest-neighbour logic; we simply extract the index
-    maps it builds rather than re-deriving them.
+    This will write an index map if we are obtaining the limits of the
+    meteorological data from the DEM (i.e. model_setup.lat_bounds == "dem"). This
+    mapping allows MONARCHS gridpoints to select the nearest relevant data for the
+    forcing without needing to save everything to disk or interpolate at runtime.
 
     Parameters
     ----------
@@ -114,8 +103,8 @@ def process_year(model_setup, year, index, lat_array, lon_array):
             "fine_lat" : ndarray, shape (num_cols,)       or (num_rows, num_cols)
             "fine_lon" : ndarray, shape (num_rows,)       or (num_rows, num_cols)
     """
-    start_index = year * CHUNKSIZE * 24 / index
-    timesteps_per_day = 24 / index
+    start_index = year * CHUNKSIZE * 24 // index
+    timesteps_per_day = 24 // index
 
     era5_vars = ERA5_to_variables(
         model_setup.met_input_filepath,
@@ -125,7 +114,17 @@ def process_year(model_setup, year, index, lat_array, lon_array):
         chunk_size=CHUNKSIZE,
     )
 
-    if has_user_defined_bounds(model_setup):
+    use_user_bounds = has_user_defined_bounds(model_setup)
+    use_dem_bounds = getattr(model_setup, "lat_bounds", None) == "dem"
+
+    if use_user_bounds and use_dem_bounds:
+        raise ValueError(
+            "monarchs.setup_met_data.process_year: choose either explicit lat/long bounds "
+            "or lat_bounds='dem', not both."
+            )
+
+    # First restrict the coarse ERA5 grid if we are subsetting via the DEM.
+    if use_user_bounds:
         era5_vars = grid_subset(
             era5_vars,
             model_setup.latmax,
@@ -134,27 +133,62 @@ def process_year(model_setup, year, index, lat_array, lon_array):
             model_setup.longmin,
         )
 
+    # Then decide how to map the coarse ERA5 grid onto the model grid.
+    # DEM mode produces 2-D index maps; regular lat/lon mode produces 1-D maps.
+    if use_dem_bounds:
+        if lat_array is False or lon_array is False:
+            raise ValueError(
+                "process_year: lat_array and lon_array are required when "
+                "lat_bounds='dem'."
+                )
 
-    # get_met_bounds_from_DEM already contains the find_nearest loop
-    # that builds the 2-D index maps.  We now get those maps back
-    # directly rather than discarding them after the expansion.
-    era5_vars, lat_idx, lon_idx = get_met_bounds_from_DEM(
-        model_setup,
-        era5_vars,
-        lat_array,
-        lon_array,
-        diagnostic_plots=model_setup.met_dem_diagnostic_plots,
-    )
-    fine_lat = lat_array    # 2-D (num_rows, num_cols), geographic coords
-    fine_lon = lon_array    # 2-D (num_rows, num_cols), geographic coords
+        era5_vars, lat_idx, lon_idx = get_met_bounds_from_DEM(
+            model_setup,
+            era5_vars,
+            lat_array,
+            lon_array,
+            diagnostic_plots=model_setup.met_dem_diagnostic_plots,
+        )
+        fine_lat = lat_array
+        fine_lon = lon_array
 
+        era5_vars["lat_idx"] = lat_idx
+        era5_vars["lon_idx"] = lon_idx
+        era5_vars["fine_lat"] = fine_lat
+        era5_vars["fine_lon"] = fine_lon
 
+    else:
+        # Regular lat/lon case: keep the current 1-D index-map convention used
+        # by update_met_conditions:
+        # - fine_lat has length col_amount
+        # - fine_lon has length row_amount
+        coarse_lat = np.asarray(era5_vars["lat"])
+        coarse_lon = np.asarray(era5_vars["long"])
 
-    # attach maps so write_to_netcdf can persist them
-    era5_vars["lat_idx"]  = lat_idx
-    era5_vars["lon_idx"]  = lon_idx
-    era5_vars["fine_lat"] = fine_lat
-    era5_vars["fine_lon"] = fine_lon
+        if coarse_lat.ndim != 1 or coarse_lon.ndim != 1:
+            raise ValueError(
+                "process_year: expected 1-D ERA5 lat/long axes for regular-grid "
+                "index mapping."
+                )
+        fine_lat = np.linspace(
+            coarse_lat[-1], coarse_lat[0], model_setup.col_amount
+                                            )
+        fine_lon = np.linspace(
+            coarse_lon[0], coarse_lon[-1], model_setup.row_amount
+                                            )
+
+        lat_idx = np.abs(
+            coarse_lat[:, np.newaxis] - fine_lat[np.newaxis, :]
+            ).argmin(axis=0).astype(np.int32)
+        lon_idx = np.abs(
+            coarse_lon[:, np.newaxis] - fine_lon[np.newaxis, :]
+                    ).argmin(axis=0).astype(np.int32)
+
+        era5_vars["lat_idx"] = lat_idx
+        era5_vars["lon_idx"] = lon_idx
+        era5_vars["fine_lat"] = fine_lat
+        era5_vars["fine_lon"] = fine_lon
+
 
     # optionally scale radiation for testing
     scale_by_factor(model_setup, era5_vars)
@@ -163,7 +197,8 @@ def process_year(model_setup, year, index, lat_array, lon_array):
 
 def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     """
-    Write ERA5 data to the met netCDF at **coarse** resolution.
+    Write ERA5 data to the met netCDF. This data is either index-mapped or
+    interpolated to obtain values on the MONARCHS model grid.
 
     On the first call (``start_index == 0``) the index maps and fine-grid
     lat / lon are written as static variables so that
@@ -174,16 +209,28 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     (e.g. from get_met_bounds_from_DEM). When 2-D, also writes
     cell_latitude and cell_longitude from fine_lat/fine_lon for the reader.
     """
+    routine_name = "write_to_netcdf"
     start_index = int(start_index)
     end_index = int(start_index + len(era5_grid["SW_surf"]))
 
     mode = "w" if start_index == 0 else "a"
+
+    # check we have the index mapping vars
+    required = ("lat_idx", "lon_idx", "fine_lat", "fine_lon")
+    missing = [key for key in required if key not in era5_grid]
+    if missing:
+        raise ValueError(
+            "write_to_netcdf requires index-mapped ERA5 data; "
+            f"missing keys: {missing}"
+        )
+
 
     # Keys that require special handling or are stored separately.
     SKIP_KEYS = {"lat", "long", "time", "lat_idx", "lon_idx",
                  "fine_lat", "fine_lon", "coarse_lat", "coarse_lon"}
 
     with Dataset(era5_grid_path, mode) as f:
+
         if start_index == 0:
             # Use coarse_lat/coarse_lon when present (after get_met_bounds_from_DEM
             # overwrites lat/long with 2-D fine arrays)
@@ -191,11 +238,11 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
                 coarse_lat_1d = era5_grid["coarse_lat"]
                 coarse_lon_1d = era5_grid["coarse_lon"]
             else:
-                coarse_lat_1d = np.asarray(era5_grid["lat"]).ravel()
-                coarse_lon_1d = np.asarray(era5_grid["long"]).ravel()
+                coarse_lat_1d = np.asarray(era5_grid["lat"])
+                coarse_lon_1d = np.asarray(era5_grid["long"])
                 if coarse_lat_1d.ndim > 1 or coarse_lon_1d.ndim > 1:
                     raise ValueError(
-                        "write_to_netcdf: expected 1-D coarse lat/lon. "
+                        f"{MODULE_NAME}.{routine_name}: expected 1-D coarse lat/lon. "
                         "If using get_met_bounds_from_DEM, it should set coarse_lat/coarse_lon."
                     )
             n_coarse_lat = len(coarse_lat_1d)
@@ -264,7 +311,7 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
                 v.long_name = "Nearest coarse-lon index for each fine-grid row"
                 v[:] = lon_idx
 
-        # ── Time-varying met variables at coarse resolution ───────────────
+        # Time-varying met variables at coarse resolution
         for key, value in era5_grid.items():
             if key in SKIP_KEYS:
                 continue
@@ -277,187 +324,93 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
                 var[start_index:end_index] = value
             else:
                 f.variables[key][start_index:end_index] = value
-
-def write_to_netcdf_full(era5_grid_path, era5_grid, model_setup, start_index=0):
-    """
-    Write the ERA5 data to a netCDF file.
-    """
-    #     TODO - docstring
-    start_index = int(start_index)
-    end_index = int(start_index + len(era5_grid["SW_surf"]))
-
-    # If we are starting afresh, need to write the file from scratch,
-    # else append
-    if start_index == 0:
-        mode = "w"
-    else:
-        mode = "a"
-
-    with Dataset(era5_grid_path, mode) as f:
-        # Initialise some variables if we are starting afresh
-        if start_index == 0:
-            f.createGroup("variables")
-            f.createDimension("time", None)
-            f.createDimension("column", model_setup.col_amount)
-            f.createDimension("row", model_setup.row_amount)
-        # Go through all of the items in the original ERA5 data, and create
-        # variables in the new netCDF file.
-        for key, value in era5_grid.items():
-            if start_index == 0:
-                if key == "long":
-                    var = f.createVariable(
-                        "cell_longitude",
-                        np.dtype("float64").char,
-                        ("column", "row"),
-                    )
-                    var.long_name = "Longitude of grid cell"
-                    var[start_index:end_index] = value
-                elif key == "lat":
-                    var = f.createVariable(
-                        "cell_latitude",
-                        np.dtype("float64").char,
-                        ("column", "row"),
-                    )
-                    var.long_name = "Latitude of grid cell"
-                    var[start_index:end_index] = value
-                elif key != "time":
-                    var = f.createVariable(
-                        key,
-                        np.dtype("float64").char,
-                        ("time", "column", "row"),
-                    )
-                    var.long_name = key
-                    var[start_index:end_index] = value
-            else:
-                if key in ["long", "lat", "time"]:
-                    continue
-                var = f.variables[key]
-                var[start_index:end_index] = value
-
-
-def process_year_interpolated(model_setup, year, index, lat_array, lon_array):
-    """
-    Process a single year of ERA5 data, returning the interpolated grid in MONARCHS format.
-    """
-    #     TODO - docstring
-    start_index = year * CHUNKSIZE * 24 / index
-    timesteps_per_day = 24 / index
-
-    era5_vars = ERA5_to_variables(
-        model_setup.met_input_filepath,
-        timesteps_per_day,
-        model_setup.num_days,
-        start_index=start_index,
-        chunk_size=CHUNKSIZE,
-    )
-
-    # If we have specified some bounds in our configuration script, subset the
-    # input data here.
-    if has_user_defined_bounds(model_setup):
-        era5_vars = grid_subset(
-            era5_vars,
-            model_setup.latmax,
-            model_setup.latmin,
-            model_setup.longmax,
-            model_setup.longmin,
-        )
-
-    era5_grid = interpolate_grid(
-        era5_vars, model_setup.row_amount, model_setup.col_amount
-    )
-    # If we are using a DEM to define our lat/long bounds, get these from the DEM now
-    if getattr(model_setup, "lat_bounds", "").lower() == "dem":
-        era5_grid = get_met_bounds_from_DEM(
-            model_setup,
-            era5_grid,
-            lat_array,
-            lon_array,
-            diagnostic_plots=model_setup.met_dem_diagnostic_plots,
-        )
-    # Optionally scale our data by a forcing factor for testing purposes.
-    scale_by_factor(model_setup, era5_grid)
-    return era5_grid
-
-
 def prescribed_met_data(model_setup):
     """
     Create a netCDF file using the prescribed met data defined in ``model_setup``
     rather than ERA5.
+
+    Full-grid prescribed data are written directly on the MONARCHS model grid:
+    - time-varying variables use dimensions (time, row, column)
+    - optional cell_latitude / cell_longitude use dimensions (row, column)
     """
-    func_name = "monarchs.core.initial_conditions.setup_prescribed_data"
-    met_data = model_setup.met_data
+    func_name = "prescribed_met_data"
+    met_data = dict(model_setup.met_data)
 
     def ensure_key(key, fallback_key=None, default_shape=None, fill_value=0):
-        """Helper function - if a key doesn't exist, look for a fallback, else initialise to a
-        default value."""
-        if key not in met_data:
-            met_data[key] = met_data.get(fallback_key) or np.full(
-                default_shape, fill_value
-            )
+        """
+        If ``key`` is missing, copy ``fallback_key`` if present;
+        otherwise create a default array.
+        """
+        if key in met_data:
+            return
+        if fallback_key is not None and fallback_key in met_data:
+            met_data[key] = met_data[fallback_key]
+        else:
+            met_data[key] = np.full(default_shape, fill_value)
 
-    # Try loading in keys, including fallbacks for common alternatives. If they don't exist,
-    # set default values.
-    ensure_key(
-        "lat", "latitude", (model_setup.row_amount, model_setup.col_amount)
-    )
-    ensure_key(
-        "long", "longitude", (model_setup.row_amount, model_setup.col_amount)
-    )
+    # if we have coords great, else ignore
+    if "lat" not in met_data and "latitude" in met_data:
+        met_data["lat"] = met_data["latitude"]
+    if "long" not in met_data and "longitude" in met_data:
+        met_data["long"] = met_data["longitude"]
+
+    # check snow density exists
     ensure_key(
         "snow_dens",
         default_shape=(
+            model_setup.num_days * model_setup.t_steps_per_day,
             model_setup.row_amount,
             model_setup.col_amount,
-            model_setup.num_days * model_setup.t_steps_per_day,
         ),
         fill_value=300,
     )
 
-    # Open a new dataset and create dimensions and variables.
     with Dataset(model_setup.met_output_filepath, "w") as f:
         f.createGroup("variables")
         f.createDimension(
             "time", model_setup.num_days * model_setup.t_steps_per_day
         )
-        f.createDimension("column", model_setup.col_amount)
         f.createDimension("row", model_setup.row_amount)
+        f.createDimension("column", model_setup.col_amount)
 
         for key, value in met_data.items():
-            # lat and long are functions of column and row only, not time
+            if key == "time":
+                continue
+
             if key == "long":
                 var = f.createVariable(
-                    "cell_longitude", "f8", ("column", "row")
+                    "cell_longitude", "f8", ("row", "column")
                 )
                 var.long_name = "Longitude of grid cell"
                 var[:] = value
+
             elif key == "lat":
                 var = f.createVariable(
-                    "cell_latitude", "f8", ("column", "row")
+                    "cell_latitude", "f8", ("row", "column")
                 )
                 var.long_name = "Latitude of grid cell"
                 var[:] = value
-            # time is only a dimension, not a variable. everything else is a function of it, so
-            # include it in the dims
-            elif key != "time":
-                var = f.createVariable(key, "f8", ("time", "column", "row"))
+
+            else:
+                var = f.createVariable(key, "f8", ("time", "row", "column"))
                 var.long_name = key
                 var[:] = value
 
     print(
-        f"{func_name}: Saved meteorological data to {model_setup.met_output_filepath}"
+        f"{MODULE_NAME}.{func_name}: Saved meteorological data to "
+        f"{model_setup.met_output_filepath}"
     )
-
 
 def scale_by_factor(model_setup, era5_grid):
     """
     Scale the shortwave and longwave radiation by a factor for testing purposes.
     """
-    func_name = "monarchs.core.initial_conditions.scale_by_factor"
+    func_name = "scale_by_factor"
     if hasattr(model_setup, "radiation_forcing_factor"):
         if model_setup.radiation_forcing_factor not in [False, 1]:
             era5_grid["SW_surf"] *= model_setup.radiation_forcing_factor
             era5_grid["LW_surf"] *= model_setup.radiation_forcing_factor
-            print(f"{func_name}: ")
+            print(f"{MODULE_NAME}.{func_name}: ")
             print(
                 "Scaling SW_surf and LW_surf by a factor of"
                 f" {model_setup.radiation_forcing_factor} for testing"
@@ -485,6 +438,20 @@ def has_user_defined_bounds(model_setup):
 def repeat_to_make_hourly(era5_grid, index):
     """If our timestep is e.g. 3-hourly, repeat each timestep index times to get to hourly data.
     to be used in MONARCHS"""
-    for var in era5_grid:
-        if var not in ["lat", "long"]:
+    TIME_VARYING_KEYS = {
+        "time",
+        "wind",
+        "temperature",
+        "dew_point_temperature",
+        "pressure",
+        "snowfall",
+        "SW_surf",
+        "LW_surf",
+        "snow_albedo",
+        "snow_dens",
+    }
+
+    for var in TIME_VARYING_KEYS:
+        if var in era5_grid:
             era5_grid[var] = np.repeat(era5_grid[var], index, axis=0)
+

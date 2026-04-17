@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from scipy.interpolate import RegularGridInterpolator
 from monarchs.met_data.index_map import apply_index_map, build_coarse_index_map
 
+MODULE_NAME = "monarchs.met_data.import_ERA5"
 def ERA5_to_variables(
     era5_input, met_timestep, total_days, start_index=0, chunk_size=365
 ):
@@ -29,7 +30,7 @@ def ERA5_to_variables(
         Dictionary of gridded output, with variable names and formatting
         suitable for loading into MONARCHS.
     """
-
+    routine_name = "ERA5_to_variables"
     var_dict = {}
     # Determine indices for start and end of the year.
     # We write only in one-yearly segments.
@@ -41,31 +42,31 @@ def ERA5_to_variables(
 
     start_index = int(start_index)
     end_index = int(end_index)
-    with netCDF4.Dataset(era5_input) as era5_data:
-        errflag = False
+    era5_data =  netCDF4.Dataset(era5_input)
+    errflag = False
+    try:
+        if len(era5_data.variables["time"]) < end_index:
+            errflag = True
+    except KeyError:
         try:
-            if len(era5_data.variables["time"]) < end_index:
+            if len(era5_data.variables["valid_time"]) < end_index:
                 errflag = True
         except KeyError:
-            try:
-                if len(era5_data.variables["valid_time"]) < end_index:
-                    errflag = True
-            except KeyError:
-                raise ValueError(
-                    "monarchs.met_data.import_ERA5.ERA5_to_variables: No time"
-                    " variable found in the input netCDF file. Please check your"
-                    " input data."
-                )
-        finally:
-            if errflag:
-                raise ValueError(
-                    "monarchs.met_data.import_ERA5.ERA5_to_variables: End index"
-                    f" {end_index} is greater than the length of the data"
-                    f" available ({len(era5_data.variables['time'])} timesteps) in"
-                    " the input netCDF file. Please check your input data is"
-                    " large enough, or adjust your chosen number of days to"
-                    " compensate."
-                )
+            raise ValueError(
+                f"{MODULE_NAME}.{routine_name}: No time"
+                " variable found in the input netCDF file. Please check your"
+                " input data."
+            )
+    finally:
+        if errflag:
+            raise ValueError(
+                f"{MODULE_NAME}.{routine_name}: End index"
+                f" {end_index} is greater than the length of the data"
+                f" available ({len(era5_data.variables['time'])} timesteps) in"
+                " the input netCDF file. Please check your input data is"
+                " large enough, or adjust your chosen number of days to"
+                " compensate."
+            )
 
     var_dict["long"] = era5_data.variables["longitude"][:]
     var_dict["lat"] = era5_data.variables["latitude"][:]
@@ -78,7 +79,7 @@ def ERA5_to_variables(
             ]
         except KeyError:
             raise KeyError(
-                "Time variable 'time' or 'valid_time' not found in the input"
+                f"{MODULE_NAME}.{routine_name}: Time variable 'time' or 'valid_time' not found in the input"
                 " ERA5 netCDF. Check your input data,or amend"
                 " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
                 " key that is in your data."
@@ -107,7 +108,7 @@ def ERA5_to_variables(
             )
         except KeyError:
             raise KeyError(
-                "Pressure variable 'sp' or 'msl' not found in the input ERA5"
+                f"{MODULE_NAME}.{routine_name}: Pressure variable 'sp' or 'msl' not found in the input ERA5"
                 " netCDF. Check your input data,or amend"
                 " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
                 " key that is in your data."
@@ -129,7 +130,7 @@ def ERA5_to_variables(
             )
         except KeyError:
             raise KeyError(
-                'Downwelling shortwave radiation variable "ssrd" or "ssrdc"'
+                f"{MODULE_NAME}.{routine_name}: Downwelling shortwave radiation variable `ssrd` or `ssrdc`"
                 " not found in the input ERA5 netCDF. Check your input data,"
                 " or amend <monarchs.met_data.import_ERA5.ERA5_to_variables>"
                 " to use the key that is in your data."
@@ -140,7 +141,7 @@ def ERA5_to_variables(
         )
     except KeyError:
         try:
-            print(
+            print(f"{MODULE_NAME}.{routine_name}: "
                 "Reading in clear-sky rather than all-sky radiation data since"
                 " strd was not in the input netCDF"
             )
@@ -148,8 +149,8 @@ def ERA5_to_variables(
                 era5_data.variables["strdc"][start_index:end_index] / 3600
             )
         except KeyError:
-            raise KeyError(
-                'Downwelling longwave radiation variable "strd" or "strdc" not'
+            raise KeyError(f"{MODULE_NAME}.{routine_name}: "
+                "Downwelling longwave radiation variable `strd` or `strdc` not"
                 " found in the input ERA5 netCDF. Check your input data, or"
                 " amend <monarchs.met_data.import_ERA5.ERA5_to_variables> to"
                 " use the key that is in your data."
@@ -256,7 +257,8 @@ def interpolate_grid(var_dict, num_rows, num_cols):
 
     """
     var_dict = dict(var_dict)
-    print("monarchs.met_data.interpolate_grid: Interpolating ERA5 data")
+    routine_name = "interpolate_grid"
+    print(f"{MODULE_NAME}.{routine_name}: Interpolating ERA5 data")
     new_lat = np.nan
     new_long = np.nan
     for key in var_dict.keys():
@@ -304,7 +306,8 @@ def generate_met_dem_diagnostic_plots(
     import cartopy.crs as ccrs
     import cartopy
 
-    print("monarchs.met_data.import_ERA5: Generating diagnostic plots")
+    routine_name = "generate_met_dem_diagnostic_plots"
+    print(f"{MODULE_NAME}.{routine_name}: Generating diagnostic plots")
     latmax = ilats.max()
     latmin = ilats.min()
     lonmax = ilons.max()
@@ -371,8 +374,8 @@ def get_met_bounds_from_DEM(
     model_setup, era5_grid, lat_array, lon_array, diagnostic_plots=False
 ):
     from monarchs.dem_utils.load_dem import export_DEM
-    from monarchs.core.utils import find_nearest
 
+    routine_name = "get_met_bounds_from_DEM"
     bounds = [
         "bbox_top_right",
         "bbox_bottom_left",
@@ -394,7 +397,7 @@ def get_met_bounds_from_DEM(
         num_points=model_setup.row_amount,
         input_crs=model_setup.input_crs,
     )
-    print("Loading in lat/long bounds from DEM")
+    print(f"{MODULE_NAME}.{routine_name}: Loading in lat/long bounds from DEM")
 
     # Build 2-D index maps using vectorised nearest-neighbour (same result as
     # the previous find_nearest loop, but in one place with index_map module)

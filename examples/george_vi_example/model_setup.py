@@ -80,7 +80,7 @@ DEM/initial firn profile
             from running physics on these cells.
 
 """
-data_dir = "../.."
+data_dir = "../../data"
 DEM_path = f"{data_dir}/DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
 
 # firn_depth - by default overridden by the presence of a valid DEM
@@ -162,7 +162,7 @@ Meteorological parameters and input
 # TODO - write full list of variable names that can be read into MONARCHS
 
 # met_input_filepath = "data/ERA5_new_dem_fixed.nc"
-met_input_filepath = f"{data_dir}/data/ERA5_small.nc"
+met_input_filepath = f"{data_dir}/ERA5_small.nc"
 
 met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
@@ -258,7 +258,7 @@ use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a 
 # this switch and use_numba both True.
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = 16  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+cores = 10  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 

@@ -24,12 +24,11 @@ import warnings
 import numpy as np
 import pathos
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
-from monarchs.core import configuration, initial_conditions, setup_met_data
+from monarchs.core import configuration, initial_conditions
 from monarchs.core.load_model_setup import get_model_setup
 from monarchs.core.dump_model_state import dump_state, reload_from_dump
 from monarchs.core.model_grid import get_spec as get_iceshelf_spec
 from monarchs.core.model_output import setup_output, update_model_output
-from monarchs.core.debug import neighbourhood_check
 from monarchs.core.utils import (
     get_2d_grid,
     get_num_cores,
@@ -39,6 +38,8 @@ from monarchs.core.error_handling import (
     check_grid_correctness,
     check_for_single_column_errors,
 )
+from monarchs.met_data import setup_met_data
+
 from monarchs.met_data.met_data_grid import initialise_met_data, get_spec
 from monarchs.physics import lateral_movement
 from monarchs.met_data.index_map import apply_index_map_expand
@@ -186,15 +187,7 @@ def update_met_conditions(
 ):
     """
     Load meteorological data for one day from the met netCDF and optionally
-    expand from coarse to fine grid using index maps.
-
-    Supports two file formats:
-    - Coarse + index maps: variables have shape (time, coarse_lat, coarse_lon);
-      lat_idx and lon_idx are loaded from the file and used to expand to
-      (time, row, col). cell_latitude/cell_longitude or fine_lat/fine_lon
-      provide the fine-grid coordinates.
-    - Legacy full-grid: variables have shape (time, row, col); no expansion.
-      cell_latitude and cell_longitude must be present.
+    expand from coarse (ERA5) to fine (MONARCHS) grid using index maps if present.
 
     Parameters
     ----------
@@ -266,12 +259,17 @@ def update_met_conditions(
                         (model_setup.row_amount, model_setup.col_amount),
                     ).copy()
         else:
-            # Legacy full-grid: variables are already (time, row, col)
+            # full-grid: variables are already (time, row, col)
             def _read(var):
                 return met_data.variables[var][met_start_idx:met_end_idx].data
 
-            cell_lat = met_data.variables["cell_latitude"][:].data
-            cell_lon = met_data.variables["cell_longitude"][:].data
+            if "cell_latitude" in met_data.variables and "cell_longitude" in met_data.variables:
+                cell_lat = met_data.variables["cell_latitude"][:].data
+                cell_lon = met_data.variables["cell_longitude"][:].data
+            # dummy values if no lat/long specified
+            else:
+                cell_lat = np.full((model_setup.row_amount, model_setup.col_amount), np.nan)
+                cell_lon = np.full((model_setup.row_amount, model_setup.col_amount), np.nan)
 
         met_data_dtype = get_spec()
         met_data_grid = initialise_met_data(
@@ -397,11 +395,13 @@ def print_model_end_of_timestep_messages(
     else:
         print("Original mass = ", total_mass_start)
     print(f"Time at end of day {day + 1} is {toc - tic:0.4f} seconds")
-    print("Firn depth = ", get_2d_grid(grid, "firn_depth"))
-    print("Lake depth = ", get_2d_grid(grid, "lake_depth"))
-    print("Lid depth = ", get_2d_grid(grid, "lid_depth"))
+    print("Firn depth = ", get_2d_grid(grid, "firn_depth"), mask_invalid=True)
+    print("Lake depth = ", get_2d_grid(grid, "lake_depth"), mask_invalid=True)
+    print("Lid depth = ", get_2d_grid(grid, "lid_depth"), mask_invalid=True)
     print("Number of lakes = ", np.sum(get_2d_grid(grid, "lake")))
     print("Number of lids = ", np.sum(get_2d_grid(grid, "lid")))
+    print('Max lake depth = ', np.max(get_2d_grid(grid, "lake_depth")))
+    print('Max lid depth = ', np.max(get_2d_grid(grid, "lid_depth")))
     # ensure that output is flushed to the console immediately rather than
     # being buffered.
     # Mostly a fix for output not updating when running with Slurm.
