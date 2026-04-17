@@ -1,49 +1,52 @@
+""" """
+
+# TODO - module-level docstring
 import numpy as np
+from monarchs.physics.constants import (
+    emissivity,
+    sfc_absorbed_frac,
+    bare_ice_albedo,
+    saturated_firn_albedo,
+    wet_snow_albedo,
+    dry_snow_albedo,
+)
 
 
 def sfc_flux(
-    melt,
-    exposed_water,
+    alpha,
     lid,
     lake,
-    lake_depth,
-    LW_in,
-    SW_in,
-    T_air,
+    lw_in,
+    sw_in,
+    air_temp,
     p_air,
-    T_dp,
+    dew_point_temperature,
     wind,
     xsurf,
 ):
     """
-    Calculate the surface heat flux from the input shortwave and longwave fluxes
-    and latent/sensible heat fluxes.
+    Calculate the surface heat flux from the input shortwave and longwave
+    fluxes and latent/sensible heat fluxes.
 
     Parameters
     ----------
-    melt : bool
-        Flag which indicates whether melting has occurred.
-        Used here to determine surface albedo.
-    exposed_water : bool
-        Flag which describes whether there is exposed water at the surface.
-        Used here to determine surface albedo.
+    alpha: float
+        Surface albedo.
     lid : bool
         Flag which indicates whether there is a lid at the surface due to
-        refreezing. Used here to determine surface albedo.
+        refreezing. Used here to determine which form of bulk fluxes to use.
     lake : bool
         Flag which indicates whether there is a lake present. Used here to
-        determine surface albedo.
-    lake_depth : float
-        Depth of the lake (in vertical points?)
-    LW_in : float
+        determine which form of bulk fluxes to use.
+    lw_in : float
         Incoming longwave radiation. [W m^-2].
-    SW_in : float
+    sw_in : float
         Incoming shortwave (solar) radiation. [W m^-2].
-    T_air : float
+    air_temp : float
         Surface-layer air temperature. [K].
     p_air : float
         Surface-layer air pressure. [hPa].
-    T_dp : float
+    dew_point_temperature : float
         Dew-point temperature at the surface. [K]
     wind : float
         Wind speed. [m s^-1].
@@ -56,19 +59,39 @@ def sfc_flux(
         Surface energy flux. [W m^-2].
 
     """
-    alpha = sfc_albedo(melt, exposed_water, lid, lake, lake_depth)
-    Flat, Fsens = bulk_fluxes(wind, T_air, xsurf, p_air, T_dp)
-    epsilon = 0.98
-    Q = epsilon * LW_in + (1 - alpha) * SW_in + Flat + Fsens
+
+    # positive going into ice shelf
+    Flat, Fsens = bulk_fluxes(
+        wind, air_temp, xsurf, p_air, dew_point_temperature, lake, lid
+    )
+    epsilon = emissivity  # emissivity
+
+    if lid:
+        frac_scaling = sfc_absorbed_frac  # fraction of solar absorbed at lid surface
+    elif lake:
+        frac_scaling = sfc_absorbed_frac  # fraction of solar absorbed at lake surface
+    else:
+        frac_scaling = 1  # firn surface - all radiation absorbed at surface
+    Q = epsilon * lw_in + ((1 - alpha) * sw_in * frac_scaling) + Flat + Fsens
+
     return Q
 
 
-def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
+def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_lid):
     """
     Determine the effective surface albedo depending on the situation at the
     top of the ice shelf (i.e. is there exposed water, firn or snow etc.)
 
-    TODO - snow albedo, add later
+    TODO - two-band albedo scheme. We split SW radiative transfer into
+    a "skin" absorption (SWIR/NIR) and that which penetrates (visible).
+    Currently though, we use a single-value reflectance, which is
+    somewhere between the SWIR and visible values. A better
+    approach would be to split this.
+
+    TODO - We also want to better consider how the albedo changes.
+    Right now, we have a bunch of switches. This is mostly fine, but
+    there is more likely to be a smooth transition between reflectances
+    over time than hard swaps like this.
 
     Parameters
     ----------
@@ -93,39 +116,56 @@ def sfc_albedo(melt, exposed_water, lid, lake, lake_depth):
     if melt:
         if exposed_water:
             if lid:
-                alpha = 0.413
+                # JE - if we have a "full" lid (white ice), then the albedo
+                # is actually higher?
+                # https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JC014161
+                # this implies (Fig. 1) that it should be ~0.6
+                alpha = bare_ice_albedo  # bare dry ice lid albedo
             elif lake:
                 h = lake_depth
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
                     -539 + 20000 * np.exp(3.6 * h)
-                )
+                )  # lake albedo
+                # if virtual_lid:
+                #     # TODO - more sophisticated treatment of virtual lid albedo?
+                #     alpha = max(alpha, 0.2) # minimum albedo for virtual lid
             else:
-                alpha = 0.6
+                alpha = saturated_firn_albedo  # saturated firn albedo (0.6 default)
         else:
-            alpha = 0.6
+            alpha = wet_snow_albedo  # wet snow albedo (0.6 default)
     else:
-        alpha = 0.867
+        alpha = dry_snow_albedo  # dry snow albedo (0.867 default)
+    # TODO - an idea for a future change - snow-covered lids, as snow increases albedo
+    # TODO - = further freezing. This is *basically* implemented but not default behaviour.
+    # if snow_on_lid == 1:
+    #     alpha = dry_snow_albedo  # snow albedo
+    # elif snow_on_lid == 2:
+    #     if == 2, then lid has undergone melt with snow on top so update albedo
+    #     alpha = wet_snow_albedo # wet snow albedo
+
     return alpha
 
 
-def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
+def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid):
     """
     Calculate the latent and sensible heat fluxes given the wind speed and
     surface meteorology.
 
     Parameters
     ----------
+
     wind : float
         Wind speed. [m s^-1].
-    T_air : float
+    air_temp : float
         Surface-layer air temperature. [K].
     T_sfc : float
         Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
     p_air : float
         Surface air pressure. [hPa]
-    T_dp : float
+    dew_point_temperature : float
         2m dewpoint temperature. [K]
-
+    lid
+    lake
     Returns
     -------
     Flat : float
@@ -133,35 +173,61 @@ def bulk_fluxes(wind, T_air, T_sfc, p_air, T_dp):
     Fsens : float
          Sensible heat flux.   [W m^-2].
 
-    Documentation on how the saturation vapour pressure is calculated can be found in Section 12 of
-    https://www.ecmwf.int/sites/default/files/elibrary/2021/20198-ifs-documentation-cy47r3-part-vi-physical-processes.pdf
+    Documentation on how the saturation vapour pressure is calculated can be
+    found in Section 12 of
+    https://www.ecmwf.int/sites/default/files/elibrary/2021/20198-ifs-
+    documentation-cy47r3-part-vi-physical-processes.pdf
 
     =======
     """
+    # Gravity
     g = 9.8
     b = 20
+    # Height windspeed is measured at
     dz = 10
     CT0 = 1.3 * 10**-3
     c = 1961 * b * CT0
+    # J kg−1 K−1 From section 12 of documentation in docstring
     R_dry = 287.0597
-    R_sat = 461.525
-    a1 = 611.21
+    # J kg−1 K−1
+    R_sat = 461.5250
+    # Pa
+    # K
     T_0 = 273.16
-    a3 = 17.502
-    a4 = 32.19
-    e_sat = a1 * np.exp(a3 * (T_dp - T_0) / (T_dp - a4))
-    s_hum = R_dry / R_sat * e_sat / (p_air - e_sat * (1 - R_dry / R_sat))
+    # This and a4 set to over water values as dewpoint temp being
+    # used (following ERA-5 documentation)
+    # Choose coefficients depending on surface
+    if lake and not lid:  # i.e. over water
+        a1, a3, a4 = 611.21, 17.502, 32.19
+        L = 2.501e6
+        p_v = 2.53e11 * np.exp(-5420 / T_sfc)
+
+    else:  # over ice/snow
+        a1 = 611.21
+        a3, a4 = 22.587, -0.7
+        L = 2.834e6
+        # saturation vapor pressure over ice
+        p_v = a1 * np.exp(22.587 * (T_sfc - T_0) / (T_sfc + 0.7))
+
+    e_sat = a1 * np.exp(
+        a3 * (dew_point_temperature - T_0) / (dew_point_temperature - a4)
+    )
+    p_air *= 100  # convert hPa to Pa for consistency
+    # Calculate the saturation vapour pressure at the dewpoint temperature
+    # (i.e. the vapour pressure at the real temp)
+    # this is in kg/kg
+    s_hum = (R_dry / R_sat) * e_sat / (p_air - (e_sat * (1 - (R_dry / R_sat))))
+    # Richardson number
     if wind == 0:
         Ri = 0
     else:
-        Ri = g * (T_air - T_sfc) * dz / (T_air * wind**2)
+        Ri = g * (air_temp - T_sfc) * dz / (air_temp * wind**2)
     if Ri < 0:
         CT = CT0 * (1 - 2 * b * Ri / (1 + c * abs(Ri) ** 0.5))
     else:
         CT = CT0 * (1 + b * Ri) ** -2
-    L = 2.501 * 10**6
-    p_v = 2.53 * 10**8 * np.exp(-5420 / T_sfc)
     q_0 = 0.622 * p_v / (p_air - 0.378 * p_v)
-    Fsens = 1.275 * 1005 * CT * wind * (T_air - T_sfc)
-    Flat = 1.275 * L * CT * wind * (s_hum / 1000 - q_0)
+    Fsens = 1.275 * 1004 * CT * wind * (air_temp - T_sfc)
+    #  q_0 is in kg/kg, s_hum is in kg/kg also.
+    Flat = 1.275 * L * CT * wind * (s_hum - q_0)
     return Flat, Fsens

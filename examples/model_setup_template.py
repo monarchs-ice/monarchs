@@ -1,15 +1,11 @@
 # TODO - check TODOs in docstrings, move docstrings to documentation file but don't include in final runscript
-"""
-Run script for MONARCHS.
-All parameters that have default values will use these defaults if they are not specified in the runscript.
-The template includes all MONARCHS parameters explicitly.
-Since this is a Python script, you can specify parameters e.g. as numpy arrays.
-"""
+"""Run script for MONARCHS. All parameters that have default values will use
+these defaults if they are not specified in the runscript. The template
+includes all MONARCHS parameters explicitly. Since this is a Python script,
+you can specify parameters e.g. as numpy arrays."""
 
-import os
 import numpy as np
 
-print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 
@@ -21,15 +17,18 @@ Spatial parameters
         Number of columns (i.e. `x`-points) in your model grid, looking from top-down.
         MONARCHS indexes the model grid via `grid[row][col]`, i.e. the `y`-coordinate is the first index.
     
-    lat_grid_size : float, or str
-        Size of each grid cell in m. This is used to determine how much water can flow during the lateral
-        flow calculations. If set to a number, then the cells are assumed square. If set to `'dem'`, then the `x` and
-        `y` dimensions are calculated separately - in which case the cells are not necessarily assumed to be square.
-        This value is stored in the IceShelf class as `cell.grid_size_dx` and `cell.grid_size_dy`
-"""
+    lat_grid_size : float, or str Size of each grid cell in m. This is used 
+    to determine how much water can flow during the lateral flow 
+    calculations. If set to a number, then the cells are assumed square. If 
+    set to `'dem'`, then the `x` and `y` dimensions are calculated separately 
+    - in which case the cells are not necessarily assumed to be square. This 
+    value is stored in the IceShelf class as `cell.grid_size_dx` and 
+    `cell.grid_size_dy`"""
 col_amount = 50  # Number of columns in your model grid, looking from top-down.
 row_amount = 50  # Number of rows in your model grid, looking from top-down.
-lat_grid_size = "dem"  # size of each lateral grid cell in m - can either be a number or 'dem' to calculate
+lat_grid_size = (  # size of each lateral grid cell in m - can either be a number or 'dem' to calculate
+    "dem"
+)
 # x and y grid sizes from the DEM itself.
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
@@ -49,7 +48,9 @@ bbox_top_right = [
 bbox_bottom_left = [
     (-66.289, -64.68)
 ]  # bounding box bottom left coordinates, [(lat, long)]
-bbox_top_left = [(-66.04, -63.42)]  # bounding box top left coordinates, [(lat, long)]
+bbox_top_left = [
+    (-66.04, -63.42)
+]  # bounding box top left coordinates, [(lat, long)]
 bbox_bottom_right = [
     (-66.778, -64.099)
 ]  # bounding box bottom right coordinates, [(lat, long)]
@@ -57,9 +58,13 @@ bbox_bottom_right = [
 """
 Timestepping parameters
 """
-num_days = 1000  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = (
+    1000  # number of days to run the model for (assuming t_steps = 24 below)
+)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
+lateral_timestep = (
+    3600 * t_steps_per_day
+)  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -143,7 +148,9 @@ Model initial conditions (density/temperature profiles)
     rho_sfc: float
         Initial surface density used to calculate the profile if using `rho_init` = 'default'.
 """
-rho_init = "default"  # Initial density, use 'default' to use empirical formula for initial density profile
+rho_init = (  # Initial density, use 'default' to use empirical formula for initial density profile
+    "default"
+)
 T_init = "default"  # Initial temperature profile.
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 
@@ -154,7 +161,6 @@ Meteorological parameters and input
          At the moment, only ERA5 format (in netCDF) is supported. 
          If this is a relative filepath, then you should ensure that is relative to the folder in which
          you are running MONARCHS from, not the source code directory.
-         # TODO - write full list of variable names that can be read into MONARCHS
 
     met_start_index : int
         If specified, start reading the data from <met_input> at this index. Useful if you e.g. have a met data file
@@ -181,6 +187,7 @@ Meteorological parameters and input
         This file can be large if running for large domains and timescales. Therefore,this setting is useful 
         for those who e.g. want to save this file into scratch space rather than locally.
 """
+# TODO - write full list of variable names that can be read into MONARCHS
 
 # met_input_filepath = "data/ERA5_new_dem_fixed.nc"
 met_input_filepath = "data/ERA5_small.nc"
@@ -203,13 +210,11 @@ Model output
         Note that this is separate from dumping, where only a snapshot of the current iteration is saved. It is not 
         possible to restart MONARCHS from the output defined here. See the documentation on dumping and reload
         parameters for information on how to enable restarting MONARCHS.
-        # TODO - hyperlink to documentation on dumping
 
     vars_to_save : tuple, str
         Default ('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth', 'lake', 'lid', 'v_lid').
         Tuple containing the names of the variables that we wish to save during the evolution of MONARCHS over time.
         See <iceshelf_class> for details on the full list of variables that <vars_to_save> accepts.
-        # TODO - flag so that if var in vars to save not in iceshelf_class, flag this and either exit or write a warning
 
     output_filepath : str
         Path to the file that you want to save output into, including file extension. 
@@ -220,6 +225,9 @@ Model output
         actual model calculations, in which case the results are interpolated to this grid size. Useful to reduce the 
         size of output files, which can be large.
 """
+# TODO - hyperlink to documentation on dumping
+# TODO - flag so that if var in vars to save not in iceshelf_class, flag this and either exit or write a warning
+
 save_output = True
 vars_to_save = (
     "firn_temperature",
@@ -233,7 +241,9 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
 )
-output_filepath = "../MONARCHS_runs/sample_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = (  # Filename for model output, including file extension (.nc for netCDF).
+    "../MONARCHS_runs/sample_output.nc"
+)
 output_grid_size = 200  # Size of interpolated output
 output_timestep = 1
 """
@@ -245,7 +255,6 @@ Dumping and reloading parameters
         If this is True, then you also need to specify <reload_filename>. Note that dumping the model state is separate
         to setting model output - this only dumps a snapshot of the model in its current state, needed to restart the 
         model. If you desire output over time, see the section on model output.
-        # TODO - hyperlink to model output doc 
     dump_filepath : str
         File path to dump the current model state into at the end of each timestep, 
         for use if <dump_data> or <reload_from_dump> are True. 
@@ -253,12 +262,18 @@ Dumping and reloading parameters
         Flag to determine whether we want to reload from a dump (see <dump_data> for details). If True, reload model
         state from file at the path determined by <reload_filepath>.
 """
+# TODO - hyperlink to model output doc
+
 dump_data = True
-dump_filepath = (
-    "../MONARCHS_runs/progress_df.nc"  # Filename of our previously dumped state
+dump_filepath = (  # Filename of our previously dumped state
+    "../MONARCHS_runs/progress_df.nc"
 )
-reload_from_dump = False  # Flag to determine whether to reload the state or not
-dump_format = "NETCDF4"  # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
+reload_from_dump = (
+    False  # Flag to determine whether to reload the state or not
+)
+dump_format = (  # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
+    "NETCDF4"
+)
 dump_timestep = 1
 """
 Computing and numerical parameters
@@ -279,9 +294,7 @@ All of these default to True.
 """
 snowfall_toggle = True
 firn_column_toggle = True
-firn_heat_toggle = (
-    True  # if firn_column_toggle is False, this just triggers during lake formation
-)
+firn_heat_toggle = True  # if firn_column_toggle is False, this just triggers during lake formation
 lake_development_toggle = True  # also triggers lake formation
 lid_development_toggle = True  # also triggers lid formation
 lateral_movement_toggle = True
@@ -290,10 +303,14 @@ densification_toggle = False
 percolation_toggle = True  # only works if firn_column_toggle also True
 perc_time_toggle = True  # Determines if percolation occurs over timescales,
 # or all water can percolate until it can no longer move
-catchment_outflow = False  # Determines if water on the edge of the catchment area will
+catchment_outflow = (
+    False  # Determines if water on the edge of the catchment area will
+)
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
-flow_into_land = False  # Determines if water will flow into land cells at local minima
+flow_into_land = (
+    False  # Determines if water will flow into land cells at local minima
+)
 """
 Other flags for doing tests - e.g. adding water from outside catchment area
 """
@@ -301,7 +318,9 @@ simulated_water_toggle = False  # 0.001  # False if off, otherwise float
 if simulated_water_toggle:
     print("model_setup: Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = False  # True for testing low resolution heat equation runs
+heateqn_res_toggle = (
+    False  # True for testing low resolution heat equation runs
+)
 
 met_dem_diagnostic_plots = False
 radiation_forcing_factor = 1

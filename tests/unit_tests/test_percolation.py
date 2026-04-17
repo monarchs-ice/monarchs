@@ -1,0 +1,19 @@
+from monarchs.physics import percolation
+import numpy as np
+import pytest
+
+
+def test_perc_time():
+    # define cell parameters
+    v_lev = 0
+    cell = {}
+    cell["Sfrac"] = np.array([0.5])
+    cell["Lfrac"] = np.array([0.1])
+    rho_ice = 917
+    rho_water = 1000
+    cell["firn_depth"] = 35
+    cell["vert_grid"] = 500
+    test_1 = percolation.perc_time(cell, v_lev)
+    cell["vert_grid"] = 1000
+    test_2 = percolation.perc_time(cell, v_lev)
+    assert test_2 == 0.5 * test_1  # more layers, shorter time per layer

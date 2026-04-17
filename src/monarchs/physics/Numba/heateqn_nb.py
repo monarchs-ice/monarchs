@@ -2,78 +2,78 @@
 Functions used to solve the heat equation using NumbaMinpack's hybrd function.
 This gives significant performance boosts over scipy's fsolve(hybrd = True).
 
-For the version of heateqn used with Scipy's optimize.fsolve, see /physics/heateqn.
+For the version of heateqn used with Scipy's optimize.fsolve, see
+/physics/heateqn.
 
-These are kept separate as there is significantly more complexity required to get the
-inputs in the correct format for this version, and the requirement to not return anything
-(whereas scipy.optimize.fsolve requires a return value)
+These are kept separate as there is significantly more complexity required to
+get the inputs in the correct format for this version, and the requirement to
+not return anything (whereas scipy.optimize.fsolve requires a return value)
+
 """
 
-
+# TODO - docstrings, possibility of using numba.overload
 import numpy as np
 from numba import cfunc, njit
 from NumbaMinpack import minpack_sig
 from monarchs.physics.Numba import extract_args
-from monarchs.physics import surface_fluxes
+from monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics.constants import (
+    cp_air,
+    cp_water,
+    k_air,
+    k_water,
+    emissivity,
+    rho_ice,
+    rho_water,
+    rho_air,
+    stefan_boltzmann,
+    tau_ice,
+    sfc_absorbed_frac,
+)
 
 
 @njit
 def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
     # precompute some values
-    rho = sfrac * 917 + lfrac * 1000
+
+    air_frac = 1.0 - sfrac - lfrac
     k_ice = np.zeros(np.shape(T), dtype=np.float64)
     k_ice[T < 273.15] = 1000 * (
-        2.24e-03
-        + 5.975e-06
-        * (
-            (273.15 - T[T < 273.15])
-            ** 1.156
-        )
+        2.24e-03 + 5.975e-06 * ((273.15 - T[T < 273.15]) ** 1.156)
     )
     k_ice[T >= 273.15] = 2.24
-    k = (
-        sfrac * k_ice
-        + (1 - sfrac - lfrac) * k_air
-        + lfrac * k_water
-    )
+    k = sfrac * k_ice + (1 - sfrac - lfrac) * k_air + lfrac * k_water
     cp_ice = 7.16 * T + 138
-    cp = (
-        sfrac * cp_ice
-        + (1 - sfrac - lfrac) * cp_air
-        + lfrac * cp_water
-    )
-    kappa = k / (cp * rho)
-    return k, kappa
+    cv_ice = sfrac * rho_ice * cp_ice
+    cv_water = lfrac * rho_water * cp_water
+    cv_air = air_frac * rho_air * cp_air
 
+    C_vol = cv_ice + cv_water + cv_air
+
+    # Avoid divide by zero if C_vol is somehow 0
+    # Diffusivity [m^2 s^-1]
+    kappa = k / C_vol
+    return k, kappa
 
 
 @njit
 def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     T_old = cell["firn_temperature"][N:]
-    Sfrac = cell['Sfrac'][N:]
-    Lfrac = cell['Lfrac'][N:]
-    cp_air = cell['cp_air']
-    cp_water = cell['cp_water']
-    k_air = cell['k_air']
-    k_water = cell['k_water']
+    Sfrac = cell["Sfrac"][N:]
+    Lfrac = cell["Lfrac"][N:]
     k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
-    total_len = np.shape(cell['firn_temperature'])[0]  # Total number of layers in the firn column
-    n = total_len - N  # Number of layers below the nonlinear region
+    # total number of layers in the firn column
+    total_len = np.shape(cell["firn_temperature"])[0]
+    # number of layers below the nonlinear region
+    n = total_len - N
 
     # Initialize diagonals and RHS
-    A = np.zeros(n - 1, dtype=np.float64)  # Sub-diagonal (lower)
-    B = np.zeros(n, dtype=np.float64)  # Main diagonal
-    C = np.zeros(n - 1, dtype=np.float64)  # Super-diagonal (upper)
+    A = np.zeros(n - 1, dtype=np.float64)  # sub-diagonal (lower)
+    B = np.zeros(n, dtype=np.float64)  # main diagonal
+    C = np.zeros(n - 1, dtype=np.float64)  # super-diagonal (upper)
     D = np.zeros(n, dtype=np.float64)  # RHS vector
 
     factor = np.float64(dt / dz**2)
-
-    # First row: connect to top nonlinear region
-    i = 0
-    alpha = factor * kappa[i]
-    B[i] = 1 + 2 * alpha
-    C[i] = -alpha
-    D[i] = T_old[i] + alpha * T_bc_top
 
     # Interior rows
     # First row: connect to top nonlinear region
@@ -91,15 +91,15 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
         C[i] = -alpha
         D[i] = T_old[i]
 
-    # Last row: Neumann BC using backward difference
+    # zero-flux (neumann) boundary condition
     i = n - 1
     alpha = factor * kappa[i]
     A[i - 1] = -alpha
     B[i] = 1 + alpha
     D[i] = T_old[i]
-    T_new = solve_tridiagonal(A, B, C, D)  
-    #print(T_new)  
+    T_new = solve_tridiagonal(A, B, C, D)
     return T_new
+
 
 @njit
 def solve_tridiagonal(a, b, c, d):
@@ -125,6 +125,7 @@ def solve_tridiagonal(a, b, c, d):
         x[i] = (dc[i] - cc[i] * x[i + 1]) / bc[i]
 
     return x
+
 
 def heateqn(x, output, args):
     """
@@ -155,51 +156,45 @@ def heateqn(x, output, args):
 
     """
 
-
     # separate "args" into the relevant variables
     (
-        T,
-        Sfrac,
-        Lfrac,
-        k_air,
-        k_water,
-        cp_air,
-        cp_water,
+        N,
+        firn_depth,
         dt,
         dz,
         melt,
+        albedo,
         exposed_water,
         lid,
+        lid_depth,
+        virtual_lid,
+        virtual_lid_depth,
         lake,
         lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
-        p_air,
-        T_dp,
-        wind,
-    ) = extract_args.extract_args_firn(args)
-    
-    N = np.int32(args[0])
-    
-    epsilon = 0.98
-    sigma = 5.670374e-8
+        snow_on_lid,
+    ) = extract_args.extract_scalars(args)
 
-    Q = surface_fluxes.sfc_flux(
-        melt,
-        exposed_water,
+    lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind = (
+        extract_args.extract_met_data(args)
+    )
+
+    T, Sfrac, Lfrac = extract_args.extract_firn_arrays(args)
+
+    epsilon = emissivity
+    sigma = stefan_boltzmann
+
+    Q = sfc_flux(
+        albedo,
         lid,
         lake,
-        lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         x[0],
     )
-
 
     k, kappa = get_k_and_kappa(T, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
     # Surface temperature equation (residual)
@@ -210,29 +205,28 @@ def heateqn(x, output, args):
         output[idx] = (
             T[idx]
             - x[idx]
-            + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+            + dt * (kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2
         )
-        
-    output[N-1] = (
-        T[N - 1]
-        - x[N - 1]
-        + dt * (kappa[N - 1] / dz**2) * (-x[N - 1] + x[N - 2])
+    # neumann boundary condition at the bottom
+    output[N - 1] = (
+        T[N - 1] - x[N - 1] + dt * (kappa[N - 1]) * (-x[N - 1] + x[N - 2]) / dz**2
     )
-    
-    # print(f"Residual for T_sfc = {x}: {residual}")
 
 
 def heateqn_lid(x, output, args):
     """
-    Heat equation solver function for a frozen lid. To be passed into NumbaMinpack's hybrd solver.
+    Heat equation solver function for a frozen lid. To be passed into
+    NumbaMinpack's hybrd solver.
 
     Parameters
     ----------
-    x : array_like, float64, dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
+    x : array_like, float64,
+          dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
         Starting estimate for the roots of the PDE we are trying to solve.
         This is by default cell.firn_temperature.
 
-    output : array_like, float64, dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
+    output : array_like, float64,
+          dimension(core.iceshelf_class.IceShelf.vert_grid_lid)
         Output array, i.e. the values of x such that F(x) = 0.
         This array is handled automatically by the solver, so does not need
         to be initialised and explicitly entered as an argument.
@@ -241,72 +235,89 @@ def heateqn_lid(x, output, args):
         Vector describing arguments to the system of equations being solved.
         This comprises many of the attributes of an IceShelf instance, and
         some physical variables such as specific humidity, wind etc.
-        See extract_args_lid for more details.
+        See extract_args for more details.
 
     Returns
     -------
     None (output is handled by the solver)
 
     """
-    vert_grid_lid = np.int32(args[0])
 
     # separate "args" into the relevant variables
     (
-        lid_temperature,
-        Sfrac_lid,
-        k_lid,
-        cp_air,
-        cp_water,
+        vert_grid,
+        firn_depth,
         dt,
         dz,
         melt,
+        albedo,
         exposed_water,
         lid,
+        lid_depth,
+        virtual_lid,
+        virtual_lid_depth,
         lake,
         lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
-        p_air,
-        T_dp,
-        wind,
-    ) = extract_args.extract_args_lid(args)
+        snow_on_lid,
+    ) = extract_args.extract_scalars(args)
+    lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind = (
+        extract_args.extract_met_data(args)
+    )
+    lid_temperature, Sfrac_lid, k_lid, vert_grid_lid, v_lid_depth, v_lid_temp = (
+        extract_args.extract_lid_variables(args)
+    )
 
-    # print('here')
-    # k_ice = (1000 * 2.24 * 0.001 + 5.975 * 0.000001 * (273.15 - cell.lid_temperature) ** 1.156)
-    # k = cell.Sfrac_lid * k_ice + (1 - cell.Sfrac_lid - cell.Lfrac_lid) * cell.k_air + cell.Lfrac_lid * cell.k_water
+    k_lid = 1000 * (2.24e-03 + 5.975e-06 * ((273.15 - lid_temperature) ** 1.156))
+
     cp_ice = 1000 * (0.00716 * lid_temperature + 0.138)
-    cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cp_air
+    cp = cp_ice
     rho = 917
-    kappa = k_lid / (cp * rho)  # thermal diffusivity [m^2 s^-1]
-    epsilon = 0.98
-    sigma = 5.670374 * (10**-8)
-    Q = surface_fluxes.sfc_flux(
-        melt,
-        exposed_water,
+    # thermal diffusivity [m^2 s^-1]
+    kappa = k_lid / (cp * rho)
+    epsilon = emissivity
+    sigma = stefan_boltzmann
+
+    Q = sfc_flux(
+        albedo,
         lid,
         lake,
-        lake_depth,
-        LW_in,
-        SW_in,
-        T_air,
+        lw_in,
+        sw_in,
+        air_temp,
         p_air,
-        T_dp,
+        dew_point_temperature,
         wind,
         x[0],
     )
-    output[0] = k_lid * (x[0] - x[1]) / dz - (Q - epsilon * sigma * x[0] ** 4)
+    output[0] = k_lid[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
+    # SW radiation baked into surface flux already
+
+    # fraction of the remaining radiation absorbed at surface layer - baked
+    # into surface flux Q.
 
     for idx in np.arange(1, vert_grid_lid - 1):
+        z_depth = idx * dz
+        flux_in = (
+            sw_in * (1 - albedo) * (1 - sfc_absorbed_frac) * np.exp(-tau_ice * z_depth)
+        )
+        flux_out = (
+            sw_in
+            * (1 - albedo)
+            * (1 - sfc_absorbed_frac)
+            * np.exp(-tau_ice * (z_depth + dz))
+        )
+        sw_absorbed_in_layer = flux_in - flux_out
+        # convert source to temperature change contribution: S / (rho * cp)
+        # units: [W/m2] / ([kg/m3] * [J/kg/K] * m) = [J/s/m2] / [J/m2/K] = K/s
+        dT_solar = sw_absorbed_in_layer / (rho * cp[idx] * dz)
         output[idx] = (
             lid_temperature[idx]
             - x[idx]
-            + dt * (kappa[idx] / dz**2) * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
+            + dt * ((kappa[idx]) * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2)
+            + dt * dT_solar
         )
-
-    output[-1] = x[vert_grid_lid - 1] - 273.15  # fix boundary temperature to 273.15
+    output[-1] = x[vert_grid_lid - 1] - 273.15
 
 
 heateqn = cfunc(minpack_sig)(heateqn)
 heateqn_lid = cfunc(minpack_sig)(heateqn_lid)
-

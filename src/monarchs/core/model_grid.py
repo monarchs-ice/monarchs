@@ -5,7 +5,13 @@ Define the model grid datatype. This is a Numpy structured array.
 import numpy as np
 
 
+# This function handles loading in *all* the variables to the model grid,
+# so the pylint warnings are not too relevant here. Splitting this would
+# likely make it harder rather than easier to follow.
+# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-positional-arguments
 def initialise_iceshelf(
+    model_setup,  # Unused, but can be used for future extensions
     num_rows,
     num_cols,
     vert_grid,
@@ -17,8 +23,8 @@ def initialise_iceshelf(
     firn_depth,
     rho,
     firn_temperature,
-    Sfrac=np.array([np.nan]),
-    Lfrac=np.array([np.nan]),
+    sfrac=np.array([np.nan]),
+    lfrac=np.array([np.nan]),
     meltflag=np.array([np.nan]),
     saturation=np.array([np.nan]),
     lake_depth=0,
@@ -60,100 +66,150 @@ def initialise_iceshelf(
     iceshelf : np.ndarray
         A NumPy structured array initialized with the provided parameters.
     """
+
     iceshelf = np.zeros((num_rows, num_cols), dtype=dtype)
-    iceshelf["column"] = x
-    iceshelf["row"] = y
-    iceshelf["firn_depth"] = firn_depth
-    iceshelf["vert_grid"] = vert_grid
-    iceshelf["vertical_profile"] = np.moveaxis(
-        np.linspace(0, firn_depth, vert_grid), 0, -1
-    )
-    iceshelf["vert_grid_lake"] = vert_grid_lake
-    iceshelf["vert_grid_lid"] = vert_grid_lid
-    iceshelf["rho"] = rho
-    iceshelf["rho_lid"] = 917.0 * np.ones((num_rows, num_cols, vert_grid_lid))
-    iceshelf["firn_temperature"] = firn_temperature
-    if np.isnan(Sfrac).all():
-        iceshelf["Sfrac"] = np.ones((num_rows, num_cols, vert_grid)) * rho / 917
-    else:
-        iceshelf["Sfrac"][:] = Sfrac
-    if np.isnan(Lfrac).all():
-        iceshelf["Lfrac"] = np.zeros((num_rows, num_cols, vert_grid))
-    else:
-        iceshelf["Lfrac"][:] = Lfrac
-    if np.isnan(meltflag).all():
-        iceshelf["meltflag"] = np.zeros((num_rows, num_cols, vert_grid))
-    else:
-        iceshelf["meltflag"][:] = meltflag
-    if np.isnan(saturation).all():
-        iceshelf["saturation"] = np.zeros((num_rows, num_cols, vert_grid))
-    else:
-        iceshelf["saturation"][:] = saturation
-    if np.isnan(lake_temperature).any():
-        iceshelf["lake_temperature"] = 273.15 * np.ones(
-            (num_rows, num_cols, vert_grid_lake)
-        )
-    else:
-        iceshelf["lake_temperature"][:] = lake_temperature
-    if np.isnan(lid_temperature).any():
-        iceshelf["lid_temperature"] = 273.15 * np.ones(
-            (num_rows, num_cols, vert_grid_lid)
-        )
-    else:
-        iceshelf["lid_temperature"][:] = lid_temperature
-    if isinstance(lake_depth, np.ndarray) and len(lake_depth) > 1:
-        iceshelf["lake_depth"] = lake_depth
-    else:
-        iceshelf["lake_depth"][:] = lake_depth
-    if isinstance(lid_depth, np.ndarray) and len(lid_depth) > 1:
-        iceshelf["lid_depth"] = lid_depth
-    else:
-        iceshelf["lid_depth"][:] = lid_depth
-    iceshelf["water_level"][:] = water_level
-    if np.isnan(water).any():
-        iceshelf["water"][:] = np.zeros((num_rows, num_cols, vert_grid))
-    else:
-        iceshelf["water"][:] = water
-    iceshelf["melt_hours"][:] = melt_hours
-    iceshelf["exposed_water_refreeze_counter"][:] = exposed_water_refreeze_counter
-    iceshelf["lid_sfc_melt"][:] = lid_sfc_melt
-    iceshelf["melt"][:] = melt
-    iceshelf["exposed_water"][:] = exposed_water
-    iceshelf["lake"][:] = lake
-    iceshelf["v_lid"][:] = v_lid
-    iceshelf["virtual_lid_temperature"][:] = virtual_lid_temperature
-    iceshelf["lid"][:] = lid
-    iceshelf["ice_lens"][:] = ice_lens
-    iceshelf["ice_lens_depth"][:] = ice_lens_depth
-    iceshelf["has_had_lid"][:] = has_had_lid
-    iceshelf["lid_melt_count"][:] = lid_melt_count
-    iceshelf["total_melt"][:] = total_melt
-    iceshelf["rho_ice"][:] = 917
-    iceshelf["rho_water"][:] = 1000
-    iceshelf["L_ice"][:] = 334000
-    iceshelf["pore_closure"][:] = 830
-    iceshelf["k_air"][:] = 0.022
-    iceshelf["cp_air"][:] = 1004
-    iceshelf["k_water"][:] = 0.5818
-    iceshelf["cp_water"][:] = 4217
-    iceshelf["t_step"][:] = 0
-    iceshelf["day"][:] = 0
-    iceshelf["snow_added"][:] = 0
-    iceshelf["reset_combine"][:] = False
-    iceshelf["valid_cell"][:] = valid_cells
-    iceshelf["lat"][:] = lat
-    iceshelf["lon"][:] = lon
-    iceshelf["numba"][:] = numba
-    iceshelf["size_dx"][:] = size_dx
-    iceshelf["size_dy"][:] = size_dy
-    iceshelf["water_direction"] = np.zeros((num_rows, num_cols, 8))  # 8 possible directions
+
+    def validate_inputs(value, default_value, z):
+        """Check for NaNs and assign default values with correct shape."""
+        shape = (num_rows, num_cols, z)
+
+        # if value is not an array or contains NaNs, use default_value
+        if not isinstance(value, np.ndarray) or np.isnan(value).any():
+            # if default_value is a scalar, broadcast it
+            if np.isscalar(default_value):
+                return np.full(shape, default_value)
+            # if default_value is an array, ensure it matches
+            # the expected shape
+            if isinstance(default_value, np.ndarray):
+                if default_value.shape == shape:
+                    return default_value
+
+                return np.broadcast_to(default_value, shape)
+        return value
+
+    # want a nested dict here with the values to check with
+    # their default values and their name
+    values_to_check = {
+        "sfrac": (sfrac, rho / 917, vert_grid),
+        "lfrac": (lfrac, 0, vert_grid),
+        "meltflag": (meltflag, 0, vert_grid),
+        "saturation": (saturation, 0, vert_grid),
+        "water": (water, 0, vert_grid),
+        "lake_temperature": (lake_temperature, 273.15, vert_grid_lake),
+        "lid_temperature": (lid_temperature, 273.15, vert_grid_lid),
+    }
+    validated_values = {}
+    for key, default in values_to_check.items():
+        validated_values[key] = validate_inputs(*default)
+
+    # Set up dictionaries with the various groups of variables that are used
+    # in the model.
+    # We could throw everything into a big bucket here, but splitting them
+    # into types can be useful as a reference.
+    fixed_model_values = {
+        "lat": lat,
+        "lon": lon,
+        "size_dx": size_dx,
+        "size_dy": size_dy,
+        "row": y,
+        "column": x,
+        "vert_grid": vert_grid,
+        "vert_grid_lake": vert_grid_lake,
+        "vert_grid_lid": vert_grid_lid,
+    }
+
+    model_vectors = {
+        "firn_temperature": firn_temperature,
+        "rho": rho,
+        "Sfrac": validated_values["sfrac"],
+        "Lfrac": validated_values["lfrac"],
+        "meltflag": validated_values["meltflag"],
+        "saturation": validated_values["saturation"],
+        "lake_temperature": validated_values["lake_temperature"],
+        "lid_temperature": validated_values["lid_temperature"],
+        "water": validated_values["water"],
+        "vertical_profile": np.moveaxis(np.linspace(0, firn_depth, vert_grid), 0, -1),
+    }
+
+    model_scalars = {
+        "albedo": 0.0,
+        "ice_lens_depth": ice_lens_depth,
+        "lid_depth": lid_depth,
+        "lake_depth": lake_depth,
+        "firn_depth": firn_depth,
+        "water_level": water_level,
+        "virtual_lid_temperature": virtual_lid_temperature,
+        "t_step": 0,
+        "day": 0,
+        "visit_count": 0,
+        "lid_snow_depth": 0.0,
+    }
+    flags = {
+        "has_had_lid": has_had_lid,
+        "valid_cell": valid_cells,
+        "numba": numba,
+        "melt": melt,
+        "exposed_water": exposed_water,
+        "lake": lake,
+        "v_lid": v_lid,
+        "lid": lid,
+        "ice_lens": ice_lens,
+        "reset_combine": False,
+        "error_flag": False,
+        "snow_on_lid": 0,
+    }
+    counters = {
+        "lid_melt_count": lid_melt_count,
+        "melt_hours": melt_hours,
+        "exposed_water_refreeze_counter": exposed_water_refreeze_counter,
+        "lake_refreeze_counter": 0,
+    }
+
+    # for water direction - 8 possible directions
+    diagnostics = {
+        "water_direction": np.zeros((num_rows, num_cols, 8)),
+        "firn_boundary_change": 0,
+        "lake_boundary_change": 0,
+        "lid_boundary_change": 0,
+        "snow_added": 0,
+        "total_melt": total_melt,
+        "lid_sfc_melt": lid_sfc_melt,
+    }
+
+    hourly_diagnostics = {}  # Placeholder for future use
+    # Example structure:
+    # hourly_diagnostics = {
+    #     "example_diagnostic": np.zeros((num_rows, num_cols,
+    #     model_setup.t_steps_per_day)),
+    # }
+    # This would necessitate changing get_spec to load in
+    # model_setup.t_steps_per_day and setting up the dtype accordingly.
+    # (e.g. ("example_diagnostic", np.float64, model_setup.t_steps_per_day))
+
+    def add_keys_to_grid(input_dict):
+        """Add keys and values from a dictionary to the
+        iceshelf structured array."""
+        for key, value in input_dict.items():
+            iceshelf[key][:] = value
+
+    list_of_dicts = [
+        diagnostics,
+        flags,
+        counters,
+        fixed_model_values,
+        model_vectors,
+        model_scalars,
+    ]
+    for dict_item in list_of_dicts:
+        add_keys_to_grid(dict_item)
 
     return iceshelf
 
 
-def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
+def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
     """
-    Define the structured array dtype for the model grid, with explicit sizes for dimensions.
+    Define the structured array dtype for the model grid, with explicit sizes
+    for dimensions.
 
     Parameters
     ----------
@@ -187,6 +243,7 @@ def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
             ("firn_temperature", np.float64, vert_grid_size),
             ("Sfrac", np.float64, vert_grid_size),
             ("Lfrac", np.float64, vert_grid_size),
+            ("albedo", np.float64),
             ("meltflag", np.float64, vert_grid_size),
             ("saturation", np.float64, vert_grid_size),
             ("lake_temperature", np.float64, vert_grid_lake),
@@ -203,14 +260,7 @@ def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
             ("lid_depth", np.float64),
             ("ice_lens", np.bool_),
             ("ice_lens_depth", np.int32),
-            ("rho_ice", np.float64),
-            ("rho_water", np.float64),
-            ("L_ice", np.float64),
             ("pore_closure", np.float64),
-            ("k_air", np.float64),
-            ("cp_air", np.float64),
-            ("k_water", np.float64),
-            ("cp_water", np.float64),
             ("v_lid_depth", np.float64),
             ("has_had_lid", np.bool_),
             ("melt_hours", np.int32),
@@ -220,7 +270,6 @@ def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
             ("total_melt", np.float64),
             ("t_step", np.int32),
             ("day", np.int32),
-            ("log", "U256"),
             ("snow_added", np.float64),
             ("reset_combine", np.bool_),
             ("valid_cell", np.bool_),
@@ -230,6 +279,15 @@ def get_spec( vert_grid_size, vert_grid_lid, vert_grid_lake):
             ("size_dy", np.float64),
             ("numba", np.bool_),
             ("water_direction", np.int32, 8),
-        ]
+            ("firn_boundary_change", np.float64),
+            ("lake_boundary_change", np.float64),
+            ("lid_boundary_change", np.float64),
+            ("lake_refreeze_counter", np.int32),
+            ("error_flag", np.bool_),
+            ("visit_count", np.int32),
+            ("snow_on_lid", np.int32),
+            ("lid_snow_depth", np.float64),
+        ],
+        align=True,
     )
     return dtype

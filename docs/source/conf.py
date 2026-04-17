@@ -42,8 +42,8 @@ napoleon_google_docstring = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 # Add any paths that contain templates here, relative to this directory.
-autoapi_template_dir = (
-    "./source/_templates/autoapi"  # exclude_patterns = ['_build', '_templates']
+autoapi_template_dir = (  # exclude_patterns = ['_build', '_templates']
+    "./source/_templates/autoapi"
 )
 autoapi_python_class_content = "both"
 # -- Options for HTML output -------------------------------------------------

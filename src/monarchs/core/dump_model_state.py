@@ -1,21 +1,26 @@
 """
-Functions to handle dumping of model state, so that runs can be restarted upon failure.
-Separate from model_output, which just handles a user-defined subset of the outputs (i.e. ones that are useful
-scientifically, rather than everything needed to restart the model).
+Functions to handle dumping of model state, so that runs can be restarted
+upon failure.
+Separate from model_output, which just handles a user-defined subset of the
+outputs (i.e. ones that are useful scientifically, rather than everything
+ needed to restart the model).
 """
 
 import os
 import numpy as np
-from netCDF4 import Dataset
+from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from monarchs.core.utils import get_2d_grid
 
 
 def dump_state(fname, grid, met_start_idx, met_end_idx):
     """
-    MONARCHS can sometimes crash, or throw an error. This function allows for the model state to be
-    saved into a file (name determined by <model_setup.reload_file>). This allows for restarting
-    of the code from this saved state, which can be useful either to keep progress in the event of an error outside
-    of MONARCHS' control, or to debug the cause of an error (e.g. by switching Numba and parallelisation off).
+    MONARCHS can sometimes crash, or throw an error. This function allows for
+    the model state to be saved into a file (name determined by
+    <model_setup.reload_file>).
+    This allows for restarting of the code from this saved state, which can be
+    useful either to keep progress in the event of an error outside of
+    MONARCHS' control, or to debug the cause of an error
+    (e.g. by switching Numba and parallelisation off).
     Called by <main>, if the relevant flag is set in <model_setup.py>.
 
     Parameters
@@ -25,11 +30,12 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
     grid : numpy structured array
         Model grid containing our ice shelf.
     met_start_idx : int
-        Index used to determine where in our grid of meteorological data we want to start from if we were
-        to restart the model.
+        Index used to determine where in our grid of meteorological data we
+        want to start from if we were to restart the model.
     met_end_idx : int
-        As met_start_idx, but the ending index. These together create a slice across the current iteration,
-        so we can continue from where we left off. These will be updated then in <main>.
+        As met_start_idx, but the ending index. These together create a slice
+        across the current iteration,so we can continue from where we left
+        off. These will be updated then in <main>.
 
     Returns
     -------
@@ -87,7 +93,8 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
 
 def reload_from_dump(fname, dtype, keys="all"):
     """
-    Loads the netCDF file containing the model state into a NumPy structured array.
+    Loads the netCDF file containing the model state into a NumPy structured
+    array.
 
     Parameters
     ----------
@@ -96,7 +103,8 @@ def reload_from_dump(fname, dtype, keys="all"):
     dtype : np.dtype
         The dtype of the structured array to load the data into.
     keys : list or str, optional
-        List of keys to load from the netCDF file. If "all", all keys will be loaded.
+        List of keys to load from the netCDF file.
+        If "all", all keys will be loaded.
 
     Returns
     -------

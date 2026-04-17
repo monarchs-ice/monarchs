@@ -27,3 +27,10 @@ src/model_setup.py
 examples/*/output/
 *.ipynb
 *.zip
+examples/sarah_test_case/
+validation/resolution_benchmarking/
+output/
+validation/
+.DS_Store
+examples/.DS_Store
+

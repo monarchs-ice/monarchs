@@ -21,7 +21,7 @@ Then, navigate to the ``examples/1D_test_case`` folder in the MONARCHS repositor
 
     .. code-block:: python
 
-        if __name__ == '__main__':
+        if __name__ == "__main__":
             from monarchs.core.driver import monarchs
             monarchs()
 
@@ -126,7 +126,7 @@ You can see that the model setup script has a few additional parameters compared
 MONARCHS will set "sensible" default values for any parameters that are not specified in the model setup script, aside
 from those that the model will not be able to run without - i.e. an initial firn profile, and meteorological data.
 
-You will notice that the firn profile is determined by an imported Python function from ``monarchs.DEM.create_DEM_GaussianTestCase``.
+You will notice that the firn profile is determined by an imported Python function from ``monarchs.dem_utils.create_DEM_GaussianTestCase``.
 A neat feature of our model setup file being a Python script is that you can freely generate any input firn distribution
 you want using Python code, as long as it is passed in as a 2D ``numpy`` array.
 This can be useful for testing, but also for generating realistic initial conditions using

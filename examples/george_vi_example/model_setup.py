@@ -5,10 +5,7 @@ The template includes all MONARCHS parameters explicitly.
 Since this is a Python script, you can specify parameters e.g. as numpy arrays.
 """
 
-import os
-import numpy as np
 
-print(f"Loading runscript from {os.getcwd()}/model_setup.py")
 """
 Spatial parameters
 """
@@ -38,9 +35,13 @@ input_crs = 3031  # Coordinate reference system of the input data
 """
 Timestepping parameters
 """
-num_days = 365  # number of days to run the model for (assuming t_steps = 24 below)
+num_days = (
+    365  # number of days to run the model for (assuming t_steps = 24 below)
+)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
+lateral_timestep = (
+    3600 * t_steps_per_day
+)  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -79,7 +80,7 @@ DEM/initial firn profile
             from running physics on these cells.
 
 """
-data_dir = "../.."
+data_dir = "../../data"
 DEM_path = f"{data_dir}/DEM/38_12_32m_v2.0/38_12_32m_v2.0_dem.tif"
 
 # firn_depth - by default overridden by the presence of a valid DEM
@@ -119,7 +120,9 @@ Model initial conditions (density/temperature profiles)
     rho_sfc: float
         Initial surface density used to calculate the profile if using `rho_init` = 'default'.
 """
-rho_init = "default"  # Initial density, use 'default' to use empirical formula for initial density profile
+rho_init = (  # Initial density, use 'default' to use empirical formula for initial density profile
+    "default"
+)
 T_init = "default"  # Initial temperature profile.
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 
@@ -130,7 +133,6 @@ Meteorological parameters and input
          At the moment, only ERA5 format (in netCDF) is supported. 
          If this is a relative filepath, then you should ensure that is relative to the folder in which
          you are running MONARCHS from, not the source code directory.
-         # TODO - write full list of variable names that can be read into MONARCHS
 
     met_start_index : int
         If specified, start reading the data from <met_input> at this index. Useful if you e.g. have a met data file
@@ -157,9 +159,10 @@ Meteorological parameters and input
         This file can be large if running for large domains and timescales. Therefore,this setting is useful 
         for those who e.g. want to save this file into scratch space rather than locally.
 """
+# TODO - write full list of variable names that can be read into MONARCHS
 
 # met_input_filepath = "data/ERA5_new_dem_fixed.nc"
-met_input_filepath = f"{data_dir}/data/ERA5_small.nc"
+met_input_filepath = f"{data_dir}/ERA5_small.nc"
 
 met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
@@ -179,13 +182,11 @@ Model output
         Note that this is separate from dumping, where only a snapshot of the current iteration is saved. It is not 
         possible to restart MONARCHS from the output defined here. See the documentation on dumping and reload
         parameters for information on how to enable restarting MONARCHS.
-        # TODO - hyperlink to documentation on dumping
 
     vars_to_save : tuple, str
         Default ('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth', 'lake', 'lid', 'v_lid').
         Tuple containing the names of the variables that we wish to save during the evolution of MONARCHS over time.
         See <model_grid.py> for details on the full list of variables that <vars_to_save> accepts.
-        # TODO - flag so that if var in vars to save not in model_grid, flag this and either exit or write a warning
 
     output_filepath : str
         Path to the file that you want to save output into, including file extension. 
@@ -196,6 +197,9 @@ Model output
         actual model calculations, in which case the results are interpolated to this grid size. Useful to reduce the 
         size of output files, which can be large.
 """
+# TODO - hyperlink to documentation on dumping
+# TODO - flag so that if var in vars to save not in model_grid, flag this and either exit or write a warning
+
 save_output = True
 vars_to_save = (
     "firn_temperature",
@@ -209,9 +213,11 @@ vars_to_save = (
     "v_lid",
     "ice_lens_depth",
     "water_level",
-    "water_direction"
+    "water_direction",
 )
-output_filepath = "output/george_VI_output.nc"  # Filename for model output, including file extension (.nc for netCDF).
+output_filepath = (  # Filename for model output, including file extension (.nc for netCDF).
+    "output/george_VI_output.nc"
+)
 output_grid_size = 40  # Size of interpolated output
 output_timestep = 2
 """
@@ -223,7 +229,6 @@ Dumping and reloading parameters
         If this is True, then you also need to specify <reload_filename>. Note that dumping the model state is separate
         to setting model output - this only dumps a snapshot of the model in its current state, needed to restart the 
         model. If you desire output over time, see the section on model output.
-        # TODO - hyperlink to model output doc 
     dump_filepath : str
         File path to dump the current model state into at the end of each timestep, 
         for use if <dump_data> or <reload_from_dump> are True. 
@@ -231,9 +236,15 @@ Dumping and reloading parameters
         Flag to determine whether we want to reload from a dump (see <dump_data> for details). If True, reload model
         state from file at the path determined by <reload_filepath>.
 """
+# TODO - hyperlink to model output doc
+
 dump_data = True
-dump_filepath = "output/george_vi_dump.nc"  # Filename of our previously dumped state
-reload_from_dump = False  # Flag to determine whether to reload the state or not
+dump_filepath = (  # Filename of our previously dumped state
+    "output/george_vi_dump.nc"
+)
+reload_from_dump = (
+    False  # Flag to determine whether to reload the state or not
+)
 dump_format = "NETCDF4"
 
 """
@@ -247,7 +258,7 @@ use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a 
 # this switch and use_numba both True.
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
-cores = 16  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
+cores = 10  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 
@@ -255,9 +266,7 @@ All of these default to True.
 """
 snowfall_toggle = True
 firn_column_toggle = True
-firn_heat_toggle = (
-    True  # if firn_column_toggle is False, this just triggers during lake formation
-)
+firn_heat_toggle = True  # if firn_column_toggle is False, this just triggers during lake formation
 lake_development_toggle = True  # also triggers lake formation
 lid_development_toggle = True  # also triggers lid formation
 lateral_movement_toggle = True
@@ -266,10 +275,14 @@ densification_toggle = False
 percolation_toggle = True  # only works if firn_column_toggle also True
 perc_time_toggle = True  # Determines if percolation occurs over timescales,
 # or all water can percolate until it can no longer move
-catchment_outflow = True  # Determines if water on the edge of the catchment area will
+catchment_outflow = (
+    True  # Determines if water on the edge of the catchment area will
+)
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
-flow_into_land = True  # Determines if water will flow into land cells at local minima
+flow_into_land = (
+    True  # Determines if water will flow into land cells at local minima
+)
 dump_data_pre_lateral_movement = True
 """
 Other flags for doing tests - e.g. adding water from outside catchment area
@@ -278,7 +291,9 @@ simulated_water_toggle = False  # 0.001  # False if off, otherwise float
 if simulated_water_toggle:
     print("model_setup: Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = False  # True for testing low resolution heat equation runs
+heateqn_res_toggle = (
+    False  # True for testing low resolution heat equation runs
+)
 
 met_dem_diagnostic_plots = False
 dem_diagnostic_plots = False
@@ -289,25 +304,25 @@ if __name__ == "__main__":
 
     grid = monarchs()
 
-
     from matplotlib import pyplot as plt
 
     from monarchs.core.utils import get_2d_grid
+
     plt.figure()
     for i in range(len(grid)):
         for j in range(len(grid[0])):
-            if grid[i][j]['lid']:
-                grid[i][j]['water_level'] = 0
+            if grid[i][j]["lid"]:
+                grid[i][j]["water_level"] = 0
 
-    plt.imshow(get_2d_grid(grid, 'water_level'))
-    plt.title('water_level')
+    plt.imshow(get_2d_grid(grid, "water_level"))
+    plt.title("water_level")
     plt.figure()
-    plt.imshow(get_2d_grid(grid, 'lake_depth'))
-    plt.title('Lake depth')
+    plt.imshow(get_2d_grid(grid, "lake_depth"))
+    plt.title("Lake depth")
 
     import sys
 
-    sys.path.append('../../scripts')
+    sys.path.append("../../scripts")
     import flow_plot as fp
 
     flow_plot = fp.flow_plot
@@ -320,14 +335,12 @@ if __name__ == "__main__":
 
     def make_fd_plot(a, idx=0):
         fig, ax = plt.subplots()
-        ax.imshow(a.variables['water_level'][idx], vmax=100, animated=True)
+        ax.imshow(a.variables["water_level"][idx], vmax=100, animated=True)
         return fig, ax
-
 
     def make_both(a, idx=0):
         fig, ax = make_fd_plot(a, idx=idx)
         flow_plot(a, netcdf=True, index=idx, fig=fig, ax=ax)
-
 
     make_both(a, idx=30)
     a.close()

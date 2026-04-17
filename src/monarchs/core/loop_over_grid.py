@@ -3,12 +3,15 @@ Grid-looping module. This either runs sequentially, or runs through in parallel
 (effectively like a collapsed OpenMP parallel do loop).
 """
 
-import numpy as np
-from monarchs.physics.timestep import timestep_loop
 import time
+import numpy as np
 from dask import delayed, compute
+from monarchs.physics.timestep import timestep_loop
 
-def process_chunk(original_indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day):
+
+def process_chunk(
+    original_indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day
+):
     """
     Process a chunk of cells and return results with their original indices.
     """
@@ -37,25 +40,34 @@ def chunk_grid(flat_grid, met_data_grid, chunk_size):
     tuple
         (original_indices, chunk, met_data_chunk) for each chunk.
     """
-    valid_indices = np.where(flat_grid["valid_cell"] == True)[0]
+    valid_indices = np.where(flat_grid["valid_cell"])[0]
     valid_cells = flat_grid[valid_indices]
     valid_met_data = met_data_grid[valid_indices]
     for i in range(0, len(valid_cells), chunk_size):
-        yield valid_indices[i:i + chunk_size], valid_cells[i:i + chunk_size], valid_met_data[i:i + chunk_size]
+        yield (
+            valid_indices[i : i + chunk_size],
+            valid_cells[i : i + chunk_size],
+            valid_met_data[i : i + chunk_size],
+        )
 
+
+# Disable linting for no-else-return here. Given the way that this
+# function is structured, refactoring to avoid this makes it significantly
+# less clear. Readability may be improved with this pragma removed
+# if the function is split up.
+# pylint: disable=no-else-return,too-many-arguments
 def loop_over_grid(
-        row_amount,
-        col_amount,
-        grid,
-        dt,
-        met_data,
-        t_steps_per_day,
-        toggle_dict,
-        parallel=False,
-        use_mpi=False,
-        ncores="all",
-        dask_scheduler='processes',
-        client=None
+    row_amount,
+    col_amount,
+    grid,
+    dt,
+    met_data,
+    t_steps_per_day,
+    toggle_dict,
+    parallel=False,
+    ncores="all",
+    dask_scheduler="processes",
+    client=None,
 ):
     """
     This function wraps timestep_loop, allowing for it to be
@@ -69,20 +81,28 @@ def loop_over_grid(
         Number of columns in <grid>.
     grid : numpy structured array
         Model grid containing the ice shelf parameters.
+    dt : float
+        Timestep in seconds (usually 3600 * t_steps_per_day).
     met_data : numpy structured array
         Grid containing the met data associated with the model grid.
+    t_steps_per_day : int
+        Number of timesteps in a model iteration (usually 24)
+    toggle_dict : dict
+        Dictionary of toggles to turn model features on and off.
     parallel : bool, optional
         Flag to determine whether the model is to be run in parallel across
         multiple cores or not.
         Default False.
-    use_mpi : bool, optional
-        Flag to determine whether to use MPI for parallelisation.
-        Default False.
-    ncores : int or str
-        Number of cores to use if running in parallel. If 'all', all available cores will be used.
-    use_dask : bool, optional
-        Flag to determine whether to use Dask for parallelism.
-        Default False.
+    ncores : int or str, optional
+        Number of cores to use if running in parallel. If "all",
+        all available cores will be used.
+    dask_scheduler : str, optional
+        Dask scheduler to use. Options are "threads", "processes",
+        or "distributed".
+        Default "processes".
+    client : None, or dask.distributed.Client, optional
+        Dask client to use if using the "distributed" scheduler.
+        Default None.
 
     Returns
     -------
@@ -90,27 +110,40 @@ def loop_over_grid(
     """
     flat_grid = grid.flatten()
     met_data_grid = met_data
-    # met_data_grid = met_data.reshape(24, -1)  # use reshape as want to pass the 24 timesteps
-    # met_data_grid = np.moveaxis(met_data_grid, 0, -1)  # move the first axis to the last axis
     if parallel:
-        chunksize = max(1, len(flat_grid) // (ncores * 2))  # Dynamic chunk size for load balancing
+        print("Running timstep in parallel")
+        # Dynamic chunk size for load balancing
+        chunksize = max(1, len(flat_grid) // (ncores * 2))
 
         start_submit = time.time()
 
         # Use Dask for parallelism
-        if dask_scheduler != 'distributed':
+        if dask_scheduler != "distributed":
             tasks = [
-                delayed(process_chunk)(indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day)
-                for indices, chunk, met_data_chunk in chunk_grid(flat_grid, met_data_grid, chunksize)
+                delayed(process_chunk)(
+                    indices,
+                    chunk,
+                    met_data_chunk,
+                    dt,
+                    toggle_dict,
+                    t_steps_per_day,
+                )
+                for indices, chunk, met_data_chunk in chunk_grid(
+                    flat_grid, met_data_grid, chunksize
+                )
             ]
             end_submit = time.time()
             print(f"Submission time: {end_submit - start_submit:.2f}s")
             start_compute = time.time()
-            results = compute(*tasks, scheduler=dask_scheduler)  # Use "threads" for I/O-bound tasks
+            results = compute(
+                *tasks, scheduler=dask_scheduler
+            )  # Use "threads" for I/O-bound tasks
             end_compute = time.time()
             print(f"Execution time: {end_compute - start_compute:.2f}s")
-            print(f"Total time (submit + exec): {end_compute - start_submit:.2f}s")
-            results = [item for sublist in results for item in sublist]  # Flatten results
+            print("Total time (submit + exec):" f" {end_compute - start_submit:.2f}s")
+            results = [
+                item for sublist in results for item in sublist
+            ]  # Flatten results
             # Update the grid with results
             for idx, val in results:
                 flat_grid[idx] = val
@@ -121,11 +154,21 @@ def loop_over_grid(
         else:
             scattered_chunks = [
                 client.scatter((indices, chunk, met_data_chunk))
-                for indices, chunk, met_data_chunk in chunk_grid(flat_grid, met_data_grid, chunksize)
+                for indices, chunk, met_data_chunk in chunk_grid(
+                    flat_grid, met_data_grid, chunksize
+                )
             ]
 
         futures = [
-            client.submit(process_chunk, indices, chunk, met_data_chunk, dt, toggle_dict, t_steps_per_day)
+            client.submit(
+                process_chunk,
+                indices,
+                chunk,
+                met_data_chunk,
+                dt,
+                toggle_dict,
+                t_steps_per_day,
+            )
             for (indices, chunk, met_data_chunk) in scattered_chunks
         ]
 
@@ -140,13 +183,15 @@ def loop_over_grid(
         grid = flat_grid.reshape((row_amount, col_amount))
         return grid
 
-
-
     # Sequential version - with inplace modification
     else:
         for i in range(row_amount * col_amount):
             timestep_loop(
-                flat_grid[i], dt, met_data_grid[i], t_steps_per_day, toggle_dict
+                flat_grid[i],
+                dt,
+                met_data_grid[i],
+                t_steps_per_day,
+                toggle_dict,
             )
         grid[:] = flat_grid.reshape(grid.shape)
         return grid

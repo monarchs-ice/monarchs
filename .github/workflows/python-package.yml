@@ -10,6 +10,7 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+
 jobs:
   build:
 
@@ -17,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
@@ -30,30 +31,35 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
     - name: Install dependencies
+      env:
+        CMAKE_POLICY_VERSION_MINIMUM: "3.5"
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8 pytest
+        python -m pip install flake8 pytest black pylint
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python -m pip install -e .
+
+    - name: Check formatting with black
+      run: |
+        black src/monarchs --check || echo "::warning::Black formatting needed (see diff above)"
 
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 src/monarchs --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. 
+        flake8 src/monarchs --count --exit-zero --max-complexity=10 --max-line-length=80 --statistics
+
+    - name: Lint with pylint (warn only)
+      run: |
+        # Lint with pylint, but disable the C0103 (invalid-name) warning to allow non-conforming names
+        # as we have lots of mathematical symbols etc. in the codebase.
+        pylint src/monarchs --disable=C0103 || echo "::warning::Pylint reported issues"
+
     - name: Test with pytest
       run: |
-        cd tests/serial
-        pytest
+        cd tests/unit_tests
+        pytest . 
         cd ../numba
-        pytest
-#        cd ../parallel
-#        pytest
-#        cd ../output
-#        pytest
-#        cd ../dem_import
-#        pytest
-#        cd ../era5_import
-#        pytest
-        
+        pytest .
+

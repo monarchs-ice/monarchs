@@ -1,10 +1,29 @@
-import numpy as np
+"""
+Utilities module containing various helper functions or wrappers.
+"""
+
+import contextlib
 from functools import wraps
+import numpy as np
+import pathos
+from monarchs.physics.constants import rho_ice, rho_water, cp_water
+
+try:
+    from numba import prange, objmode
+except ImportError:
+    # fallback if numba is not installed
+    prange = range  # pylint: disable=invalid-name
+
+    @contextlib.contextmanager
+    def objmode(*args, **kwargs):
+        """Dummy context manager for objmode when numba is not installed."""
+        yield
 
 
 def do_not_jit(function):
     """
-    An empty function used to decorate functions that we do not wish to jit-compile.
+    An empty function used to decorate functions that we do not wish to
+    jit-compile.
     Parameters
     ----------
     function - function to be decorated
@@ -22,182 +41,16 @@ def do_not_jit(function):
     return wrapper
 
 
-
-def get_2d_grid(grid, attr, index=False):
-    """
-    Helper function to get a printout of a variable from the model grid, at a user-specified index.
-    objects.
-
-    Parameters
-    ----------
-    grid : List, or nb.typed.List
-        the model grid
-    attr : str
-        the attribute you want to print out, e.g:
-        get_2d_grid(grid, 'firn_depth') will print out the firn depth
-        for each point on the grid at index <index>
-    index : int, optional
-        the index (i.e. height) at which you want to print out.
-        Defaults to False, which the code interprets as the surface
-        (index 0).
-
-    Returns
-    -------
-    None. (but will print to stdout)
-
-    """
-    if not index:
-        index = 0
-    var = [None] * len(grid)
-    if not isinstance(grid, np.ndarray):
-        for row in range(len(grid)):
-            var[row] = [None] * len(grid[0])
-            for col in range(len(grid[0])):
-                var[row][col] = getattr(grid[row][col], attr)
-    else:
-        for row in range(len(grid)):
-            var[row] = [None] * len(grid[0])
-            for col in range(len(grid[0])):
-                var[row][col] = grid[attr][row][col]
-    if index == "all":
-        return np.array(var)
-    else:
-        try:
-            return np.array(var)[:, :, index]
-        except IndexError:
-            return np.array(var)[:, :]
-
-
-def find_nearest(a, a0):
-    """Obtain index of element in array `a` closest to the scalar value `a0`"""
-    idx = np.abs(a - a0).argmin()
-    return idx
-
-
-def calc_grid_mass(grid):
-    """
-    Calculate the total mass inside the grid, to check for mass conservation.
-    Only do this for valid cells, since invalid cells will have constant mass as no physics is run on them.
-
-    Parameters
-    ----------
-    grid : List, or numba.typed.List
-        the model grid
-    Returns
-    -------
-    total_mass : float
-        Total mass of the whole grid, in arbitrary units.
-    """
-    total_mass = 0
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            cell = grid[i][j]
-            if cell["valid_cell"]:
-                total_mass += calc_mass_sum(cell)
-    return total_mass
-
-
-def check_correct(cell):
-    """
-    Sanity checking to ensure model is still in a physically correct state. This ensures things such as the
-    solid and liquid fraction being below 1 and less than 0 within a grid cell, firn depth and lake depth being
-    non-negative, etc.
-
-    Parameters
-    ----------
-    cell : numpy structured array
-        Element of the model grid we want to check.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    ValueError
-        If any of the conditions are met, raise ValueError as the model has reached an unphysical state.
-        See the code body for details.
-    """
-    if cell["lake_depth"] < -1E-12:  # account for rounding errors
-        print(f"monarchs.core.utils.check_correct: ")
-        print("Lake depth = ", cell["lake_depth"])
-        raise ValueError("Lake depth must not be negative \n")
-    elif cell["lake_depth"] < 0:
-        cell["lake_depth"] = 0
-
-    if cell["firn_depth"] < 0:
-        print(
-            "Error: column = ",
-            cell["column"],
-            ", row = ",
-            cell["row"],
-            ", firn_depth = ",
-            cell["firn_depth"],
-            "\n",
-        )
-        raise ValueError(f"monarchs.core.utils.check_correct: All firn has melted.")
-    if np.any(cell["Sfrac"][cell["Sfrac"] < -0.01]) or np.any(
-        cell["Sfrac"][cell["Sfrac"] > 1.01]
-    ):
-        print(
-            f"""{np.max(cell['Sfrac'])} at level {np.where((cell['Sfrac'] > 1) | (cell['Sfrac'] < 0))}, x = {cell['column']}, y = {cell['row']}
-"""
-        )
-        print("Minimum Sfrac = ", np.min(cell["Sfrac"]))
-        raise ValueError(
-            f"""monarchs.core.utils.check_correct: Solid fraction must be between 0 and 1 
-"""
-        )
-    if np.any(cell["Lfrac"][cell["Lfrac"] < -0.01]) or np.any(
-        cell["Lfrac"][cell["Lfrac"] > 1.01]
-    ):
-        print(np.max(cell["Lfrac"]))
-        print(np.min(cell["Lfrac"]))
-        print(np.where(cell["Lfrac"] < -0.01))
-        print(cell["Lfrac"])
-        raise ValueError(
-            f"monarchs.core.utils.check_correct: Lfrac error - either above 1 or below 0"
-        )
-    total = cell["Lfrac"] + cell["Sfrac"]
-    if np.any(total > 1.01):
-        print(f"monarchs.core.utils.check_correct: ")
-        print(f"{np.max(total)} at level {np.where(total > 1)} \n")
-        print("Sfrac :", cell["Sfrac"][np.where(total > 1)])
-        print("Lfrac :", cell["Lfrac"][np.where(total > 1)])
-        print(
-            "Sfrac + Lfrac:",
-            cell["Lfrac"][np.where(total > 1)] + cell["Sfrac"][np.where(total > 1)],
-        )
-        raise ValueError(
-            f"""monarchs.core.utils.check_correct: Sum of liquid and solid fraction must be less than 1 
-"""
-        )
-def check_grid_correctness(grid):
-    """
-    Wraps check_correct for each cell in the grid. We do this in a separate function so that we can wrap it
-    with numba.njit and speed things up.
-
-    Parameters
-    ----------
-    grid
-
-    Returns
-    -------
-
-    """
-    from numba import prange
-
-    for i in prange(len(grid)):
-        for j in range(len(grid[0])):
-            check_correct(grid[i][j])
-
 def calc_mass_sum(cell):
     """
     Calculate the total mass in the grid cell in its current state.
-    This is the sum of the firn column mass, the mass in the frozen lake, and the mass in the lid or virtual lid.
-    This is in arbitrary units, since it is calculating the columnar mass independent of the lateral grid size, but is
-    useful for consistency checking, i.e. ensuring the model does not gain or lose mass outside the known mechanisms
-    (snowfall and losing water out of the catchment area laterally).
+    This is the sum of the firn column mass, the mass in the frozen lake, and
+    the mass in the lid or virtual lid.
+    This is in arbitrary units, since it is calculating the columnar mass
+    independent of the lateral grid size, but is useful for consistency
+    checking, i.e. ensuring the model does not gain or lose mass outside the
+    known mechanisms (snowfall and losing water out of the catchment area
+    laterally).
 
     Parameters
     ----------
@@ -210,17 +63,96 @@ def calc_mass_sum(cell):
         Amount of mass in the system, in arbitrary units.
     """
     total_mass = (
-        np.sum(
-            cell["Sfrac"] * cell["rho_ice"] * (cell["firn_depth"] / cell["vert_grid"])
-        )
-        + np.sum(
-            cell["Lfrac"] * cell["rho_water"] * (cell["firn_depth"] / cell["vert_grid"])
-        )
-        + cell["lake_depth"] * cell["rho_water"]
-        + cell["lid_depth"] * cell["rho_ice"]
-        + cell["v_lid_depth"] * cell["rho_ice"]
+        np.sum(cell["Sfrac"] * rho_ice * (cell["firn_depth"] / cell["vert_grid"]))
+        + np.sum(cell["Lfrac"] * rho_water * (cell["firn_depth"] / cell["vert_grid"]))
+        + cell["lake_depth"] * rho_water
+        + cell["lid_depth"] * rho_ice
+        + cell["v_lid_depth"] * rho_ice
     )
     return total_mass
+
+
+def get_2d_grid(grid, attr, index=False, mask_invalid=False):
+    """
+    Helper function to get a printout of a variable from the model grid,
+    at a user-specified index.
+
+    Parameters
+    ----------
+    grid : List, or nb.typed.List
+        the model grid
+    attr : str
+        the attribute you want to print out, e.g:
+        get_2d_grid(grid, "firn_depth") will print out the firn depth
+        for each point on the grid at index <index>
+    index : int, optional
+        the index (i.e. height) at which you want to print out.
+        Defaults to False, which the code interprets as the surface
+        (index 0).
+    mask_invalid : bool, optional
+        If True, mask out values where cell['valid_cell'] is False (set to np.nan).
+
+    Returns
+    -------
+    None. (but will print to stdout)
+
+    """
+
+    if index is False:
+        index = 0
+
+    out = []
+
+    if not isinstance(grid, np.ndarray):
+        for row in grid:
+            out_row = []
+            for cell in row:
+                value = getattr(cell, attr)
+
+                if mask_invalid and (not getattr(cell, "valid_cell")):
+                    if isinstance(value, np.ndarray):
+                        value = np.full(value.shape, np.nan, dtype=float)
+                    else:
+                        value = np.nan
+
+                out_row.append(value)
+            out.append(out_row)
+
+    else:
+        valid_mask = None
+        dtype_names = getattr(grid.dtype, "names", None)
+        if mask_invalid and dtype_names is not None and "valid_cell" in dtype_names:
+            valid_mask = grid["valid_cell"]
+
+        for row_idx, row in enumerate(grid):
+            out_row = []
+            for col_idx, _ in enumerate(row):
+                value = grid[attr][row_idx][col_idx]
+
+                if valid_mask is not None and (not valid_mask[row_idx][col_idx]):
+                    if isinstance(value, np.ndarray):
+                        value = np.full(value.shape, np.nan, dtype=float)
+                    else:
+                        value = np.nan
+
+                out_row.append(value)
+            out.append(out_row)
+
+    arr = np.array(out)
+
+    if index == "all":
+        return arr
+
+    try:
+        return arr[:, :, index]
+    except IndexError:
+        return arr[:, :]
+
+
+def find_nearest(a, a0):
+    """Obtain index of element in array `a` closest to the scalar value `a0`"""
+    idx = np.abs(a - a0).argmin()
+    return idx
 
 
 def add_random_water(grid, max_grid_row, max_grid_col):
@@ -279,28 +211,27 @@ def add_edge_water(grid, max_grid_row, max_grid_col):
 
 
 def check_energy_conservation(grid):
+    """ """
+    #     TODO - WIP.
     energy = 0
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            cell = grid[i][j]
+    for row in grid:
+        for cell in row:
             if cell["valid_cell"]:
                 cp_ice = 1000 * (7.16 * 10**-3 * cell["firn_temperature"] + 0.138)
                 cp = (
-                    cell["cp_water"] * cell["Lfrac"]
+                    cp_water * cell["Lfrac"]
                     + 1004 * (1 - cell["Sfrac"] - cell["Lfrac"])
                     + cp_ice * cell["Sfrac"]
                 )
-                cell["rho"] = (
-                    cell["Sfrac"] * cell["rho_ice"] + cell["Lfrac"] * cell["rho_water"]
-                )
+                cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
                 energy += cell["rho"] * cell["firn_temperature"] * cp
     print("Total energy = ", np.sum(energy))
 
 
 def spinup(cell, x, args):
     """
-    Attempt to force the model into a solvable state if the initial conditions are unsuitable.
-    TODO - This is a definite work in progress. Need to update this further.
+    Attempt to force the model into a solvable state if the initial conditions
+    are unsuitable.
 
     Parameters
     ----------
@@ -317,17 +248,50 @@ def spinup(cell, x, args):
     Raises
     ------
     ValueError
-        If solution does not converge, then rather than attempting to continue it raises an error. The user should
-        re-consider their initial conditions in this case.
+        If solution does not converge, then rather than attempting to continue
+        it raises an error. The user should re-consider their initial
+        conditions in this case.
     """
+    #     TODO - This is a work in progress. Need to update this further.
+    return cell, x, args
+
+
+def get_num_cores(model_setup):
+    """
+
+    Parameters
+    ----------
+    model_setup
+
+    Returns
+    -------
+
+    """
+    # TODO - docstring, possibly remove pathos dependency
+    if model_setup.cores in ["all", False] and model_setup.parallel:
+        if not model_setup.use_mpi:
+            cores = pathos.helpers.cpu_count()
+        else:
+            cores = pathos.helpers.cpu_count()
+        print(f"Using all cores - {pathos.helpers.cpu_count()} detected")
+    elif not model_setup.parallel:
+        cores = 1
+    else:
+        cores = model_setup.cores
+    return cores
+
 
 try:
     import psutil
     import functools
     import os
 except ImportError:
-    print('monarchs.core.utils: psutil module not found. Memory profiling will not be available. To suppress this warning, '
-          'install psutil with "python -m pip install psutil".')
+    print(
+        "monarchs.core.utils: psutil module not found. Memory profiling will"
+        " not be available. To suppress this warning, install psutil with"
+        " 'python -m pip install psutil'."
+    )
+
 
 def memory_tracker(label=""):
     """
@@ -348,5 +312,7 @@ def memory_tracker(label=""):
             print(f"[{label}] Memory after:  {mem_after:.2f} MB")
             print(f"[{label}] Memory delta:  {mem_after - mem_before:.2f} MB")
             return result
+
         return wrapper
+
     return decorator
