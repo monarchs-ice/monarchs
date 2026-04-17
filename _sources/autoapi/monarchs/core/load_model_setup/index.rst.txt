@@ -1,0 +1,56 @@
+monarchs.core.load_model_setup
+==============================
+
+.. py:module:: monarchs.core.load_model_setup
+
+.. autoapi-nested-parse::
+
+   Module containing the ModelSetup class, used to load in and hold the
+   configuration used by MONARCHS.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.core.load_model_setup.MODULE_NAME
+   monarchs.core.load_model_setup.SAFE_IMPORTS
+
+
+Classes
+-------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/load_model_setup/ModelSetup
+
+.. autoapisummary::
+
+   monarchs.core.load_model_setup.ModelSetup
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/load_model_setup/get_model_setup
+
+.. autoapisummary::
+
+   monarchs.core.load_model_setup.get_model_setup
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.core.load_model_setup'
+
+
+.. py:data:: SAFE_IMPORTS
+

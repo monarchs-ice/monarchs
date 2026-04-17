@@ -1,0 +1,49 @@
+monarchs.core.load_model_setup.ModelSetup
+=========================================
+
+.. py:class:: monarchs.core.load_model_setup.ModelSetup(script_path)
+
+   Class to load in the model setup from a user-specified Python script.
+
+
+   .. py:method:: check_file_exists()
+
+      Check to see whether the user-provided runscript works.
+
+
+
+   .. py:method:: check_for_key_variables()
+
+      Ensure that certain variables are defined within the model setup
+      script before we import it. The intent is to prevent the model from
+      progressing if variables that are required to run are not present,
+      and goes some way to preventing unexpected code from running.
+
+
+
+   .. py:method:: check_for_unexpected_imports()
+
+      We want to ensure that only certain imports are allowed in a model
+      setup script. This further prevents unexpected code from being run
+      when importing the script. This means that use of modules like
+      "os" and "sys" are not supported in runscripts by default.
+
+      If you are getting an error here due a module that you know is safe
+      to execute, then add it to SAFE_IMPORTS below.
+
+
+
+   .. py:method:: validate_model_setup()
+
+      Run the validation checks. If any of them fail, print out all the
+      errors found for each.
+
+
+
+   .. py:attribute:: errors
+      :value: []
+
+
+
+   .. py:attribute:: script_path
+

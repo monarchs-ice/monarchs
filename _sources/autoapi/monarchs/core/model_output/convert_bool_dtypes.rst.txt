@@ -1,0 +1,7 @@
+monarchs.core.model_output.convert_bool_dtypes
+==============================================
+
+.. py:function:: monarchs.core.model_output.convert_bool_dtypes(var)
+
+   Convert boolean dtypes to 'b' for NetCDF compatibility.
+

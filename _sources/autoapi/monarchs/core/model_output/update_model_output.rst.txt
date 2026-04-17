@@ -1,0 +1,19 @@
+monarchs.core.model_output.update_model_output
+==============================================
+
+.. py:function:: monarchs.core.model_output.update_model_output(fname, grid, iteration, vars_to_save=('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth'), hourly=False, t_step=0, vert_grid_size=False)
+
+   Update the NetCDF file with the current state of the model grid.
+
+   :Parameters: * **fname** (*str*) -- Filename for the output NetCDF file.
+                * **grid** (*np.ndarray*) -- Structured array representing the model grid.
+                * **iteration** (*int*) -- Current iteration number (i.e. day) of the model.
+                * **vars_to_save** (*tuple, optional*) -- Variables to save in the output file.
+                * **hourly** (*bool, optional*) -- Whether the model is running with hourly output (rather than daily).
+                  Default is False.
+                * **t_step** (*int, optional*) -- Current timestep within the day (0-23 if hourly is True). Default is 0.
+                * **vert_grid_size** (*int or bool, optional*) -- Size of the vertical grid for interpolation. If False, uses the existing
+                  vertical grid size from the model grid. Default is False.
+
+   :rtype: None.
+

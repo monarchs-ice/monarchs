@@ -1,0 +1,4 @@
+heateqn_nb.get_k_and_kappa
+==========================
+
+.. py:function:: heateqn_nb.get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water)

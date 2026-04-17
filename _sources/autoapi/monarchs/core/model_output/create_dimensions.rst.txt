@@ -1,0 +1,21 @@
+monarchs.core.model_output.create_dimensions
+============================================
+
+.. py:function:: monarchs.core.model_output.create_dimensions(data, grid, vert_grid_size)
+
+   Create dimensions in the NetCDF file. We have the following dimensions:
+   - x: horizontal grid dimension (number of columns)
+   - y: horizontal grid dimension (number of rows)
+   - time: unlimited dimension for time steps
+   - vert_grid: vertical grid dimension for firn column
+   - vert_grid_lid: vertical grid dimension for frozen lid
+   - vert_grid_lake: vertical grid dimension for lake
+   - direction: dimension for lateral flow (8 cardinal directions), used for
+     outputting direction in which water moves in each timestep
+
+   :Parameters: * **data** (*netCDF4.Dataset*) -- The NetCDF dataset to which dimensions will be added.
+                * **grid** (*np.ndarray*) -- Structured array representing the model grid.
+                * **vert_grid_size** (*int*) -- Size of the vertical grid for interpolation.
+
+   :rtype: None (amends data object inplace)
+

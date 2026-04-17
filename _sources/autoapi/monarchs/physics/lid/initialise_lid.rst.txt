@@ -1,0 +1,13 @@
+monarchs.physics.lid.initialise_lid
+===================================
+
+.. py:function:: monarchs.physics.lid.initialise_lid(cell, met_data, dt, dz, k_lid)
+
+   Check to determine if a lid has been formed previously - if not, then
+   initialise the lid by calculating its surface energy balance
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **Q** (*float*) -- Surface energy flux, taken from surface_fluxes.sfc_flux. [W m^-2]
+
+   :rtype: None (amends cell inplace)
+

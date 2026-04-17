@@ -1,0 +1,20 @@
+extract_args.pack_args
+======================
+
+.. py:function:: extract_args.pack_args(cell, met_data, dt, dz, N=False, k_lid=np.nan, Sfrac_lid=np.nan)
+
+   Convert the variables from the model grid into a unified flat buffer.
+   Uses a 'Table of Contents' (pointers) in the header to allow for
+   variable grid sizes and optional arrays.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*dict*) -- Dictionary containing the meteorological data for the current timestep.
+                  See firn_column for details.
+                * **dt** (*float*) -- Number of seconds in each timestep. [s]
+                * **dz** (*float*) -- Change in firn height with respect to a step in vertical point [m]
+                * **N** (*int, optional*) -- Number of vertical grid points in the firn column. If not provided,
+                  uses cell["vert_grid"]. Used for the non-fixed-surface heat
+                  equation solver. Default is False.
+                * **k_lid** (*float, optional*) -- Thermal conductivity of the lid. Default is np.nan.
+                * **Sfrac_lid** (*float, optional*) -- Solid fraction of the lid. Default is np.nan.
+

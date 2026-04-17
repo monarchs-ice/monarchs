@@ -1,0 +1,217 @@
+extract_args
+============
+
+.. py:module:: extract_args
+
+.. autoapi-nested-parse::
+
+   NumbaMinpack requires all arguments to be passed as a single flat array.
+   This module provides functions to pack and unpack model variables
+   into/from such a flat array, supporting variable grid sizes and optional arrays.
+
+   This is done using a mapping of indices for each scalar variable in the packed array,
+   as well as pointers to the start of variable-length arrays (e.g. firn temperature, lid temperature).
+
+   The intent here is to ensure that we just have one set of logic to move data from
+   the Python structured array format into the flat array format required by NumbaMinpack,
+   and one set of functions we can use and re-use to extract the relevant parameters from
+   this packed array.
+
+   The indices defined below is the "canonical" mapping of model variables to positions
+   in the packed args array. If you want to use a new variable inside
+   the heat equation solver (or equivalently surface fluxes, since this is called inside
+   the heat equation solver), you need to add it here.
+
+   We define functions to extract the specific parameters we need, which is determined by the needs
+   of the specific physics functions.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   extract_args.HEADER_SIZE
+   extract_args.IDX_AIR_TEMP
+   extract_args.IDX_ALBEDO
+   extract_args.IDX_DP_TEMP
+   extract_args.IDX_DT
+   extract_args.IDX_DZ
+   extract_args.IDX_EXPOSED_WATER
+   extract_args.IDX_FIRN_DEPTH
+   extract_args.IDX_K_LID_SCALAR
+   extract_args.IDX_LAKE
+   extract_args.IDX_LAKE_DEPTH
+   extract_args.IDX_LID
+   extract_args.IDX_LID_DEPTH
+   extract_args.IDX_LW_IN
+   extract_args.IDX_MELT
+   extract_args.IDX_N_GRID
+   extract_args.IDX_P_AIR
+   extract_args.IDX_SCALARS_END
+   extract_args.IDX_SFRAC_LID_SCALAR
+   extract_args.IDX_SNOW_LID
+   extract_args.IDX_SW_IN
+   extract_args.IDX_V_LID
+   extract_args.IDX_V_LID_DEPTH
+   extract_args.IDX_V_LID_TEMP
+   extract_args.IDX_WIND
+   extract_args.PTR_FIRN_T
+   extract_args.PTR_LAKE_T
+   extract_args.PTR_LFRAC
+   extract_args.PTR_LID_T
+   extract_args.PTR_SFRAC
+   extract_args.PTR_SIZE
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/extract_args/extract_firn_arrays
+   /autoapi/extract_args/extract_lake_variables
+   /autoapi/extract_args/extract_lid_variables
+   /autoapi/extract_args/extract_met_data
+   /autoapi/extract_args/extract_scalars
+   /autoapi/extract_args/pack_args
+
+.. autoapisummary::
+
+   extract_args.extract_firn_arrays
+   extract_args.extract_lake_variables
+   extract_args.extract_lid_variables
+   extract_args.extract_met_data
+   extract_args.extract_scalars
+   extract_args.pack_args
+
+
+Module Contents
+---------------
+
+.. py:data:: HEADER_SIZE
+   :value: 25
+
+
+.. py:data:: IDX_AIR_TEMP
+   :value: 20
+
+
+.. py:data:: IDX_ALBEDO
+   :value: 8
+
+
+.. py:data:: IDX_DP_TEMP
+   :value: 22
+
+
+.. py:data:: IDX_DT
+   :value: 9
+
+
+.. py:data:: IDX_DZ
+   :value: 10
+
+
+.. py:data:: IDX_EXPOSED_WATER
+   :value: 2
+
+
+.. py:data:: IDX_FIRN_DEPTH
+   :value: 15
+
+
+.. py:data:: IDX_K_LID_SCALAR
+   :value: 11
+
+
+.. py:data:: IDX_LAKE
+   :value: 5
+
+
+.. py:data:: IDX_LAKE_DEPTH
+   :value: 6
+
+
+.. py:data:: IDX_LID
+   :value: 3
+
+
+.. py:data:: IDX_LID_DEPTH
+   :value: 4
+
+
+.. py:data:: IDX_LW_IN
+   :value: 18
+
+
+.. py:data:: IDX_MELT
+   :value: 1
+
+
+.. py:data:: IDX_N_GRID
+   :value: 0
+
+
+.. py:data:: IDX_P_AIR
+   :value: 21
+
+
+.. py:data:: IDX_SCALARS_END
+   :value: 17
+
+
+.. py:data:: IDX_SFRAC_LID_SCALAR
+   :value: 12
+
+
+.. py:data:: IDX_SNOW_LID
+   :value: 7
+
+
+.. py:data:: IDX_SW_IN
+   :value: 19
+
+
+.. py:data:: IDX_V_LID
+   :value: 13
+
+
+.. py:data:: IDX_V_LID_DEPTH
+   :value: 14
+
+
+.. py:data:: IDX_V_LID_TEMP
+   :value: 16
+
+
+.. py:data:: IDX_WIND
+   :value: 23
+
+
+.. py:data:: PTR_FIRN_T
+   :value: 27
+
+
+.. py:data:: PTR_LAKE_T
+   :value: 26
+
+
+.. py:data:: PTR_LFRAC
+   :value: 29
+
+
+.. py:data:: PTR_LID_T
+   :value: 25
+
+
+.. py:data:: PTR_SFRAC
+   :value: 28
+
+
+.. py:data:: PTR_SIZE
+   :value: 30
+
+

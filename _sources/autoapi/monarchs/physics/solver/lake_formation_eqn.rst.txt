@@ -1,0 +1,7 @@
+monarchs.physics.solver.lake_formation_eqn
+==========================================
+
+.. py:function:: monarchs.physics.solver.lake_formation_eqn(x, args)
+
+   Refactored lake formation eqn with dynamic surface flux.
+

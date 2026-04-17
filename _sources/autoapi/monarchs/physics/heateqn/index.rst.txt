@@ -1,0 +1,27 @@
+monarchs.physics.heateqn
+========================
+
+.. py:module:: monarchs.physics.heateqn
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/heateqn/get_k_and_kappa
+   /autoapi/monarchs/physics/heateqn/heateqn
+   /autoapi/monarchs/physics/heateqn/heateqn_lid
+   /autoapi/monarchs/physics/heateqn/propagate_temperature
+   /autoapi/monarchs/physics/heateqn/solve_tridiagonal
+
+.. autoapisummary::
+
+   monarchs.physics.heateqn.get_k_and_kappa
+   monarchs.physics.heateqn.heateqn
+   monarchs.physics.heateqn.heateqn_lid
+   monarchs.physics.heateqn.propagate_temperature
+   monarchs.physics.heateqn.solve_tridiagonal
+
+

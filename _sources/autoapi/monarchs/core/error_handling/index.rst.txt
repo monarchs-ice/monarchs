@@ -1,0 +1,42 @@
+monarchs.core.error_handling
+============================
+
+.. py:module:: monarchs.core.error_handling
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.core.error_handling.prange
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/error_handling/calc_grid_mass
+   /autoapi/monarchs/core/error_handling/check_correct
+   /autoapi/monarchs/core/error_handling/check_for_mass_conservation
+   /autoapi/monarchs/core/error_handling/check_for_single_column_errors
+   /autoapi/monarchs/core/error_handling/check_grid_correctness
+   /autoapi/monarchs/core/error_handling/generic_error
+
+.. autoapisummary::
+
+   monarchs.core.error_handling.calc_grid_mass
+   monarchs.core.error_handling.check_correct
+   monarchs.core.error_handling.check_for_mass_conservation
+   monarchs.core.error_handling.check_for_single_column_errors
+   monarchs.core.error_handling.check_grid_correctness
+   monarchs.core.error_handling.generic_error
+
+
+Module Contents
+---------------
+
+.. py:data:: prange
+

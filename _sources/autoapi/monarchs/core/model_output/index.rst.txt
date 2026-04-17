@@ -1,0 +1,48 @@
+monarchs.core.model_output
+==========================
+
+.. py:module:: monarchs.core.model_output
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.core.model_output.DEFAULT_VARS
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/model_output/add_lat_long
+   /autoapi/monarchs/core/model_output/convert_bool_dtypes
+   /autoapi/monarchs/core/model_output/create_dimensions
+   /autoapi/monarchs/core/model_output/create_variable
+   /autoapi/monarchs/core/model_output/get_variable_dims
+   /autoapi/monarchs/core/model_output/interpolate_model_output
+   /autoapi/monarchs/core/model_output/setup_output
+   /autoapi/monarchs/core/model_output/update_model_output
+
+.. autoapisummary::
+
+   monarchs.core.model_output.add_lat_long
+   monarchs.core.model_output.convert_bool_dtypes
+   monarchs.core.model_output.create_dimensions
+   monarchs.core.model_output.create_variable
+   monarchs.core.model_output.get_variable_dims
+   monarchs.core.model_output.interpolate_model_output
+   monarchs.core.model_output.setup_output
+   monarchs.core.model_output.update_model_output
+
+
+Module Contents
+---------------
+
+.. py:data:: DEFAULT_VARS
+   :value: ('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth')
+
+

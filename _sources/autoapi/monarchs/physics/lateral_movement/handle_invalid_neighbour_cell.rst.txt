@@ -1,0 +1,17 @@
+monarchs.physics.lateral_movement.handle_invalid_neighbour_cell
+===============================================================
+
+.. py:function:: monarchs.physics.lateral_movement.handle_invalid_neighbour_cell(grid, cell, temporary_cell, row, col, n_s_index, w_e_index, flow_into_land, split, water_frac, outflow_proportion)
+
+   :Parameters: * **grid**
+                * **cell**
+                * **temporary_cell**
+                * **row**
+                * **col**
+                * **n_s_index**
+                * **w_e_index**
+                * **flow_into_land**
+                * **split**
+                * **water_frac**
+                * **outflow_proportion**
+
