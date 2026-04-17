@@ -395,9 +395,9 @@ def print_model_end_of_timestep_messages(
     else:
         print("Original mass = ", total_mass_start)
     print(f"Time at end of day {day + 1} is {toc - tic:0.4f} seconds")
-    print("Firn depth = ", get_2d_grid(grid, "firn_depth"), mask_invalid=True)
-    print("Lake depth = ", get_2d_grid(grid, "lake_depth"), mask_invalid=True)
-    print("Lid depth = ", get_2d_grid(grid, "lid_depth"), mask_invalid=True)
+    print("Firn depth = ", get_2d_grid(grid, "firn_depth", mask_invalid=True))
+    print("Lake depth = ", get_2d_grid(grid, "lake_depth", mask_invalid=True))
+    print("Lid depth = ", get_2d_grid(grid, "lid_depth", mask_invalid=True))
     print("Number of lakes = ", np.sum(get_2d_grid(grid, "lake")))
     print("Number of lids = ", np.sum(get_2d_grid(grid, "lid")))
     print('Max lake depth = ', np.max(get_2d_grid(grid, "lake_depth")))

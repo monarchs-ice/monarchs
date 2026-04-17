@@ -105,32 +105,42 @@ def get_2d_grid(grid, attr, index=False, mask_invalid=False):
     None. (but will print to stdout)
 
     """
-    if not index:
+
+    if index is False:
         index = 0
 
+    out = []
+
     if not isinstance(grid, np.ndarray):
-        for row_idx, row in enumerate(grid):
-            for col_idx, cell in enumerate(row):
+        for row in grid:
+            out_row = []
+            for cell in row:
                 value = getattr(cell, attr)
+
                 if mask_invalid and (not cell["valid_cell"]):
                     if isinstance(value, np.ndarray):
-                        value = np.full_like(value, np.nan)
+                        value = np.full(value.shape, np.nan, dtype=float)
                     else:
                         value = np.nan
-                grid[row_idx][col_idx] = value
+
+                out_row.append(value)
+            out.append(out_row)
     else:
         for row_idx, row in enumerate(grid):
+            out_row = []
             for col_idx, _ in enumerate(row):
                 value = grid[attr][row_idx][col_idx]
-                # Cannot mask in this case, as we don't have cell['valid_cell']
-                grid[row_idx][col_idx] = value
-    if index == "all":
-        return np.array(grid)
+                out_row.append(value)
+            out.append(out_row)
 
+    arr = np.array(out)
+
+    if index == "all":
+        return arr
     try:
-        return np.array(grid)[:, :, index]
+        return arr[:, :, index]
     except IndexError:
-        return np.array(grid)[:, :]
+        return arr[:, :]
 
 
 def find_nearest(a, a0):
