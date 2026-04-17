@@ -109,7 +109,7 @@ def get_2d_grid(grid, attr, index=False, mask_invalid=False):
             for cell in row:
                 value = getattr(cell, attr)
 
-                if mask_invalid and (not cell["valid_cell"]):
+                if mask_invalid and (not getattr(cell, "valid_cell")):
                     if isinstance(value, np.ndarray):
                         value = np.full(value.shape, np.nan, dtype=float)
                     else:
@@ -117,11 +117,24 @@ def get_2d_grid(grid, attr, index=False, mask_invalid=False):
 
                 out_row.append(value)
             out.append(out_row)
+
     else:
+        valid_mask = None
+        dtype_names = getattr(grid.dtype, "names", None)
+        if mask_invalid and dtype_names is not None and "valid_cell" in dtype_names:
+            valid_mask = grid["valid_cell"]
+
         for row_idx, row in enumerate(grid):
             out_row = []
             for col_idx, _ in enumerate(row):
                 value = grid[attr][row_idx][col_idx]
+
+                if valid_mask is not None and (not valid_mask[row_idx][col_idx]):
+                    if isinstance(value, np.ndarray):
+                        value = np.full(value.shape, np.nan, dtype=float)
+                    else:
+                        value = np.nan
+
                 out_row.append(value)
             out.append(out_row)
 
@@ -129,6 +142,7 @@ def get_2d_grid(grid, attr, index=False, mask_invalid=False):
 
     if index == "all":
         return arr
+
     try:
         return arr[:, :, index]
     except IndexError:
