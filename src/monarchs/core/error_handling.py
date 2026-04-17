@@ -1,5 +1,5 @@
-import numpy as np
 import contextlib
+import numpy as np
 from monarchs.core.utils import calc_mass_sum
 
 try:

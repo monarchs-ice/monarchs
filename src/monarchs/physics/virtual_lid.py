@@ -11,7 +11,6 @@ from monarchs.physics.constants import (
     L_ice,
     rho_ice,
     rho_water,
-    v_lid_min_thickness,
     k_water,
 )
 

@@ -6,8 +6,8 @@ Main MONARCHS execution script. Invoked via the command line with
 where <filepath> is the path to a model setup script.
 """
 
-from monarchs.core.driver import monarchs
 import sys
+from monarchs.core.driver import monarchs
 
 # fix for CPOM server
 sys.setrecursionlimit(3000)

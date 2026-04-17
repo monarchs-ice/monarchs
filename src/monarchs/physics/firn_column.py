@@ -19,12 +19,6 @@ from monarchs.physics.constants import (
     rho_water,
     emissivity,
     stefan_boltzmann,
-    L_ice,
-    k_water,
-    rho_air,
-    cp_air,
-    cp_water,
-    k_air,
 )
 
 MODULE_NAME = "monarchs.physics.firn_column"

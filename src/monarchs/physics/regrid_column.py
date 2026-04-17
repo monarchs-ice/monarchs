@@ -225,7 +225,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     cell["vertical_profile"] = np.linspace(0.0, new_depth, nz)
 
     mass_after = utils.calc_mass_sum(cell)
-    tol = max(1e-2, 1e-10 * mass_before)
     check_for_mass_conservation(cell, mass_before, mass_after, routine_name)
 
 

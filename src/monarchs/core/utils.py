@@ -2,10 +2,10 @@
 Utilities module containing various helper functions or wrappers.
 """
 
+import contextlib
 from functools import wraps
 import numpy as np
 import pathos
-import contextlib
 from monarchs.physics.constants import rho_ice, rho_water, cp_water
 
 try:

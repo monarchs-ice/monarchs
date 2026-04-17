@@ -5,8 +5,8 @@ Grid-looping module. This either runs sequentially, or runs through in parallel
 
 import time
 import numpy as np
-from monarchs.physics.timestep import timestep_loop
 from dask import delayed, compute
+from monarchs.physics.timestep import timestep_loop
 
 
 def process_chunk(
