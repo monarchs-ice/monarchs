@@ -32,7 +32,7 @@ lateral_timestep = (
 firn_depth = np.array([[35, 30], [30, 35]])
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 
-met_input_filepath = "data/ERA5_small.nc"
+met_input_filepath = "../../data/ERA5_small.nc"
 met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
 met_output_filepath = "./parallel_test_met_data.nc"
