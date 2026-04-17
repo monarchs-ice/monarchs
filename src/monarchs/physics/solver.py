@@ -24,13 +24,6 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
     """
     Dispatcher for firn heat equation solver.
 
-    Routes to either the Newton–tridiagonal solver (if use_newton_solver=True)
-    or the scipy hybr solver (default, legacy path).
-
-    This function now uses the modern call signature matching the benchmarks:
-    solve_firn_heateqn(cell, met_data, dt, dz, ...) rather than the old
-    scipy.optimize.fsolve interface.
-
     Called in <firn_column>, <timestep>, <lake>.
 
     Parameters
@@ -48,9 +41,7 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
         If True, use fixed surface temperature (273.15 K). Default False.
     solver_method : str, optional
         Solver method (ignored, accepted for backwards compatibility). Default "hybr".
-    toggle_dict : dict, optional
-        Toggle dictionary containing use_newton_solver flag. If None, defaults
-        to scipy path. Default None.
+
 
     Returns
     -------
@@ -77,19 +68,19 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
         mesg = "Fixed surface temperature"
         T_tri = heateqn.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T = np.concatenate((np.array([273.15]), T_tri))
+        print('T fixed = ', T_tri[:20])
     else:
 
         N = cell["vert_grid"]
         x = cell["firn_temperature"][:N]
         x = np.asarray(x)
 
-        temp_cell = cell.copy()
 
         soldict = root(
             heateqn.heateqn,
             x,
             args=(
-                temp_cell,
+                cell,
                 lw_in,
                 sw_in,
                 air_temp,
@@ -109,6 +100,7 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
             )
 
         if N == cell["vert_grid"]:
+            print('T free = ', soldict.x[:5])
             return soldict.x, soldict, soldict.success, soldict.message
         else:
             sol = soldict.x
@@ -123,7 +115,6 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
 
         T_tri = heateqn.propagate_temperature(cell, dz, dt, sol[-1], N=N)
         T = np.concatenate((sol[:], T_tri))
-
     T = np.around(T, decimals=8)
 
     return T, infodict, ier, mesg
@@ -568,12 +559,8 @@ def lid_heateqn_solver(cell, met_data, dt, dz):
     eqn = heateqn.heateqn_lid
     x = cell["lid_temperature"].copy()
 
-    # Sfrac_lid: assume all-ice lid (solid fraction = 1).
-    # k_lid is recomputed internally by heateqn_lid from cell["lid_temperature"],
-    # so the value passed here is overwritten; we pass ones as a placeholder.
     n_lid = int(cell["vert_grid_lid"])
     Sfrac_lid = np.ones(n_lid, dtype=np.float64)
-    k_lid_placeholder = np.ones(n_lid, dtype=np.float64)
 
     args = (
         cell,
@@ -585,7 +572,6 @@ def lid_heateqn_solver(cell, met_data, dt, dz):
         p_air,
         dew_point_temperature,
         wind,
-        k_lid_placeholder,
         Sfrac_lid,
     )
 

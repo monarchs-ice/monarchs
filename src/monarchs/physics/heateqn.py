@@ -13,7 +13,8 @@ from monarchs.physics.constants import (
     rho_water,
     rho_air,
     stefan_boltzmann,
-    sfc_absorbed_frac
+    sfc_absorbed_frac,
+    tau_ice
 )
 
 def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
@@ -197,9 +198,7 @@ def heateqn_lid(
     p_air,
     dew_point_temperature,
     wind,
-    k_lid,
     Sfrac_lid,
-    albedo
 ):
     """
     Solve the heat equation for the frozen lid, similarly to the calculation
@@ -245,7 +244,6 @@ def heateqn_lid(
     )
     kappa = k_lid / (cp * rho_ice)
     epsilon = emissivity
-    tau_ice = 1.5
     sigma = stefan_boltzmann
     rho = 917
 

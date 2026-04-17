@@ -119,13 +119,14 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
         T_fixed = hnb.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T[0] = 273.15
         T[1:] = T_fixed[:]
-
+        print('T fixed = ', T_fixed[:20])
     # else, use hybrd to solve for the top N layers, then use the tridiagonal
     # solver for the rest of the column.
     else:
         sol, fvec, success, info = hybrd(heq, x, args)
         if N == len(cell["firn_temperature"]):
             T[:N] = sol
+            print('T free = ', T[:5])
         else:
             T_tri = hnb.propagate_temperature(cell, dz, dt, sol[-1], N=N)
             T[:N] = sol

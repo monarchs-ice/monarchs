@@ -26,7 +26,7 @@ from monarchs.physics.constants import (
     rho_ice,
     rho_water,
     rho_air, stefan_boltzmann,
-    ice_extinction_coefficient,
+    tau_ice,
     sfc_absorbed_frac,
 )
 
@@ -254,7 +254,6 @@ def heateqn_lid(x, output, args):
     kappa = k_lid / (cp * rho)
     epsilon = emissivity
     sigma = stefan_boltzmann
-    tau_ice = ice_extinction_coefficient
 
     Q = sfc_flux(
         albedo,
@@ -288,14 +287,14 @@ def heateqn_lid(x, output, args):
             lid_temperature[idx]
             - x[idx]
             + dt
-            * (
+            *
                 (
                     (kappa[idx])
                     * (x[idx + 1] - 2 * x[idx] + x[idx - 1])
                     / dz ** 2
                 )
-                + dT_solar
-            )
+                + dt *  dT_solar
+
         )
     output[-1] = x[vert_grid_lid - 1] - 273.15
 

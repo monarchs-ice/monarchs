@@ -2,7 +2,14 @@
 
 # TODO - module-level docstring
 import numpy as np
-from monarchs.physics.constants import emissivity, sfc_absorbed_frac
+from monarchs.physics.constants import (
+    emissivity,
+    sfc_absorbed_frac,
+    bare_ice_albedo,
+    saturated_firn_albedo,
+    wet_snow_albedo,
+    dry_snow_albedo
+)
 
 
 def sfc_flux(
@@ -113,26 +120,28 @@ def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_
                 # is actually higher?
                 # https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JC014161
                 # this implies (Fig. 1) that it should be ~0.6
-                alpha = 0.6 # bare dry ice lid albedo
+                alpha = bare_ice_albedo # bare dry ice lid albedo
             elif lake:
                 h = lake_depth
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
                     -539 + 20000 * np.exp(3.6 * h)
                 )  # lake albedo
                 # if virtual_lid:
-                #     # TODO - more sophisticated treatment of virtual lid albedo
+                #     # TODO - more sophisticated treatment of virtual lid albedo?
                 #     alpha = max(alpha, 0.2) # minimum albedo for virtual lid
             else:
-                alpha = 0.6  # saturated firn albedo
+                alpha = saturated_firn_albedo  # saturated firn albedo (0.6 default)
         else:
-            alpha = 0.6  # wet snow albedo
+            alpha = wet_snow_albedo  # wet snow albedo (0.6 default)
     else:
-        alpha = 0.867  # dry snow albedo
-    #
+        alpha = dry_snow_albedo  # dry snow albedo (0.867 default)
+    # TODO - an idea for a future change - snow-covered lids, as snow increases albedo
+    # TODO - = further freezing. This is *basically* implemented but not default behaviour.
     # if snow_on_lid == 1:
-    #     alpha = 0.867  # snow albedo
+    #     alpha = dry_snow_albedo  # snow albedo
     # elif snow_on_lid == 2:
-    #     alpha = 0.6 # wet snow albedo
+    #     if == 2, then lid has undergone melt with snow on top so update albedo
+    #     alpha = wet_snow_albedo # wet snow albedo
 
     return alpha
 

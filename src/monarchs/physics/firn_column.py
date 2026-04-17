@@ -241,7 +241,7 @@ def calc_height_change(
         met_data["surf_pressure"],
         met_data["dew_point_temperature"],
         met_data["wind"],
-        surface_temp[0],
+        cell["firn_temperature"][0]
     )
 
     # Strictly speaking, since the MONARCHS grid is defined from the surface

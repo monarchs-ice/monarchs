@@ -181,7 +181,6 @@ def surface_freezing(cell, dt, Q):
     )
     freezing_amount = (Q - kdTdz - (emissivity * stefan_boltzmann * cell["lid_temperature"][0] ** 4)) / (L_ice * rho_ice) * dt
     cell["lid_sfc_melt"] -= min(cell["lid_sfc_melt"], np.abs(freezing_amount))
-    #print('Froze this timestep = ', freezing_amount)
 
     if cell["lid_sfc_melt"] < 0.1:
         cell["lid_melt_count"] -= 1
@@ -214,9 +213,6 @@ def surface_melt(cell, dt, Q):
     """
     routine_name = f"{MODULE_NAME}.surface_melt"
     original_mass = utils.calc_mass_sum(cell)
-    # Switch to determine if this is being run as part of the initial lid
-    # formation - if so then don't iterate the melt (but the rest is the same)
-    # cell["lid_melt_count"] += 1
     k_lid, _ = calc_k_and_cp(cell)
     kdTdz = (
         (cell["lid_temperature"][0] - cell["lid_temperature"][1])
@@ -225,10 +221,6 @@ def surface_melt(cell, dt, Q):
             cell["lid_depth"] / (cell["vert_grid_lid"])
         )
     )
-#     lid_melt_this_timestep = (
-#         (Q - kdTdz - emissivity * stefan_boltzmann * cell["lid_temperature"][0] ** 4) / (L_ice * rho_ice) * dt
-# ) / (L_ice * rho_ice)
-#     ) * dt
     lid_melt_this_timestep = (Q - kdTdz - (emissivity * stefan_boltzmann * cell["lid_temperature"][0] ** 4)) * dt / (L_ice * rho_ice)
     cell["lid_sfc_melt"] += lid_melt_this_timestep
     cell["lid_temperature"][0] = 273.15
@@ -245,14 +237,11 @@ def surface_melt(cell, dt, Q):
     check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
     # melting lid surface removes snow, so albedo reduces
     cell["lid_snow_depth"] -= min(cell["lid_snow_depth"], lid_melt_this_timestep * (rho_ice / 350))
-    #print('lid melt this timestep = ', lid_melt_this_timestep)
-    #print('Total melt = ', cell["lid_sfc_melt"])
     if cell["snow_on_lid"] == 1:
         cell["snow_on_lid"] = 2  # now wet snow
     if cell["lid_snow_depth"] <= 0:
         cell["snow_on_lid"] = 0
     if cell["lid_sfc_melt"] > 0.02:  # 2 cm deep
-        print('Lid surface melt exceeded 10 cm this timestep')
         cell["lid_melt_count"] += 1  # force it above the timestep.py threshold
 
 

@@ -50,33 +50,26 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
         # add to lid depth
         cell["lid_depth"] += snow_depth * snow_rho / rho_ice
         cell['lid_snow_depth'] += snow_depth  # just a tracker
-        #print('Lid snow depth:', cell['lid_snow_depth'])
 
-        # if snow_depth > 0:
-        #     cell["snow_on_lid"] = True
+        # currently this branch doesnt change anything, the flag is not used
+        # but could be used to track ice lid albedo with snow on top
         if cell['lid_snow_depth'] > 0.01 and not cell["snow_on_lid"]:
             # more than 1 cm of snow on lid
-            #print('Adding snow on lid')
-            #print('Lid snow depth:', cell['lid_snow_depth'])
             cell['snow_on_lid'] = 1
         return
 
-
-    elif cell['lake']:
-        # add to virtual lid depth - will melt instantly if it is too warm to sustain
-        # cell["lake_depth"] += snow_depth * snow_rho / rho_water
-        cell["v_lid_depth"] += snow_depth * snow_rho / rho_ice
-        # if cell["v_lid"]:
-        #     cell["lid_snow_depth"] += snow_depth  # just a tracker
-            # if cell['lid_snow_depth'] > 0.01 and not cell["snow_on_lid"]:
-            #     # more than 1 cm of snow on lid
-            #     cell["snow_on_lid"] = 1
-        return
-    # elif cell["lake"] and not cell["lid"]:
-    #     # add to lake depth
-    #     cell["lake_depth"] += snow_depth * snow_rho / rho_water
-    #     # modify temperature
+    # TODO - would snow sit on top and start forming a "virtual lid"? if conditions are
+    # TODO - cold enough for snow it might not melt right away..
+    # elif cell['lake']:
+    #     # add to virtual lid depth - will melt instantly if it is too warm to sustain
+    #     # cell["lake_depth"] += snow_depth * snow_rho / rho_water
+    #     cell["v_lid_depth"] += snow_depth * snow_rho / rho_ice
     #     return
+    elif cell["lake"] and not cell["lid"]:
+        # add to lake depth
+        cell["lake_depth"] += snow_depth * snow_rho / rho_water
+        # modify temperature
+        return
 
     # dry firn/ice lens
     # calculate mass

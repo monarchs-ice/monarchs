@@ -228,14 +228,25 @@ def regrid_after_melt(cell, height_change, lake=False):
     mass_after = utils.calc_mass_sum(cell)
     tol = max(1e-2, 1e-10 * mass_before)
     check_for_mass_conservation(
-        cell, mass_before, mass_after, "monarchs.physics.regrid_after_melt"
+        cell, mass_before, mass_after, routine_name
     )
 
 
 def regrid_after_freeze(cell, height_change):
     """
-    Handles basal freezing (accretion of ice from lake to firn).
-    height_change should be POSITIVE here (representing thickness of new ice).
+    As regrid_after_melt, but in the rare occurrence we have a freezing event (if temperatures go below
+    freezing in the firn and we have a lake), regrid the column but *increase* the depth.
+
+    Parameters:
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    height_change : float
+        Change in the firn height as a result of freezing. [m]
+
+    -------
+    Returns:
+        cell : numpy structured array
+        (amended) Element of the model grid we are operating on.
     """
     routine_name = "monarchs.physics.regrid_column.regrid_after_freeze"
 
@@ -292,5 +303,5 @@ def regrid_after_freeze(cell, height_change):
     mass_after = utils.calc_mass_sum(cell)
 
     check_for_mass_conservation(
-        cell, mass_before, mass_after, "monarchs.physics.regrid_after_melt"
+        cell, mass_before, mass_after, routine_name
     )

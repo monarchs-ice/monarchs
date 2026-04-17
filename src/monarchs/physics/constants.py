@@ -28,3 +28,9 @@ tau_ice = 1.5  # black ice extinction coefficient
 # measurements of light transmission in bare ice on the Greenland Ice Sheet.
 # The Cryosphere, 15(4), pp.1931-1953.
 v_lid_min_thickness = 1e-3
+
+# reflectance properties
+bare_ice_albedo = 0.413
+saturated_firn_albedo = 0.6
+wet_snow_albedo = 0.6
+dry_snow_albedo = 0.867

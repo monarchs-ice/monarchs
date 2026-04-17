@@ -245,15 +245,14 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 elif (cell["lid_melt_count"] > 12):
                     reset_column.combine_lid_firn(cell, surface_slush=True)
 
+        # TODO:
         # If we have had a reset/combine event, we may end up with a
         # region of liquid water inside the firn. We need to ensure that this
         # continues to freeze based on the conditions what we take to be our
         # new "firn column" - much as it did when it was a lake under a lid.
-        # Effectively, we are mimicking the behaviour of the lid refreezing,
+        # Effectively, we need to mimick the behaviour of the lid refreezing,
         # so that the water doesn't just sit there forever.
-        if cell["reset_combine"]:
-            pass
-            #firn_column.refreeze_internal_lake(cell, dt)
+
         # If we have Sfrac + Lfrac > 1, we need to ensure that Lfrac is
         # adjusted accordingly.
         # We can do this via calc_saturation, which is used to similar effect
@@ -297,6 +296,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     # If firn depth goes below 5, then we now consider this cell to be
     # invalid. This prevents situations where points where water concentrates
     # and melts through the firn column causing the whole model to crash.
+    # Update - this now *will* cause the model to crash, in driver.py where we
+    # traverse valid cells, but this is probably desirable since this indicates
+    # the potential for unphysical conditions.
     if cell["firn_depth"] < 5:
         print("Firn depth below 5 m - setting cell to invalid")
         print(

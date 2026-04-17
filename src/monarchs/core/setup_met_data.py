@@ -9,7 +9,6 @@ from monarchs.met_data.import_ERA5 import (
     grid_subset,
     get_met_bounds_from_DEM,
 )
-from monarchs.met_data.index_map import build_coarse_index_map, apply_index_map
 
 # TODO - make CHUNKSIZE model_setup variable rather than constant?
 CHUNKSIZE = 365  # days

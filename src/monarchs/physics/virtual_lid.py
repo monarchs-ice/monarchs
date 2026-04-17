@@ -79,8 +79,7 @@ def virtual_lid_development(
     # temperature
     update_virtual_lid_temperature(cell, met_data, dt)
     # Calculate flux at the ice-water interface (at 273.15K) to determine
-    # freezing/melting rate. Following MATLAB approach: use combined thermal
-    # resistance through virtual lid + water layer.
+    # freezing/melting rate.
     z_water = cell["lake_depth"] / (cell["vert_grid_lake"] / 2)
 
 
@@ -141,16 +140,10 @@ def update_virtual_lid_temperature(
         + 5.975e-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
     )
 
-    #print('Temp before virtual lid update:', cell["virtual_lid_temperature"])
     cell["virtual_lid_temperature"] = solver.lid_seb_solver(
         cell, met_data, dt, 0, k_v_lid
     )[0][0]
 
-    # # debug
-    # cell["virtual_lid_temperature"] = min(
-    #     cell["virtual_lid_temperature"], 273.15
-    # )
-    #print('Temp after virtual lid update:', cell["virtual_lid_temperature"])
 
 
 def freeze_virtual_lid(cell, ice_added):
@@ -174,17 +167,13 @@ def freeze_virtual_lid(cell, ice_added):
         )
         cell["v_lid_depth"] += ice_added
         cell["lake_temperature"][0] = 273.15
-        #print('Partial freezing of virtual lid')
-        #print('ice_added:', ice_added)
-        #print('v_lid_depth:', cell["v_lid_depth"])
+
     # whole lake freezes
     else:
         cell["v_lid_depth"] += cell["lake_depth"] * (
             rho_water / rho_ice
         )
         cell["lake_depth"] = 0
-        #print('Whole lake frozen into virtual lid')
-        #print('ice_added:', ice_added)
 
 
 def melt_virtual_lid(cell, ice_added):
@@ -196,8 +185,7 @@ def melt_virtual_lid(cell, ice_added):
             cell["lake_depth"] += (
                 cell["v_lid_depth"] * rho_ice / rho_water
             )
-            #print('Virtual lid depth before melting:', cell["v_lid_depth"])
-            #print('ice_removed:', ice_removed)
+
             cell["total_melt"] = cell["total_melt"] + cell["v_lid_depth"]
             cell["v_lid_depth"] = 0
             print('Whole virtual lid melted')
@@ -211,11 +199,8 @@ def melt_virtual_lid(cell, ice_added):
             cell["total_melt"] = cell["total_melt"] + ice_removed
             cell["lake_temperature"][0] = 273.15
 
-            #print('Partial melting of virtual lid')
     # check if we still have a virtual lid
     if cell["v_lid_depth"] <= 0 and cell["v_lid"]:
-        #print('Whole virtual lid melted - step 2 ')
-
         cell["v_lid"] = False
         cell["v_lid_depth"] = 0
     cell["snow_on_lid"] = 0
