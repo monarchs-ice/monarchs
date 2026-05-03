@@ -1,0 +1,4 @@
+monarchs.physics.lateral_movement.calc_available_water_lake
+===========================================================
+
+.. py:function:: monarchs.physics.lateral_movement.calc_available_water_lake(cell, water_frac, split, neighbour_cell, outflow=False)

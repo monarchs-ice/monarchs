@@ -1,0 +1,4 @@
+monarchs.physics.virtual_lid.melt_virtual_lid
+=============================================
+
+.. py:function:: monarchs.physics.virtual_lid.melt_virtual_lid(cell, ice_added)

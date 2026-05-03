@@ -1,0 +1,124 @@
+monarchs.physics.constants
+==========================
+
+.. py:module:: monarchs.physics.constants
+
+.. autoapi-nested-parse::
+
+   Physical constants used in MONARCHS calculations.
+
+   Previously, these were either scattered throughout the codebase, or
+   defined in the model grid.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.constants.L_ice
+   monarchs.physics.constants.bare_ice_albedo
+   monarchs.physics.constants.cp_air
+   monarchs.physics.constants.cp_water
+   monarchs.physics.constants.dry_snow_albedo
+   monarchs.physics.constants.emissivity
+   monarchs.physics.constants.ice_extinction_coefficient
+   monarchs.physics.constants.k_air
+   monarchs.physics.constants.k_water
+   monarchs.physics.constants.pore_closure
+   monarchs.physics.constants.rho_air
+   monarchs.physics.constants.rho_ice
+   monarchs.physics.constants.rho_water
+   monarchs.physics.constants.saturated_firn_albedo
+   monarchs.physics.constants.sfc_absorbed_frac
+   monarchs.physics.constants.stefan_boltzmann
+   monarchs.physics.constants.tau_ice
+   monarchs.physics.constants.tau_water
+   monarchs.physics.constants.v_lid_min_thickness
+   monarchs.physics.constants.wet_snow_albedo
+
+
+Module Contents
+---------------
+
+.. py:data:: L_ice
+   :value: 334000
+
+
+.. py:data:: bare_ice_albedo
+   :value: 0.413
+
+
+.. py:data:: cp_air
+   :value: 1004
+
+
+.. py:data:: cp_water
+   :value: 4217
+
+
+.. py:data:: dry_snow_albedo
+   :value: 0.867
+
+
+.. py:data:: emissivity
+   :value: 0.98
+
+
+.. py:data:: ice_extinction_coefficient
+   :value: 1.5
+
+
+.. py:data:: k_air
+   :value: 0.022
+
+
+.. py:data:: k_water
+   :value: 0.5818
+
+
+.. py:data:: pore_closure
+   :value: 830
+
+
+.. py:data:: rho_air
+   :value: 1.29
+
+
+.. py:data:: rho_ice
+   :value: 917.0
+
+
+.. py:data:: rho_water
+   :value: 1000.0
+
+
+.. py:data:: saturated_firn_albedo
+   :value: 0.6
+
+
+.. py:data:: sfc_absorbed_frac
+   :value: 0.5
+
+
+.. py:data:: stefan_boltzmann
+   :value: 5.670374e-08
+
+
+.. py:data:: tau_ice
+   :value: 1.5
+
+
+.. py:data:: tau_water
+   :value: 0.36
+
+
+.. py:data:: v_lid_min_thickness
+   :value: 0.001
+
+
+.. py:data:: wet_snow_albedo
+   :value: 0.6
+
+

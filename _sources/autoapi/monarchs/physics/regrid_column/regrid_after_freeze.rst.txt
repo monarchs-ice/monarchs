@@ -1,0 +1,19 @@
+monarchs.physics.regrid_column.regrid_after_freeze
+==================================================
+
+.. py:function:: monarchs.physics.regrid_column.regrid_after_freeze(cell, height_change)
+
+   As regrid_after_melt, but in the rare occurrence we have a freezing event (if temperatures go below
+   freezing in the firn and we have a lake), regrid the column but *increase* the depth.
+
+   Parameters:
+   cell : numpy structured array
+       Element of the model grid we are operating on.
+   height_change : float
+       Change in the firn height as a result of freezing. [m]
+
+   -------
+   Returns:
+       cell : numpy structured array
+       (amended) Element of the model grid we are operating on.
+

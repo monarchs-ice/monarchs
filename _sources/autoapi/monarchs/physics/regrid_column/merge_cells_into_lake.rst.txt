@@ -1,0 +1,17 @@
+monarchs.physics.regrid_column.merge_cells_into_lake
+====================================================
+
+.. py:function:: monarchs.physics.regrid_column.merge_cells_into_lake(cell, height_change)
+
+   Check for and merge all fully liquid firn layers. e.g. if we
+   melt through a solid layer, and reach a series of layers with
+   Lfrac = 1.0, then add the height of all of these layers to
+   height_change. These will then later be removed from the firn
+   column and added to the lake depth.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **height_change** (*float*) -- Change in the firn height as a result of melting. [m]
+
+   :returns: **height_change** -- Updated height_change after merging fully liquid layers into the lake.
+   :rtype: float
+

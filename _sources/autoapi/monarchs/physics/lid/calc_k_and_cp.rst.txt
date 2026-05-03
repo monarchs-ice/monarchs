@@ -1,0 +1,11 @@
+monarchs.physics.lid.calc_k_and_cp
+==================================
+
+.. py:function:: monarchs.physics.lid.calc_k_and_cp(cell)
+
+   Calculate the thermal conductivity and specific heat capacity of the
+    ice lid based on its temperature profile.
+   :Parameters: **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+
+   :rtype: None.
+

@@ -1,0 +1,12 @@
+surface_energy_balance.sfc_energy_lid
+=====================================
+
+.. py:function:: surface_energy_balance.sfc_energy_lid(x, output, args)
+
+   :Parameters: * **x - array_like, float, dimension(vert_grid_lid)** -- Initial estimate of the lid surface temperature. [K].
+                  Use the air temperature for this - as we only run this when initialising the lid.
+                * **args**
+
+   :returns: **output**
+   :rtype: float
+

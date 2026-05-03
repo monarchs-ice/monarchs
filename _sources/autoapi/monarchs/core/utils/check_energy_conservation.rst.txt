@@ -1,0 +1,4 @@
+monarchs.core.utils.check_energy_conservation
+=============================================
+
+.. py:function:: monarchs.core.utils.check_energy_conservation(grid)

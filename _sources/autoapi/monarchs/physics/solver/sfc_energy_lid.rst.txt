@@ -1,0 +1,20 @@
+monarchs.physics.solver.sfc_energy_lid
+======================================
+
+.. py:function:: monarchs.physics.solver.sfc_energy_lid(x, args)
+
+   Surface energy balance for the frozen lid.
+   Called in lid_seb_solver when ``cell["v_lid"]`` is False.
+
+   :Parameters: * **x** (*array_like, float, shape (1,)*) -- Current estimate of the lid surface temperature [K].
+                * **args** (*tuple*) -- ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+                  dew_point_temperature, wind, k_lid, lid_depth,
+                  vert_grid_lid, sub_T)``
+
+                  sub_T : float
+                      Temperature of the first lid layer used as the sub-surface
+                      boundary condition [K].
+
+   :returns: **output** -- Residual of the surface energy balance equation.
+   :rtype: array_like, float, shape (1,)
+

@@ -1,0 +1,15 @@
+monarchs.physics.solver.lake_development_eqn
+============================================
+
+.. py:function:: monarchs.physics.solver.lake_development_eqn(x, args)
+
+   Scipy-compatible form of the lake development version of the surface
+   temperature equation.  Called in lake_seb_solver.
+
+   :Parameters: * **x** (*array_like, float, shape (1,)*) -- Current estimate of the lake surface temperature [K].
+                * **args** (*tuple*) -- ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+                  dew_point_temperature, wind, lake_temperature, vert_grid_lake)``
+
+   :returns: **output** -- Residual of the surface energy balance equation.
+   :rtype: array_like, float, shape (1,)
+

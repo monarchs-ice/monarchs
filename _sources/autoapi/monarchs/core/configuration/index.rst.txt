@@ -1,0 +1,29 @@
+monarchs.core.configuration
+===========================
+
+.. py:module:: monarchs.core.configuration
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/configuration/create_defaults_for_missing_flags
+   /autoapi/monarchs/core/configuration/create_output_folders
+   /autoapi/monarchs/core/configuration/handle_incompatible_flags
+   /autoapi/monarchs/core/configuration/handle_invalid_values
+   /autoapi/monarchs/core/configuration/jit_modules
+   /autoapi/monarchs/core/configuration/parse_args
+
+.. autoapisummary::
+
+   monarchs.core.configuration.create_defaults_for_missing_flags
+   monarchs.core.configuration.create_output_folders
+   monarchs.core.configuration.handle_incompatible_flags
+   monarchs.core.configuration.handle_invalid_values
+   monarchs.core.configuration.jit_modules
+   monarchs.core.configuration.parse_args
+
+

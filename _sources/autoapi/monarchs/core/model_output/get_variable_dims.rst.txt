@@ -1,0 +1,14 @@
+monarchs.core.model_output.get_variable_dims
+============================================
+
+.. py:function:: monarchs.core.model_output.get_variable_dims(key)
+
+   Determine the dimensions for a variable based on its key.
+   Lake variables use the lake vertical grid, lid variables use the lid vertical grid, etc.
+   Water direction uses a separate direction dimension, to represent one of the 8 cardinal
+   directions in which water can flow.
+   :Parameters: **key** (*str*) -- Variable name.
+
+   :returns: Dimensions for the variable.
+   :rtype: tuple
+

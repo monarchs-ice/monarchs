@@ -1,0 +1,43 @@
+monarchs.physics.snow_accumulation
+==================================
+
+.. py:module:: monarchs.physics.snow_accumulation
+
+.. autoapi-nested-parse::
+
+   Module handling snow accumulation on the surface.
+   Uses conservative regridding to maintain mass balance when adding
+   new layers to the top of the firn column.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.snow_accumulation.MODULE_NAME
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/snow_accumulation/densification
+   /autoapi/monarchs/physics/snow_accumulation/snowfall
+
+.. autoapisummary::
+
+   monarchs.physics.snow_accumulation.densification
+   monarchs.physics.snow_accumulation.snowfall
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.physics.snow_accumulation'
+
+

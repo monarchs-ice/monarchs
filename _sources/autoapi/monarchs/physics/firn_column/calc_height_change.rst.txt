@@ -1,0 +1,17 @@
+monarchs.physics.firn_column.calc_height_change
+===============================================
+
+.. py:function:: monarchs.physics.firn_column.calc_height_change(cell, timestep, met_data, surface_temp)
+
+   Determine the amount of firn height change that arises due to melting.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **timestep** (*float*) -- Number of seconds in each timestep. [s]
+                * **met_data** (*dict*) -- Dictionary containing the meteorological data for the current timestep.
+                  See firn_column for details.
+                * **surf_T** (*float*) -- Calculated surface temperature of the firn from the initial (non-fixed
+                  surface) implementation of the heat equation. [K]
+
+   :returns: **dHdt** -- Change in firn height as a result of melting. [m]
+   :rtype: float
+

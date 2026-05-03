@@ -1,0 +1,15 @@
+monarchs.physics.lid.adjust_lid_height
+======================================
+
+.. py:function:: monarchs.physics.lid.adjust_lid_height(cell, dt, Fu, k_ice)
+
+   Adjust the lid and lake heights based on the temperature gradient at the
+   lake-lid boundary. Called in lid_development.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **dt** (*int*) -- Number of seconds in the timestep, very likely 3600 (i.e. 1h) [s]
+                * **Fu** (*float*) -- Heat flux from the lake into the lid [W m^-2]
+                * **k_ice** (*array_like, float, dimension(cell.vert_grid_lid)*) -- Thermal conductivity of the ice lid [W m^-1 K^-1]
+
+   :rtype: None (amends cell inplace)
+

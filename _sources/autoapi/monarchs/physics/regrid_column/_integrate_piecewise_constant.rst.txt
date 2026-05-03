@@ -1,0 +1,16 @@
+monarchs.physics.regrid_column._integrate_piecewise_constant
+============================================================
+
+.. py:function:: monarchs.physics.regrid_column._integrate_piecewise_constant(edges, values, z0, z1)
+
+   Integrate layer-by-layer, assuming piecewise-constant values.
+   (much like those in our firn column, which are constant between
+   layer edges).
+   This will yield a value in metres, if values is a fraction (i.e. Sfrac
+   or Lfrac), and the depth coordinate is metres. This means that we get
+   out the resulting thickness of the solid/liquid column in metres.
+   :Parameters: * **edges**
+                * **values**
+                * **z0**
+                * **z1**
+

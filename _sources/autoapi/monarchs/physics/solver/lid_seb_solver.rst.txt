@@ -1,0 +1,26 @@
+monarchs.physics.solver.lid_seb_solver
+======================================
+
+.. py:function:: monarchs.physics.solver.lid_seb_solver(cell, met_data, dt, dz, k_lid, Sfrac_lid=None)
+
+   Scipy version of the lid surface energy balance solver.
+   Solves sfc_energy_lid or sfc_energy_virtual_lid.
+
+   Values are read directly from ``cell`` and ``met_data``, consistent with
+   the Numba solver in solver_nb.py.
+
+   Called in virtual_lid and lid.lid_development.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*dict*) -- Meteorological data for the current timestep.
+                * **dt** (*float*) -- Timestep [s].
+                * **dz** (*float*) -- Layer thickness [m].
+                * **k_lid** (*float*) -- Thermal conductivity of the lid [W m^-1 K^-1].
+                * **Sfrac_lid** (*array_like, optional*) -- Solid fraction of the lid.  Unused in the scipy path but accepted for
+                  API parity with solver_nb.py.
+
+   :returns: * **sol** (*array_like, float*) -- Calculated lid surface temperature [K].
+             * **infodict** (*dict*) -- Diagnostic output from fsolve.
+             * **ier** (*int*) -- 1 if a solution was found, otherwise see mesg.
+             * **mesg** (*str*) -- Status message from fsolve.
+

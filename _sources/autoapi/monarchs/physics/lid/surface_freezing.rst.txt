@@ -1,0 +1,14 @@
+monarchs.physics.lid.surface_freezing
+=====================================
+
+.. py:function:: monarchs.physics.lid.surface_freezing(cell, dt, Q)
+
+   Determine the thermal conductivity of the lid when the surface temperature
+   is below freezing. If the model is in this state, then we decrement
+   lid_melt_count, so that we do not call combine_lid_firn prematurely
+   (e.g. if there are a few timesteps of melt followed by many of freezing).
+
+   :Parameters: **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+
+   :rtype: k_lid - float - thermal conductivity of the lid [W m^-1 K^-1]
+

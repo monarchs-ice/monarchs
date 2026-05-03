@@ -1,0 +1,4 @@
+monarchs.physics.lake.calc_height_adjustment
+============================================
+
+.. py:function:: monarchs.physics.lake.calc_height_adjustment(cell, k, Fl)

@@ -1,0 +1,23 @@
+monarchs.physics.surface_fluxes
+===============================
+
+.. py:module:: monarchs.physics.surface_fluxes
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/surface_fluxes/bulk_fluxes
+   /autoapi/monarchs/physics/surface_fluxes/sfc_albedo
+   /autoapi/monarchs/physics/surface_fluxes/sfc_flux
+
+.. autoapisummary::
+
+   monarchs.physics.surface_fluxes.bulk_fluxes
+   monarchs.physics.surface_fluxes.sfc_albedo
+   monarchs.physics.surface_fluxes.sfc_flux
+
+
