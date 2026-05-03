@@ -22,7 +22,7 @@ model developers.
 The model source code is located in the `src/monarchs` folder. 
 
 If you have any feedback or issues, please submit via Github Issues if a problem with the code, or email Jon Elsey at 
-the University of Leeds for help setting up on HPC systems.
+Newcastle University for help setting up on HPC systems.
 
 Todos
 -----
@@ -35,10 +35,14 @@ Todos
 
 Installation
 ------------
-I recommend setting up a new virtual environment and using it for MONARCHS only, to avoid dependency issues. You 
-can do this using `conda create -n monarchs python=3.9` or `python -m venv monarchs`.
+Set up a new virtual environment and use it for MONARCHS only, to avoid dependency issues. You 
+can do this using `conda create -n monarchs python=3.13` or `python -m venv monarchs`.
 
-You can install MONARCHS and its core dependencies on your system by cloning this repository and from the project root folder do
+You can install MONARCHS and its core dependencies on your system two ways. To get the latest stable release, you can do:
+
+`pip install monarchs-ice` 
+
+If you want a development version of the model (i.e. one you can edit), do so by cloning this repository and from the project root folder do
 
 `python -m pip install -e .`
 
@@ -48,17 +52,6 @@ You may first need to do
 `python -m pip install --upgrade pip`.
 
 If you want changes you have made to be picked up on your system, ensure that you use the `-e` flag when installing. See `pyproject.toml` for details.
-
-In future, it will be possible to install a stable, version of MONARCHS with all its dependencies by doing 
-
-`python -m pip install monarchs`
-
-or 
-
-`conda install -c conda-forge monarchs`
-
-It is still recommended to clone the repository and install with `pip install -e .` if you are intending to make 
-changes to the model source code.
 
 ## Installing optional dependencies
 The simplest way to install the extra MONARCHS dependencies from an existing build is doing
