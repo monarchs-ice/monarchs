@@ -1,6 +1,6 @@
 [project]
 name = 'monarchs-ice'
-version = '1.0.0'
+version = '1.0.1'
 description = 'A numerical model of ice shelf development'
 requires-python = ">3.8"
 authors = [
