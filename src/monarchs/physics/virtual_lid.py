@@ -94,11 +94,7 @@ def virtual_lid_development(cell, dt, met_data, turbulent_flux_upper):
 
     # Net flux at interface: negative (upward heat loss) causes freezing
     q_net = flux_total
-
-    print("Updated virtual lid temperature:", cell["virtual_lid_temperature"])
-    print("Q net at virtual lid interface:", q_net)
     new_boundary_change = -q_net * dt / (L_ice * rho_ice)
-    print("New boundary change virtual lid (m):", new_boundary_change)
 
     # further freezing of the virtual lid
     if new_boundary_change > 0:

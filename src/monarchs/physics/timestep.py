@@ -169,7 +169,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
             if not cell["lake"]:
                 if lake_development_toggle:
-                    print("Lake formation")
                     lake.lake_formation(cell, dt, met_data[t_step])
 
             elif cell["lake"] and not cell["lid"]:
