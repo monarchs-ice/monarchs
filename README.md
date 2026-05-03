@@ -13,9 +13,9 @@ Leeds (both formerly Cardiff University), in collaboration with Alex Robel and t
 Georgia Tech.
 
 It is available and open source under the GPL v3.0-or-later License. If you are planning on using it, we would very much
-appreciate being kept in the loop, or a citation being given to our paper: #TODO - link/doi etc. 
+appreciate being kept in the loop. The citation for MONARCHS is (TBD, paper under review).
 
-If you make changes to the code, please feel free to submit a pull request to get your features added into the core model repo!
+If you make changes to the code, please feel free to submit a pull request to get your features added into the core model repo.
 Alternatively, if you have feature requests, please submit an Issue on the GitHub repo, or get in touch with one of the
 model developers.
 
@@ -26,8 +26,6 @@ Newcastle University for help setting up on HPC systems.
 
 Todos
 -----
-- Validation tests (Moussavi lakes)
-- How to handle DEMs with large vertical changes - e.g. 100m-0m firn.
 - Type hints 
 - Full unit test suite
 - Longer term - a MONARCHS GUI may be really handy for specifying the inputs in model_setup.
