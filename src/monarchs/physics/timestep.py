@@ -220,8 +220,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 #              melting for half a day, and therefore has
                 #              significant slush/water on the surface)
                 if cell["lake_depth"] <= 1e-5:
-                    print("Combining lid and firn column")
-                    print("Lid melt count:", cell["lid_melt_count"])
+                    #print("Combining lid and firn column")
+                    #print("Lid melt count:", cell["lid_melt_count"])
                     reset_column.combine_lid_firn(cell, surface_slush=False)
                 elif cell["lid_melt_count"] > 12:
                     reset_column.combine_lid_firn(cell, surface_slush=True)

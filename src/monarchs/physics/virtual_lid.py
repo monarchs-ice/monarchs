@@ -170,7 +170,7 @@ def melt_virtual_lid(cell, ice_added):
 
             cell["total_melt"] = cell["total_melt"] + cell["v_lid_depth"]
             cell["v_lid_depth"] = 0
-            print("Whole virtual lid melted")
+            #print("Whole virtual lid melted")
         # some of the lid melts
         else:
             cell["lake_depth"] = cell["lake_depth"] + ice_removed * rho_ice / rho_water

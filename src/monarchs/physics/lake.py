@@ -211,7 +211,7 @@ def turbulent_mixing(cell, sw_in, dt, k):
     dh += dh_change * 3600
     if dh > (cell["firn_depth"] / cell["vert_grid"]):
         dh = cell["firn_depth"] / cell["vert_grid"]
-        print("Melting entire layer")
+        #print("Melting entire layer")
     # return both the bottom flux (W/m^2) and the cumulative energy moved there (J/m^2)
     return flux_upper, dh
 
@@ -431,8 +431,8 @@ def lake_development(cell, dt, met_data):
         )[0][0]
         # If surface cooled below freezing, create virtual lid
         if cell["lake_temperature"][0] < 273.15:
-            print("Lake surface below freezing, creating virtual lid")
-            print(cell["lake_temperature"][0])
+            #print("Lake surface below freezing, creating virtual lid")
+            #print(cell["lake_temperature"][0])
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15
             cell["v_lid"] = True
@@ -528,7 +528,7 @@ def calc_height_adjustment(cell, k, Fl):
             if abs(boundary_change_raw) > cap:
                 boundary_change = np.sign(boundary_change_raw) * cap
                 cap_reached = True
-                print("Cap reached in calc_height_adjustment")
+                #print("Cap reached in calc_height_adjustment")
             else:
                 boundary_change = boundary_change_raw
 
