@@ -394,43 +394,6 @@ def freeze_pre_lake(cell):
     cell["v_lid"] = False
     cell["lid"] = False
 
-
-def freeze_pre_lake(cell):
-    """
-    Refreeze a shallow 'pre-lake' (exposed water film) into the firn column, conserving mass.
-
-    Converts the entire lake water depth H_w to an equivalent ice thickness
-    H_i = H_w * (rho_water / rho_ice), adds that thickness at the surface
-    (pure ice), and removes the lake water. Uses the same regridding
-    routine as other freezing events to keep all state arrays consistent.
-    """
-    # Clear exposed-water flags/counters up-front
-    cell["exposed_water"] = False
-    cell["exposed_water_refreeze_counter"] = 0
-
-    # Nothing to do if the pre-lake is already zero
-    H_w = float(max(0.0, cell["lake_depth"]))
-    if H_w == 0.0:
-        return
-
-    # Equivalent ice thickness to add at the surface
-    H_i = H_w * (rho_water / rho_ice)
-
-    cell["lake_depth"] = 0.0
-    cell["lake"] = False
-
-    # Add a solid-ice layer of thickness H_i on top of the firn column and regrid
-    # accordingly
-    regrid_column.regrid_after_freeze(cell, H_i)
-
-    # Newly formed surface ice should be at the melting point
-    cell["firn_temperature"][0] = 273.15
-
-    # reset flags
-    cell["v_lid"] = False
-    cell["lid"] = False
-
-
 def lake_development(cell, dt, met_data):
     """
     Once a lake of at least 10 cm deep is present this function calculates
@@ -509,9 +472,9 @@ def lake_development(cell, dt, met_data):
     elif boundary_change < 0:
         # remove water from lake, add ice to firn
         thickness_to_add = abs(boundary_change)
-        water_loss = thickness_to_add * (rho_ice / rho_water)
-        cell["lake_depth"] -= water_loss
-        regrid_column.regrid_after_freeze(cell, thickness_to_add)
+        # ensure we can't lose more than the total size of the lake
+        water_loss = min(cell["lake_depth"], thickness_to_add * (rho_ice / rho_water))
+        regrid_column.regrid_after_freeze(cell, thickness_to_add, water_loss)
         cell["lake_boundary_change"] += boundary_change
     # Set end=False since we only care about the top cell, and in this
     # case we want to put this water into the lake.

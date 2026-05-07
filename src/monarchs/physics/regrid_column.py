@@ -228,7 +228,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     check_for_mass_conservation(cell, mass_before, mass_after, routine_name)
 
 
-def regrid_after_freeze(cell, height_change):
+def regrid_after_freeze(cell, height_change, water_loss):
     """
     As regrid_after_melt, but in the rare occurrence we have a freezing event (if temperatures go below
     freezing in the firn and we have a lake), regrid the column but *increase* the depth.
@@ -250,7 +250,7 @@ def regrid_after_freeze(cell, height_change):
         return
 
     mass_before = utils.calc_mass_sum(cell)
-
+    cell["lake_depth"] -= water_loss
     # new layer properties - pure ice
     new_ice_Sfrac = 1.0
     new_ice_Lfrac = 0.0
