@@ -1,0 +1,23 @@
+monarchs.physics.solver.lid_heateqn_solver
+==========================================
+
+.. py:function:: monarchs.physics.solver.lid_heateqn_solver(cell, met_data, dt, dz)
+
+   Scipy version of the lid heat equation solver.
+   Solves heateqn.heateqn_lid.
+
+   Values are read directly from ``cell`` and ``met_data``, consistent with
+   the Numba solver in solver_nb.py.
+
+   Called in lid.lid_development.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*dict*) -- Meteorological data for the current timestep.
+                * **dt** (*float*) -- Timestep [s].
+                * **dz** (*float*) -- Layer thickness [m].
+
+   :returns: * **sol** (*array_like, float, dimension(cell.vert_grid_lid)*) -- Calculated lid column temperature [K].
+             * **infodict** (*dict*) -- Diagnostic output from fsolve.
+             * **ier** (*int*) -- 1 if a solution was found, otherwise see mesg.
+             * **mesg** (*str*) -- Status message from fsolve.
+

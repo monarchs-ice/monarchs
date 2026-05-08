@@ -1,0 +1,24 @@
+monarchs.physics.surface_fluxes.sfc_flux
+========================================
+
+.. py:function:: monarchs.physics.surface_fluxes.sfc_flux(alpha, lid, lake, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, xsurf)
+
+   Calculate the surface heat flux from the input shortwave and longwave
+   fluxes and latent/sensible heat fluxes.
+
+   :Parameters: * **alpha** (*float*) -- Surface albedo.
+                * **lid** (*bool*) -- Flag which indicates whether there is a lid at the surface due to
+                  refreezing. Used here to determine which form of bulk fluxes to use.
+                * **lake** (*bool*) -- Flag which indicates whether there is a lake present. Used here to
+                  determine which form of bulk fluxes to use.
+                * **lw_in** (*float*) -- Incoming longwave radiation. [W m^-2].
+                * **sw_in** (*float*) -- Incoming shortwave (solar) radiation. [W m^-2].
+                * **air_temp** (*float*) -- Surface-layer air temperature. [K].
+                * **p_air** (*float*) -- Surface-layer air pressure. [hPa].
+                * **dew_point_temperature** (*float*) -- Dew-point temperature at the surface. [K]
+                * **wind** (*float*) -- Wind speed. [m s^-1].
+                * **xsurf** (*float*) -- Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
+
+   :returns: **Q** -- Surface energy flux. [W m^-2].
+   :rtype: float64
+

@@ -1,0 +1,12 @@
+monarchs.core.configuration.handle_invalid_values
+=================================================
+
+.. py:function:: monarchs.core.configuration.handle_invalid_values(model_setup)
+
+   Handle cases where model attributes are set to values that will cause
+   the model to fail.
+
+   :Parameters: **model_setup - load_model_setup.ModelSetup instance** -- Loaded in model setup file (see <load_in_model_setup>)
+
+   :rtype: None
+

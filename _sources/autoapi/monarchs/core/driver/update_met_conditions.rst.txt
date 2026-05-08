@@ -1,0 +1,19 @@
+monarchs.core.driver.update_met_conditions
+==========================================
+
+.. py:function:: monarchs.core.driver.update_met_conditions(model_setup, grid, met_start_idx, met_end_idx, start=False, snow_added=0)
+
+   Load meteorological data for one day from the met netCDF and optionally
+   expand from coarse (ERA5) to fine (MONARCHS) grid using index maps if present.
+
+   :Parameters: * **model_setup**
+                * **grid**
+                * **met_start_idx**
+                * **met_end_idx**
+                * **start** (*bool, optional*) -- If True, wrap met_start_idx modulo met_data_len (e.g. for restart).
+                * **snow_added** (*float, optional*) -- Running total of snow added (for mass accounting).
+
+   :returns: * **met_data_grid** (*structured array*)
+             * **met_data_len** (*int*)
+             * **snow_added** (*float*)
+

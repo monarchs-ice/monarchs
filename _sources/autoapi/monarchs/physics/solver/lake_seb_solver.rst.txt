@@ -1,0 +1,23 @@
+monarchs.physics.solver.lake_seb_solver
+=======================================
+
+.. py:function:: monarchs.physics.solver.lake_seb_solver(cell, met_data, dt, dz, formation=False)
+
+   Scipy version of the lake solver.
+   Solves lake_development_eqn or lake_formation_eqn.
+
+   Values are read directly from ``cell`` and ``met_data``, consistent with
+   the Numba solver in solver_nb.py.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*dict*) -- Meteorological data for the current timestep.
+                * **dt** (*float*) -- Timestep [s].
+                * **dz** (*float*) -- Layer thickness [m].
+                * **formation** (*bool, optional*) -- If True, solve the lake *formation* equation; otherwise solve the lake
+                  *development* equation.  Default False.
+
+   :returns: * **sol** (*array_like, float*) -- Calculated lake surface temperature [K].
+             * **infodict** (*dict*) -- Diagnostic output from fsolve.
+             * **ier** (*int*) -- 1 if a solution was found, otherwise see mesg.
+             * **mesg** (*str*) -- Status message from fsolve.
+

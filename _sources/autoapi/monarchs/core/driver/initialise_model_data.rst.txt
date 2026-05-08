@@ -1,0 +1,8 @@
+monarchs.core.driver.initialise_model_data
+==========================================
+
+.. py:function:: monarchs.core.driver.initialise_model_data(model_setup)
+
+   Wrapper function that calls various initialisation functions to set up
+   MONARCHS.
+

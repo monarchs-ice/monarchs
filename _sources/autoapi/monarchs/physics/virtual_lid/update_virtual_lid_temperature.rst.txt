@@ -1,0 +1,4 @@
+monarchs.physics.virtual_lid.update_virtual_lid_temperature
+===========================================================
+
+.. py:function:: monarchs.physics.virtual_lid.update_virtual_lid_temperature(cell, met_data, dt)

@@ -1,0 +1,11 @@
+monarchs.core.model_output.interpolate_model_output
+===================================================
+
+.. py:function:: monarchs.core.model_output.interpolate_model_output(grid, vert_grid_size, var)
+
+   Interpolate a 3D variable to a new vertical grid size.
+
+   :Parameters: * **grid** (*np.ndarray*) -- Structured array representing the model grid.
+                * **vert_grid_size** (*int*) -- Desired size of the vertical grid for interpolation.
+                * **var** (*np.ndarray*) -- 3D variable to interpolate, with shape (x, y, z).
+

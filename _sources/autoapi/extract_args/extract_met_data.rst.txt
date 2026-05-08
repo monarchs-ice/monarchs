@@ -1,0 +1,9 @@
+extract_args.extract_met_data
+=============================
+
+.. py:function:: extract_args.extract_met_data(args)
+
+   Extract only the meteorological data from the packed args array.
+
+   :Parameters: **args** (*np.ndarray*) -- Unified flat buffer containing model variables.
+

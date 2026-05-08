@@ -1,0 +1,8 @@
+monarchs.core.load_model_setup.get_model_setup
+==============================================
+
+.. py:function:: monarchs.core.load_model_setup.get_model_setup(model_setup_path)
+
+   Load in the model setup from the specified path,
+   and return an instance of the ModelSetup class.
+

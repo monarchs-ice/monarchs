@@ -1,0 +1,33 @@
+monarchs.physics.regrid_column
+==============================
+
+.. py:module:: monarchs.physics.regrid_column
+
+.. autoapi-nested-parse::
+
+   Functions related to regridding (interpolation) of the firn column as a
+   response to melting.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/regrid_column/_integrate_piecewise_constant
+   /autoapi/monarchs/physics/regrid_column/conservative_regrid
+   /autoapi/monarchs/physics/regrid_column/merge_cells_into_lake
+   /autoapi/monarchs/physics/regrid_column/regrid_after_freeze
+   /autoapi/monarchs/physics/regrid_column/regrid_after_melt
+
+.. autoapisummary::
+
+   monarchs.physics.regrid_column._integrate_piecewise_constant
+   monarchs.physics.regrid_column.conservative_regrid
+   monarchs.physics.regrid_column.merge_cells_into_lake
+   monarchs.physics.regrid_column.regrid_after_freeze
+   monarchs.physics.regrid_column.regrid_after_melt
+
+

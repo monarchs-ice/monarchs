@@ -1,0 +1,28 @@
+monarchs.run_monarchs
+=====================
+
+.. py:module:: monarchs.run_monarchs
+
+.. autoapi-nested-parse::
+
+   Main MONARCHS execution script. Invoked via the command line with
+
+   `monarchs -i <filepath>
+
+   where <filepath> is the path to a model setup script.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/run_monarchs/run_from_cli
+
+.. autoapisummary::
+
+   monarchs.run_monarchs.run_from_cli
+
+

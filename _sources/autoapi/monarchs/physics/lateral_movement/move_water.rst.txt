@@ -1,0 +1,38 @@
+monarchs.physics.lateral_movement.move_water
+============================================
+
+.. py:function:: monarchs.physics.lateral_movement.move_water(grid, max_grid_col, max_grid_row, timestep, catchment_outflow=True, lateral_movement_percolation_toggle=True, flow_into_land=False, flow_speed_scaling=1.0, outflow_proportion=1.0)
+
+   Loop over the model grid and determine which cells water is allowed to move
+   from/to, then perform this movement simultaneously.
+    This is the main function used to perform the water movement.
+
+   This movement can be from a lake to a lake, from a lake to an ice lens,
+   or from an ice lens to another ice lens.
+   In the case that an ice lens is present, water will move to and from the
+   lowest point in the firn that is not saturated.
+
+   At the end of the algorithm, a percolation step (without refreezing) is
+   run, so that water ends up in the correct places in the column.
+   Similarly, a pass of `calc_saturation` is also run, to ensure that cells
+   that are over-full with water pool upward, so we don't end up with an
+   unphysical state.
+
+   :Parameters: * **grid** (*np.ndarray*) -- Numpy structured array containing the model grid.
+                * **max_grid_row** (*int*) -- Number of grid rows
+                * **max_grid_col** (*int*) -- Number of grid columns
+                * **timestep** (*int*) -- Time taken for the lateral movement to occur. This is typically
+                  24 hours, i.e. 3600 * 24 seconds. [s]
+                * **lateral_movement_percolation_toggle** (*bool, optional*) -- Boolean flag to determine whether to perform a percolation step after
+                  we do lateral water, to ensure that water is where it should be in the
+                  firn column.
+
+   :returns: **grid**
+   :rtype: amended version of the model grid with water having moved laterally
+
+   :raises ValueError: If the total amount of water is not conserved, then the algorithm is
+       not working correctly (as we are losing mass), so an unphysical state
+       has been reached.
+       This conservation calculation accounts for water lost to catchment
+       outflow.
+

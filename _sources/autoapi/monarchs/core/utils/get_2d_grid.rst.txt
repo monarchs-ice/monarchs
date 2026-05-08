@@ -1,0 +1,19 @@
+monarchs.core.utils.get_2d_grid
+===============================
+
+.. py:function:: monarchs.core.utils.get_2d_grid(grid, attr, index=False, mask_invalid=False)
+
+   Helper function to get a printout of a variable from the model grid,
+   at a user-specified index.
+
+   :Parameters: * **grid** (*List, or nb.typed.List*) -- the model grid
+                * **attr** (*str*) -- the attribute you want to print out, e.g:
+                  get_2d_grid(grid, "firn_depth") will print out the firn depth
+                  for each point on the grid at index <index>
+                * **index** (*int, optional*) -- the index (i.e. height) at which you want to print out.
+                  Defaults to False, which the code interprets as the surface
+                  (index 0).
+                * **mask_invalid** (*bool, optional*) -- If True, mask out values where cell['valid_cell'] is False (set to np.nan).
+
+   :rtype: None. (but will print to stdout)
+

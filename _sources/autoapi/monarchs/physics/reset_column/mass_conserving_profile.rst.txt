@@ -1,0 +1,4 @@
+monarchs.physics.reset_column.mass_conserving_profile
+=====================================================
+
+.. py:function:: monarchs.physics.reset_column.mass_conserving_profile(cell, orig_lid_depth, var='Sfrac', freeze_lake=False)

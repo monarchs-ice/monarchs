@@ -1,0 +1,8 @@
+monarchs.core.driver.get_snow_sum
+=================================
+
+.. py:function:: monarchs.core.driver.get_snow_sum(met_data_grid, grid, met_start_idx, met_end_idx, snow_added)
+
+   Work out how much snow has been added to the model over the last day, and
+   add it to the total amount of snow already added.
+

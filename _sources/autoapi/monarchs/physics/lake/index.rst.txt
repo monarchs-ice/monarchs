@@ -1,0 +1,44 @@
+monarchs.physics.lake
+=====================
+
+.. py:module:: monarchs.physics.lake
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.lake.MODULE_NAME
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lake/calc_height_adjustment
+   /autoapi/monarchs/physics/lake/freeze_pre_lake
+   /autoapi/monarchs/physics/lake/lake_development
+   /autoapi/monarchs/physics/lake/lake_formation
+   /autoapi/monarchs/physics/lake/radiative_transfer
+   /autoapi/monarchs/physics/lake/turbulent_mixing
+
+.. autoapisummary::
+
+   monarchs.physics.lake.calc_height_adjustment
+   monarchs.physics.lake.freeze_pre_lake
+   monarchs.physics.lake.lake_development
+   monarchs.physics.lake.lake_formation
+   monarchs.physics.lake.radiative_transfer
+   monarchs.physics.lake.turbulent_mixing
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.physics.lake'
+
+

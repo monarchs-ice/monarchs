@@ -1,0 +1,20 @@
+monarchs.physics.lateral_movement.handle_edge_cases
+===================================================
+
+.. py:function:: monarchs.physics.lateral_movement.handle_edge_cases(grid, cell, temporary_cell, row, col, n_s_index, w_e_index, water_frac, split, outflow_proportion, catchment_outflow=False)
+
+   Handles the edge cases where we are trying to move water out of the model
+   domain.
+
+   :Parameters: * **grid**
+                * **cell**
+                * **temporary_cell**
+                * **row**
+                * **col**
+                * **n_s_index**
+                * **w_e_index**
+                * **water_frac**
+                * **split**
+                * **outflow_proportion**
+                * **catchment_outflow**
+

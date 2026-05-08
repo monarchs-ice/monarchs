@@ -1,0 +1,12 @@
+monarchs.physics.lake.freeze_pre_lake
+=====================================
+
+.. py:function:: monarchs.physics.lake.freeze_pre_lake(cell)
+
+   Refreeze a shallow 'pre-lake' (exposed water film) into the firn column, conserving mass.
+
+   Converts the entire lake water depth H_w to an equivalent ice thickness
+   H_i = H_w * (rho_water / rho_ice), adds that thickness at the surface
+   (pure ice), and removes the lake water. Uses the same regridding
+   routine as other freezing events to keep all state arrays consistent.
+

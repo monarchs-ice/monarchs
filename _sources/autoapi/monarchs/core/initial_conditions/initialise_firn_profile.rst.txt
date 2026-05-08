@@ -1,0 +1,8 @@
+monarchs.core.initial_conditions.initialise_firn_profile
+========================================================
+
+.. py:function:: monarchs.core.initial_conditions.initialise_firn_profile(model_setup, diagnostic_plots=False)
+
+   DEM/initial firn profile
+
+

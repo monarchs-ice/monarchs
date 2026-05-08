@@ -1,0 +1,22 @@
+monarchs.core.model_output.create_variable
+==========================================
+
+.. py:function:: monarchs.core.model_output.create_variable(data, key, var, dtype, grid, vert_grid_size=20)
+
+   Create a variable in the NetCDF file with appropriate dimensions and data.
+   Lat and long are variables with dimensions (x, y) only, as these don't change
+   over time.
+   Other variables may use the firn vertical grid, lid vertical grid, or
+   lake vertical grid.
+   Any variables that use the firn vertical grid (e.g. temperature)
+   may need to be interpolated to a new vertical grid size.
+
+   :Parameters: * **data** (*netCDF4.Dataset*) -- The NetCDF dataset to which the variable will be added.
+                * **key** (*str*) -- Variable name.
+                * **var** (*np.ndarray*) -- 2D or 3D variable data to be saved.
+                * **dtype** (*str*) -- Data type for the variable.
+                * **grid** (*np.ndarray*) -- Structured array representing the model grid.
+                * **vert_grid_size** (*int*) -- Desired size of the vertical grid for interpolation.
+
+   :rtype: None (amends data object inplace)
+

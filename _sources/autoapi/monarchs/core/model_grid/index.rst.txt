@@ -1,0 +1,26 @@
+monarchs.core.model_grid
+========================
+
+.. py:module:: monarchs.core.model_grid
+
+.. autoapi-nested-parse::
+
+   Define the model grid datatype. This is a Numpy structured array.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/model_grid/get_spec
+   /autoapi/monarchs/core/model_grid/initialise_iceshelf
+
+.. autoapisummary::
+
+   monarchs.core.model_grid.get_spec
+   monarchs.core.model_grid.initialise_iceshelf
+
+

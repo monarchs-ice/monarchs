@@ -1,0 +1,10 @@
+monarchs.physics.regrid_column.conservative_regrid
+==================================================
+
+.. py:function:: monarchs.physics.regrid_column.conservative_regrid(old_edges, old_values, new_edges)
+
+   Mass/volume-conserving interpolation for piecewise-constant values.
+
+   Effectively, we take the integral of the old values, and interpolate that
+   to the new grid, which ensures that the integral is conserved.
+

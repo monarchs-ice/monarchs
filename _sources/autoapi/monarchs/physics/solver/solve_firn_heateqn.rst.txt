@@ -1,0 +1,22 @@
+monarchs.physics.solver.solve_firn_heateqn
+==========================================
+
+.. py:function:: monarchs.physics.solver.solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method='hybr', toggle_dict=None)
+
+   Dispatcher for firn heat equation solver.
+
+   Called in <firn_column>, <timestep>, <lake>.
+
+   :Parameters: * **cell** (*structured array*) -- Element of the model grid we are operating on
+                * **met_data** (*structured array*) -- Meteorological data for current timestep (LW_down, SW_down, temperature,
+                  surf_pressure, dew_point_temperature, wind)
+                * **dt** (*float*) -- Timestep [s]
+                * **dz** (*float*) -- Layer thickness [m]
+                * **fixed_sfc** (*bool, optional*) -- If True, use fixed surface temperature (273.15 K). Default False.
+                * **solver_method** (*str, optional*) -- Solver method (ignored, accepted for backwards compatibility). Default "hybr".
+
+   :returns: * **T** (*array_like, float*) -- Temperature profile [K]
+             * **infodict** (*dict*) -- Diagnostic info dict
+             * **ier** (*int*) -- Success flag (1 if converged)
+             * **mesg** (*str*) -- Status message
+

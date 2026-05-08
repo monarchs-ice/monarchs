@@ -1,0 +1,46 @@
+monarchs.physics.lid
+====================
+
+.. py:module:: monarchs.physics.lid
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.lid.MODULE_NAME
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lid/adjust_lid_height
+   /autoapi/monarchs/physics/lid/calc_k_and_cp
+   /autoapi/monarchs/physics/lid/initialise_lid
+   /autoapi/monarchs/physics/lid/interpolate_profiles
+   /autoapi/monarchs/physics/lid/lid_development
+   /autoapi/monarchs/physics/lid/surface_freezing
+   /autoapi/monarchs/physics/lid/surface_melt
+
+.. autoapisummary::
+
+   monarchs.physics.lid.adjust_lid_height
+   monarchs.physics.lid.calc_k_and_cp
+   monarchs.physics.lid.initialise_lid
+   monarchs.physics.lid.interpolate_profiles
+   monarchs.physics.lid.lid_development
+   monarchs.physics.lid.surface_freezing
+   monarchs.physics.lid.surface_melt
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.physics.lid'
+
+

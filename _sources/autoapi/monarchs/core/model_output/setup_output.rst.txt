@@ -1,0 +1,17 @@
+monarchs.core.model_output.setup_output
+=======================================
+
+.. py:function:: monarchs.core.model_output.setup_output(fname, grid, vars_to_save=DEFAULT_VARS, vert_grid_size=False)
+
+   Set up the NetCDF file for model output.
+
+   :Parameters: * **fname** (*str*) -- Filename for the output NetCDF file.
+                * **grid** (*np.ndarray*) -- Structured array representing the model grid.
+                * **vars_to_save** (*tuple, optional*) -- Variables to save in the output file. Default includes firn temperature,
+                  solid fraction, liquid fraction, firn depth, lake depth, and lid depth.
+                  See DEFAULT_VARS in the code for the full list.
+                * **vert_grid_size** (*int or bool, optional*) -- Size of the vertical grid for interpolation. If False, uses the existing
+                  vertical grid size from the model grid. Default is False.
+
+   :rtype: None.
+
