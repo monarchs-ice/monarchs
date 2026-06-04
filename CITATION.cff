@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Buzzard"
+  given-names: "Sammie"
+  orcid: "https://orcid.org/0000-0003-0722-2549"
+- family-names: "Elsey"
+  given-names: "Jonathan"
+  orcid: "https://orcid.org/0000-0002-8321-0358"
+- family-names: "Robel"
+  given-names: "Alexander"
+  orcid: "https://orcid.org/0000-0003-4520-0105"
+title: "MONARCHS - A Model for Antarctic Ice Shelf Hydrology and Stability"
+version: 1.0.3
+doi: 10.5281/zenodo.20545354
+date-released: 2026-06-04
+url: "https://github.com/monarchs-ice/monarchs"
