@@ -3,9 +3,6 @@ __pycache__/
 .run
 src/monarchs/plots/outputs/
 venv/
-data/*.tif
-data/*.jpg
-!src/monarchs/data/ERA5_small.nc
 *.gif
 *.jpg
 *.nc
@@ -14,7 +11,5 @@ temp/
 *.png
 plots/
 validation/
-dist/
 .run/
-data/RACMO_temp.nc
-data/ERA5_data_subset.nc
+.DS_Store

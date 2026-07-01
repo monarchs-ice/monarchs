@@ -5,23 +5,9 @@ configuration used by MONARCHS.
 
 import importlib.util
 import ast
+from monarchs.core.configuration import SAFE_IMPORTS
 
-# List of safe imports that are allowed in a model setup script.
-SAFE_IMPORTS = {
-    "monarchs",
-    "numpy",
-    "netCDF4",
-    "math",
-    "matplotlib",
-    "scipy",
-    "datetime",
-    "pandas",
-    "cartopy",
-    "argparse",
-    "flow_plot",
-    "cProfile",
-    "sys",
-}
+
 MODULE_NAME = "monarchs.core.load_model_setup"
 
 
@@ -40,14 +26,18 @@ class ModelSetup:
         config_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(config_module)
 
+        import types
+
         for var_name in dir(config_module):
-            # don't load in dunder attributes like __name__
             if var_name.startswith("__"):
                 continue
             var_value = getattr(config_module, var_name)
-            # don't load in functions or classes
-            if not callable(var_value):
-                setattr(self, var_name, var_value)
+            if callable(var_value):
+                continue
+            # skip imported modules (not picklable, not needed as config values)
+            if isinstance(var_value, types.ModuleType):
+                continue
+            setattr(self, var_name, var_value)
 
     def validate_model_setup(self):
         """
@@ -61,7 +51,7 @@ class ModelSetup:
         if self.errors:
             error_message = "\n".join(self.errors)
             raise ValueError(
-                f"{method_name}: Errors found in model setup:\n" f"{error_message}"
+                f"{method_name}: Errors found in model setup:\n{error_message}"
             )
 
     def check_file_exists(self):
@@ -136,10 +126,10 @@ class ModelSetup:
         "os" and "sys" are not supported in runscripts by default.
 
         If you are getting an error here due a module that you know is safe
-        to execute, then add it to SAFE_IMPORTS below.
+        to execute, then add it to SAFE_IMPORTS in monarchs.core.configuration.
         """
         method_name = (
-            "monarchs.core.load_model_setup.ModelSetup." "check_for_unexpected_imports"
+            "monarchs.core.load_model_setup.ModelSetup.check_for_unexpected_imports"
         )
 
         with open(self.script_path, "r", encoding="utf-8") as f:
@@ -172,16 +162,13 @@ class ModelSetup:
                     flag = True
         if flag:
             self.errors.extend(
-                [
-                    f"Only the following imports are allowed: "
-                    f"{', '.join(SAFE_IMPORTS)}."
-                ]
+                [f"Only the following imports are allowed: {', '.join(SAFE_IMPORTS)}."]
             )
             self.errors.extend(
                 [
-                    f"If you are confident that your configuration script "
-                    f"import(s) are safe, please add them to SAFE_IMPORTS "
-                    f"in {MODULE_NAME}."
+                    "If you are confident that your configuration script "
+                    "import(s) are safe, please add them to SAFE_IMPORTS "
+                    "in monarchs.core.configuration.."
                 ]
             )
 

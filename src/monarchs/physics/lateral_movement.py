@@ -1,11 +1,30 @@
-""" """
+"""
+Lateral water movement module for MONARCHS.
 
-# TODO - Module docstring, PEP8 compliance for comments, function docstrings
-# disable pylint warnings for broad exceptions as they are needed with Numba
-# pylint: disable=broad-exception-raised
+Water flows between grid cells based on differences in water level.
+Movement can occur from lakes, or from saturated firn above an ice lens,
+to any of the 8 surrounding cells (N, NE, E, SE, S, SW, W, NW).
+
+Parallelism notes
+-----------------
+The water-level initialisation loop (Phase 1 of ``move_water``) is safe to
+parallelise with ``prange`` because each iteration writes only to its own
+cell in ``temp_grid``.
+
+The movement loop (Phase 2) writes to *neighbour* cells in ``temp_grid``.
+Running it with ``prange`` over rows creates a race condition: two rows
+processed simultaneously can both write to the same intermediate-row cell.
+Phase 2 is therefore deliberately kept serial (plain ``range``).
+
+To re-enable parallelism in Phase 2 in the future, a 3×3 tile-colouring
+(9-colour) scheme should be used: cells sharing the same colour are at
+least 3 apart in every dimension, so no two same-colour cells can share a
+neighbour. Running 9 sequential ``prange`` passes over the 9 colours is
+both correct and fully parallel.
+"""
+
+# TODO - PEP8 compliance for comments, function docstrings
 import numpy as np
-from numba.typed import Dict
-from numba import types
 from monarchs.core.utils import find_nearest
 from monarchs.physics.percolation import percolate, calc_saturation
 from monarchs.physics.constants import rho_ice, rho_water
@@ -15,6 +34,19 @@ try:
 except ImportError:
     # in case we don't have Numba - use the standard range function
     prange = range
+
+# ---------------------------------------------------------------------------
+# Direction constants
+# ---------------------------------------------------------------------------
+# The 8 compass directions are stored as parallel row-offset and col-offset
+# arrays.  The index ordering matches the original Dict insertion order used
+# in move_to_neighbours, so that ``cell["water_direction"][d]`` retains its
+# existing meaning:
+#   0=NW  1=N  2=NE  3=E  4=SE  5=S  6=SW  7=W
+_DIR_ROW = np.array([-1, -1, -1, 0, 1, 1, 1, 0], dtype=np.int32)
+_DIR_COL = np.array([-1, 0, 1, 1, 1, 0, -1, -1], dtype=np.int32)
+_N_DIRS = 8
+# Even indices (0,2,4,6) are diagonal; odd indices (1,3,5,7) are cardinal.
 
 
 def update_water_level(cell):
@@ -56,7 +88,6 @@ def update_water_level(cell):
 
     elif not cell["lake"] and not cell["lid"]:
         if cell["ice_lens"]:
-
             # We find the water level by the topmost bit of saturated firn
             # above the ice lens.
             if not np.any(cell["saturation"][: cell["ice_lens_depth"] + 1] > 0):
@@ -99,58 +130,21 @@ def update_water_level(cell):
 
 
 def get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row):
-    neighbours = Dict.empty(key_type=types.unicode_type, value_type=types.float64)
-    # if not on top edge of domain - init N, possibly NE/NW
-    if row > 0:
-        # north neighbour = -1 in row index (i.e. when selecting rows,
-        # previous row is the cell directly above)
-        neighbours["N"] = cell["water_level"] - grid["water_level"][row - 1][col]
-        if col < max_grid_col - 1:  # if not at right edge - init NE
-            neighbours["NE"] = (
-                cell["water_level"] - grid["water_level"][row - 1][col + 1]
-            )
-        # if not at left edge - init NW
-        if col > 0:
-            neighbours["NW"] = (
-                cell["water_level"] - grid["water_level"][row - 1][col - 1]
-            )
-    # if at top edge - N/NW/NE all False
-    else:
-        neighbours["N"] = -999
-        neighbours["NE"] = -999
-        neighbours["NW"] = -999
+    """
+    Return the water-level differences between *cell* and each of its 8
+    neighbours as a fixed-size float64 array indexed by direction
+    (0=NW … 7=W; see module-level ``_DIR_ROW``/``_DIR_COL``).
 
-    # if not on bottom edge of domain - init S, possibly SE/SW
-    if row < max_grid_row - 1:
-        neighbours["S"] = cell["water_level"] - grid["water_level"][row + 1][col]
-        if col < max_grid_col - 1:  # if not at right edge - init SE
-            neighbours["SE"] = (
-                cell["water_level"] - grid["water_level"][row + 1][col + 1]
-            )
-        if col > 0:  # if not at left edge - init SW
-            neighbours["SW"] = (
-                cell["water_level"] - grid["water_level"][row + 1][col - 1]
-            )
-    # if at bottom edge - S/SW/SE all False
-    else:
-        neighbours["S"] = -999
-        neighbours["SE"] = -999
-        neighbours["SW"] = -999
-    # if not at left edge - init W - NW/SW have already been initialised if
-    # possible to do so
-    if col > 0:
-        neighbours["W"] = cell["water_level"] - grid["water_level"][row][col - 1]
-    else:  # if at left edge - W/SW/NW all False
-        neighbours["W"] = -999
-        neighbours["SW"] = -999
-        neighbours["NW"] = -999
-    if col < max_grid_col - 1:  # As above, for the right edge
-        neighbours["E"] = cell["water_level"] - grid["water_level"][row][col + 1]
-    else:
-        neighbours["E"] = -999
-        neighbours["SE"] = -999
-        neighbours["NE"] = -999
-    return neighbours
+    Out-of-bounds neighbours are given a sentinel value of -999.0 so that
+    they are never chosen as a flow destination.
+    """
+    diffs = np.full(_N_DIRS, -999.0)
+    for d in range(_N_DIRS):
+        nr = row + _DIR_ROW[d]
+        nc = col + _DIR_COL[d]
+        if 0 <= nr < max_grid_row and 0 <= nc < max_grid_col:
+            diffs[d] = cell["water_level"] - grid["water_level"][nr][nc]
+    return diffs
 
 
 def find_biggest_neighbour(
@@ -164,112 +158,59 @@ def find_biggest_neighbour(
     flow_into_land=False,
 ):
     """
-    Finds the points in grid surrounding a central point cell that have the
-    highest difference in water level.
-    Called in <move_water>.
+    Return the largest water-level height difference between *cell* and its
+    neighbours, together with the direction indices (0-7) that achieve it.
 
     Parameters
     ----------
-    catchment_outflow: bool
-        If True, then water that reaches the edge of the catchment area will
-        flow outward, if it is in the lowest cell locally.
-    cell: numpy structured array
-       Element of our model grid.
-    grid: List or numba.typed.List()
-        List containing multiple instances of IceShelf objects.
-    i: int
-        Iteration index along the x-axis of grid.
-    j: int
-        Iteration index along the y-axis of grid.
-    max_grid_row: int
-        Number of x points in grid.
-    max_grid_col: int
-        Number of y points in grid.
+    catchment_outflow : bool
+        If True, out-of-bounds neighbours are treated as valid outflow
+        destinations when the cell is a local water-level minimum.
+    flow_into_land : bool
+        If True, invalid (land) neighbours may receive water when the cell
+        is a local minimum, but are blocked when other valid neighbours exist.
 
     Returns
     -------
-    biggest_height_difference: List
-        List containing the values of the largest difference(s) in water level
-        between cell and its neighbours.
-    max_list: List
-        List containing the indices corresponding to the largest neighbour(s).
+    biggest_height_difference : float
+    max_dirs : np.ndarray[int32]
+        Array of direction indices (subset of 0-7) that are within floating-
+        point rounding tolerance of the maximum height difference.
     """
-    neighbours = get_neighbour_water_levels(
-        cell, grid, col, row, max_grid_col, max_grid_row
-    )
-    # Ensure that if catchment_outflow is set, water that reaches the edge of
-    # the catchment area will flow outward, if it is in the lowest cell
-    # locally. This way, water will preferentially stay in the model.
-    if catchment_outflow and max(neighbours.values()) <= 0:
-        for key in neighbours.keys():
-            if neighbours[key] == -999:
-                neighbours[key] = 9999
+    diffs = get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row)
 
-    # if flow_into_land is True, then if the cell is at a local minimum aside
-    # from invalid cells, then it will flow into the land. This is motivated by
-    # the appearance of lakes on the ice shelf-land boundary in testing runs,
-    # which is not seen in the validation data. This is placed after the
-    # initial loop, since this should only occur if the water level is a local
-    # minimum.
+    # Allow outflow at domain boundaries when the cell is a local minimum.
+    if catchment_outflow and np.max(diffs) <= 0:
+        for d in range(_N_DIRS):
+            if diffs[d] == -999.0:
+                diffs[d] = 9999.0
+
+    # Optionally allow (or block) flow into invalid (land) cells.
     if flow_into_land:
-        for i in range(-1, 2, 1):
-            for j in range(-1, 2, 1):
-                try:
-                    code = []
-                    if i == -1:
-                        code.append("N")
-                    elif i == 1:
-                        code.append("S")
-                    if j == -1:
-                        code.append("W")
-                    elif j == 1:
-                        code.append("E")
+        current_max = np.max(diffs)
+        for d in range(_N_DIRS):
+            nr = row + _DIR_ROW[d]
+            nc = col + _DIR_COL[d]
+            if 0 <= nr < max_grid_row and 0 <= nc < max_grid_col:
+                if current_max <= 0 and not grid[nr][nc]["valid_cell"]:
+                    # Cell is a local minimum: allow flow into land.
+                    diffs[d] = 9998.0
+                elif not grid[nr][nc]["valid_cell"]:
+                    # Other valid destinations exist: block flow into land.
+                    diffs[d] = -9999.0
 
-                    code_str = "".join(code)
-                    if 0 <= row + i < grid.shape[0] and 0 <= col + j < grid.shape[1]:
-                        neighbour_cell = grid[row + i][col + j]
-                    else:
-                        continue
-                    # If the water level is a local minimum, then we want to
-                    # flow water into the land.
+    biggest_height_difference = np.max(diffs)
 
-                    if max(neighbours.values()) <= 0:
-                        if not neighbour_cell["valid_cell"]:
-                            neighbours[code_str] = 9998
+    # Collect all directions within floating-point rounding tolerance of the
+    # maximum.  A fixed-size buffer avoids heap allocation inside @njit.
+    max_dirs = np.zeros(_N_DIRS, dtype=np.int32)
+    n_max = 0
+    for d in range(_N_DIRS):
+        if biggest_height_difference - diffs[d] < 1e-8:
+            max_dirs[n_max] = d
+            n_max += 1
 
-                    # Otherwise, ensure we *don't* flow water into land as it
-                    # has places it can go within the model.
-                    elif not neighbour_cell["valid_cell"]:
-                        neighbours[code_str] = -9999
-
-                except Exception:
-                    continue
-
-    # Find neighbour with the biggest height difference in water level
-    biggest_height_difference = max(neighbours.values())
-
-    # check a new list of indices/value pairs to see which one corresponds
-    # to the maximum calculated above
-    # max list is a list of the indices of m that have the largest value
-    # e,g. if the NW and SE neighbours have the biggest value,
-    # max_list = [0, 7]
-    # max_list = [
-    #     idx for idx, val in enumerate(neighbour_list) if
-    #     (val == biggest_height_difference and val > 0)
-    # ]
-    max_list = [k for k, v in neighbours.items() if v == biggest_height_difference]
-
-    # A fix for the symmetric test case. What was happening was that there were
-    # tiny rounding errors. This caused water to preferentially move one way
-    # over the other, which is bad for a symmetric case! This fixes the issue.
-    # Append any that are within a rounding error
-    # (i.e. if the difference is 0.0000000001, then we want to include it)
-    for k, v in neighbours.items():
-        if biggest_height_difference - v < 1e-08:
-            if k not in max_list:
-                max_list.append(k)
-
-    return biggest_height_difference, max_list
+    return biggest_height_difference, max_dirs[:n_max]
 
 
 def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
@@ -288,9 +229,10 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     timestep : int
         time in which the water can move - default 3600 (set by user in
         runscript) [s]
-    direction: str
-        direction of the water flow - used to determine the "cell size", as
-        these can be non-square.
+    direction : int
+        Direction index (0=NW, 1=N, 2=NE, 3=E, 4=SE, 5=S, 6=SW, 7=W).
+        Even indices are diagonal; odd indices are cardinal.
+        Used to determine the effective cell size for flow calculations.
 
     Returns
     -------
@@ -299,15 +241,16 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
         number if a lake is present, or a Numpy array of length cell.vert_grid
         if not. M is biggest height difference
     """
-    # first calculate the distance the water has to move
-    if direction in ["NW", "NE", "SW", "SE"]:
+    # Determine effective cell size based on direction type.
+    # Even index → diagonal (NW, NE, SE, SW); odd → cardinal.
+    # Among cardinal directions: _DIR_COL == 0 → N or S (use size_dy);
+    #                            _DIR_ROW == 0 → E or W (use size_dx).
+    if direction % 2 == 0:  # diagonal
         cell_size = np.sqrt(cell["size_dx"] ** 2 + cell["size_dy"] ** 2)
-    elif direction in ["N", "S"]:
+    elif _DIR_COL[direction] == 0:  # N or S
         cell_size = cell["size_dy"]
-    elif direction in ["E", "W"]:
+    else:  # E or W
         cell_size = cell["size_dx"]
-    else:
-        raise ValueError("Direction not recognised")
     # TODO - should cell_size be divided by 2? Since water is moving from the
     #      - centre of the cell. But if we consider that it is moving from
     #      - centre to centre, is probably fine assuming size of adjacent cells
@@ -594,7 +537,7 @@ def move_from_lake(
         print("After = ", temporary_cell["lake_depth"])
         print("Before = ", cell["lake_depth"])
         raise ValueError(
-            "Moving water has caused lake depth to go below 0 - in the central" " cell"
+            "Moving water has caused lake depth to go below 0 - in the central cell"
         )
     return temporary_cell, temporary_neighbour
 
@@ -811,202 +754,175 @@ def move_to_neighbours(
     outflow_proportion=1.0,
 ):
     """
-    Moves water from the central cell (grid[i][j]) to the neighbours with the
-    lowest water level.
-    The specific neighbour is associated with an index [i + m][j + n] with
-    m, n = [-1, 0, 1].
-    e.g. SW neighbour is associated with the m = +1, n = -1.
-    How the movement is handled is dependent on the features of the cell and
-    its neighbour.
-    Called in <move_water>.
+    Moves water from the central cell (grid[row][col]) to the neighbours
+    indicated by *biggest_neighbours*.
 
     Parameters
     ----------
     grid : numpy structured array
         Model grid representing the ice shelf.
-    biggest_neighbours : List
-        List of the largest neighbour cells calculated from
-        find_biggest_neighbour
-    i : int
-        current row index
-    j : int
-        current column index
-    biggest_height_difference : float
-        largest difference in water level between the central cell and its
-        neighbours. Used in `water_fraction`.
+    temp_grid : numpy structured array
+        Working copy of the grid used to accumulate water movements before
+        they are applied simultaneously at the end of ``move_water``.
+    biggest_neighbours : np.ndarray[int32]
+        Direction indices (0=NW … 7=W; see module ``_DIR_ROW``/``_DIR_COL``)
+        of the neighbours with the largest downhill water-level difference.
+    col, row : int
+        Column and row indices of the source cell.
     split : int
-        Number determining whether water is split between two or more neighbour
-        grid cells, if there are cells of equal water_level
+        Number of directions water is being split across (len(biggest_neighbours)).
+    catchment_outflow : bool
+        Whether out-of-domain flow is allowed.
+    biggest_height_difference : float
+        Largest water-level difference, used in ``water_fraction``.
+    timestep : int
+        Lateral movement timestep in seconds.
+    flow_into_land : bool
+        Whether water may flow into invalid (land) cells.
+    flow_speed_scaling : float
+        Multiplicative scaling factor for flow speed.
+    outflow_proportion : float
+        Fraction of available water allowed to leave the domain per step.
 
     Returns
     -------
-    None (amends instance of grid passed into it)
+    total_water_out : float
+        Volume of water that left the model domain this step.
 
     Raises
     ------
     ValueError
-        If model reaches a state that should not be able to occur, then raise
-        this error.
-        This can occur if the lake depth goes below 0, or if there is water to
-        move in a grid cell where water should not be able to move from
-        (i.e. no lake or ice lens)
+        If an inconsistent model state is encountered (e.g. negative lake
+        depth, or water present in a cell with no lake or ice lens).
     """
-    # recall that the "column" index is our *x* coordinate, not y, and we index
-    # by [row, col], i.e. [y, x] in the grid. And that we start indexing from
-    # the top left, not the bottom left!
-    all_neighbours = Dict()
-    all_neighbours["NW"] = np.array([-1, -1])
-    all_neighbours["N"] = np.array([-1, 0])
-    all_neighbours["NE"] = np.array([-1, 1])
-    all_neighbours["E"] = np.array([0, 1])
-    all_neighbours["SE"] = np.array([1, 1])
-    all_neighbours["S"] = np.array([1, 0])
-    all_neighbours["SW"] = np.array([1, -1])
-    all_neighbours["W"] = np.array([0, -1])
-
     cell = grid[row][col]
     cell["water_direction"][:] = 0  # clear water direction
     total_water_out = 0.0
-    # for each of the neighbours we wish to move water to, which depends on the
-    # difference in water level between the central cell and the cells at each
-    # cardinal point
-    for idx, neighbour in enumerate(all_neighbours.keys()):
-        if neighbour in biggest_neighbours:
-            if cell["lid"]:
-                return 0
-            cell["water_direction"][idx] = 1
-            n_s_index = all_neighbours[neighbour][0]  # i.e. row index
-            w_e_index = all_neighbours[neighbour][1]  # i.e. col index
-            temporary_cell = temp_grid[row][col]
-            water_frac = water_fraction(
-                cell,
-                biggest_height_difference,
-                timestep,
-                neighbour,
-                flow_speed_scaling=flow_speed_scaling,
-            )
 
-            # Before actually moving water, we first need to find out how much
-            # water can actually move.
-            # If the cell is at a boundary, and the neighbour
-            # cell is outside of the domain, then we don't want to move water
-            # unless catchment_outflow is True.
-            water_out, edge_flag = handle_edge_cases(
-                grid,
+    for d in range(_N_DIRS):
+        # Skip directions that are not in the set of downhill neighbours.
+        is_target = False
+        for k in range(len(biggest_neighbours)):
+            if biggest_neighbours[k] == d:
+                is_target = True
+                break
+        if not is_target:
+            continue
+
+        # Cells with a frozen lid cannot release water laterally.
+        if cell["lid"]:
+            return 0.0
+
+        cell["water_direction"][d] = 1
+        n_s_index = _DIR_ROW[d]  # row offset
+        w_e_index = _DIR_COL[d]  # column offset
+        temporary_cell = temp_grid[row][col]
+        water_frac = water_fraction(
+            cell,
+            biggest_height_difference,
+            timestep,
+            d,
+            flow_speed_scaling=flow_speed_scaling,
+        )
+
+        # Check domain boundary before attempting to access the neighbour.
+        water_out, edge_flag = handle_edge_cases(
+            grid,
+            cell,
+            temporary_cell,
+            row,
+            col,
+            n_s_index,
+            w_e_index,
+            water_frac,
+            split,
+            outflow_proportion,
+            catchment_outflow=catchment_outflow,
+        )
+        if edge_flag:
+            return water_out
+
+        # Check that the neighbour cell is a valid ice-shelf cell.
+        land_water_out, invalid_flag = handle_invalid_neighbour_cell(
+            grid,
+            cell,
+            temporary_cell,
+            row,
+            col,
+            n_s_index,
+            w_e_index,
+            flow_into_land,
+            split,
+            water_frac,
+            outflow_proportion,
+        )
+        total_water_out += land_water_out
+        if invalid_flag or land_water_out > 0:
+            continue
+        water_out += land_water_out
+
+        """Logic for valid cells"""
+        if 0 <= row + n_s_index < len(grid) and 0 <= col + w_e_index < len(grid[0]):
+            temporary_neighbour = temp_grid[row + n_s_index][col + w_e_index]
+
+        # Cells with a lid in either source or destination are skipped.
+        if cell["lid"] or grid[row + n_s_index][col + w_e_index]["lid"]:
+            continue
+
+        is_outflow = False
+        # Case 1: source cell has a lake.
+        if cell["lake"]:
+            water_to_move, _, _, _ = calc_available_water_lake(
                 cell,
+                water_frac,
+                split,
+                grid[row + n_s_index][col + w_e_index],
+                outflow=is_outflow,
+            )
+            temporary_cell, temporary_neighbour = move_from_lake(
+                cell,
+                grid,
                 temporary_cell,
+                temporary_neighbour,
                 row,
                 col,
                 n_s_index,
                 w_e_index,
+                water_to_move,
+            )
+
+        # Case 2: source cell has an ice lens (and no lake).
+        elif cell["ice_lens"] and not cell["lake"]:
+            (
+                water_to_move,
+                lowest_water_level,
+                move_from_index,
+                top_saturation_level,
+            ) = calc_available_water_ice_lens(
+                cell,
                 water_frac,
                 split,
-                outflow_proportion,
-                catchment_outflow=catchment_outflow,
+                grid[row + n_s_index][col + w_e_index],
+                outflow=is_outflow,
             )
-            # If we returned water from handle_edge_cases, water will not move
-            # further so we return this amount to move_water.
-            # This amount will always be positive.
-            if edge_flag:
-                return water_out
-            # Also check that neighbour_cell is actually a valid cell.
-            # If it isn't, then we don't want to move water to it,
-            # unless flow_into_land is True.
-            land_water_out, invalid_flag = handle_invalid_neighbour_cell(
-                grid,
+            temporary_cell, temporary_neighbour = move_from_ice_lens(
                 cell,
+                grid,
                 temporary_cell,
+                temporary_neighbour,
+                split,
                 row,
                 col,
                 n_s_index,
                 w_e_index,
-                flow_into_land,
-                split,
-                water_frac,
-                outflow_proportion,
+                lowest_water_level,
+                move_from_index,
+                top_saturation_level,
+                water_to_move,
             )
-            total_water_out += land_water_out
-            if invalid_flag or land_water_out > 0:
-                continue
-            water_out += land_water_out
-            # if handle_invalid_neighbour_cell returns -1, then don't flow to
-            # this particular (invalid) cell, but there may be a neighbour
-            # that *is* valid
-            # if water_out == -1 and idx != len(biggest_neighbours) - 1:
-            #    continue
-            # If we get to the end and all possible neighbours have been
-            # exhausted, then simply return 0 so we don't do anything.
-            # This fixes a bug where if no valid neighbours are found, then
-            # an extremely large amount of water is moved.
-            # elif water_out == -1:
-            #    return total_water_out  # return accumulator
-
-            """Logic for valid cells"""
-            # Determine the neighbour and create a temporary version of it to
-            # hold info while we move to/from other cells
-            if 0 <= row + n_s_index < len(grid) and 0 <= col + w_e_index < len(grid[0]):
-                temporary_neighbour = temp_grid[row + n_s_index][col + w_e_index]
-
-            # If there is a lid in either cell - too complicated to model, and
-            # physically unlikely, so we ignore movement in this case.
-            if cell["lid"] or grid[row + n_s_index][col + w_e_index]["lid"]:
-                continue
-            is_outflow = False
-            # Case where the central cell has a lake.
-            if cell["lake"]:
-                water_to_move, _, _, _ = calc_available_water_lake(
-                    cell,
-                    water_frac,
-                    split,
-                    grid[row + n_s_index][col + w_e_index],
-                    outflow=is_outflow,
-                )
-                temporary_cell, temporary_neighbour = move_from_lake(
-                    cell,
-                    grid,
-                    temporary_cell,
-                    temporary_neighbour,
-                    row,
-                    col,
-                    n_s_index,
-                    w_e_index,
-                    water_to_move,
-                )
-
-            elif cell["ice_lens"] and not cell["lake"]:
-                # in this case we need to return a bit more info, hence the
-                # tuple
-                (
-                    water_to_move,
-                    lowest_water_level,
-                    move_from_index,
-                    top_saturation_level,
-                ) = calc_available_water_ice_lens(
-                    cell,
-                    water_frac,
-                    split,
-                    grid[row + n_s_index][col + w_e_index],
-                    outflow=is_outflow,
-                )
-
-                temporary_cell, temporary_neighbour = move_from_ice_lens(
-                    cell,
-                    grid,
-                    temporary_cell,
-                    temporary_neighbour,
-                    split,
-                    row,
-                    col,
-                    n_s_index,
-                    w_e_index,
-                    lowest_water_level,
-                    move_from_index,
-                    top_saturation_level,
-                    water_to_move,
-                )
-            else:  # If no ice lens, then no water should be able to move as
-                # it should preferentially percolate downwards.
-                raise ValueError("This should not be happening...")
+        else:
+            # No ice lens and no lake: water percolates downward only.
+            raise ValueError("This should not be happening...")
 
     return total_water_out
 
@@ -1021,6 +937,8 @@ def move_water(
     flow_into_land=False,
     flow_speed_scaling=1.0,
     outflow_proportion=1.0,
+    row_start=None,
+    row_end=None,
 ):
     """
     Loop over the model grid and determine which cells water is allowed to move
@@ -1042,10 +960,12 @@ def move_water(
     ----------
     grid : np.ndarray
         Numpy structured array containing the model grid.
-    max_grid_row : int
-        Number of grid rows
     max_grid_col : int
-        Number of grid columns
+        Total number of grid columns (used for bounds checking; includes any
+        halo columns, though only row halos are currently used).
+    max_grid_row : int
+        Total number of grid rows in *grid* (used for bounds checking).  When
+        halo rows are present this is ``len(grid)`` not ``local_rows``.
     timestep : int
         Time taken for the lateral movement to occur. This is typically
         24 hours, i.e. 3600 * 24 seconds. [s]
@@ -1053,6 +973,13 @@ def move_water(
         Boolean flag to determine whether to perform a percolation step after
         we do lateral water, to ensure that water is where it should be in the
         firn column.
+    row_start : int, optional
+        Index of the first locally-owned row in *grid*.  Defaults to 0.
+        Set to 1 (or 2) when halo rows are prepended so that Phase 1 does not
+        overwrite the halo ``water_level`` values placed there by the MPI halo
+        exchange, and Phase 2 only writes to owned cells.
+    row_end : int, optional
+        One-past-last locally-owned row index.  Defaults to ``max_grid_row``.
 
     Returns
     -------
@@ -1077,89 +1004,120 @@ def move_water(
     # about types if a user specifies e.g. 1.
     flow_speed_scaling = float(flow_speed_scaling)
     outflow_proportion = float(outflow_proportion)
+
+    # Resolve owned-row range.  In serial mode these default to the full grid.
+    # In MPI mode, row_start/row_end are the indices of the first/last+1 owned
+    # row inside `grid` (which may include halo rows prepended/appended by
+    # mpi_utils.attach_halos).  Halo rows must NOT be touched by Phase 1
+    # (their water_level was set by the MPI exchange) or Phase 2 (they are
+    # read-only boundary data).  max_grid_row is still the full padded length
+    # and is used for bounds-checking inside find_biggest_neighbour.
+    if row_start is None:
+        row_start = 0
+    if row_end is None:
+        row_end = max_grid_row
     # Perform some housekeeping. This consists of:
     # a) determining the water level in each cell,
     # b) creating temporary cells for our water to move in and out of,
     # so it can be performed simultaneously in parallel.
     dtype = grid.dtype
     temp_grid = np.zeros((len(grid), len(grid[0])), dtype=dtype)
-    for row in prange(max_grid_row):
+    # ---------------------------------------------------------------------------
+    # Phase 1: initialise water levels and build temp_grid snapshot.
+    # Safe to parallelise with prange: each iteration writes only to its own
+    # cell.  water_direction is also zeroed here so the diagnostic field is
+    # clean at the start of every move_water call.
+    # Only owned rows (row_start..row_end) are processed so that halo rows
+    # (whose water_level was set by the MPI exchange) are not overwritten.
+    # ---------------------------------------------------------------------------
+    for row in prange(row_start, row_end):
         for col in range(max_grid_col):
             cell = grid[row][col]
             update_water_level(cell)
             total_water += np.sum(cell["water"]) + cell["lake_depth"]
+            cell["water_direction"][:] = 0
 
-            # temporary cell specification
+            # Snapshot relevant fields into temp_grid so Phase 2 can read the
+            # pre-movement state while writing proposed movements.
             temp_grid[row, col]["lake_depth"] = cell["lake_depth"]
             temp_grid[row, col]["lake"] = cell["lake"]
             temp_grid[row, col]["valid_cell"] = cell["valid_cell"]
-            # need to explicitly loop rather than using array syntax
-            # else it will create a shallow copy, and explicit loops are better
-            # for Numba anyway
+            # Explicit level loops: avoids a shallow copy and is preferred by
+            # Numba's auto-paralleliser.
             for level in range(len(grid[row, col]["water"])):
                 temp_grid[row, col]["water"][level] = cell["water"][level]
                 temp_grid[row, col]["saturation"][level] = cell["saturation"][level]
                 temp_grid[row, col]["meltflag"][level] = cell["meltflag"][level]
 
-    # Now loop through the cells again, this time actually performing the
-    # movement step. This and the prior loop cannot be merged, since the
-    # temporary grid needs to be fully populated and the water levels
-    # determined everywhere before we start moving water around, particularly
-    # as both loops are done in parallel.
-    for row in prange(max_grid_row):
-        for col in range(max_grid_col):
-            cell = grid[row][col]
-            # clear water direction - this will be updated later
-            cell["water_direction"][:] = 0
-            # don't bother trying moving water unless we have
-            # a) a cell that is actually running physics, and
-            # b) that cell actually has water in it!
-            if cell["valid_cell"] and (
-                cell["ice_lens"]
-                and (cell["water"] > 0).any()
-                or cell["lake"]
-                and cell["lake_depth"] > 0
-            ):
-                # For each element of grid, determine the neighbour with the
-                # biggest (positive or negative) difference in water level.
-                biggest_height_difference, max_list = find_biggest_neighbour(
-                    cell,
-                    grid,
-                    col,
-                    row,
-                    max_grid_col,
-                    max_grid_row,
-                    catchment_outflow,
-                    flow_into_land=flow_into_land,
-                )
-                # If more than one cell is equally lower than central the water
-                # is split between them
-                split = len(max_list)
-                # Water moves if one of surrounding grid is lower than
-                # central cell
-                if biggest_height_difference > 0:
-                    # Now calculate the amount of water to move.
-                    # Note that this is in the form of temporary arrays,
-                    # as we need to avoid race conditions (i.e. order matters).
-                    # The actual water level is updated in the next loop.
-                    catchment_out_water += move_to_neighbours(
-                        grid,
-                        temp_grid,
-                        max_list,
-                        col,
-                        row,
-                        split,
-                        catchment_outflow,
-                        biggest_height_difference,
-                        timestep,
-                        flow_into_land=flow_into_land,
-                        flow_speed_scaling=flow_speed_scaling,
-                        outflow_proportion=outflow_proportion,
-                    )
+    # ---------------------------------------------------------------------------
+    # Phase 2: compute water movements using the 9-colour (3×3 tile) scheme.
+    #
+    # Why 9 colours?
+    # Each cell can write to any of its 8 diagonal/cardinal neighbours in
+    # temp_grid.  Two cells processed simultaneously must not share a
+    # neighbour, otherwise we get a write-write race condition.  The cells of
+    # a single (phase_r, phase_c) colour are spaced ≥3 apart in every
+    # dimension, so their 8-neighbour sets are always disjoint.
+    #
+    # Each phase is a prange over rows, skipping rows that do not belong to the
+    # current colour.  The 2/3 of iterations that hit ``continue`` execute only
+    # two cheap modulo comparisons — the overhead is negligible.
+    #
+    # Thread-level parallelism (prange → actual threads) is active when
+    # move_water is compiled with @njit(parallel=True), which is set by
+    # configuration.jit_modules() via the PARALLEL_FUNCTIONS constant.
+    #
+    # MPI note: only locally-owned rows (row_start..row_end) are processed.
+    # Halo rows are read-only boundary data: Phase 2 may *read* their
+    # water_level but never writes to them.  max_grid_row (the padded length)
+    # is used only for bounds-checking inside find_biggest_neighbour.
+    # ---------------------------------------------------------------------------
+    for phase_r in range(3):
+        for phase_c in range(3):
+            for row in prange(row_start, row_end):
+                if row % 3 != phase_r:
+                    continue
+                for col in range(max_grid_col):
+                    if col % 3 != phase_c:
+                        continue
+                    cell = grid[row][col]
+                    if cell["valid_cell"] and (
+                        cell["ice_lens"]
+                        and (cell["water"] > 0).any()
+                        or cell["lake"]
+                        and cell["lake_depth"] > 0
+                    ):
+                        biggest_height_difference, max_dirs = find_biggest_neighbour(
+                            cell,
+                            grid,
+                            col,
+                            row,
+                            max_grid_col,
+                            max_grid_row,
+                            catchment_outflow,
+                            flow_into_land=flow_into_land,
+                        )
+                        split = len(max_dirs)
+                        if biggest_height_difference > 0:
+                            catchment_out_water += move_to_neighbours(
+                                grid,
+                                temp_grid,
+                                max_dirs,
+                                col,
+                                row,
+                                split,
+                                catchment_outflow,
+                                biggest_height_difference,
+                                timestep,
+                                flow_into_land=flow_into_land,
+                                flow_speed_scaling=flow_speed_scaling,
+                                outflow_proportion=outflow_proportion,
+                            )
 
     # Now we have the values calculated in our temporary grid,
-    # update the values of <grid>, i.e. performing our movement in one step
-    for row in range(0, max_grid_row):
+    # update the values of <grid>, i.e. performing our movement in one step.
+    # Restricted to owned rows: halo rows are not written back.
+    for row in range(row_start, row_end):
         for col in range(0, max_grid_col):
             cell = grid[row][col]
             temporary_cell = temp_grid[row][col]

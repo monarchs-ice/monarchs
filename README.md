@@ -29,7 +29,7 @@ Todos
 - Type hints 
 - Full unit test suite
 - Longer term - a MONARCHS GUI may be really handy for specifying the inputs in model_setup.
-- MPI - still WIP to get working on e.g. ARCHER2
+- MPI - still WIP
 
 Installation
 ------------
@@ -76,6 +76,15 @@ On Linux, ```apt-get install mpich``` should suffice. This is only suggested for
 
 It should be re-iterated that neither NumbaMinpack nor Pyina are required to be installed for the code to run, 
 provided that you set ```use_numba = False``` and/or ```use_mpi = False``` in your runscript (see below).
+
+Install with the ``[dev]`` option if you want to contribute to the codebase, as this will install the required
+dependencies. You can also run
+
+```python -m pip install pre-commit```
+
+```pre-commit install``` 
+
+in the project root directory. This gets you access to the pre-commit hooks for automatic code formatting and linting.
 
 
 Running the model

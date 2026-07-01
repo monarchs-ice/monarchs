@@ -7,6 +7,23 @@ import warnings
 import os
 import numpy as np
 
+# List of safe imports that are allowed in a model setup script.
+SAFE_IMPORTS = {
+    "monarchs",
+    "numpy",
+    "netCDF4",
+    "math",
+    "matplotlib",
+    "scipy",
+    "datetime",
+    "pandas",
+    "cartopy",
+    "argparse",
+    "flow_plot",
+    "cProfile",
+    "sys",
+}
+
 
 def parse_args():
     """
