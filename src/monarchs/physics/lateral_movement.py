@@ -26,7 +26,7 @@ both correct and fully parallel.
 # TODO - PEP8 compliance for comments, function docstrings
 import numpy as np
 from monarchs.core.utils import find_nearest
-from monarchs.physics.percolation import percolate, calc_saturation
+from monarchs.physics.firn.percolation import percolate, calc_saturation
 from monarchs.physics.constants import rho_ice, rho_water
 
 try:

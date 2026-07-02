@@ -64,22 +64,22 @@ def initialise_met_data(
 
     Returns
     -------
-    metdata - numpy structured array
+    met_data - numpy structured array
         Grid containing meteorological data for the model run.
     """
 
-    metdata = np.zeros((t_steps_per_day, num_rows, num_cols), dtype=dtype)
-    metdata["snowfall"] = snowfall
-    metdata["temperature"] = temperature
-    metdata["wind"] = wind
-    metdata["surf_pressure"] = surf_pressure
-    metdata["dew_point_temperature"] = dew_point_temperature
-    metdata["LW_down"] = lw_down
-    metdata["SW_down"] = sw_down
-    metdata["snow_dens"] = snow_dens
-    metdata["lat"] = latitude
-    metdata["lon"] = longitude
-    return metdata
+    met_data = np.zeros((t_steps_per_day, num_rows, num_cols), dtype=dtype)
+    met_data["snowfall"] = snowfall
+    met_data["temperature"] = temperature
+    met_data["wind"] = wind
+    met_data["surf_pressure"] = surf_pressure
+    met_data["dew_point_temperature"] = dew_point_temperature
+    met_data["LW_down"] = lw_down
+    met_data["SW_down"] = sw_down
+    met_data["snow_dens"] = snow_dens
+    met_data["lat"] = latitude
+    met_data["lon"] = longitude
+    return met_data
 
 
 def get_spec():

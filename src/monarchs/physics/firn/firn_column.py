@@ -8,7 +8,8 @@ contained in percolation.py.
 # pylint: disable=broad-exception-raised, raise-missing-from
 # TODO - flesh out module-level docstring
 import numpy as np
-from monarchs.physics import percolation, surface_fluxes, solver, regrid_column
+from monarchs.physics.firn import percolation, regrid_column
+from monarchs.physics import surface_fluxes, solver
 from monarchs.core import utils
 from monarchs.core.error_handling import (
     check_for_mass_conservation,

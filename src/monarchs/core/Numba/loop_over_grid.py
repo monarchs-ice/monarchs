@@ -85,7 +85,6 @@ def loop_over_grid_numba(
     # on a shared machine without a scheduler)
     # pylint: disable=not-an-iterable
     for i in prange(row_amount * col_amount):
-
         timestep_loop(
             flat_grid[i],
             dt,

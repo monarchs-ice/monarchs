@@ -352,8 +352,6 @@ def initialise_lid(cell, met_data, dt, dz, k_lid):
 
     cell["has_had_lid"] = True
     # Surface energy balance for the lid
-    x = np.array([cell["lid_temperature"][0]])
-
     # need the [0][0] as we want the first
     # element of the output array for initialisation
     cell["lid_temperature"][0] = solver.lid_seb_solver(cell, met_data, dt, dz, k_lid)[

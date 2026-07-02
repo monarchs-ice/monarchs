@@ -67,7 +67,6 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     firn_depth_under_35_flag = False
     if hasattr(model_setup, "firn_min_height"):
         if model_setup.min_height_handler == "clip":
-
             firn_depth = np.clip(
                 firn_depth, a_min=model_setup.firn_min_height, a_max=None
             )

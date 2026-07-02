@@ -11,7 +11,6 @@ from monarchs.physics.constants import (
     stefan_boltzmann,
     k_water,
     k_air,
-    v_lid_min_thickness,
 )
 from monarchs.physics.Numba import extract_args
 

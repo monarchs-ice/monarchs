@@ -6,8 +6,8 @@ new layers to the top of the firn column.
 
 import numpy as np
 from monarchs.core import utils
-from monarchs.physics.regrid_column import conservative_regrid
-from monarchs.physics.percolation import calc_saturation
+from monarchs.physics.firn.regrid_column import conservative_regrid
+from monarchs.physics.firn.percolation import calc_saturation
 from monarchs.core.error_handling import generic_error
 from monarchs.physics.constants import rho_ice, rho_water
 
@@ -148,7 +148,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
 
     if abs(final_mass - expected_new_mass) > tol:
         message = (
-            f"Mass conservation failed in snowfall.\n" "Expected: ",
+            "Mass conservation failed in snowfall.\nExpected: ",
             float(expected_new_mass),
             "Actual: ",
             float(final_mass),

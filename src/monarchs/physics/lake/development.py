@@ -1,11 +1,18 @@
-""" """
+"""
+Lake development physics.
+
+Contains functions for the thermodynamic evolution of a fully-formed lake
+(depth >= 10 cm), including turbulent mixing, radiative transfer through
+the water column, and adjustment of the lake-firn boundary.
+"""
 
 # TODO - module level docstring, split/refactor lake_formation and
 #      - lake_development if possible
 import numpy as np
-from monarchs.physics import surface_fluxes, percolation
+from monarchs.physics import surface_fluxes
+from monarchs.physics.firn import percolation
 from monarchs.core import utils
-from monarchs.physics import regrid_column
+from monarchs.physics.firn import regrid_column
 from monarchs.core.error_handling import (
     check_for_mass_conservation,
     generic_error,
@@ -211,188 +218,10 @@ def turbulent_mixing(cell, sw_in, dt, k):
     dh += dh_change * 3600
     if dh > (cell["firn_depth"] / cell["vert_grid"]):
         dh = cell["firn_depth"] / cell["vert_grid"]
-        #print("Melting entire layer")
+        # print("Melting entire layer")
     # return both the bottom flux (W/m^2) and the cumulative energy moved there (J/m^2)
     return flux_upper, dh
 
-
-def lake_formation(cell, dt, met_data):
-    """
-    Generate a lake, and track its evolution until we reach the point where
-    it can evolve freely according to lake_development, when it goes about
-    10 cm deep.
-    Called in timestep_loop.
-
-    Parameters
-    ----------
-    cell : numpy structured array
-        Element of the model grid we are operating on.
-    dt : int
-        Number of seconds in the timestep, most likely 3600 (i.e. 1 hour) [s]
-    met_data: numpy structured array
-        Structured array containing meteorological data used in the model.
-    Returns
-    -------
-    None (amends cell inplace).
-    """
-    routine_name = f"{MODULE_NAME}.lake_formation"
-    if cell["lake_depth"] > 0.1:
-        cell["lake"] = True
-    if np.isnan(cell["lake_depth"]):
-        print("Error (start of timestep) - lake depth is NaN")
-        cell["error_flag"] = 1
-    original_mass = utils.calc_mass_sum(cell)
-    dz = cell["firn_depth"] / cell["vert_grid"]
-    cp_ice = np.zeros(cell["vert_grid"])
-    k_ice = np.zeros(cell["vert_grid"])
-    air = np.zeros(cell["vert_grid"])
-    for i in np.arange(0, cell["vert_grid"]):
-        if cell["firn_temperature"][i] > 273.15:
-            cp_ice[i] = 4186.8
-            k_ice[i] = 1000 * (
-                1.017 * 10**-4 + 1.695 * 10**-6 * cell["firn_temperature"][i]
-            )
-        else:
-            cp_ice[i] = 1000 * (
-                7.16 * 10**-3 * cell["firn_temperature"][i] + 0.138
-            )  # Alexiades & Solomon pg. 8
-            k_ice[i] = 1000 * (
-                2.24 * 10**-3
-                + 5.975 * 10**-6 * (273.15 - cell["firn_temperature"][i]) ** 1.156
-            )
-        air[i] = 1 - cell["Sfrac"][i] - cell["Lfrac"][i]
-    k = cell["Sfrac"] * k_ice + air * k_air + cell["Lfrac"] * k_water
-
-    # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
-    root, _, success, _ = solver.solve_firn_heateqn(
-        cell, met_data, dt, dz, fixed_sfc=True, solver_method="hybr"
-    )
-    if success:
-        cell["firn_temperature"] = root
-
-    x = cell["lake_temperature"]
-    # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
-    Q = surface_fluxes.sfc_flux(
-        cell["albedo"],
-        cell["lid"],
-        cell["lake"],
-        met_data["LW_down"],
-        met_data["SW_down"],
-        met_data["temperature"],
-        met_data["surf_pressure"],
-        met_data["dew_point_temperature"],
-        met_data["wind"],
-        x[0],
-    )
-
-    old_T_sfc = solver.lake_seb_solver(cell, met_data, dt, dz, formation=True)[0][0]
-
-    # Check for conservation of mass
-    new_mass = utils.calc_mass_sum(cell)
-    errflag = check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
-
-    if old_T_sfc >= 273.15 and Q > 0:  # melting occurring at the surface
-        kdTdz = (
-            (cell["firn_temperature"][0] - cell["firn_temperature"][1])
-            * abs(k[0])
-            / (cell["firn_depth"] / cell["vert_grid"])
-        )
-        # change in firn height due to melting
-        if cell["Sfrac"][0] < 0.1:
-            dHdt = cell["firn_depth"] / cell["vert_grid"]
-        else:
-            dHdt = (Q - kdTdz) / (cell["Sfrac"][0] * L_ice * rho_ice) * dt
-
-        if dHdt < 0:
-            cell["error_flag"] = True
-            message = "Error in surface temperature in lake formation \n"
-            message += f"\tdHdt = {dHdt}\n"
-            generic_error(cell, routine_name, message)
-            return cell
-
-        cell["melt_hours"] += 1
-
-        # we reduce the firn height and add to the lake depth here
-        regrid_column.regrid_after_melt(cell, dHdt, lake=True)
-        # Set end=False since we only care about the top cell, and in this case
-        # we want to put this water into the lake.
-        percolation.calc_saturation(cell, 0)
-
-    # If we have 48h of no melt and the surface temp is below freezing then we
-    # refreeze the exposed water if it is less than 10cm deep
-    # TODO - this currently doesn't do anything, but might be something to think
-    # about for later.
-    else:
-        cell["exposed_water_refreeze_counter"] += 1
-        if cell["exposed_water_refreeze_counter"] > 48 and cell["lake_depth"] < 0.1:
-            # freeze_pre_lake(cell)
-            pass
-
-    cell["vertical_profile"] = np.linspace(0, cell["firn_depth"], cell["vert_grid"])
-    if cell["lake_depth"] >= 0.1:
-        cell["lake"] = True
-    # Another round of mass conservation checks
-    new_mass = utils.calc_mass_sum(cell)
-    # end of timestep so not bothered about returning early if error
-    check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
-    if np.isnan(cell["lake_depth"]):
-        print("Error - lake depth is NaN (end of timestep)")
-        cell["error_flag"] = 1
-
-
-def freeze_pre_lake(cell):
-    """
-    Refreeze a shallow 'pre-lake' (exposed water film) into the firn column, conserving mass.
-
-    Converts the entire lake water depth H_w to an equivalent ice thickness
-    H_i = H_w * (rho_water / rho_ice), adds that thickness at the surface
-    (pure ice), and removes the lake water. Uses the same regridding
-    routine as other freezing events to keep all state arrays consistent.
-    """
-    # Clear exposed-water flags/counters up-front
-    cell["exposed_water"] = False
-    cell["exposed_water_refreeze_counter"] = 0
-
-    # Nothing to do if the pre-lake is already zero
-    H_w = float(max(0.0, cell["lake_depth"]))
-    if H_w == 0.0:
-        return
-
-    # Equivalent ice thickness to add at the surface (mass conservation)
-    H_i = H_w * (rho_water / rho_ice)
-
-    # Remove all lake water and mark no lake
-    cell["lake_depth"] = 0.0
-    cell["lake"] = False
-
-    # Add a solid-ice layer of thickness H_i on top of the firn column.
-    # This routine handles firn_depth, temperature, Sfrac/Lfrac, rho, etc.
-    regrid_column.regrid_after_freeze(cell, H_i)
-
-    # Newly formed surface ice should be at the melting point (freshwater)
-    cell["firn_temperature"][0] = 273.15
-
-    # If any lid flags were left over from previous states, ensure they're off
-    cell["v_lid"] = False
-    cell["lid"] = False
 
 def lake_development(cell, dt, met_data):
     """
@@ -431,8 +260,8 @@ def lake_development(cell, dt, met_data):
         )[0][0]
         # If surface cooled below freezing, create virtual lid
         if cell["lake_temperature"][0] < 273.15:
-            #print("Lake surface below freezing, creating virtual lid")
-            #print(cell["lake_temperature"][0])
+            # print("Lake surface below freezing, creating virtual lid")
+            # print(cell["lake_temperature"][0])
             cell["lid_temperature"][:] = cell["lake_temperature"][0]
             cell["lake_temperature"][0] = 273.15
             cell["v_lid"] = True
@@ -504,7 +333,7 @@ def calc_height_adjustment(cell, k, Fl):
             kdTdz = (
                 (cell["firn_temperature"][0] - cell["firn_temperature"][1])
                 * abs(k[0])
-                / ((cell["firn_depth"] / cell["vert_grid"]))
+                / (cell["firn_depth"] / cell["vert_grid"])
             )
             # First work out the maximum available amount of melt based
             # on the solid fraction of the top cell
@@ -528,7 +357,7 @@ def calc_height_adjustment(cell, k, Fl):
             if abs(boundary_change_raw) > cap:
                 boundary_change = np.sign(boundary_change_raw) * cap
                 cap_reached = True
-                #print("Cap reached in calc_height_adjustment")
+                # print("Cap reached in calc_height_adjustment")
             else:
                 boundary_change = boundary_change_raw
 

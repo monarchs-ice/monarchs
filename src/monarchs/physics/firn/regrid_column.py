@@ -4,7 +4,7 @@ response to melting.
 """
 
 import numpy as np
-from monarchs.physics import percolation
+from monarchs.physics.firn import percolation
 from monarchs.core import utils
 from monarchs.core.error_handling import (
     check_for_mass_conservation,
@@ -188,7 +188,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     new_depth = old_depth - height_change
     new_edges = np.linspace(height_change, old_depth, nz + 1)
     if height_change > old_depth / nz:
-
         print("Warning: height change greater than one layer thickness.")
         print("height_change =", height_change)
 

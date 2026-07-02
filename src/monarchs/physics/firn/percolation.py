@@ -57,7 +57,6 @@ def percolate(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=True
     -------
     None (amends Cell inplace)
     """
-    dz = cell["firn_depth"] / cell["vert_grid"]
     # v_lev = 0 at surface, cell["vert_grid"] at bottom
     for point in range(0, len(cell["firn_temperature"])):
         v_lev = len(cell["firn_temperature"]) - (point + 1)

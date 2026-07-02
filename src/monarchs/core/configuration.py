@@ -396,18 +396,20 @@ def jit_modules(fastmath=False):
     from numba import njit
     from monarchs.physics import (
         surface_fluxes,
-        percolation,
-        lid,
-        lake,
-        firn_column,
         timestep,
-        snow_accumulation,
         lateral_movement,
-        virtual_lid,
-        reset_column,
+    )
+    from monarchs.physics.firn import (
+        firn_column,
+        percolation,
+        snow_accumulation,
         regrid_column,
     )
-    from monarchs.core import model_output, utils, error_handling
+    from monarchs.physics import lake  # the lake package
+    from monarchs.physics.lid import lid, virtual_lid
+    from monarchs.physics.lake import reset_column
+    from monarchs.core import utils, error_handling
+    from monarchs.io import output
 
     # pylint: enable=import-outside-toplevel
     # modules to search from when applying jit
@@ -421,7 +423,7 @@ def jit_modules(fastmath=False):
         virtual_lid,
         percolation,
         firn_column,
-        model_output,
+        output,
         timestep,
         lateral_movement,
         reset_column,
@@ -432,17 +434,14 @@ def jit_modules(fastmath=False):
     # If a piece of code is refusing to compile, and you can't get it to debug,
     # add it to here.
     ignore_list = [
-        "setup_output",
-        "update_model_output",  # we only want to hit interpolation
+        "initialise_output",
+        "append_output",  # we only want to hit interpolation
         "get_2d_grid",
         "memory_tracker",
         "do_not_jit",
         "wraps",
-        "create_dimensions",
-        "convert_bool_dtypes",
         "create_variable",
         "add_lat_long",
-        "get_variable_dims",
         "calc_grid_mass",
         "check_for_single_column_errors",
         "check_grid_correctness",

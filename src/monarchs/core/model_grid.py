@@ -176,7 +176,8 @@ def initialise_iceshelf(
         "lid_sfc_melt": lid_sfc_melt,
     }
 
-    hourly_diagnostics = {}  # Placeholder for future use
+    # Placeholder for future use:
+    # hourly_diagnostics = {}
     # Example structure:
     # hourly_diagnostics = {
     #     "example_diagnostic": np.zeros((num_rows, num_cols,

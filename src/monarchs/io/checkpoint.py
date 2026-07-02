@@ -1,18 +1,19 @@
 """
 Functions to handle dumping of model state, so that runs can be restarted
 upon failure.
-Separate from model_output, which just handles a user-defined subset of the
-outputs (i.e. ones that are useful scientifically, rather than everything
- needed to restart the model).
+Separate from model output (``monarchs.io.output``), which just handles a
+user-defined subset of the outputs (i.e. ones that are useful scientifically,
+rather than everything needed to restart the model). Both share the
+grid<->netCDF engine in ``monarchs.io.grid_serialisation``.
 """
 
 import os
 import numpy as np
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
-from monarchs.core.utils import get_2d_grid
+from monarchs.io import grid_serialisation as gs
 
 
-def dump_state(fname, grid, met_start_idx, met_end_idx):
+def write_checkpoint(fname, grid, met_start_idx, met_end_idx):
     """
     MONARCHS can sometimes crash, or throw an error. This function allows for
     the model state to be saved into a file (name determined by
@@ -50,40 +51,17 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     with Dataset(fname, clobber=True, mode="w") as data:
-        data.createDimension("vert_grid", size=grid["vert_grid"][0][0])
-        data.createDimension("vert_grid_lid", size=grid["vert_grid_lid"][0][0])
-        data.createDimension("vert_grid_lake", size=grid["vert_grid_lake"][0][0])
-        data.createDimension("direction", size=8)
-        data.createDimension("x", size=len(grid))
-        data.createDimension("y", size=len(grid[0]))
+        gs.create_grid_dimensions(data, grid, include_time=False)
         # keys = dir(grid[0][0])
         keys = list(grid.dtype.names)
         for key in keys:
             if not key.startswith("_"):
-                var = get_2d_grid(grid, key, index="all")
-                if var.dtype == "bool":
-                    dtype = "b"
-                else:
-                    dtype = var.dtype
-                if len(np.shape(var)) > 2 and np.shape(var)[-1] > 1:
-                    if "lake" in key:
-                        var_write = data.createVariable(
-                            key, dtype, ("x", "y", "vert_grid_lake")
-                        )
-                    elif "lid" in key:
-                        var_write = data.createVariable(
-                            key, dtype, ("x", "y", "vert_grid_lid")
-                        )
-                    elif key == "water_direction":
-                        var_write = data.createVariable(
-                            key, dtype, ("x", "y", "direction")
-                        )
-                    else:
-                        var_write = data.createVariable(
-                            key, dtype, ("x", "y", "vert_grid")
-                        )
-                else:
-                    var_write = data.createVariable(key, dtype, ("x", "y"))
+                var = gs.extract_field(grid, key)
+                dtype = gs.netcdf_dtype(var)
+                dims = gs.variable_dimensions(
+                    key, is_vector=gs.is_vector_field(var), include_time=False
+                )
+                var_write = data.createVariable(key, dtype, dims)
                 var_write[:] = var
         met_start_write = data.createVariable("met_start_idx", "i4")
         met_end_write = data.createVariable("met_end_idx", "i4")
@@ -91,7 +69,7 @@ def dump_state(fname, grid, met_start_idx, met_end_idx):
         met_end_write[:] = met_end_idx
 
 
-def reload_from_dump(fname, dtype, keys="all"):
+def read_checkpoint(fname, dtype, keys="all"):
     """
     Loads the netCDF file containing the model state into a NumPy structured
     array.

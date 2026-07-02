@@ -1,9 +1,17 @@
-""" """
+"""
+Time-series model output. This handles a user-defined subset of the model
+variables (i.e. ones that are useful scientifically, rather than everything
+needed to restart the model), written per timestep into an unlimited ``time``
+dimension so that the evolution of the model over time can be analysed as
+results.
 
-# TODO - docstrings, module-level docstring
+Separate from ``monarchs.io.checkpoint``, which captures the full model state
+for e.g. restarting a run.
+"""
+
 import numpy as np
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
-from monarchs.core.utils import get_2d_grid
+from monarchs.io import grid_serialisation as gs
 
 # pylint: disable=duplicate-code
 DEFAULT_VARS = (
@@ -17,7 +25,7 @@ DEFAULT_VARS = (
 # pylint: enable=duplicate-code
 
 
-def setup_output(fname, grid, vars_to_save=DEFAULT_VARS, vert_grid_size=False):
+def initialise_output(fname, grid, vars_to_save=DEFAULT_VARS, vert_grid_size=False):
     """
     Set up the NetCDF file for model output.
 
@@ -40,12 +48,14 @@ def setup_output(fname, grid, vars_to_save=DEFAULT_VARS, vert_grid_size=False):
     """
     with Dataset(fname, clobber=True, mode="w") as data:
         vert_grid_size = vert_grid_size or grid["vert_grid"][0][0]
-        create_dimensions(data, grid, vert_grid_size)
+        gs.create_grid_dimensions(
+            data, grid, vert_grid_size=vert_grid_size, include_time=True
+        )
 
         vars_loop = add_lat_long(vars_to_save)
         for key in vars_loop:
-            var = get_2d_grid(grid, key, index="all")
-            dtype = convert_bool_dtypes(var)
+            var = gs.extract_field(grid, key)
+            dtype = gs.netcdf_dtype(var)
             create_variable(data, key, var, dtype, grid, vert_grid_size=vert_grid_size)
 
 
@@ -59,44 +69,6 @@ def add_lat_long(vars_to_save):
         if key not in vars_to_save:
             vars_loop.append(key)
     return vars_loop
-
-
-def create_dimensions(data, grid, vert_grid_size):
-    """
-    Create dimensions in the NetCDF file. We have the following dimensions:
-    - x: horizontal grid dimension (number of columns)
-    - y: horizontal grid dimension (number of rows)
-    - time: unlimited dimension for time steps
-    - vert_grid: vertical grid dimension for firn column
-    - vert_grid_lid: vertical grid dimension for frozen lid
-    - vert_grid_lake: vertical grid dimension for lake
-    - direction: dimension for lateral flow (8 cardinal directions), used for
-      outputting direction in which water moves in each timestep
-
-    Parameters
-    ----------
-    data : netCDF4.Dataset
-        The NetCDF dataset to which dimensions will be added.
-    grid : np.ndarray
-        Structured array representing the model grid.
-    vert_grid_size : int
-        Size of the vertical grid for interpolation.
-    Returns
-    -------
-    None (amends data object inplace)
-    """
-    data.createDimension("x", size=len(grid["firn_depth"]))
-    data.createDimension("y", size=len(grid["firn_depth"][0]))
-    data.createDimension("time", None)
-    data.createDimension("vert_grid", size=vert_grid_size)
-    data.createDimension("vert_grid_lid", size=grid["vert_grid_lid"][0][0])
-    data.createDimension("vert_grid_lake", size=grid["vert_grid_lake"][0][0])
-    data.createDimension("direction", size=8)
-
-
-def convert_bool_dtypes(var):
-    """Convert boolean dtypes to 'b' for NetCDF compatibility."""
-    return "b" if var.dtype == "bool" else var.dtype
 
 
 # We need to pass everything in here, and using a config object
@@ -135,9 +107,8 @@ def create_variable(data, key, var, dtype, grid, vert_grid_size=20):
         var_write[:] = var
         return
 
-    shape = np.shape(var)
-    if len(shape) > 2 and shape[-1] > 1:
-        dims = get_variable_dims(key)
+    if gs.is_vector_field(var):
+        dims = gs.variable_dimensions(key, is_vector=True, include_time=True)
         if vert_grid_size != grid["vert_grid"][0][0] and "vert_grid" in dims:
             var = interpolate_model_output(grid, vert_grid_size, var)
         var_write = data.createVariable(key, dtype, dims)
@@ -148,31 +119,6 @@ def create_variable(data, key, var, dtype, grid, vert_grid_size=20):
 
 
 # pylint: enable=too-many-arguments, too-many-positional-arguments
-
-
-def get_variable_dims(key):
-    """
-    Determine the dimensions for a variable based on its key.
-    Lake variables use the lake vertical grid, lid variables use the lid vertical grid, etc.
-    Water direction uses a separate direction dimension, to represent one of the 8 cardinal
-    directions in which water can flow.
-    Parameters
-    ----------
-    key : str
-        Variable name.
-    Returns
-    -------
-    tuple
-        Dimensions for the variable.
-    """
-    if "water_direction" in key:
-        return "time", "x", "y", "direction"
-    if "lake" in key and "lake_depth" not in key:
-        return "time", "x", "y", "vert_grid_lake"
-    if "lid" in key and "lid_depth" not in key:
-        return "time", "x", "y", "vert_grid_lid"
-
-    return "time", "x", "y", "vert_grid"
 
 
 def interpolate_model_output(grid, vert_grid_size, var):
@@ -209,7 +155,7 @@ def interpolate_model_output(grid, vert_grid_size, var):
 # We have many optional arguments here, and using a config object
 # would be overkill, so disable the pylint warnings.
 # pylint: disable=too-many-arguments, too-many-positional-arguments
-def update_model_output(
+def append_output(
     fname,
     grid,
     iteration,
@@ -259,7 +205,7 @@ def update_model_output(
 
     with Dataset(fname, clobber=True, mode="a") as data:
         for key in vars_to_save:
-            var = get_2d_grid(grid, key, index="all")
+            var = gs.extract_field(grid, key)
             var_write = data.variables[key]
             if "vert_grid" in var_write.dimensions:
                 if (

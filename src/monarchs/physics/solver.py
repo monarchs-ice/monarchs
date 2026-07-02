@@ -71,7 +71,6 @@ def solve_firn_heateqn(
         T_tri = heateqn.propagate_temperature(cell, dz, dt, 273.15, N=1)
         T = np.concatenate((np.array([273.15]), T_tri))
     else:
-
         N = cell["vert_grid"]
         x = cell["firn_temperature"][:N]
         x = np.asarray(x)
@@ -117,225 +116,6 @@ def solve_firn_heateqn(
     T = np.around(T, decimals=8)
 
     return T, infodict, ier, mesg
-
-
-######################
-# EQUATIONS TO SOLVE #
-######################
-def lake_formation_eqn(x, args):
-    """
-    Refactored lake formation eqn with dynamic surface flux.
-    """
-    (
-        albedo,
-        lid,
-        lake,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        k,
-        T1,
-        dz,
-    ) = args
-
-    # Calculate Q dynamically based on the solver's current guess x[0]
-    Q = surface_fluxes.sfc_flux(
-        albedo,
-        lid,
-        lake,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        x[0],
-    )
-
-    # Now the residual accounts for changes in sensible/latent heat
-    output = np.array(
-        [-emissivity * stefan_boltzmann * x[0] ** 4 + Q - k * (x[0] - T1) / dz]
-    )
-    return output
-
-
-def lake_development_eqn(x, args):
-    """
-    Scipy-compatible form of the lake development version of the surface
-    temperature equation.  Called in lake_seb_solver.
-
-    Parameters
-    ----------
-    x : array_like, float, shape (1,)
-        Current estimate of the lake surface temperature [K].
-    args : tuple
-        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
-        dew_point_temperature, wind, lake_temperature, vert_grid_lake)``
-
-    Returns
-    -------
-    output : array_like, float, shape (1,)
-        Residual of the surface energy balance equation.
-    """
-    J = 0.1 * (9.8 * 5e-5 * (1.19e-7) ** 2 / 1e-6) ** (1 / 3)
-
-    (
-        albedo,
-        lid,
-        lake,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        lake_temperature,
-        vert_grid_lake,
-    ) = args
-
-    Q = surface_fluxes.sfc_flux(
-        albedo,
-        lid,
-        lake,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        x[0],
-    )
-
-    T_core = lake_temperature[int(vert_grid_lake / 2)]
-    output = np.array(
-        [
-            -emissivity * stefan_boltzmann * x[0] ** 4
-            + Q
-            + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
-        ]
-    )
-    return output
-
-
-def sfc_energy_virtual_lid(x, args):
-    """
-    Surface energy balance for the virtual lid.
-    Called in lid_seb_solver when ``cell["v_lid"]`` is True.
-
-    Parameters
-    ----------
-    x : array_like, float, shape (1,)
-        Current estimate of the virtual-lid surface temperature [K].
-    args : tuple
-        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
-        dew_point_temperature, wind, k_v_lid, lake_depth,
-        vert_grid_lake, v_lid_depth)``
-
-    Returns
-    -------
-    output : array_like, float, shape (1,)
-        Residual of the surface energy balance equation.
-    """
-    (
-        albedo,
-        lid,
-        lake,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        k_v_lid,
-        lake_depth,
-        vert_grid_lake,
-        v_lid_depth,
-    ) = args
-
-    Q = surface_fluxes.sfc_flux(
-        albedo,
-        lid,
-        lake,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        x[0],
-    )
-
-    # Combined thermal resistance: virtual-lid ice + half-lake water column
-    total_thickness = v_lid_depth + lake_depth / (vert_grid_lake / 2)
-    conduction = k_v_lid * (x[0] - 273.15) / total_thickness
-
-    output = np.zeros(1)
-    output[0] = Q - emissivity * stefan_boltzmann * x[0] ** 4 - conduction
-    return output
-
-
-def sfc_energy_lid(x, args):
-    """
-    Surface energy balance for the frozen lid.
-    Called in lid_seb_solver when ``cell["v_lid"]`` is False.
-
-    Parameters
-    ----------
-    x : array_like, float, shape (1,)
-        Current estimate of the lid surface temperature [K].
-    args : tuple
-        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
-        dew_point_temperature, wind, k_lid, lid_depth,
-        vert_grid_lid, sub_T)``
-
-        sub_T : float
-            Temperature of the first lid layer used as the sub-surface
-            boundary condition [K].
-
-    Returns
-    -------
-    output : array_like, float, shape (1,)
-        Residual of the surface energy balance equation.
-    """
-    (
-        albedo,
-        lid,
-        lake,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        k_lid,
-        lid_depth,
-        vert_grid_lid,
-        sub_T,
-    ) = args
-
-    Q = surface_fluxes.sfc_flux(
-        albedo,
-        lid,
-        lake,
-        lw_in,
-        sw_in,
-        air_temp,
-        p_air,
-        dew_point_temperature,
-        wind,
-        x[0],
-    )
-
-    output = np.zeros(1)
-    output[0] = (
-        -emissivity * stefan_boltzmann * x[0] ** 4
-        + Q
-        - k_lid * (x[0] - sub_T) / (lid_depth / vert_grid_lid)
-    )
-    return output
 
 
 ######################
@@ -588,3 +368,236 @@ def lid_heateqn_solver(cell, met_data, dt, dz):
     sol, infodict, ier, mesg = fsolve(eqn, x, args=args, full_output=True)
     sol = np.around(sol, decimals=8)
     return sol, infodict, ier, mesg
+
+
+############################
+# EQUATION RESIDUALS       #
+############################
+
+
+def lake_formation_eqn(x, args):
+    """
+    Equation residual for the lake-formation surface energy balance solver.
+    Called by lake_seb_solver when formation=True.
+
+    Parameters
+    ----------
+    x : array_like, float, shape (1,)
+        Current estimate of the lake surface temperature [K].
+    args : tuple
+        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+        dew_point_temperature, wind, k, T1, dz)``
+
+    Returns
+    -------
+    output : array_like, float, shape (1,)
+        Residual of the surface energy balance equation.
+    """
+    (
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        k,
+        T1,
+        dz,
+    ) = args
+
+    Q = surface_fluxes.sfc_flux(
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        x[0],
+    )
+
+    output = np.array(
+        [-emissivity * stefan_boltzmann * x[0] ** 4 + Q - k * (x[0] - T1) / dz]
+    )
+    return output
+
+
+def lake_development_eqn(x, args):
+    """
+    Equation residual for the lake-development surface energy balance solver.
+    Called by lake_seb_solver when formation=False.
+
+    Parameters
+    ----------
+    x : array_like, float, shape (1,)
+        Current estimate of the lake surface temperature [K].
+    args : tuple
+        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+        dew_point_temperature, wind, lake_temperature, vert_grid_lake)``
+
+    Returns
+    -------
+    output : array_like, float, shape (1,)
+        Residual of the surface energy balance equation.
+    """
+    J = 0.1 * (9.8 * 5e-5 * (1.19e-7) ** 2 / 1e-6) ** (1 / 3)
+
+    (
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        lake_temperature,
+        vert_grid_lake,
+    ) = args
+
+    Q = surface_fluxes.sfc_flux(
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        x[0],
+    )
+
+    T_core = lake_temperature[int(vert_grid_lake / 2)]
+    output = np.array(
+        [
+            -emissivity * stefan_boltzmann * x[0] ** 4
+            + Q
+            + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
+        ]
+    )
+    return output
+
+
+def sfc_energy_lid(x, args):
+    """
+    Surface energy balance for the frozen lid.
+    Called in lid_seb_solver when ``cell["v_lid"]`` is False.
+
+    Parameters
+    ----------
+    x : array_like, float, shape (1,)
+        Current estimate of the lid surface temperature [K].
+    args : tuple
+        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+        dew_point_temperature, wind, k_lid, lid_depth,
+        vert_grid_lid, sub_T)``
+
+        sub_T : float
+            Temperature of the first lid layer used as the sub-surface
+            boundary condition [K].
+
+    Returns
+    -------
+    output : array_like, float, shape (1,)
+        Residual of the surface energy balance equation.
+    """
+    (
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        k_lid,
+        lid_depth,
+        vert_grid_lid,
+        sub_T,
+    ) = args
+
+    Q = surface_fluxes.sfc_flux(
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        x[0],
+    )
+
+    output = np.zeros(1)
+    output[0] = (
+        -emissivity * stefan_boltzmann * x[0] ** 4
+        + Q
+        - k_lid * (x[0] - sub_T) / (lid_depth / vert_grid_lid)
+    )
+    return output
+
+
+def sfc_energy_virtual_lid(x, args):
+    """
+    Surface energy balance for the virtual lid.
+    Called in lid_seb_solver when ``cell["v_lid"]`` is True.
+
+    Parameters
+    ----------
+    x : array_like, float, shape (1,)
+        Current estimate of the virtual-lid surface temperature [K].
+    args : tuple
+        ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+        dew_point_temperature, wind, k_v_lid, lake_depth,
+        vert_grid_lake, v_lid_depth)``
+
+    Returns
+    -------
+    output : array_like, float, shape (1,)
+        Residual of the surface energy balance equation.
+    """
+    (
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        k_v_lid,
+        lake_depth,
+        vert_grid_lake,
+        v_lid_depth,
+    ) = args
+
+    Q = surface_fluxes.sfc_flux(
+        albedo,
+        lid,
+        lake,
+        lw_in,
+        sw_in,
+        air_temp,
+        p_air,
+        dew_point_temperature,
+        wind,
+        x[0],
+    )
+
+    # Combined thermal resistance: virtual-lid ice + half-lake water column
+    total_thickness = v_lid_depth + lake_depth / (vert_grid_lake / 2)
+    conduction = k_v_lid * (x[0] - 273.15) / total_thickness
+
+    output = np.zeros(1)
+    output[0] = Q - emissivity * stefan_boltzmann * x[0] ** 4 - conduction
+    return output

@@ -50,7 +50,7 @@ def met_data_from_era5(
             # Repeat each timestep index times to get to hourly data.
             repeat_to_make_hourly(era5_grid, index)
 
-        print(f"{func_name}: Writing data for" f" year {year + 1} into netCDF...")
+        print(f"{func_name}: Writing data for year {year + 1} into netCDF...")
 
         write_to_netcdf(
             model_setup.met_output_filepath,
@@ -218,8 +218,7 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     missing = [key for key in required if key not in era5_grid]
     if missing:
         raise ValueError(
-            "write_to_netcdf requires index-mapped ERA5 data; "
-            f"missing keys: {missing}"
+            f"write_to_netcdf requires index-mapped ERA5 data; missing keys: {missing}"
         )
 
     # Keys that require special handling or are stored separately.
@@ -236,7 +235,6 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     }
 
     with Dataset(era5_grid_path, mode) as f:
-
         if start_index == 0:
             # Use coarse_lat/coarse_lon when present (after get_met_bounds_from_DEM
             # overwrites lat/long with 2-D fine arrays)

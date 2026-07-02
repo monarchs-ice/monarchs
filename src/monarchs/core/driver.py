@@ -17,20 +17,16 @@ variables that the user wants to track over time.
 # TODO - docstrings
 
 import os
-import sys
 import time
 import pickle
-import warnings
+import logging
 import numpy as np
 import pathos
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
-from monarchs.core import configuration, initial_conditions
+from monarchs.core import configuration
 from monarchs.core.load_model_setup import get_model_setup
-from monarchs.core.dump_model_state import dump_state, reload_from_dump
-from monarchs.core.model_grid import get_spec as get_iceshelf_spec
-from monarchs.core.model_output import setup_output, update_model_output
+from monarchs.io import write_checkpoint, initialise_output, append_output
 from monarchs.core.utils import (
-    get_2d_grid,
     get_num_cores,
 )
 from monarchs.core.error_handling import (
@@ -38,11 +34,16 @@ from monarchs.core.error_handling import (
     check_grid_correctness,
     check_for_single_column_errors,
 )
-from monarchs.met_data import setup_met_data
 
 from monarchs.met_data.met_data_grid import initialise_met_data, get_spec
 from monarchs.physics import lateral_movement
 from monarchs.met_data.index_map import apply_index_map_expand
+from monarchs.core.initialise import check_for_reload_from_dump, initialise_model_data
+from monarchs.core.diagnostics import (
+    print_model_end_of_timestep_messages,
+)
+
+logger = logging.getLogger(__name__)
 
 # dummy init value for Dask client which may be used later - this needs to be
 # global
@@ -99,72 +100,6 @@ def setup_toggle_dict(model_setup):
         toggle_dict = num_dict
 
     return toggle_dict
-
-
-def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
-    """
-    Determine if the model needs to re-initialise parameters from a dump file.
-
-    Parameters
-    ----------
-    model_setup
-    grid
-    met_start_idx
-    met_end_idx
-
-    Returns
-    -------
-
-    """
-    # TODO - add support for reloading from pickle
-
-    if hasattr(model_setup, "dump_filepath"):
-        reload_name = model_setup.dump_filepath
-    else:
-        reload_name = ""
-
-    if model_setup.reload_from_dump:
-        print("Reloading state from dump...")
-
-        if not os.path.exists(reload_name):
-            first_iteration = 0
-            warnings.warn(
-                f"Reload/dump filepath {reload_name} does not exist - instead"
-                " starting model from scratch. If you believe you do have a"
-                " dump file, check that it is specified correctly in"
-                " model_setup.py."
-            )
-            reload_dump_success = False
-        else:
-            (
-                grid,
-                met_start_idx,
-                met_end_idx,
-                first_iteration,
-            ) = reload_from_dump(
-                reload_name,
-                get_iceshelf_spec(
-                    model_setup.vertical_points_firn,
-                    model_setup.vertical_points_lake,
-                    model_setup.vertical_points_lid,
-                ),
-            )
-            print(
-                f"Loading model state from dump file {reload_name} - first"
-                " iteration = ",
-                first_iteration,
-            )
-            reload_dump_success = True
-    else:
-        first_iteration = 0
-        reload_dump_success = False
-    return (
-        grid,
-        met_start_idx,
-        met_end_idx,
-        first_iteration,
-        reload_dump_success,
-    )
 
 
 def get_snow_sum(met_data_grid, grid, met_start_idx, met_end_idx, snow_added):
@@ -321,106 +256,6 @@ def update_met_conditions(
     return met_data_grid, met_data_len, snow_added
 
 
-def check_firn_met_consistency(grid, met_data_grid):
-    """
-    Check visually that the meteorological data input is mapped to the
-    DEM input.
-    """
-    # pylint: disable=import-outside-toplevel
-    from matplotlib import pyplot as plt
-    from cartopy import crs as ccrs
-
-    # pylint: enable=import-outside-toplevel
-    projection = ccrs.PlateCarree()
-    fig1 = plt.figure()
-    ax1 = fig1.add_subplot(211, projection=projection)
-    ax1.set_title("Original vs regridded met data")
-    ax1.coastlines()
-    ax1.gridlines(draw_labels=True)
-    ax1.contourf(
-        get_2d_grid(grid, "lon"),
-        get_2d_grid(grid, "lat"),
-        get_2d_grid(grid, "firn_depth"),
-        transform=projection,
-    )
-    ax2 = fig1.add_subplot(212, projection=projection)
-    ax2.coastlines()
-    ax2.gridlines(draw_labels=True)
-    ax2.contourf(
-        get_2d_grid(grid, "lon"),
-        get_2d_grid(grid, "lat"),
-        get_2d_grid(met_data_grid, "temperature"),
-        transform=projection,
-    )
-
-
-def print_model_end_of_timestep_messages(
-    grid,
-    day,
-    total_mass_start,
-    snow_added,
-    catchment_outflow,
-    tic,
-    model_setup,
-):
-    """
-    Messages to print out at the end of each model timestep (day).
-
-    Parameters
-    ----------
-    grid
-    day
-    total_mass_start
-    snow_added
-    catchment_outflow
-    tic
-
-    Returns
-    -------
-
-    """
-    toc = time.perf_counter()
-    print("\n*******************************************\n")
-    print("End of timestep diagnostics:")
-    if np.isnan(calc_grid_mass(grid)):
-        raise ValueError(
-            "Total mass of grid is NaN. This likely indicates that in the single-column physics "
-            "a variable has become undefined due to a divide-by-zero. Check the logs for more details."
-        )
-    print(f"Total mass at end of iteration {day + 1} = ", calc_grid_mass(grid))
-    if model_setup.snowfall_toggle and model_setup.catchment_outflow:
-        print(
-            "Original mass accounting for catchment outflow and snowfall = ",
-            total_mass_start + snow_added - catchment_outflow,
-        )
-    elif model_setup.snowfall_toggle and not model_setup.catchment_outflow:
-        print("Total snow added = ", snow_added)
-        print(
-            "Original mass accounting for snowfall = ",
-            total_mass_start + snow_added,
-        )
-    elif model_setup.catchment_outflow:
-        print(f"Model has lost {catchment_outflow} units of water")
-        print(
-            "Original mass accounting for catchment outflow = ",
-            total_mass_start - catchment_outflow,
-        )
-    else:
-        print("Original mass = ", total_mass_start)
-    print(f"Time at end of day {day + 1} is {toc - tic:0.4f} seconds")
-    print("Firn depth = ", get_2d_grid(grid, "firn_depth", mask_invalid=True))
-    print("Lake depth = ", get_2d_grid(grid, "lake_depth", mask_invalid=True))
-    print("Lid depth = ", get_2d_grid(grid, "lid_depth", mask_invalid=True))
-    print("Number of lakes = ", np.sum(get_2d_grid(grid, "lake")))
-    print("Number of lids = ", np.sum(get_2d_grid(grid, "lid")))
-    print("Max lake depth = ", np.max(get_2d_grid(grid, "lake_depth")))
-    print("Max lid depth = ", np.max(get_2d_grid(grid, "lid_depth")))
-    # ensure that output is flushed to the console immediately rather than
-    # being buffered.
-    # Mostly a fix for output not updating when running with Slurm.
-    sys.stdout.flush()
-
-
 def main(model_setup, grid):
     """
     Main loop function. This calls loop_over_grid, which in turn calls
@@ -545,7 +380,7 @@ def main(model_setup, grid):
     ) = check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx)
 
     if model_setup.save_output and not reload_dump_success:
-        setup_output(
+        initialise_output(
             model_setup.output_filepath,
             grid,
             vars_to_save=model_setup.vars_to_save,
@@ -624,14 +459,11 @@ def main(model_setup, grid):
                     if grid[i][j]["valid_cell"] and (
                         grid[i][j]["visit_count"] != visit_grid[i][j] + 1
                     ):
-                        print(
-                            "i = ",
+                        logger.error(
+                            "i = %s j = %s old visit count = %s new visit count = %s",
                             i,
-                            "j = ",
                             j,
-                            "old visit count = ",
                             visit_grid[i][j],
-                            "new visit count = ",
                             grid[i][j]["visit_count"],
                         )
                         visit_flag = True
@@ -646,7 +478,9 @@ def main(model_setup, grid):
         start_serial = time.perf_counter()
         if model_setup.dump_data_pre_lateral_movement:
             if model_setup.dump_format == "NETCDF4":
-                dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
+                write_checkpoint(
+                    model_setup.dump_filepath, grid, met_start_idx, met_end_idx
+                )
             elif model_setup.dump_format == "pickle":
                 with open(model_setup.dump_filepath, "wb") as outfile:
                     pickle.dump(grid, outfile)
@@ -711,7 +545,9 @@ def main(model_setup, grid):
         if model_setup.dump_data and day % model_setup.dump_timestep == 0:
             print(f"Dumping model state to {model_setup.dump_filepath}...")
             if model_setup.dump_format == "NETCDF4":
-                dump_state(model_setup.dump_filepath, grid, met_start_idx, met_end_idx)
+                write_checkpoint(
+                    model_setup.dump_filepath, grid, met_start_idx, met_end_idx
+                )
             elif model_setup.dump_format == "pickle":
                 with open(model_setup.dump_filepath, "wb") as outfile:
                     pickle.dump(grid, outfile)
@@ -721,7 +557,7 @@ def main(model_setup, grid):
         start = time.perf_counter()
         if model_setup.save_output and day % model_setup.output_timestep == 0:
             output_counter += 1
-            update_model_output(
+            append_output(
                 model_setup.output_filepath,
                 grid,
                 output_counter,
@@ -731,8 +567,7 @@ def main(model_setup, grid):
         print(f"Updating model output time: {time.perf_counter() - start:.2f}s")
         print(f"Serial time total: {time.perf_counter() - start_serial:.2f}s")
         print(
-            f"Total time for day {day + 1}:"
-            f" {time.perf_counter() - timestep_start:.2f}s"
+            f"Total time for day {day + 1}: {time.perf_counter() - timestep_start:.2f}s"
         )
         """ Extra checkpointing """
         if model_setup.dump_data:
@@ -744,7 +579,7 @@ def main(model_setup, grid):
                 )
                 print(f"Writing model state as an extra checkpoint at timestep {day}")
                 if day in dump_checkpoints:
-                    dump_state(
+                    write_checkpoint(
                         model_setup.dump_filepath + str(day),
                         grid,
                         met_start_idx,
@@ -753,80 +588,6 @@ def main(model_setup, grid):
     print("\n*******************************************\n")
     print("MONARCHS has finished running successfully!")
     print("Total time taken = ", time.perf_counter() - tic)
-    return grid
-
-
-def initialise_model_data(model_setup):
-    """
-    Wrapper function that calls various initialisation functions to set up
-    MONARCHS.
-    """
-    func_name = "monarchs.core.driver.initialise_model_data"
-    # Load in the initial firn profile, either from a whole DEM, or a
-    # user-defined subset
-    if hasattr(model_setup, "lat_bounds") and model_setup.lat_bounds.lower() == "dem":
-        (
-            firn_temperature,
-            rho,
-            firn_depth,
-            valid_cells,
-            dx,
-            dy,
-            lat_array,
-            lon_array,
-        ) = initial_conditions.initialise_firn_profile(
-            model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
-        )
-    else:
-        (
-            firn_temperature,
-            rho,
-            firn_depth,
-            valid_cells,
-            dx,
-            dy,
-            _,
-            _,
-        ) = initial_conditions.initialise_firn_profile(
-            model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
-        )
-        lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
-        lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
-
-    # Set up meteorological data, from either ERA5-format input ("ERA5") or
-    # user-defined values from their model configuration ("user_defined")
-    if model_setup.met_data_source == "ERA5":
-        setup_met_data_flag = True
-        if model_setup.load_precalculated_met_data:
-            print(f"{func_name}: Loading in pre-calculated" " MONARCHS format met data")
-            # check the file actually exists first
-            if not os.path.exists(model_setup.met_output_filepath):
-                print(
-                    f"{func_name}: Pre-calculated met data file"
-                    f" {model_setup.met_output_filepath} does not exist."
-                    " Calculating from raw ERA5 data instead."
-                )
-                setup_met_data_flag = True
-            else:
-                setup_met_data_flag = False
-
-        if setup_met_data_flag:
-            setup_met_data.met_data_from_era5(model_setup, lat_array, lon_array)
-    elif model_setup.met_data_source == "user_defined":
-        setup_met_data.prescribed_met_data(model_setup)
-
-    # Write all of the initial ice shelf values into the model grid
-    grid = initial_conditions.create_model_grid(
-        model_setup,
-        firn_depth,
-        rho,
-        firn_temperature,
-        valid_cells=valid_cells,
-        lats=lat_array,
-        lons=lon_array,
-        size_dx=dx,
-        size_dy=dy,
-    )
     return grid
 
 

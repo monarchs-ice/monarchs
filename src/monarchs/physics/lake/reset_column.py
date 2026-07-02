@@ -4,10 +4,10 @@
 # disable pylint warnings for broad exceptions as they are needed with Numba
 # pylint: disable=broad-exception-raised, raise-missing-from
 import numpy as np
-from monarchs.physics import percolation
+from monarchs.physics.firn import percolation
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
-from monarchs.physics.regrid_column import conservative_regrid
+from monarchs.physics.firn.regrid_column import conservative_regrid
 from monarchs.physics.constants import rho_ice, rho_water
 
 
