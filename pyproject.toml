@@ -27,11 +27,12 @@ dependencies = [
 ]
 
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-    "Programming Language :: Python :: 3.9",
+    "License: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+
 ]
 
 [project.optional-dependencies]
@@ -42,6 +43,24 @@ mpi = [
 numba = [
     'NumbaMinpack',
 ]
+
+[dependency-groups]
+
+dev = [
+    'pytest',
+    'pytest-cov',
+    'ruff',
+    'mypy',
+    'pre-commit',
+    'tox'
+    ]
+
+docs = [
+    'sphinx',
+    'sphinx-rtd-theme',
+    'myst-parser',
+    'sphinx-autoapi'
+    ]
 
 [project.scripts]
 monarchs = 'monarchs.run_monarchs:run_from_cli'
@@ -61,3 +80,22 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/monarchs"]
+
+[tool.pytest]
+testpaths = ["tests"]
+
+[tool.tox]
+requires = ["tox>=4.15.0"]
+env_list = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+[tool.tox.env_run_base]
+extras = ["dev"]
+commands = [
+    ["ruff", "format", "--check"],
+    ["ruff", "check"],
+    ["pytest"]
+]
+
+[tool.ruff]
+
+[tool.mypy]
