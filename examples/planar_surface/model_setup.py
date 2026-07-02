@@ -13,6 +13,7 @@ at monarchs-ice.github.io/monarchs/model_setup_reference.
 """
 
 import numpy as np
+import numpy.testing as npt
 from monarchs.dem_utils import create_dem_planar_test_case as cpt
 
 """
@@ -20,9 +21,7 @@ Spatial parameters
 """
 row_amount = 3  # Number of rows in your model grid, looking from top-down.
 col_amount = 3  # Number of columns in your model grid, looking from top-down.
-lat_grid_size = (
-    1000  # size of each lateral grid cell in m - possible to automate
-)
+lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 400  # Number of vertical grid cells
 # (i.e. firn_depth/vertical_points_firn = height of each grid cell)
 vertical_points_lake = 20  # Number of vertical grid cells in lake
@@ -33,13 +32,9 @@ vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 """
 Timestepping parameters
 """
-num_days = (
-    105  # number of days to run the model for (assuming t_steps = 24 below)
-)
+num_days = 105  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = (
-    3600 * t_steps_per_day
-)  # Timestep for each iteration of lateral
+lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -80,9 +75,7 @@ met_data["temperature"] = np.append(
 met_data["pressure"] = 1000 * np.ones(
     num_days * t_steps_per_day
 )  # Surface-layer air pressure. [hPa].
-met_data["wind"] = 5 * np.ones(
-    num_days * t_steps_per_day
-)  # Wind speed. [m s^-1].
+met_data["wind"] = 5 * np.ones(num_days * t_steps_per_day)  # Wind speed. [m s^-1].
 met_data["snowfall"] = 0 * np.ones(
     num_days * t_steps_per_day
 )  # Snowfall rate. [m s^-1].
@@ -123,9 +116,7 @@ dump_data = True
 dump_filepath = (  # Filename of our previously dumped state
     "output/gaussian_threelake_example_dump.nc"
 )
-reload_from_dump = (
-    False  # Flag to determine whether to reload the state or not
-)
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters
@@ -152,9 +143,7 @@ Toggles to turn on or off various parts of the model. These should only be chang
 All of these default to True.
 """
 
-catchment_outflow = (
-    True  # Determines if water on the edge of the catchment area will
-)
+catchment_outflow = True  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
 flow_into_land = True  # As above, but for flowing into invalid cells in addition to the model edge boundaries.
@@ -165,12 +154,9 @@ single_column_toggle = True
 
 
 # Just for this specific case - assert that the DEM is symmetric
-import numpy.testing as npt
-
 npt.assert_array_equal(firn_depth, firn_depth[::-1])
 
 if __name__ == "__main__":
-
     from monarchs.core.driver import monarchs
 
     from monarchs.core.utils import get_2d_grid

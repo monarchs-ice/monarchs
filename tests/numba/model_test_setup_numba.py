@@ -2,6 +2,7 @@
 """
 Sparse runscript for
 """
+
 import numpy as np
 
 """
@@ -9,9 +10,7 @@ Spatial parameters
 """
 row_amount = 2  # Number of rows in your model grid, looking from top-down.
 col_amount = 2  # Number of columns in your model grid, looking from top-down.
-lat_grid_size = (
-    2000  # size of each lateral grid cell in m - possible to automate
-)
+lat_grid_size = 2000  # size of each lateral grid cell in m - possible to automate
 # TODO - calc based on DEM automatically
 # lat_grid_size = 'dem'
 vertical_points_firn = 400  # Number of vertical grid cells
@@ -22,7 +21,9 @@ vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 # Set to a number if you want to manually specify a bounding box.
 # lat_bounds = 'dem'
 
-num_days = 10  # number of days to run the model for (assuming t_steps_per_day = 24 below)
+num_days = (
+    10  # number of days to run the model for (assuming t_steps_per_day = 24 below)
+)
 
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
 lateral_timestep = (
@@ -32,16 +33,18 @@ lateral_timestep = (
 firn_depth = np.array([[35, 30], [30, 35]])
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 
-met_input_filepath = "../../data/ERA5_small.nc"
+# TODO - the ERA5 test data now lives in the package at src/monarchs/_data.
+# It should be referenced as importable package data (e.g. via
+# importlib.resources.files("monarchs._data")) rather than by a hard-coded
+# relative path, so tests/examples work regardless of the working directory.
+met_input_filepath = "../../src/monarchs/_data/ERA5_small.nc"
 met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
 met_output_filepath = "./parallel_test_met_data.nc"
 
 save_output = False
 dump_data = False
-reload_from_dump = (
-    False  # Flag to determine whether to reload the state or not
-)
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters
@@ -64,7 +67,9 @@ All of these default to True.
 """
 snowfall_toggle = True
 firn_column_toggle = True
-firn_heat_toggle = True  # if firn_column_toggle is False, this just triggers during lake formation
+firn_heat_toggle = (
+    True  # if firn_column_toggle is False, this just triggers during lake formation
+)
 lake_development_toggle = True  # also triggers lake formation
 lid_development_toggle = True  # also triggers lid formation
 lateral_movement_toggle = True
@@ -73,9 +78,7 @@ densification_toggle = False
 percolation_toggle = True  # only works if firn_column_toggle also True
 _toggle = True  # Determines if percolation occurs over timescales,
 # or all water can percolate until it can no longer move
-catchment_outflow = (
-    False  # Determines if water on the edge of the catchment area will
-)
+catchment_outflow = False  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
 """
@@ -85,9 +88,7 @@ simulated_water_toggle = False  # 0.001  # False if off, otherwise float
 if simulated_water_toggle:
     print("Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = (
-    False  # True for testing low resolution heat equation runs
-)
+heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 
 met_dem_diagnostic_plots = True
 radiation_forcing_factor = 1

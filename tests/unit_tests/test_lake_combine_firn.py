@@ -1,13 +1,12 @@
 # test_regrid_and_merge.py
 import numpy as np
-import pytest
-from monarchs.physics import regrid_column as rg
+from monarchs.physics.firn import regrid_column as rg
 from monarchs.core.utils import calc_mass_sum
 
 
-
-def make_cell(nz=4, firn_depth=4.0, rho_i=917.0, rho_w=1000.0,
-              lake=True, lake_depth=0.0):
+def make_cell(
+    nz=4, firn_depth=4.0, rho_i=917.0, rho_w=1000.0, lake=True, lake_depth=0.0
+):
     """Create a minimal 'cell' dict-like for tests."""
     cell = {
         "firn_depth": float(firn_depth),
@@ -28,7 +27,7 @@ def make_cell(nz=4, firn_depth=4.0, rho_i=917.0, rho_w=1000.0,
         "meltflag": np.zeros(nz, dtype=int),
         "lake_boundary_change": 0,
         "lid_boundary_change": 0,
-        "firn_boundary_change": 0
+        "firn_boundary_change": 0,
     }
     return cell
 
@@ -46,7 +45,6 @@ def test_lfrac_equals_one_into_lake():
     height_change = 0  # no melt, just testing the merge
     height_change = rg.merge_cells_into_lake(cell, height_change)
     assert height_change == 2
-
 
 
 def test_lfrac_equals_one_into_lake_after_melt():

@@ -1,6 +1,5 @@
-from monarchs.physics import percolation
+from monarchs.physics.firn import percolation
 import numpy as np
-import pytest
 
 
 def test_perc_time():
@@ -9,8 +8,6 @@ def test_perc_time():
     cell = {}
     cell["Sfrac"] = np.array([0.5])
     cell["Lfrac"] = np.array([0.1])
-    rho_ice = 917
-    rho_water = 1000
     cell["firn_depth"] = 35
     cell["vert_grid"] = 500
     test_1 = percolation.perc_time(cell, v_lev)

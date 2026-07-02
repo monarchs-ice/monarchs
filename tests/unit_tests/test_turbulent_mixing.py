@@ -4,6 +4,7 @@ import pytest
 from monarchs.physics.lake import turbulent_mixing
 from monarchs.core.model_grid import get_spec, initialise_iceshelf
 
+
 @pytest.fixture
 def make_cell():
     """
@@ -11,6 +12,7 @@ def make_cell():
     - Surface boundary: lake_temperature[0] (you can set it per test)
     - Bottom boundary: implemented in turbulent_mixing as 273.15 K
     """
+
     def _make(
         vert_grid=10,
         vert_grid_lake=8,
@@ -27,26 +29,33 @@ def make_cell():
         firn_T = np.full(vert_grid, float(firn_temp), dtype=float)
 
         lake_T = np.full(vert_grid_lake, float(core_temp), dtype=float)
-        lake_T[0] = float(surface_temp)   # upper boundary in your scheme
-        lake_T[-1] = 273.15               # explicit lower boundary
+        lake_T[0] = float(surface_temp)  # upper boundary in your scheme
+        lake_T[-1] = 273.15  # explicit lower boundary
 
         grid = initialise_iceshelf(
             None,
-            num_rows=1, num_cols=1,
+            num_rows=1,
+            num_cols=1,
             vert_grid=vert_grid,
             vert_grid_lake=vert_grid_lake,
             vert_grid_lid=vert_grid_lid,
             dtype=dtype,
-            x=0, y=0,
+            x=0,
+            y=0,
             firn_depth=firn_depth,
             rho=rho,
             firn_temperature=firn_T,
             lake_depth=lake_depth_m,
             lake_temperature=lake_T,
             # Flags: open lake, no lid (albedo path is irrelevant as sw_in=0)
-            melt=True, exposed_water=True, lake=True, lid=False, v_lid=False,
+            melt=True,
+            exposed_water=True,
+            lake=True,
+            lid=False,
+            v_lid=False,
         )
         return grid[0, 0]
+
     return _make
 
 
@@ -109,12 +118,13 @@ def test_no_change_if_already_at_boundary(make_cell):
 @pytest.mark.parametrize(
     "surface_boundary, core_start, expect_direction",
     [
-        (276.0, 274.0, "up"),   # surface warmer than core → core should warm
-        (270.0, 272.0, "down"), # surface colder than core → core should cool
+        (276.0, 274.0, "up"),  # surface warmer than core → core should warm
+        (270.0, 272.0, "down"),  # surface colder than core → core should cool
     ],
 )
-def test_upper_boundary_influence_no_heating(make_cell, surface_boundary,
-                                             core_start, expect_direction):
+def test_upper_boundary_influence_no_heating(
+    make_cell, surface_boundary, core_start, expect_direction
+):
     """
     Optional: isolate the effect of the upper boundary when SW=0.
     The bottom boundary at 273.15 provides a restoring tendency; the net should

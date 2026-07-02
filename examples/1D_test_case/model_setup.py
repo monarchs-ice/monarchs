@@ -15,9 +15,7 @@ Spatial parameters
 """
 row_amount = 1  # Number of rows in your model grid, looking from top-down.
 col_amount = 1  # Number of columns in your model grid, looking from top-down.
-lat_grid_size = (
-    1000  # size of each lateral grid cell in m - possible to automate
-)
+lat_grid_size = 1000  # size of each lateral grid cell in m - possible to automate
 vertical_points_firn = 500  # Number of vertical grid cells
 vertical_points_lake = 20  # Number of vertical grid cells in lake
 vertical_points_lid = 20  # Number of vertical grid cells in ice lid
@@ -25,13 +23,9 @@ vertical_points_lid = 20  # Number of vertical grid cells in ice lid
 """
 Timestepping parameters
 """
-num_days = (
-    140  # number of days to run the model for (assuming t_steps = 24 below)
-)
+num_days = 140  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = (
-    3600 * t_steps_per_day
-)  # Timestep for each iteration of lateral
+lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -94,9 +88,7 @@ met_data["dew_point_temperature"] = np.concatenate(
         240 * np.ones(cold_timesteps),
     ]
 )  # Dew-point temperature. [K].
-met_data["wind"] = 5 * np.ones(
-    num_days * t_steps_per_day
-)  # Wind speed. [m s^-1].
+met_data["wind"] = 5 * np.ones(num_days * t_steps_per_day)  # Wind speed. [m s^-1].
 met_data["snowfall"] = 0 * np.ones(
     num_days * t_steps_per_day
 )  # Snowfall rate. [m s^-1].
@@ -137,9 +129,7 @@ Dumping and reloading parameters
 dump_data = True
 # Filename of our previously dumped state
 dump_filepath = f"output/1d_testcase_dump_{vertical_points_firn}.nc"
-reload_from_dump = (
-    False  # Flag to determine whether to reload the state or not
-)
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 if __name__ == "__main__":
     from monarchs.core.driver import monarchs
 
@@ -155,9 +145,7 @@ if __name__ == "__main__":
     plt.title("Number of vertical points = " + str(vertical_points_firn))
     plt.grid()
     plt.figure()
-    plt.plot(
-        grid[0][0]["firn_temperature"], grid[0][0]["vertical_profile"][::-1]
-    )
+    plt.plot(grid[0][0]["firn_temperature"], grid[0][0]["vertical_profile"][::-1])
     plt.xlabel("Temperature (K)")
     plt.ylabel("Depth (m)")
     plt.title(

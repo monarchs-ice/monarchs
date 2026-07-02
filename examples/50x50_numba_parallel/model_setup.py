@@ -40,13 +40,9 @@ longmin = np.nan  # Minimum longitude to use in our DEM and met data files.
 """
 Timestepping parameters
 """
-num_days = (
-    2  # number of days to run the model for (assuming t_steps = 24 below)
-)
+num_days = 2  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = (
-    3600 * t_steps_per_day
-)  # Timestep for each iteration of lateral
+lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -101,9 +97,7 @@ dump_data = True
 dump_filepath = (  # Filename of our previously dumped state
     "output/50x50_numba_example_dump.nc"
 )
-reload_from_dump = (
-    False  # Flag to determine whether to reload the state or not
-)
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 
 """
 Computing and numerical parameters

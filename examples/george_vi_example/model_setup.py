@@ -5,7 +5,6 @@ The template includes all MONARCHS parameters explicitly.
 Since this is a Python script, you can specify parameters e.g. as numpy arrays.
 """
 
-
 """
 Spatial parameters
 """
@@ -35,13 +34,9 @@ input_crs = 3031  # Coordinate reference system of the input data
 """
 Timestepping parameters
 """
-num_days = (
-    365  # number of days to run the model for (assuming t_steps = 24 below)
-)
+num_days = 365  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = (
-    3600 * t_steps_per_day
-)  # Timestep for each iteration of lateral
+lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -242,16 +237,14 @@ dump_data = True
 dump_filepath = (  # Filename of our previously dumped state
     "output/george_vi_dump.nc"
 )
-reload_from_dump = (
-    False  # Flag to determine whether to reload the state or not
-)
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 dump_format = "NETCDF4"
 
 """
 Computing and numerical parameters
 """
 use_numba = True  # Use Numba-optimised version (faster, but harder to debug)
-parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you mayTru
+parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
 use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a non-cluster machine set this False
 # Note that this is not yet compatible with Numba. The code will fail if you attempt to run with both
@@ -266,7 +259,9 @@ All of these default to True.
 """
 snowfall_toggle = True
 firn_column_toggle = True
-firn_heat_toggle = True  # if firn_column_toggle is False, this just triggers during lake formation
+firn_heat_toggle = (
+    True  # if firn_column_toggle is False, this just triggers during lake formation
+)
 lake_development_toggle = True  # also triggers lake formation
 lid_development_toggle = True  # also triggers lid formation
 lateral_movement_toggle = True
@@ -275,14 +270,10 @@ densification_toggle = False
 percolation_toggle = True  # only works if firn_column_toggle also True
 perc_time_toggle = True  # Determines if percolation occurs over timescales,
 # or all water can percolate until it can no longer move
-catchment_outflow = (
-    True  # Determines if water on the edge of the catchment area will
-)
+catchment_outflow = True  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
-flow_into_land = (
-    True  # Determines if water will flow into land cells at local minima
-)
+flow_into_land = True  # Determines if water will flow into land cells at local minima
 dump_data_pre_lateral_movement = True
 """
 Other flags for doing tests - e.g. adding water from outside catchment area
@@ -291,9 +282,7 @@ simulated_water_toggle = False  # 0.001  # False if off, otherwise float
 if simulated_water_toggle:
     print("model_setup: Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = (
-    False  # True for testing low resolution heat equation runs
-)
+heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 
 met_dem_diagnostic_plots = False
 dem_diagnostic_plots = False
