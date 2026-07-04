@@ -124,7 +124,6 @@ Computing and numerical parameters
 use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
 parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
-use_mpi = False
 dask_scheduler = (  # dask scheduler to use. 'processes', 'distributed' or 'threads'.
     "processes"
 )

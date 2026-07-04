@@ -9,7 +9,8 @@ the water column, and adjustment of the lake-firn boundary.
 # TODO - module level docstring, split/refactor lake_formation and
 #      - lake_development if possible
 import numpy as np
-from monarchs.physics import surface_fluxes
+from monarchs.core.kernels import kernel
+from monarchs.physics import surface_fluxes, material_properties
 from monarchs.physics.firn import percolation
 from monarchs.core import utils
 from monarchs.physics.firn import regrid_column
@@ -22,16 +23,17 @@ from monarchs.physics.constants import (
     L_ice,
     rho_ice,
     rho_water,
-    k_air,
-    k_water,
+    cp_water,
     sfc_absorbed_frac,
     tau_water,
     tau_ice,
+    saturated_firn_albedo,
 )
 
 MODULE_NAME = "monarchs.physics.lake"
 
 
+@kernel()
 def radiative_transfer(cell, sw_in):
     """
     # JE - I'm thinking about the solar radiation in the lake.
@@ -123,9 +125,7 @@ def radiative_transfer(cell, sw_in):
         lake_absorbed_solar = sw_penetrating - radiation_at_bottom
 
     # We aren't quite done yet. We also have to consider the albedo of the
-    # firn at the bottom of the lake. From surface_fluxes, the albedo
-    # of saturated firn is 0.6. So accounting for this:
-    saturated_firn_albedo = 0.6
+    # firn at the bottom of the lake.
     lake_reflected_radiation = radiation_at_bottom * saturated_firn_albedo
     # print('Radiation reflected at bottom = ', lake_reflected_radiation)
     radiation_at_bottom *= 1 - saturated_firn_albedo
@@ -143,6 +143,7 @@ def radiative_transfer(cell, sw_in):
     return lake_absorbed_solar, radiation_at_bottom
 
 
+@kernel()
 def turbulent_mixing(cell, sw_in, dt, k):
     """
     The lake has a temperature profile governed by its boundary conditions
@@ -182,28 +183,29 @@ def turbulent_mixing(cell, sw_in, dt, k):
     nsteps = int(dt / dt_scaling)
     dh = 0
 
+    # volumetric heat capacity of the lake water (cp_water is the ~0 C value)
+    # = 1000 * 4181
+    rho_cp_water = rho_water * cp_water
     for _ in range(nsteps):
         lake_core_temp = cell["lake_temperature"][int(cell["vert_grid_lake"] / 2)]
 
         flux_upper = (
             np.sign(cell["lake_temperature"][0] - lake_core_temp)
-            * 1000
-            * 4181
+            * rho_cp_water
             * J
             * abs(cell["lake_temperature"][0] - lake_core_temp) ** (4 / 3)
         )
 
         flux_lower = (
             np.sign(lake_core_temp - 273.15)
-            * 1000
-            * 4181
+            * rho_cp_water
             * J
             * abs(lake_core_temp - 273.15) ** (4 / 3)
         )
         # temp change
         # signs - positive downward into lake
         temp_change = (flux_upper - flux_lower + lake_absorbed_solar) / (
-            1000 * 4181 * cell["lake_depth"]
+            rho_cp_water * cell["lake_depth"]
         )
 
         lake_core_temp += temp_change * dt_scaling
@@ -215,7 +217,9 @@ def turbulent_mixing(cell, sw_in, dt, k):
         indices = np.arange(1, cell["vert_grid_lake"] - 1)
         cell["lake_temperature"][indices] = lake_core_temp
     dh_change, cap_reached = calc_height_adjustment(cell, k, net_lower_flux_for_dh)
-    dh += dh_change * 3600
+    # TODO - dh uses only the final substep's bottom flux - need to accumulate the
+    # flux over substeps instead.
+    dh += dh_change * dt
     if dh > (cell["firn_depth"] / cell["vert_grid"]):
         dh = cell["firn_depth"] / cell["vert_grid"]
         # print("Melting entire layer")
@@ -223,6 +227,7 @@ def turbulent_mixing(cell, sw_in, dt, k):
     return flux_upper, dh
 
 
+@kernel()
 def lake_development(cell, dt, met_data):
     """
     Once a lake of at least 10 cm deep is present this function calculates
@@ -275,17 +280,11 @@ def lake_development(cell, dt, met_data):
     elif cell["lid"] or cell["v_lid"]:
         cell["lake_temperature"][0] = 273.15
 
-    # Conductivity below lake
-    k_ice = np.zeros(cell["vert_grid"])
-    for i in np.arange(0, cell["vert_grid"]):
-        if cell["firn_temperature"][i] > 273.15:
-            k_ice[i] = 1000.0 * (1.017e-4 + 1.695e-6 * cell["firn_temperature"][i])
-        else:
-            k_ice[i] = 1000.0 * (
-                2.24e-3 + 5.975e-6 * (273.15 - cell["firn_temperature"][i]) ** 1.156
-            )
-    air = 1.0 - (cell["Sfrac"] + cell["Lfrac"])
-    k = cell["Sfrac"] * k_ice + air * k_air + cell["Lfrac"] * k_water
+    # Conductivity of the firn mixture below the lake - the liquid
+    # contribution is handled by the Lfrac term
+    k = material_properties.k_mixture(
+        cell["firn_temperature"], cell["Sfrac"], cell["Lfrac"]
+    )
     # Lake is turbulent (>= 10 cm)
     # Compute dh using the actual fluxes over the timestep rather
     # than the instantaneous flux at the end of the timestep * dt
@@ -317,6 +316,7 @@ def lake_development(cell, dt, met_data):
     return Fu
 
 
+@kernel()
 def calc_height_adjustment(cell, k, Fl):
     routine_name = f"{MODULE_NAME}.calc_height_adjustment"
     # If lake is above freezing it will begin to melt the firn below it

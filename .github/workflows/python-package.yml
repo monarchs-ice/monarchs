@@ -25,9 +25,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: ConorMacBride/install-package@v1
-      with:
-          apt: mpich
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:

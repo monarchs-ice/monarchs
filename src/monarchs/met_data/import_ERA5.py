@@ -6,6 +6,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.interpolate import RegularGridInterpolator
 from monarchs.met_data.index_map import apply_index_map, build_coarse_index_map
+from monarchs.physics.constants import rho_water
 
 MODULE_NAME = "monarchs.met_data.import_ERA5"
 
@@ -94,8 +95,13 @@ def ERA5_to_variables(
             start_index:end_index
         ]
     except KeyError:
-        var_dict["dew_point_temperature"] = (
-            0.95 * var_dict["temperature"][start_index:end_index]
+        # deprecated fallback based on 95% of true temperature - now raise an error
+        # if no dewpoint temperature provided. may relax this in future
+        raise KeyError(
+            f"{MODULE_NAME}.{routine_name}: Dewpoint temperature 'd2m' not"
+            " found in the input ERA5 netCDF. Check your input data, or amend"
+            " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
+            " key that is in your data."
         )
     try:
         var_dict["pressure"] = era5_data.variables["sp"][start_index:end_index] / 100
@@ -165,7 +171,8 @@ def ERA5_to_variables(
         )  # Kuipers Munekke 2015
 
     # Convert snow amount from ERA5 units (in water equivalent) to actual snow depth
-    var_dict["snowfall"] = var_dict["snowfall"]  # * 1000 / var_dict["snow_dens"]
+    # downstream code treats this as a snow depth in m and gets mass via snow_dens
+    var_dict["snowfall"] = var_dict["snowfall"] * rho_water / var_dict["snow_dens"]
     era5_data.close()
     return var_dict
 

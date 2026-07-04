@@ -25,15 +25,10 @@ both correct and fully parallel.
 
 # TODO - PEP8 compliance for comments, function docstrings
 import numpy as np
+from monarchs.core.kernels import kernel, prange
 from monarchs.core.utils import find_nearest
 from monarchs.physics.firn.percolation import percolate, calc_saturation
 from monarchs.physics.constants import rho_ice, rho_water
-
-try:
-    from numba import prange
-except ImportError:
-    # in case we don't have Numba - use the standard range function
-    prange = range
 
 # ---------------------------------------------------------------------------
 # Direction constants
@@ -49,6 +44,7 @@ _N_DIRS = 8
 # Even indices (0,2,4,6) are diagonal; odd indices (1,3,5,7) are cardinal.
 
 
+@kernel()
 def update_water_level(cell):
     """
     Determine the water level of a single cell, so we can determine where water
@@ -129,6 +125,7 @@ def update_water_level(cell):
         cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
 
 
+@kernel()
 def get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row):
     """
     Return the water-level differences between *cell* and each of its 8
@@ -147,6 +144,7 @@ def get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row)
     return diffs
 
 
+@kernel()
 def find_biggest_neighbour(
     cell,
     grid,
@@ -213,6 +211,7 @@ def find_biggest_neighbour(
     return biggest_height_difference, max_dirs[:n_max]
 
 
+@kernel()
 def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     """
     Determine the fraction of water that is allowed to move through the solid
@@ -281,6 +280,7 @@ def water_fraction(cell, m, timestep, direction, flow_speed_scaling=1.0):
     return water_frac
 
 
+@kernel()
 def calc_available_water_lake(cell, water_frac, split, neighbour_cell, outflow=False):
     if outflow:  # outflow case, so most of the calculation is irrelevant
         water_to_move = float(
@@ -313,6 +313,7 @@ def calc_available_water_lake(cell, water_frac, split, neighbour_cell, outflow=F
     return water_to_move, 0, 0, 0
 
 
+@kernel()
 def calc_available_water_ice_lens(
     cell, water_frac, split, neighbour_cell, outflow=False
 ):
@@ -393,6 +394,7 @@ def calc_available_water_ice_lens(
     )
 
 
+@kernel()
 def calc_catchment_outflow(
     cell, temporary_cell, water_frac, split, outflow_proportion=1.0
 ):
@@ -477,6 +479,7 @@ def calc_catchment_outflow(
     return water_out
 
 
+@kernel()
 def move_from_lake(
     cell,
     grid,
@@ -542,6 +545,7 @@ def move_from_lake(
     return temporary_cell, temporary_neighbour
 
 
+@kernel()
 def move_from_ice_lens(
     cell,
     grid,
@@ -597,7 +601,8 @@ def move_from_ice_lens(
         # Otherwise - remove all of it from that cell and go up one.
         else:
             temporary_cell["water"][idx] -= cell["water"][idx] / (split + 1)
-            water_to_move -= cell["water"][idx] / split
+            # decrement the quota by exactly the amount moved
+            water_to_move -= cell["water"][idx] / (split + 1)
             if not grid[row + n_s_index][col + w_e_index]["lake"]:
                 temporary_neighbour["water"][move_to_index] += cell["water"][idx] / (
                     split + 1
@@ -609,6 +614,7 @@ def move_from_ice_lens(
     return temporary_cell, temporary_neighbour
 
 
+@kernel()
 def handle_edge_cases(
     grid,
     cell,
@@ -678,6 +684,7 @@ def handle_edge_cases(
         return 0, False
 
 
+@kernel()
 def handle_invalid_neighbour_cell(
     grid,
     cell,
@@ -739,6 +746,7 @@ def handle_invalid_neighbour_cell(
         return 0, True
 
 
+@kernel()
 def move_to_neighbours(
     grid,
     temp_grid,
@@ -927,18 +935,17 @@ def move_to_neighbours(
     return total_water_out
 
 
+@kernel()
 def move_water(
     grid,
-    max_grid_col,
     max_grid_row,
+    max_grid_col,
     timestep,
     catchment_outflow=True,
     lateral_movement_percolation_toggle=True,
     flow_into_land=False,
     flow_speed_scaling=1.0,
     outflow_proportion=1.0,
-    row_start=None,
-    row_end=None,
 ):
     """
     Loop over the model grid and determine which cells water is allowed to move
@@ -960,12 +967,10 @@ def move_water(
     ----------
     grid : np.ndarray
         Numpy structured array containing the model grid.
-    max_grid_col : int
-        Total number of grid columns (used for bounds checking; includes any
-        halo columns, though only row halos are currently used).
     max_grid_row : int
-        Total number of grid rows in *grid* (used for bounds checking).  When
-        halo rows are present this is ``len(grid)`` not ``local_rows``.
+        Total number of grid rows in *grid* (used for bounds checking).
+    max_grid_col : int
+        Total number of grid columns (used for bounds checking).
     timestep : int
         Time taken for the lateral movement to occur. This is typically
         24 hours, i.e. 3600 * 24 seconds. [s]
@@ -973,13 +978,6 @@ def move_water(
         Boolean flag to determine whether to perform a percolation step after
         we do lateral water, to ensure that water is where it should be in the
         firn column.
-    row_start : int, optional
-        Index of the first locally-owned row in *grid*.  Defaults to 0.
-        Set to 1 (or 2) when halo rows are prepended so that Phase 1 does not
-        overwrite the halo ``water_level`` values placed there by the MPI halo
-        exchange, and Phase 2 only writes to owned cells.
-    row_end : int, optional
-        One-past-last locally-owned row index.  Defaults to ``max_grid_row``.
 
     Returns
     -------
@@ -1005,17 +1003,6 @@ def move_water(
     flow_speed_scaling = float(flow_speed_scaling)
     outflow_proportion = float(outflow_proportion)
 
-    # Resolve owned-row range.  In serial mode these default to the full grid.
-    # In MPI mode, row_start/row_end are the indices of the first/last+1 owned
-    # row inside `grid` (which may include halo rows prepended/appended by
-    # mpi_utils.attach_halos).  Halo rows must NOT be touched by Phase 1
-    # (their water_level was set by the MPI exchange) or Phase 2 (they are
-    # read-only boundary data).  max_grid_row is still the full padded length
-    # and is used for bounds-checking inside find_biggest_neighbour.
-    if row_start is None:
-        row_start = 0
-    if row_end is None:
-        row_end = max_grid_row
     # Perform some housekeeping. This consists of:
     # a) determining the water level in each cell,
     # b) creating temporary cells for our water to move in and out of,
@@ -1027,10 +1014,8 @@ def move_water(
     # Safe to parallelise with prange: each iteration writes only to its own
     # cell.  water_direction is also zeroed here so the diagnostic field is
     # clean at the start of every move_water call.
-    # Only owned rows (row_start..row_end) are processed so that halo rows
-    # (whose water_level was set by the MPI exchange) are not overwritten.
     # ---------------------------------------------------------------------------
-    for row in prange(row_start, row_end):
+    for row in prange(max_grid_row):
         for col in range(max_grid_col):
             cell = grid[row][col]
             update_water_level(cell)
@@ -1063,18 +1048,15 @@ def move_water(
     # current colour.  The 2/3 of iterations that hit ``continue`` execute only
     # two cheap modulo comparisons — the overhead is negligible.
     #
-    # Thread-level parallelism (prange → actual threads) is active when
-    # move_water is compiled with @njit(parallel=True), which is set by
-    # configuration.jit_modules() via the PARALLEL_FUNCTIONS constant.
-    #
-    # MPI note: only locally-owned rows (row_start..row_end) are processed.
-    # Halo rows are read-only boundary data: Phase 2 may *read* their
-    # water_level but never writes to them.  max_grid_row (the padded length)
-    # is used only for bounds-checking inside find_biggest_neighbour.
+    # Thread-level parallelism (prange → actual threads) would require
+    # move_water to be compiled with @njit(parallel=True). It is currently
+    # registered as a plain @kernel (see monarchs.core.kernels), so prange
+    # behaves as range and the phases run serially; enabling parallel=True is a
+    # deliberate future step (verify the 9-colour scheme is race-free first).
     # ---------------------------------------------------------------------------
     for phase_r in range(3):
         for phase_c in range(3):
-            for row in prange(row_start, row_end):
+            for row in prange(max_grid_row):
                 if row % 3 != phase_r:
                     continue
                 for col in range(max_grid_col):
@@ -1116,8 +1098,7 @@ def move_water(
 
     # Now we have the values calculated in our temporary grid,
     # update the values of <grid>, i.e. performing our movement in one step.
-    # Restricted to owned rows: halo rows are not written back.
-    for row in range(row_start, row_end):
+    for row in range(max_grid_row):
         for col in range(0, max_grid_col):
             cell = grid[row][col]
             temporary_cell = temp_grid[row][col]

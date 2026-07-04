@@ -6,22 +6,34 @@ firn column.
 
 # TODO - refactor/split up percolation, rename
 import numpy as np
+from monarchs.core.kernels import kernel
 from monarchs.core.error_handling import generic_error
-from monarchs.physics.constants import rho_ice, rho_water, L_ice, pore_closure
+from monarchs.physics import material_properties
+from monarchs.physics.constants import (
+    rho_ice,
+    rho_water,
+    L_ice,
+    pore_closure,
+    g,
+    eta_water,
+)
 
 MODULE_NAME = "monarchs.physics.percolation"
 
 
+@kernel()
 def calc_solid_mass(cell):
     """Calculate the mass of the solid part of the column."""
     return np.sum(cell["Sfrac"] * rho_ice * (cell["firn_depth"] / cell["vert_grid"]))
 
 
+@kernel()
 def calc_liquid_mass(cell):
     """Calculate the mass of the liquid part of the column."""
     return np.sum(cell["Lfrac"] * rho_water * (cell["firn_depth"] / cell["vert_grid"]))
 
 
+@kernel()
 def percolate(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=True):
     """
     Main function to handle percolation of water within the firn column.
@@ -128,6 +140,7 @@ def percolate(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=True
                     time_remaining = 0
 
 
+@kernel()
 def calc_refreezing(cell, v_lev):
     """
     Calculate refreezing of water within the firn column at a specified layer
@@ -157,7 +170,7 @@ def calc_refreezing(cell, v_lev):
     # TODO - check that this doesnt violate mass conservation
     # Maximum allowable temperature change
     T_change_max = 273.15 - cell["firn_temperature"][v_lev]
-    cp = 7.16 * cell["firn_temperature"][v_lev] + 138
+    cp = material_properties.cp_ice(cell["firn_temperature"][v_lev])
     excess_water = 0
     if cell["Sfrac"][v_lev] == 0:
         T_change_all = 10000  # arbitrarily high number
@@ -226,6 +239,7 @@ def calc_refreezing(cell, v_lev):
     )
 
 
+@kernel()
 def calc_saturation(cell, v_lev_in, end=False):
     """
     Determine whether the firn is saturated, calculating upwards from a
@@ -282,8 +296,13 @@ def calc_saturation(cell, v_lev_in, end=False):
         # if we are doing this just to force cells to have physical amounts
         # of water at the final step, say that this is meltwater that can
         # percolate at the next step.
-
-        if end and not cell["saturation"][v_lev + 1]:
+        # treat "under" the model grid as saturated, so we avoid
+        # errors reading beyond the end of the array with Numba
+        if v_lev + 1 < cell["vert_grid"]:
+            below_saturated = cell["saturation"][v_lev + 1]
+        else:
+            below_saturated = True
+        if end and not below_saturated:
             cell["meltflag"][v_lev] = 1
             # cell["saturation"][v_lev] = 0
         else:
@@ -303,7 +322,12 @@ def calc_saturation(cell, v_lev_in, end=False):
                     # if we are doing this just to force cells to have physical
                     # amounts of water at the final step, say that this is
                     # meltwater that can percolate at the next step.
-                    if end and not cell["saturation"][v_lev + 1]:
+                    # (same bottom-layer bounds guard as above)
+                    if v_lev + 1 < cell["vert_grid"]:
+                        below_saturated = cell["saturation"][v_lev + 1]
+                    else:
+                        below_saturated = True
+                    if end and not below_saturated:
                         cell["meltflag"][v_lev] = 1
                         # cell["saturation"][v_lev] = 0
                     else:
@@ -354,6 +378,7 @@ def calc_saturation(cell, v_lev_in, end=False):
         cell["saturation"][v_lev] = 0
 
 
+@kernel()
 def perc_time(cell, v_lev):
     """
     Calculate the time it takes for water to percolate through the firn at
@@ -361,6 +386,7 @@ def perc_time(cell, v_lev):
     This will determine how long the model has in practice to percolate water
     down through the current vertical level. This is calculated as the height
     of the vertical level divided by the speed of the flow.
+
 
     Parameters
     ----------
@@ -384,29 +410,23 @@ def perc_time(cell, v_lev):
     if cell["Lfrac"][v_lev] < 1e-10:
         p_time = 0
         return p_time
-    # mean grain size
+    # mean grain size [m]
     delta = 0.001
     # specific gravity of the firn
     rho_s_star = cell["Sfrac"][v_lev] * rho_ice / rho_water
-    # specific permeability
+    # specific permeability [m^2]
     perm_s = 0.077 * delta**2 * np.exp(-7.8 * rho_s_star)
-    # viscosity
-    eta = 0.001787
 
-    # pressure gradient, assuming no lake above
-    delta_p = rho_water / (
-        cell["firn_depth"] / cell["vert_grid"] / cell["Lfrac"][v_lev]
-    )
-    u = -perm_s / eta * delta_p
-    # TODO CHECK - This was double counting before. Removed the firn depth /
-    #  vert_grid term in the numerator.
-    # TODO CHECK - Previously, doubling the grid size caused the percolation
-    #  time per cell to quadruple.
-    p_time = 1 / u
+    # corrected Darcy flow speed
+    u = (perm_s / eta_water) * rho_water * g * cell["Lfrac"][v_lev]
+
+    # time for water to traverse this layer [s]
+    p_time = (cell["firn_depth"] / cell["vert_grid"]) / u
 
     return p_time
 
 
+@kernel()
 def capillary(cell, v_lev):
     """
     Calculate the amount of water left behind due to capillary effects.

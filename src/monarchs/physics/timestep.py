@@ -6,6 +6,7 @@ accordingly.
 """
 
 import numpy as np
+from monarchs.core.kernels import kernel
 from monarchs.physics.firn import firn_column, percolation, snow_accumulation
 from monarchs.physics import lake, solver
 from monarchs.physics.lid import lid, virtual_lid
@@ -16,6 +17,7 @@ from monarchs.core.error_handling import generic_error, check_correct
 MODULE_NAME = "monarchs.physics.timestep"
 
 
+@kernel()
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """
     Main timestepping loop applied to an instance of the model grid.
@@ -91,8 +93,12 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     cell["lake_boundary_change"] = 0
     cell["lid_boundary_change"] = 0
 
-    if np.isnan(cell["firn_temperature"]).any():
-        message = "NaN in firn temperature"
+    # error handling - if we have NaNs, then we have a problem
+    if np.isnan(cell["firn_temperature"]).any() or np.isnan(cell["firn_depth"]):
+        message = "NaN in firn temperature or firn depth"
+        generic_error(cell, routine_name, message)
+        return cell
+
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
         # Validation of model state at the start of the timestep
@@ -161,6 +167,11 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             if cell["lake_depth"] == 0:
                 cell["exposed_water"] = False
 
+            # placeholder flux in case we don't define lake development,
+            # for isolated/debug
+            # lid calculations
+            Fu = 0.0
+
             if not cell["lake"]:
                 if lake_development_toggle:
                     lake.lake_formation(cell, dt, met_data[t_step])
@@ -208,7 +219,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     )
                 # Check for if we need to reset the column - two possible
                 # conditions - if lake depth v small,
-                #            - or if lid melt count > 6 (i.e. lid has been
+                #            - or if lid melt count > 12 (i.e. lid has been
                 #              melting for half a day, and therefore has
                 #              significant slush/water on the surface)
                 if cell["lake_depth"] <= 1e-5:
@@ -236,7 +247,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             # Then find the other points that are saturated and perform the
             # same calculation here also.
             saturation_points = np.where(cell["Lfrac"] + cell["Sfrac"] > 1)
-            for saturation_point in saturation_points[::-1][0]:
+            for saturation_point in saturation_points[0][::-1]:
                 percolation.calc_saturation(cell, saturation_point, end=True)
             # Check again. We however will tolerate any instances where the
             # solid + liquid fraction goes above 1 (unless Sfrac is above 1).

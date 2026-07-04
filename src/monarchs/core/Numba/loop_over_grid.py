@@ -50,9 +50,9 @@ def loop_over_grid_numba(
         Dictionary of toggle switches to be fed into MONARCHS, that determine
         certain things about the model (such as whether to run certain
         physical processes).
-    parallel, use_mpi:
-        Dummy arguments so that we can overload the regular loop_over_grid
-        with this Numba implementation, since these are needed there.
+    parallel:
+        Dummy argument so that we can overload the regular loop_over_grid
+        with this Numba implementation, since it is needed there.
     ncores:
         Number of cores to use. Default "all", in which case it will use
         numba.config.NUMBA_DEFAULT_NUM_THREADS threads (i.e. all of them that

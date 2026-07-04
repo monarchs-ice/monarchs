@@ -9,6 +9,8 @@ rho_ice = 917.0
 rho_water = 1000.0
 rho_air = 1.29  # kg m^-3
 L_ice = 334000  # J kg^-1
+g = 9.81  # gravitational acceleration, m s^-2
+eta_water = 1.787e-3  # dynamic viscosity of water at 0 C, Pa s
 k_air = 0.022  # W m^-1 K^-1
 cp_air = 1004  # J kg^-1 K^-1
 k_water = 0.5818  # W m^-1 K^-1
@@ -16,7 +18,6 @@ cp_water = 4217  # J kg^-1 K^-1
 stefan_boltzmann = 5.670374e-8  # W m^-2 K^-4
 emissivity = 0.98  # emissivity of ice/water
 pore_closure = 830  # density in kg m^-3 where firn pores close
-ice_extinction_coefficient = 1.5  # m^-1, for solar radiation in ice
 sfc_absorbed_frac = (
     0.5  # fraction of solar radiation absorbed in surface layer of water or ice
 )

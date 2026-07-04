@@ -8,7 +8,8 @@ firn surface, before a full lake (depth >= 10 cm) has developed.
 # TODO - module level docstring, split/refactor lake_formation and
 #      - lake_development if possible
 import numpy as np
-from monarchs.physics import surface_fluxes
+from monarchs.core.kernels import kernel
+from monarchs.physics import surface_fluxes, material_properties
 from monarchs.physics.firn import percolation
 from monarchs.core import utils
 from monarchs.physics.firn import regrid_column
@@ -21,13 +22,14 @@ from monarchs.physics.constants import (
     L_ice,
     rho_ice,
     rho_water,
-    k_air,
-    k_water,
+    stefan_boltzmann,
+    emissivity,
 )
 
 MODULE_NAME = "monarchs.physics.lake"
 
 
+@kernel()
 def lake_formation(cell, dt, met_data):
     """
     Generate a lake, and track its evolution until we reach the point where
@@ -55,25 +57,10 @@ def lake_formation(cell, dt, met_data):
         cell["error_flag"] = 1
     original_mass = utils.calc_mass_sum(cell)
     dz = cell["firn_depth"] / cell["vert_grid"]
-    cp_ice = np.zeros(cell["vert_grid"])
-    k_ice = np.zeros(cell["vert_grid"])
-    air = np.zeros(cell["vert_grid"])
-    for i in np.arange(0, cell["vert_grid"]):
-        if cell["firn_temperature"][i] > 273.15:
-            cp_ice[i] = 4186.8
-            k_ice[i] = 1000 * (
-                1.017 * 10**-4 + 1.695 * 10**-6 * cell["firn_temperature"][i]
-            )
-        else:
-            cp_ice[i] = 1000 * (
-                7.16 * 10**-3 * cell["firn_temperature"][i] + 0.138
-            )  # Alexiades & Solomon pg. 8
-            k_ice[i] = 1000 * (
-                2.24 * 10**-3
-                + 5.975 * 10**-6 * (273.15 - cell["firn_temperature"][i]) ** 1.156
-            )
-        air[i] = 1 - cell["Sfrac"][i] - cell["Lfrac"][i]
-    k = cell["Sfrac"] * k_ice + air * k_air + cell["Lfrac"] * k_water
+    # firn conductivity term
+    k = material_properties.k_mixture(
+        cell["firn_temperature"], cell["Sfrac"], cell["Lfrac"]
+    )
 
     # Update cell albedo
     cell["albedo"] = surface_fluxes.sfc_albedo(
@@ -131,8 +118,11 @@ def lake_formation(cell, dt, met_data):
         if cell["Sfrac"][0] < 0.1:
             dHdt = cell["firn_depth"] / cell["vert_grid"]
         else:
-            dHdt = (Q - kdTdz) / (cell["Sfrac"][0] * L_ice * rho_ice) * dt
-
+            dHdt = (
+                (Q - emissivity * stefan_boltzmann * 273.15**4 - kdTdz)
+                / (cell["Sfrac"][0] * L_ice * rho_ice)
+                * dt
+            )
         if dHdt < 0:
             cell["error_flag"] = True
             message = "Error in surface temperature in lake formation \n"
@@ -170,6 +160,7 @@ def lake_formation(cell, dt, met_data):
         cell["error_flag"] = 1
 
 
+@kernel()
 def freeze_pre_lake(cell):
     """
     Refreeze a shallow 'pre-lake' (exposed water film) into the firn column, conserving mass.

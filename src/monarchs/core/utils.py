@@ -2,45 +2,13 @@
 Utilities module containing various helper functions or wrappers.
 """
 
-import contextlib
-from functools import wraps
 import numpy as np
 import pathos
 from monarchs.physics.constants import rho_ice, rho_water, cp_water
-
-try:
-    from numba import prange, objmode
-except ImportError:
-    # fallback if numba is not installed
-    prange = range  # pylint: disable=invalid-name
-
-    @contextlib.contextmanager
-    def objmode(*args, **kwargs):
-        """Dummy context manager for objmode when numba is not installed."""
-        yield
+from monarchs.core.kernels import kernel
 
 
-def do_not_jit(function):
-    """
-    An empty function used to decorate functions that we do not wish to
-    jit-compile.
-    Parameters
-    ----------
-    function - function to be decorated
-
-    Returns
-    -------
-    wrapped function
-
-    """
-
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        return function(*args, **kwargs)
-
-    return wrapper
-
-
+@kernel()
 def calc_mass_sum(cell):
     """
     Calculate the total mass in the grid cell in its current state.
@@ -149,6 +117,7 @@ def get_2d_grid(grid, attr, index=False, mask_invalid=False):
         return arr[:, :]
 
 
+@kernel()
 def find_nearest(a, a0):
     """Obtain index of element in array `a` closest to the scalar value `a0`"""
     idx = np.abs(a - a0).argmin()
@@ -269,11 +238,8 @@ def get_num_cores(model_setup):
     """
     # TODO - docstring, possibly remove pathos dependency
     if model_setup.cores in ["all", False] and model_setup.parallel:
-        if not model_setup.use_mpi:
-            cores = pathos.helpers.cpu_count()
-        else:
-            cores = pathos.helpers.cpu_count()
-        print(f"Using all cores - {pathos.helpers.cpu_count()} detected")
+        cores = pathos.helpers.cpu_count()
+        print(f"Using all cores - {cores} detected")
     elif not model_setup.parallel:
         cores = 1
     else:

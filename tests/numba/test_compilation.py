@@ -38,11 +38,11 @@ def run(model_setup):
 def test_numba_compilation():
     """Run a very simple case for 10 days. This is mostly to make sure that the code compiles correctly without
     any Numba-specific errors."""
-    from monarchs.core import load_model_setup, configuration
+    from monarchs.core import load_model_setup, configuration, kernels
 
     model_setup = load_model_setup.get_model_setup("model_test_setup_numba.py")
     configuration.handle_incompatible_flags(model_setup)
     configuration.handle_invalid_values(model_setup)
     configuration.create_defaults_for_missing_flags(model_setup)
-    configuration.jit_modules()
+    kernels.compile_all(model_setup.use_numba)
     run(model_setup)

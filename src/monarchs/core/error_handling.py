@@ -1,19 +1,9 @@
-import contextlib
 import numpy as np
 from monarchs.core.utils import calc_mass_sum
-
-try:
-    from numba import prange, objmode
-except ImportError:
-    # fallback if numba is not installed
-    prange = range  # pylint: disable=invalid-name
-
-    @contextlib.contextmanager
-    def objmode(*args, **kwargs):
-        """Dummy context manager for objmode when numba is not installed."""
-        yield
+from monarchs.core.kernels import kernel, objmode
 
 
+@kernel()
 def check_for_mass_conservation(cell, original_mass, new_mass, routine_name, tol=1e-6):
     """
     Check for mass conservation in the grid. We use this instead of
@@ -59,6 +49,7 @@ def check_for_mass_conservation(cell, original_mass, new_mass, routine_name, tol
     return errflag
 
 
+@kernel()
 def generic_error(cell, routine_name, message):
     """
     Generic error handling function to set error flag and print message,
@@ -141,6 +132,7 @@ def check_for_single_column_errors(grid):
     return flag
 
 
+@kernel()
 def check_correct(cell):
     """
     Sanity checking to ensure model is still in a physically correct state.

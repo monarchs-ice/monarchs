@@ -6,11 +6,12 @@ development.
 import numpy as np
 from numba import jit
 from monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics.material_properties import k_mixture
 from monarchs.physics.constants import (
     emissivity,
     stefan_boltzmann,
-    k_water,
-    k_air,
+    rho_water,
+    cp_water,
 )
 from monarchs.physics.Numba import extract_args
 
@@ -62,10 +63,7 @@ def lake_formation_eqn(x, output, args):
         extract_args.extract_met_data(args)
     )
     firn_temperature, Sfrac, Lfrac = extract_args.extract_firn_arrays(args)
-    k = 1000 * (
-        2.24 * 10**-3 + 5.975 * 10**-6 * (273.15 - firn_temperature[0]) ** 1.156
-    )
-    k = Sfrac[0] * k + Lfrac[0] * k_water + (1 - Sfrac[0] - Lfrac[0]) * k_air
+    k = k_mixture(firn_temperature[0], Sfrac[0], Lfrac[0])
     T1 = firn_temperature[1]
     Q = sfc_flux(
         albedo,
@@ -77,7 +75,7 @@ def lake_formation_eqn(x, output, args):
         p_air,
         dew_point_temperature,
         wind,
-        firn_temperature[0],
+        x[0],
     )
     # set output[0] rather than just output else we will just return our
     # initial guess.
@@ -150,12 +148,14 @@ def lake_development_eqn(x, output, args):
     # we have Q (surface flux, downwards) + longwave radiation (upwards, so
     # negative) + turbulent flux (downwards if T_sfc < T_core, upwards if T_sfc >
     # T_core).
-    output[0] = np.array(
-        [
-            -emissivity * stefan_boltzmann * (x[0] ** 4)
-            + Q
-            - np.sign(x[0] - T_core) * 1000 * 4181 * J * abs(x[0] - T_core) ** (4 / 3)
-        ]
+    output[0] = (
+        -emissivity * stefan_boltzmann * (x[0] ** 4)
+        + Q
+        - np.sign(x[0] - T_core)
+        * rho_water
+        * cp_water
+        * J
+        * abs(x[0] - T_core) ** (4 / 3)
     )
 
 

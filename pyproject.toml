@@ -37,9 +37,6 @@ classifiers = [
 
 [project.optional-dependencies]
 
-mpi = [
-    'mpi4py',
-]
 numba = [
     'NumbaMinpack',
 ]
@@ -81,7 +78,9 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["src/monarchs"]
 
-[tool.pytest]
+# pytest only reads [tool.pytest.ini_options] from pyproject.toml -
+# a bare [tool.pytest] table is silently ignored.
+[tool.pytest.ini_options]
 testpaths = ["tests"]
 
 [tool.tox]

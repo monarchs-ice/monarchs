@@ -339,6 +339,9 @@ def prescribed_met_data(model_setup):
     Full-grid prescribed data are written directly on the MONARCHS model grid:
     - time-varying variables use dimensions (time, row, column)
     - optional cell_latitude / cell_longitude use dimensions (row, column)
+
+    If prescribing a snow amount, make sure this is defined in metres and not
+    MWE.
     """
     func_name = "prescribed_met_data"
     met_data = dict(model_setup.met_data)

@@ -11,12 +11,12 @@ can be generated according to the value of a single Boolean.
 
 import numpy as np
 from scipy.optimize import fsolve, root
-from monarchs.physics import heateqn, surface_fluxes
+from monarchs.physics import heateqn, surface_fluxes, material_properties
 from monarchs.physics.constants import (
     emissivity,
     stefan_boltzmann,
-    k_air,
-    k_water,
+    rho_water,
+    cp_water,
 )
 
 
@@ -172,8 +172,7 @@ def lake_seb_solver(cell, met_data, dt, dz, formation=False):
         T0 = float(cell["firn_temperature"][0])
         sfrac0 = float(cell["Sfrac"][0])
         lfrac0 = float(cell["Lfrac"][0])
-        k_ice = 1000.0 * (2.24e-3 + 5.975e-6 * (273.15 - T0) ** 1.156)
-        k = sfrac0 * k_ice + lfrac0 * k_water + (1.0 - sfrac0 - lfrac0) * k_air
+        k = material_properties.k_mixture(T0, sfrac0, lfrac0)
         T1 = float(cell["firn_temperature"][1])
         dz_firn = float(cell["firn_depth"]) / float(cell["vert_grid"])
 
@@ -479,7 +478,11 @@ def lake_development_eqn(x, args):
         [
             -emissivity * stefan_boltzmann * x[0] ** 4
             + Q
-            + np.sign(T_core - x[0]) * 1000 * 4181 * J * abs(T_core - x[0]) ** (4 / 3)
+            + np.sign(T_core - x[0])
+            * rho_water
+            * cp_water
+            * J
+            * abs(T_core - x[0]) ** (4 / 3)
         ]
     )
     return output

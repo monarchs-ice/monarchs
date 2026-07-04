@@ -2,6 +2,7 @@
 
 # TODO - module-level docstring
 import numpy as np
+from monarchs.core.kernels import kernel
 from monarchs.physics.constants import (
     emissivity,
     sfc_absorbed_frac,
@@ -9,9 +10,12 @@ from monarchs.physics.constants import (
     saturated_firn_albedo,
     wet_snow_albedo,
     dry_snow_albedo,
+    rho_air,
+    cp_air,
 )
 
 
+@kernel()
 def sfc_flux(
     alpha,
     lid,
@@ -77,6 +81,7 @@ def sfc_flux(
     return Q
 
 
+@kernel()
 def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_lid):
     """
     Determine the effective surface albedo depending on the situation at the
@@ -146,6 +151,7 @@ def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_
     return alpha
 
 
+@kernel()
 def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid):
     """
     Calculate the latent and sensible heat fluxes given the wind speed and
@@ -227,7 +233,8 @@ def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid):
     else:
         CT = CT0 * (1 + b * Ri) ** -2
     q_0 = 0.622 * p_v / (p_air - 0.378 * p_v)
-    Fsens = 1.275 * 1004 * CT * wind * (air_temp - T_sfc)
+    # rho_air defined in monarchs.physics.constants
+    Fsens = rho_air * cp_air * CT * wind * (air_temp - T_sfc)
     #  q_0 is in kg/kg, s_hum is in kg/kg also.
-    Flat = 1.275 * L * CT * wind * (s_hum - q_0)
+    Flat = rho_air * L * CT * wind * (s_hum - q_0)
     return Flat, Fsens

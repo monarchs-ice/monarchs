@@ -10,6 +10,7 @@ for e.g. restarting a run.
 """
 
 import numpy as np
+from monarchs.core.kernels import kernel
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from monarchs.io import grid_serialisation as gs
 
@@ -121,6 +122,7 @@ def create_variable(data, key, var, dtype, grid, vert_grid_size=20):
 # pylint: enable=too-many-arguments, too-many-positional-arguments
 
 
+@kernel()
 def interpolate_model_output(grid, vert_grid_size, var):
     """
     Interpolate a 3D variable to a new vertical grid size.

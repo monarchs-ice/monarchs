@@ -16,14 +16,13 @@ variables that the user wants to track over time.
 
 # TODO - docstrings
 
-import os
 import time
 import pickle
 import logging
 import numpy as np
 import pathos
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
-from monarchs.core import configuration
+from monarchs.core import configuration, kernels
 from monarchs.core.load_model_setup import get_model_setup
 from monarchs.io import write_checkpoint, initialise_output, append_output
 from monarchs.core.utils import (
@@ -81,7 +80,6 @@ def setup_toggle_dict(model_setup):
         "perc_time_toggle": model_setup.perc_time_toggle,
         "densification_toggle": model_setup.densification_toggle,
         "ignore_errors": model_setup.ignore_errors,
-        "use_mpi": model_setup.use_mpi,
     }
 
     if model_setup.use_numba:
@@ -338,18 +336,15 @@ def main(model_setup, grid):
 
     # pylint: disable=import-outside-toplevel
     if model_setup.use_numba:
-        from numba import jit
         from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
-        from numba import set_num_threads
+        from numba import njit, set_num_threads
 
         if model_setup.cores in ["all", False]:
             cores = pathos.helpers.cpu_count()
         else:
             cores = model_setup.cores
         set_num_threads(int(cores))
-        loop_over_grid = jit(
-            loop_over_grid_numba, parallel=model_setup.parallel, nopython=True
-        )
+        loop_over_grid = njit(parallel=model_setup.parallel)(loop_over_grid_numba)
     else:
         from monarchs.core.loop_over_grid import loop_over_grid
     # pylint: enable=import-outside-toplevel
@@ -408,7 +403,8 @@ def main(model_setup, grid):
     catchment_outflow = 0
     time_loop = range(first_iteration, model_setup.num_days)
     start = time.perf_counter()
-    dt = 3600
+    # seconds per single-column timestep (3600 for the default 24 steps/day)
+    dt = int(86400 / model_setup.t_steps_per_day)
 
     """ Main model time loop """
 
@@ -417,8 +413,9 @@ def main(model_setup, grid):
         print("\n*******************************************\n")
         print(f"Start of model day {day + 1}\n")
 
-        # pre-flatten and rearrange met_data_grid
-        met_data_grid = met_data_grid.reshape(24, -1)
+        # pre-flatten and rearrange met_data_grid from
+        # (t_steps_per_day, rows, cols) to (rows*cols, t_steps_per_day)
+        met_data_grid = met_data_grid.reshape(model_setup.t_steps_per_day, -1)
         met_data_grid = np.moveaxis(
             met_data_grid, 0, -1
         )  # move the first axis to the last axis
@@ -598,35 +595,13 @@ def monarchs():
     of the model configuration (as opposed to initialising the model data).
     """
 
-    # Check the environment to see if we have MPI enabled.
-    if os.environ.get("MONARCHS_MPI", None) is not None:
-        mpi = True
-        print("Setting MPI to True")
-    else:
-        mpi = False
-    # If so, we need to get the model setup path from the environment
-    # variable rather than loading it in, as it will otherwise attempt
-    # to do so for every single MPI process.
-    # TODO - obviate the need for this by making it run on proc 0 only
-    if mpi:
-        if os.environ.get("MONARCHS_MODEL_SETUP_PATH") is not None:
-            model_setup_path = os.environ.get("MONARCHS_MODEL_SETUP_PATH")
-        else:
-            model_setup_path = "model_setup.py"
-    # If not using MPI, just parse the input arguments and
-    # load in the model setup path
-    else:
-        model_setup_path = configuration.parse_args()
+    model_setup_path = configuration.parse_args()
     model_setup = get_model_setup(model_setup_path)
 
-    # If we are using Numba optimisation, we need to ensure that
-    # all physics functions are JIT-compiled before we start the model run.
-    # use_numba may or may not be a model_setup attribute, so ignore
-    # the linter errors here as it is entirely optional
-    # pylint: disable=no-member
-    if hasattr(model_setup, "use_numba") and model_setup.use_numba:
-        configuration.jit_modules()
-    # pylint: enable=no-member
+    # Compile the registered @kernel functions before the model run (a no-op
+    # when use_numba is False). getattr, as defaults have not yet been applied
+    # so use_numba may or may not be a model_setup attribute at this point.
+    kernels.compile_all(getattr(model_setup, "use_numba", False))
 
     # Model configuration steps
     configuration.create_output_folders(model_setup)

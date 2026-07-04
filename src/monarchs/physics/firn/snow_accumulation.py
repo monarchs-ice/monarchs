@@ -5,6 +5,7 @@ new layers to the top of the firn column.
 """
 
 import numpy as np
+from monarchs.core.kernels import kernel
 from monarchs.core import utils
 from monarchs.physics.firn.regrid_column import conservative_regrid
 from monarchs.physics.firn.percolation import calc_saturation
@@ -14,31 +15,31 @@ from monarchs.physics.constants import rho_ice, rho_water
 MODULE_NAME = "monarchs.physics.snow_accumulation"
 
 
+@kernel()
 def snowfall(cell, snow_depth, snow_rho, snow_T):
     """
-    After melting occurs, subtract the amount of melting from the firn height,
-    convert it into meltwater, and interpolate the entire column to the new
-    vertical profile accounting for this height change.
-    This meltwater is either converted into surface liquid water fraction,
-    or if there is a lake, into lake height.
-    code Code
+    Add fresh snowfall to the top of the column.
 
+    If a lid is present, the snow is added to the lid depth (as an
+    ice-equivalent thickness). If a lake is present (and no lid), it is added
+    to the lake depth (as a water-equivalent depth). Otherwise a new snow
+    layer is added on top of the firn and the whole column is conservatively
+    regridded back onto ``vert_grid`` layers.
 
     Parameters
     ----------
     cell : numpy structured array
         Element of the model grid we are operating on.
-    height_change : float
-        Change in the firn height as a result of melting. [m]
-    lake : bool, optional
-        Flag to determine whether a lake is present or not. This is contained
-        here so that we can re-use the bulk of this algorithm, but with some
-        small changes to reflect the different situation that occurs when a
-        lake is present.
+    snow_depth : float
+        Depth of fresh snow to add. [m of snow, *not* water equivalent]
+    snow_rho : float
+        Density of the fresh snow. [kg m^-3]
+    snow_T : float
+        Temperature of the fresh snow. [K] Clamped to <= 273.15.
 
     Returns
     -------
-    None
+    None (amends cell inplace)
     """
     routine_name = f"{MODULE_NAME}.snowfall"
 
@@ -148,16 +149,15 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
 
     if abs(final_mass - expected_new_mass) > tol:
         message = (
-            "Mass conservation failed in snowfall.\nExpected: ",
-            float(expected_new_mass),
-            "Actual: ",
-            float(final_mass),
-            "Diff:  ",
-            float(final_mass - expected_new_mass),
+            "Mass conservation failed in snowfall."
+            f" Expected: {float(expected_new_mass)},"
+            f" Actual: {float(final_mass)},"
+            f" Diff: {float(final_mass - expected_new_mass)}"
         )
         generic_error(cell, routine_name, message)
 
 
+@kernel()
 def densification(cell, t_steps_per_day):
     """
 

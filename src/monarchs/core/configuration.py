@@ -1,7 +1,6 @@
 """ """
 
 # TODO - module-level docstring, other docstrings
-from inspect import getmembers, isfunction
 import argparse
 import warnings
 import os
@@ -85,12 +84,15 @@ def create_output_folders(model_setup):
     Create the output folders for the model output, meteorological data and
     dump files, if they do not already exist.
     """
-    if not os.path.exists(model_setup.output_filepath.rsplit("/", 1)[0]):
-        os.makedirs(model_setup.output_filepath.rsplit("/", 1)[0])
-    if not os.path.exists(model_setup.dump_filepath.rsplit("/", 1)[0]):
-        os.makedirs(model_setup.dump_filepath.rsplit("/", 1)[0])
-    if not os.path.exists(model_setup.met_output_filepath.rsplit("/", 1)[0]):
-        os.makedirs(model_setup.met_output_filepath.rsplit("/", 1)[0])
+    for filepath in (
+        model_setup.output_filepath,
+        model_setup.dump_filepath,
+        model_setup.met_output_filepath,
+    ):
+        # os.path.dirname is "" by default so writes to cwd
+        folder = os.path.dirname(filepath)
+        if folder:
+            os.makedirs(folder, exist_ok=True)
 
 
 def handle_incompatible_flags(model_setup):
@@ -112,6 +114,22 @@ def handle_incompatible_flags(model_setup):
     """
     func_name = "monarchs.core.configuration.handle_incompatible_flags"
     print("\n")
+    # Model doesn't properly handle non-square grids yet, so raise error at
+    # the start rather than potentially crashing out
+    if model_setup.row_amount != model_setup.col_amount:
+        raise NotImplementedError(
+            f"{func_name}: row_amount ({model_setup.row_amount}) !="
+            f" col_amount ({model_setup.col_amount}). Non-square grids are"
+            " not yet supported - see the to-fix list in _review."
+        )
+    # MPI support has been removed pending a full rework in future so
+    # warn here
+    if getattr(model_setup, "use_mpi", False):
+        warnings.warn(
+            f"{func_name}: MPI support has been removed from MONARCHS -"
+            " <use_mpi> is ignored. Use Numba (use_numba=True) or Dask"
+            " (parallel=True) parallelism instead."
+        )
     if hasattr(model_setup, "lat_bounds") and not hasattr(model_setup, "DEM_path"):
         if model_setup.lat_bounds.lower() == "dem":
             raise ValueError(
@@ -185,16 +203,15 @@ def handle_invalid_values(model_setup):
     ]
     if hasattr(model_setup, "solver") and model_setup.solver not in valid_solvers:
         raise ValueError(
-            f"m{func_name}:"
+            f"{func_name}:"
             f" solver must be one of {valid_solvers}, not {model_setup.solver}"
         )
-    if (
-        hasattr(model_setup, "outflow_proportion")
-        and model_setup.outflow_proportion > 1.0
+    if hasattr(model_setup, "outflow_proportion") and not (
+        0.0 <= model_setup.outflow_proportion <= 1.0
     ):
         raise ValueError(
             f"{func_name}:"
-            " outflow_proportion must be <= 1.0, not"
+            " outflow_proportion must be between 0.0 and 1.0, not"
             f" {model_setup.outflow_proportion}"
         )
 
@@ -252,10 +269,8 @@ def create_defaults_for_missing_flags(model_setup):
         "bbox_bottom_right",
         "dump_data_pre_lateral_movement",
         "use_numba",
-        "use_mpi",
         "dem_diagnostic_plots",
         "parallel",
-        "use_numba",
         "catchment_outflow",
         "load_precalculated_met_data",
         "dump_checkpoint_frequency",
@@ -285,7 +300,8 @@ def create_defaults_for_missing_flags(model_setup):
                 f" Setting missing model_setup attribute <{attr}> to default"
                 " value default"
             )
-    bounds = ["latmax", "latmin", "lonmax", "lonmin"]
+
+    bounds = ["latmax", "latmin", "longmax", "longmin"]
     for attr in bounds:
         if not hasattr(model_setup, attr):
             setattr(model_setup, attr, np.nan)
@@ -368,125 +384,3 @@ def create_defaults_for_missing_flags(model_setup):
                 " Setting missing model_setup attribute <lat_grid_size> to"
                 " default value 'dem' since a valid DEMwas provided."
             )
-
-
-def jit_modules(fastmath=False):
-    """
-    If using Numba, then we need to apply the `numba.jit` decorator to several
-    functions in `physics` and `core`.
-    This function handles this process, by loading in the modules and using
-    `setattr` to overwrite the initial implementation with the Numba-compatible
-    versions, either by applying the `jit` decorator, or in the case where the
-    source code differs between the Numba and non-Numba versions,
-    by overwriting the pure-Python version with the Numba-compatible one.
-
-    This is only called when `use_numba` is `True`, so the import only happens
-    if needed (important for if the user does not have Numba installed).
-
-    This function was designed this way (as opposed to applying jit to each
-    function in its own module locally) so that we only need to import
-    `monarchs.core.configuration` once; in `monarchs.core.driver`.
-    This allows us to run in parallel with `multiprocessing`, as otherwise each
-    thread would try and load in the configuration file with null arguments,
-    whenever importing the physics functions (which needed to know whether
-    `use_numba` was `True`) which was causing an error.
-    """
-    # pylint: disable=import-outside-toplevel
-    print("\nmonarchs.core.configuration.jit_modules: Applying Numba jit decorator")
-    from numba import njit
-    from monarchs.physics import (
-        surface_fluxes,
-        timestep,
-        lateral_movement,
-    )
-    from monarchs.physics.firn import (
-        firn_column,
-        percolation,
-        snow_accumulation,
-        regrid_column,
-    )
-    from monarchs.physics import lake  # the lake package
-    from monarchs.physics.lid import lid, virtual_lid
-    from monarchs.physics.lake import reset_column
-    from monarchs.core import utils, error_handling
-    from monarchs.io import output
-
-    # pylint: enable=import-outside-toplevel
-    # modules to search from when applying jit
-    module_list = [
-        utils,
-        error_handling,
-        snow_accumulation,
-        surface_fluxes,
-        lake,
-        lid,
-        virtual_lid,
-        percolation,
-        firn_column,
-        output,
-        timestep,
-        lateral_movement,
-        reset_column,
-        regrid_column,
-    ]
-
-    # Set up a list of modules to not apply njit to.
-    # If a piece of code is refusing to compile, and you can't get it to debug,
-    # add it to here.
-    ignore_list = [
-        "initialise_output",
-        "append_output",  # we only want to hit interpolation
-        "get_2d_grid",
-        "memory_tracker",
-        "do_not_jit",
-        "wraps",
-        "create_variable",
-        "add_lat_long",
-        "calc_grid_mass",
-        "check_for_single_column_errors",
-        "check_grid_correctness",
-        "get_num_cores",
-        "np",
-    ]  # other builtins/decorators
-
-    for module in module_list:
-        functions_list = getmembers(module, isfunction)
-        for name, function in functions_list:
-            # Ignore functions that are imported, are in our ignore list,
-            # or have the __wrapped__ attribute
-            # if function.__module__ != module.__name__:
-            #     print(f"Skipping {name} because it belongs to"
-            #           f" {function.__module__}, not {module.__name__}")
-            #     continue
-
-            if name in ignore_list:
-                continue
-            if hasattr(function, "__wrapped__") or name.startswith("__"):
-                continue
-            print(f"Applying Numba jit decorator to {module.__name__}.{name}")
-            jitted_function = njit(
-                function, fastmath=fastmath, debug=False, cache=False
-            )
-            setattr(module, name, jitted_function)
-
-    # we import these here since we need the other functions to first be
-    # jit-decorated
-    # pylint: disable=import-outside-toplevel
-
-    from monarchs.physics import solver
-    from monarchs.physics.Numba import solver_nb as numba_solver
-
-    # pylint: enable=import-outside-toplevel
-
-    # relax the isfunction stipulation for `numba_solver` since it is mostly
-    # jitted functions (which are `<CPUDispatcher>` objects rather than
-    # `<function>` objects
-    jit_functions_list = getmembers(numba_solver)
-    for name, jitfunc in jit_functions_list:
-        # ignore builtins - which we did not filter out with getmembers
-        if not name.startswith("__"):
-            print(
-                f"Setting {solver.__name__}.{name} to the equivalent"
-                " Numba-compatible version"
-            )
-            setattr(solver, name, jitfunc)

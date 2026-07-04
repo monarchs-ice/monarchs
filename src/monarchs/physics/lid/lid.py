@@ -1,5 +1,6 @@
 import numpy as np
-from monarchs.physics import surface_fluxes, solver
+from monarchs.core.kernels import kernel
+from monarchs.physics import surface_fluxes, solver, material_properties
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
 from monarchs.physics.constants import (
@@ -13,6 +14,7 @@ from monarchs.physics.constants import (
 MODULE_NAME = "monarchs.physics.lid"
 
 
+@kernel()
 def lid_development(cell, dt, met_data, Fu):
     """
     Once a permanent lid forms, it can refreeze the lake below. This function
@@ -55,10 +57,7 @@ def lid_development(cell, dt, met_data, Fu):
     original_mass = utils.calc_mass_sum(cell)
     if cell["lid_temperature"][0] > 273.15:
         cell["lid_temperature"][0] = 273.15
-    # clamp temperature change to avoid extreme conductivities if
-    # numerical noise causes lid temp to go above 273.15 K
-    temp_diff = max(0.0, 273.15 - cell["lid_temperature"][0])
-    k_lid_seb = 1000 * (2.24 * 10**-3 + 5.975 * 10**-6 * (temp_diff) ** 1.156)
+    k_lid_seb = material_properties.k_ice(cell["lid_temperature"][0])
     # If this is the first time we have a lid for the current state,
     # then initialise its temperature profile
     if not cell["has_had_lid"]:
@@ -154,6 +153,7 @@ def lid_development(cell, dt, met_data, Fu):
         cell["error_flag"] = 1
 
 
+@kernel()
 def surface_freezing(cell, dt, Q):
     """
     Determine the thermal conductivity of the lid when the surface temperature
@@ -191,6 +191,7 @@ def surface_freezing(cell, dt, Q):
         cell["lid_melt_count"] = 0
 
 
+@kernel()
 def surface_melt(cell, dt, Q):
     """
     Determine the amount of melting that occurs at the surface of the frozen
@@ -250,6 +251,7 @@ def surface_melt(cell, dt, Q):
         cell["lid_melt_count"] += 1  # force it above the timestep.py threshold
 
 
+@kernel()
 def calc_k_and_cp(cell):
     """
     Calculate the thermal conductivity and specific heat capacity of the
@@ -262,25 +264,13 @@ def calc_k_and_cp(cell):
     -------
     None.
     """
-    # initialise some arrays
-    cp_ice = np.zeros(cell["vert_grid_lid"])
-    k_ice = np.zeros(cell["vert_grid_lid"])
-    for i in np.arange(0, cell["vert_grid_lid"]):
-        if cell["lid_temperature"][i] > 273.15:
-            cp_ice[i] = 4186.8
-            k_ice[i] = 1000 * (
-                1.017 * 10**-4 + 1.695 * 10**-6 * cell["lid_temperature"][i]
-            )
-        else:
-            # Alexiades & Solomon pg. 8
-            cp_ice[i] = 1000 * (7.16 * 10**-3 * cell["lid_temperature"][i] + 0.138)
-            k_ice[i] = 1000 * (
-                2.24 * 10**-3
-                + 5.975 * 10**-6 * (273.15 - cell["lid_temperature"][i]) ** 1.156
-            )
+    # the lid is solid ice by definition, so use pure-ice properties
+    k_ice = material_properties.k_ice(cell["lid_temperature"])
+    cp_ice = material_properties.cp_ice(cell["lid_temperature"])
     return k_ice, cp_ice
 
 
+@kernel()
 def adjust_lid_height(cell, dt, Fu, k_ice):
     """
     Adjust the lid and lake heights based on the temperature gradient at the
@@ -333,6 +323,7 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
     cell["lake_boundary_change"] -= dh
 
 
+@kernel()
 def initialise_lid(cell, met_data, dt, dz, k_lid):
     """
     Check to determine if a lid has been formed previously - if not, then
@@ -363,6 +354,7 @@ def initialise_lid(cell, met_data, dt, dz, k_lid):
     )
 
 
+@kernel()
 def interpolate_profiles(cell, new_depth_grid, old_depth_grid):
     """
     Interpolate model variables when combining the lid and firn profiles.

@@ -10,8 +10,7 @@ COPY ../requirements.txt requirements.txt
 # Run update on base image so we can locate gfortran later
 RUN apt -y update && apt -y upgrade && apt-get install -y \
 gfortran \
-build-essential 
-RUN apt-get install mpich -y
+build-essential
 
 # Install the requirements specified in file using RUN
 # switch to virtual environment first
@@ -28,8 +27,7 @@ RUN apt -y update && apt -y upgrade && apt-get install -y \
 gfortran \
 build-essential \
 vim
-RUN apt-get install nano -y 
-RUN apt-get install mpich -y
+RUN apt-get install nano -y
 
 ENV PATH="/opt/venv/bin:$PATH"
 COPY --from=compile-image /opt/venv /opt/venv

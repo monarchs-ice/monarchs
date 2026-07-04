@@ -4,9 +4,10 @@
 # pylint: disable=broad-exception-raised
 # TODO - module-level docstring, other docstrings
 import numpy as np
+from monarchs.core.kernels import kernel
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
-from monarchs.physics import surface_fluxes, solver
+from monarchs.physics import surface_fluxes, solver, material_properties
 from monarchs.physics.constants import (
     L_ice,
     rho_ice,
@@ -17,6 +18,7 @@ from monarchs.physics.constants import (
 MODULE_NAME = "monarchs.physics.virtual_lid"
 
 
+@kernel()
 def virtual_lid_development(cell, dt, met_data, turbulent_flux_upper):
     """
     When a lake undergoes freezing from the top due to the surface conditions,
@@ -119,6 +121,7 @@ def virtual_lid_development(cell, dt, met_data, turbulent_flux_upper):
     check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
 
 
+@kernel()
 def update_virtual_lid_temperature(cell, met_data, dt):
     # Update cell albedo
     cell["albedo"] = surface_fluxes.sfc_albedo(
@@ -131,15 +134,14 @@ def update_virtual_lid_temperature(cell, met_data, dt):
         cell["snow_on_lid"],
     )
 
-    k_v_lid = 1000 * (
-        2.24e-3 + 5.975e-6 * (273.15 - cell["virtual_lid_temperature"]) ** 1.156
-    )
+    k_v_lid = material_properties.k_ice(cell["virtual_lid_temperature"])
 
     cell["virtual_lid_temperature"] = solver.lid_seb_solver(
         cell, met_data, dt, 0, k_v_lid
     )[0][0]
 
 
+@kernel()
 def freeze_virtual_lid(cell, ice_added):
     if (ice_added * rho_ice / rho_water) < cell["lake_depth"]:
         old_depth_grid = np.linspace(0, cell["lake_depth"], cell["vert_grid_lake"])
@@ -160,6 +162,7 @@ def freeze_virtual_lid(cell, ice_added):
         cell["lake_depth"] = 0
 
 
+@kernel()
 def melt_virtual_lid(cell, ice_added):
     cell["virtual_lid_temperature"] = 273.15
     ice_removed = -ice_added  #  negative ice_added means melting
