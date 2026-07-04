@@ -18,6 +18,10 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+        with:
+          # full history + tags: the image build pip-installs the package,
+          # whose version is derived from the git tag (hatch-vcs)
+          fetch-depth: 0
 
       - name: Log in to Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
@@ -44,6 +48,6 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-name: index.docker.io/jelsey92/monarchs
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true

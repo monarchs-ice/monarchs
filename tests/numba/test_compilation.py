@@ -30,7 +30,7 @@ def run(model_setup):
         lons=lon_array,
     )
 
-    grid = driver.main(model_setup, grid)
+    grid = driver.run_model(model_setup, grid)
 
     return grid
 

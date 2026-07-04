@@ -38,7 +38,6 @@ rho_sfc = 500  # Initial surface density, if using empirical formula for initial
 # importlib.resources.files("monarchs._data")) rather than by a hard-coded
 # relative path, so tests/examples work regardless of the working directory.
 met_input_filepath = "../../src/monarchs/_data/ERA5_small.nc"
-met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
 met_output_filepath = "./parallel_test_met_data.nc"
 
@@ -55,7 +54,6 @@ parallel = True  # run in parallel or serial. Parallel is of course much faster 
 # Note that this is not yet compatible with Numba. The code will fail if you attempt to run with both
 # this switch and use_numba both True.
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
-verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
 cores = (  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
     "all"
 )
@@ -83,11 +81,7 @@ catchment_outflow = False  # Determines if water on the edge of the catchment ar
 """
 Other flags for doing tests - e.g. adding water from outside catchment area
 """
-simulated_water_toggle = False  # 0.001  # False if off, otherwise float
-if simulated_water_toggle:
-    print("Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 
 met_dem_diagnostic_plots = True
 radiation_forcing_factor = 1

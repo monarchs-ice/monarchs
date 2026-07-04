@@ -42,13 +42,14 @@ def met_data_from_era5(
     # TODO - model_setup parameter whether we have a - single file or multiple.
     num_model_years = get_model_years(model_setup.num_days, chunk_size=CHUNKSIZE)
     for year in range(num_model_years):
-        start_index = year * CHUNKSIZE * 24 // index
-
         era5_grid = process_year(model_setup, year, index, lat_array, lon_array)
 
-        if index > 1:
-            # Repeat each timestep index times to get to hourly data.
-            repeat_to_make_hourly(era5_grid, index)
+        resample_met_to_model_timestep(
+            era5_grid, index, 24 / model_setup.t_steps_per_day
+        )
+        # chunk offset in *model* timesteps, since the met cache is written
+        # at model resolution
+        start_index = year * CHUNKSIZE * model_setup.t_steps_per_day
 
         print(f"{func_name}: Writing data for year {year + 1} into netCDF...")
 
@@ -440,22 +441,74 @@ def has_user_defined_bounds(model_setup):
     )
 
 
-def repeat_to_make_hourly(era5_grid, index):
-    """If our timestep is e.g. 3-hourly, repeat each timestep index times to get to hourly data.
-    to be used in MONARCHS"""
-    TIME_VARYING_KEYS = {
-        "time",
-        "wind",
-        "temperature",
-        "dew_point_temperature",
-        "pressure",
-        "snowfall",
-        "SW_surf",
-        "LW_surf",
-        "snow_albedo",
-        "snow_dens",
-    }
+# state-like variables: repeated when refining, averaged when coarsening
+STATE_KEYS = {
+    "wind",
+    "temperature",
+    "dew_point_temperature",
+    "pressure",
+    "SW_surf",
+    "LW_surf",
+    "snow_albedo",
+    "snow_dens",
+}
+# accumulation-like variables: split evenly when refining, summed when
+# coarsening (snowfall is a per-step depth)
+ACCUMULATION_KEYS = {"snowfall"}
 
-    for var in TIME_VARYING_KEYS:
-        if var in era5_grid:
-            era5_grid[var] = np.repeat(era5_grid[var], index, axis=0)
+
+def resample_met_to_model_timestep(era5_grid, met_hours, model_hours):
+    """
+    Resample met data from its native resolution to the model timestep,
+    in place.
+
+    Refining (e.g. three-hourly met, hourly model): state variables are
+    repeated; accumulations are divided evenly across the finer steps.
+    Coarsening (e.g. hourly met, three-hourly model): state variables are
+    block-averaged; accumulations are summed. Only integer ratios between
+    the two resolutions are supported.
+
+    ("time" is left at met resolution - it is not written to the met cache.)
+    """
+    routine_name = "resample_met_to_model_timestep"
+    if met_hours == model_hours:
+        return
+    if met_hours > model_hours:
+        factor = met_hours / model_hours
+        if factor != int(factor):
+            raise ValueError(
+                f"{MODULE_NAME}.{routine_name}: met resolution ({met_hours} h)"
+                f" must be an integer multiple of the model timestep"
+                f" ({model_hours} h)."
+            )
+        factor = int(factor)
+        for var in STATE_KEYS:
+            if var in era5_grid:
+                era5_grid[var] = np.repeat(era5_grid[var], factor, axis=0)
+        for var in ACCUMULATION_KEYS:
+            if var in era5_grid:
+                era5_grid[var] = np.repeat(era5_grid[var] / factor, factor, axis=0)
+    else:
+        factor = model_hours / met_hours
+        if factor != int(factor):
+            raise ValueError(
+                f"{MODULE_NAME}.{routine_name}: model timestep ({model_hours} h)"
+                f" must be an integer multiple of the met resolution"
+                f" ({met_hours} h)."
+            )
+        factor = int(factor)
+        for var in STATE_KEYS | ACCUMULATION_KEYS:
+            if var not in era5_grid:
+                continue
+            v = era5_grid[var]
+            if len(v) % factor != 0:
+                raise ValueError(
+                    f"{MODULE_NAME}.{routine_name}: length of met variable"
+                    f" '{var}' ({len(v)}) is not divisible by the coarsening"
+                    f" factor {factor}."
+                )
+            blocks = v.reshape(-1, factor, *v.shape[1:])
+            if var in ACCUMULATION_KEYS:
+                era5_grid[var] = blocks.sum(axis=1)
+            else:
+                era5_grid[var] = blocks.mean(axis=1)

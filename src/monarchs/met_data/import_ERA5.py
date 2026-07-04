@@ -35,6 +35,10 @@ def ERA5_to_variables(
     """
     routine_name = "ERA5_to_variables"
     var_dict = {}
+    # met_timestep is the number of met timesteps per day (24 = hourly,
+    # 8 = three-hourly, ...). ERA5 radiation is *accumulated* [J m^-2] over
+    # each step, so the conversion to W m^-2 must divide by the step length.
+    seconds_per_step = 86400 // met_timestep
     # Determine indices for start and end of the year.
     # We write only in one-yearly segments.
 
@@ -120,11 +124,13 @@ def ERA5_to_variables(
     var_dict["snowfall"] = era5_data.variables["sf"][start_index:end_index]
 
     try:
-        var_dict["SW_surf"] = era5_data.variables["ssrd"][start_index:end_index] / 3600
+        var_dict["SW_surf"] = (
+            era5_data.variables["ssrd"][start_index:end_index] / seconds_per_step
+        )
     except KeyError:
         try:
             var_dict["SW_surf"] = (
-                era5_data.variables["ssrdc"][start_index:end_index] / 3600
+                era5_data.variables["ssrdc"][start_index:end_index] / seconds_per_step
             )
             print(
                 "Reading in clear-sky rather than all-sky radiation data since"
@@ -138,7 +144,9 @@ def ERA5_to_variables(
                 " to use the key that is in your data."
             )
     try:
-        var_dict["LW_surf"] = era5_data.variables["strd"][start_index:end_index] / 3600
+        var_dict["LW_surf"] = (
+            era5_data.variables["strd"][start_index:end_index] / seconds_per_step
+        )
     except KeyError:
         try:
             print(
@@ -147,7 +155,7 @@ def ERA5_to_variables(
                 " strd was not in the input netCDF"
             )
             var_dict["LW_surf"] = (
-                era5_data.variables["strdc"][start_index:end_index] / 3600
+                era5_data.variables["strdc"][start_index:end_index] / seconds_per_step
             )
         except KeyError:
             raise KeyError(

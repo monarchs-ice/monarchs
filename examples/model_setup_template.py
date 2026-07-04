@@ -186,7 +186,6 @@ Meteorological parameters and input
 # met_input_filepath = "data/ERA5_new_dem_fixed.nc"
 met_input_filepath = "data/ERA5_small.nc"
 
-met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
 
 met_timestep = "hourly"
@@ -263,9 +262,6 @@ dump_filepath = (  # Filename of our previously dumped state
     "../MONARCHS_runs/progress_df.nc"
 )
 reload_from_dump = False  # Flag to determine whether to reload the state or not
-dump_format = (  # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
-    "NETCDF4"
-)
 dump_timestep = 1
 """
 Computing and numerical parameters
@@ -276,7 +272,6 @@ parallel = True  # run in parallel or serial. Parallel is of course much faster 
 # Note that this is not yet compatible with Numba. The code will fail if you attempt to run with both
 # this switch and use_numba both True.
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
-verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
 cores = 24  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 
 """
@@ -303,11 +298,7 @@ flow_into_land = False  # Determines if water will flow into land cells at local
 """
 Other flags for doing tests - e.g. adding water from outside catchment area
 """
-simulated_water_toggle = False  # 0.001  # False if off, otherwise float
-if simulated_water_toggle:
-    print("model_setup: Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = False  # True for testing low resolution heat equation runs
 
 met_dem_diagnostic_plots = False
 radiation_forcing_factor = 1

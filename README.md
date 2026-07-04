@@ -1,7 +1,12 @@
 # MONARCHS
 
-[![DOI](https://zenodo.org/badge/890500319.svg)](https://doi.org/10.5281/zenodo.14217406)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14217406.svg)](https://doi.org/10.5281/zenodo.14217406)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![CI](https://github.com/monarchs-ice/monarchs/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/monarchs-ice/monarchs/actions/workflows/python-package.yml)
+[![PyPI](https://img.shields.io/pypi/v/monarchs-ice)](https://pypi.org/project/monarchs-ice/)
+[![Python versions](https://img.shields.io/pypi/pyversions/monarchs-ice)](https://pypi.org/project/monarchs-ice/)
+[![Docker](https://img.shields.io/docker/v/jelsey92/monarchs?label=docker)](https://hub.docker.com/r/jelsey92/monarchs)
+[![License: GPL v3+](https://img.shields.io/badge/license-GPLv3+-blue)](LICENSE)
 
 MOdel of aNtARtic iCe shelf Hydrology and Stability 
 

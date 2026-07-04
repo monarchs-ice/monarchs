@@ -69,12 +69,12 @@ Installation for use on HPC
 You can install MONARCHS with its advanced dependencies using (from the top level MONARCHS folder):
 
 .. code-block:: console
-    pip install -e .[mpi,numba]
+    pip install -e .[numba]
 
 .. note::
     Not all of the modules in requirements.txt are required to make MONARCHS work, but are required to enable certain features.
-    If the install fails on either of the following, MONARCHS will still work, but only without the
-    relevant ``model_setup`` flags enabled. MPI especially is suggested only for running on HPC systems.
+    If the install fails on the following, MONARCHS will still work, but only without the
+    relevant ``model_setup`` flags enabled.
 
 .. warning::
     The install will fail on ``NumbaMinpack`` if you don't have a Fortran/C++ compiler.
@@ -83,22 +83,15 @@ You can install MONARCHS with its advanced dependencies using (from the top leve
     On HPC, you may need to use ``module load <name>`` to load in whichever compiler setup your HPC has.
     You can get around the need for ``NumbaMinpack`` by setting ``use_numba = False`` in ``model_setup.py``.
 
-.. warning::
-    The installation will fail on ``mpi4py`` if you don't have a working MPI installation. On Windows, you need to install
-    https://learn.microsoft.com/en-us/message-passing-interface/microsoft-mpi.
-    On Linux, ``apt-get install mpich`` should suffice.
-    If you don't want to run with MPI at any point, you can do
-    ``pip install -e .[numba]`` to install MONARCHS with all the dependencies except
-    ``mpi4py``.
 .. note::
-    It should be re-iterated that neither NumbaMinpack nor Pyina are required to be installed for the code to run,
-    provided that you set ``use_numba = False`` and ``use_mpi = False`` in ``model_setup.py``.
+    It should be re-iterated that NumbaMinpack is not required to be installed for the code to run,
+    provided that you set ``use_numba = False`` in ``model_setup.py``.
 
 Singularity/Docker image
 ========================
 Instead of cloning the repo and installing the requirements yourself, you can get MONARCHS via a Docker image. This image
-contains a barebones Linux distribution, with all of the required libraries (including a Fortran compiler and MPI
-implementation) pre-installed.
+contains a barebones Linux distribution, with all of the required libraries (including a Fortran compiler)
+pre-installed.
 
 To obtain this, please get in touch with the model maintainers for access as the image is currently private.
 

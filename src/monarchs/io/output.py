@@ -11,6 +11,7 @@ for e.g. restarting a run.
 
 import numpy as np
 from monarchs.core.kernels import kernel
+from monarchs.core import metadata
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from monarchs.io import grid_serialisation as gs
 
@@ -26,7 +27,9 @@ DEFAULT_VARS = (
 # pylint: enable=duplicate-code
 
 
-def initialise_output(fname, grid, vars_to_save=DEFAULT_VARS, vert_grid_size=False):
+def initialise_output(
+    fname, grid, vars_to_save=DEFAULT_VARS, vert_grid_size=False, model_setup=None
+):
     """
     Set up the NetCDF file for model output.
 
@@ -43,11 +46,15 @@ def initialise_output(fname, grid, vars_to_save=DEFAULT_VARS, vert_grid_size=Fal
     vert_grid_size : int or bool, optional
         Size of the vertical grid for interpolation. If False, uses the existing
         vertical grid size from the model grid. Default is False.
+    model_setup : ModelSetup, optional
+        If given, run-provenance metadata (code/dependency versions and the
+        resolved configuration) is written as global attributes.
     Returns
     -------
     None.
     """
     with Dataset(fname, clobber=True, mode="w") as data:
+        data.setncatts(metadata.global_attrs(model_setup))
         vert_grid_size = vert_grid_size or grid["vert_grid"][0][0]
         gs.create_grid_dimensions(
             data, grid, vert_grid_size=vert_grid_size, include_time=True
@@ -106,6 +113,7 @@ def create_variable(data, key, var, dtype, grid, vert_grid_size=20):
     if key in ("lat", "lon"):
         var_write = data.createVariable(key, dtype, ("x", "y"))
         var_write[:] = var
+        metadata.apply_variable_metadata(var_write, key)
         return
 
     if gs.is_vector_field(var):
@@ -117,6 +125,7 @@ def create_variable(data, key, var, dtype, grid, vert_grid_size=20):
     else:
         var_write = data.createVariable(key, dtype, ("time", "x", "y"))
         var_write[0] = var
+    metadata.apply_variable_metadata(var_write, key)
 
 
 # pylint: enable=too-many-arguments, too-many-positional-arguments

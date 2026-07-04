@@ -133,7 +133,6 @@ dask_scheduler = (  # dask scheduler to use. 'processes', 'distributed' or 'thre
 # poor as this does not release the GIL.
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
-verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
 cores = 8  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 
 flow_speed_scaling = 1.0  # Scaling factor for flow speed, used to adjust the speed of water flow in the model.

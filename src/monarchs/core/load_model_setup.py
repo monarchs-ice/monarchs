@@ -1,11 +1,13 @@
 """
 Module containing the ModelSetup class, used to load in and hold the
 configuration used by MONARCHS.
+
+Note that runscripts are ordinary Python and execute with the user's
+privileges - treat them like code, not data.
 """
 
 import importlib.util
 import ast
-from monarchs.core.configuration import SAFE_IMPORTS
 
 
 MODULE_NAME = "monarchs.core.load_model_setup"
@@ -47,7 +49,6 @@ class ModelSetup:
         method_name = "monarchs.core.load_model_setup.ModelSetup.validate_model_setup"
         self.check_file_exists()
         self.check_for_key_variables()
-        self.check_for_unexpected_imports()
         if self.errors:
             error_message = "\n".join(self.errors)
             raise ValueError(
@@ -117,60 +118,6 @@ class ModelSetup:
                         f"script."
                     ]
                 )
-
-    def check_for_unexpected_imports(self):
-        """
-        We want to ensure that only certain imports are allowed in a model
-        setup script. This further prevents unexpected code from being run
-        when importing the script. This means that use of modules like
-        "os" and "sys" are not supported in runscripts by default.
-
-        If you are getting an error here due a module that you know is safe
-        to execute, then add it to SAFE_IMPORTS in monarchs.core.configuration.
-        """
-        method_name = (
-            "monarchs.core.load_model_setup.ModelSetup.check_for_unexpected_imports"
-        )
-
-        with open(self.script_path, "r", encoding="utf-8") as f:
-            tree = ast.parse(f.read(), filename=self.script_path)
-        # Track whether we get any errors. If so, add an extra developer aid
-        # message to tell people where they can add new safe imports.
-        flag = False
-        for node in ast.walk(tree):
-            # Look at any nodes that are Imports.
-            # If the name is not in SAFE_IMPORTS, return an error.
-            if isinstance(node, ast.Import):
-                for node_name in node.names:
-                    # look at just the top-level module
-                    if node_name.name.split(".")[0] not in SAFE_IMPORTS:
-                        flag = True
-                        self.errors.extend(
-                            [
-                                f"{method_name}: Unsafe import '{node_name.name}'"
-                                f" found in model setup script {self.script_path}."
-                            ]
-                        )
-            # Also look at ImportFrom nodes, and check whether the parent
-            # is in SAFE_IMPORTS.
-            elif isinstance(node, ast.ImportFrom):
-                parent_name = node.module.split(".")[0] if node.module else ""
-                if parent_name not in SAFE_IMPORTS:
-                    self.errors.append(
-                        f"{method_name}: Unsafe import from '{node.module}' found. "
-                    )
-                    flag = True
-        if flag:
-            self.errors.extend(
-                [f"Only the following imports are allowed: {', '.join(SAFE_IMPORTS)}."]
-            )
-            self.errors.extend(
-                [
-                    "If you are confident that your configuration script "
-                    "import(s) are safe, please add them to SAFE_IMPORTS "
-                    "in monarchs.core.configuration.."
-                ]
-            )
 
 
 def get_model_setup(model_setup_path):

@@ -6,23 +6,6 @@ import warnings
 import os
 import numpy as np
 
-# List of safe imports that are allowed in a model setup script.
-SAFE_IMPORTS = {
-    "monarchs",
-    "numpy",
-    "netCDF4",
-    "math",
-    "matplotlib",
-    "scipy",
-    "datetime",
-    "pandas",
-    "cartopy",
-    "argparse",
-    "flow_plot",
-    "cProfile",
-    "sys",
-}
-
 
 def parse_args():
     """
@@ -156,25 +139,13 @@ def handle_incompatible_flags(model_setup):
                     " please specify in model_setup a filepath to write the"
                     " saved data into via the <output_filepath> attribute."
                 )
-    dump_formats = ["NETCDF4", "pickle"]
-    if hasattr(model_setup, "dump_format"):
-        if model_setup.dump_format not in dump_formats:
-            raise ValueError(
-                f"{func_name}:"
-                f" dump_format must be one of {dump_formats}, not"
-                f" {model_setup.dump_format}"
-            )
-        if (
-            model_setup.dump_format == "pickle"
-            and hasattr(model_setup, "use_numba")
-            and model_setup.use_numba
-        ):
-            raise ValueError(
-                f"{func_name}:"
-                " dump_format is set to `'pickle'` but use_numba is `True`."
-                " This is not supported since Numba jitclasses are not"
-                " picklable"
-            )
+    if hasattr(model_setup, "dump_format") and model_setup.dump_format != "NETCDF4":
+        raise ValueError(
+            f"{func_name}:"
+            f" dump_format must be 'NETCDF4', not {model_setup.dump_format}."
+            " Pickle dumps are no longer supported - netCDF checkpoints are"
+            " portable and can be reloaded with reload_from_dump."
+        )
 
 
 def handle_invalid_values(model_setup):
@@ -255,11 +226,8 @@ def create_defaults_for_missing_flags(model_setup):
     ]
     optional_args_to_false = [
         "densification_toggle",
-        "simulated_water_toggle",
         "ignore_errors",
-        "heateqn_res_toggle",
         "dump_data",
-        "verbose_logging",
         "spinup",
         "reload_from_dump",
         "met_dem_diagnostic_plots",
@@ -314,7 +282,6 @@ def create_defaults_for_missing_flags(model_setup):
     vardict["output_grid_size"] = model_setup.vertical_points_firn
     vardict["met_timestep"] = "hourly"
     vardict["met_output_filepath"] = "interpolated_met_data.nc"
-    vardict["met_start"] = 0
     vardict["rho_sfc"] = 500
     vardict["t_steps_per_day"] = 24
     vardict["lateral_timestep"] = model_setup.t_steps_per_day * 3600
@@ -336,7 +303,6 @@ def create_defaults_for_missing_flags(model_setup):
         "v_lid",
         "ice_lens_depth",
     )
-    vardict["dump_format"] = "NETCDF4"
     vardict["input_crs"] = 3031
     vardict["cores"] = "all"
     vardict["solver"] = "hybr"

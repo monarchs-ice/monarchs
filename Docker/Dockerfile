@@ -1,41 +1,37 @@
-#Deriving the latest base image
-FROM python:3.11-slim-bullseye AS compile-image
 
-# set working directory
-WORKDIR .
+FROM python:3.11-slim-bookworm AS compile-image
 
-# copy requirements.txt file from local (source) to file structure of container (destination) 
-COPY ../requirements.txt requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gfortran \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Run update on base image so we can locate gfortran later
-RUN apt -y update && apt -y upgrade && apt-get install -y \
-gfortran \
-build-essential
+WORKDIR /opt/monarchs
 
-# Install the requirements specified in file using RUN
-# switch to virtual environment first
+COPY requirements.txt .
+
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN pip install -r requirements.txt
 
-# copy all items in current local directory (source) to current container directory (destination)
-COPY .. ./MONARCHS
+FROM python:3.11-slim-bookworm AS build-image
 
-FROM python:3.11-slim-bullseye AS build-image
-RUN apt -y update && apt -y upgrade && apt-get install -y \
-gfortran \
-build-essential \
-vim
-RUN apt-get install nano -y
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gfortran \
+    vim \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/opt/venv/bin:$PATH"
 COPY --from=compile-image /opt/venv /opt/venv
-COPY .. ./MONARCHS
-RUN echo $PWD | ls -l
-RUN pip install -e ./MONARCHS/.
 
-# command to run when image is executed inside a container
-# CMD [ "bash" ]
-# don't perform any commands when the container is run
-CMD tail -f /dev/null
+# .git must be included in the build context: the package version is
+# derived from the git tag at install time (hatch-vcs)
+COPY . /opt/monarchs/MONARCHS
+RUN pip install -e /opt/monarchs/MONARCHS
+
+WORKDIR /opt/monarchs/MONARCHS
+
+# keep the container alive when run detached so users can exec/shell in
+CMD ["tail", "-f", "/dev/null"]

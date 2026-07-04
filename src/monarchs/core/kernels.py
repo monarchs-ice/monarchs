@@ -10,23 +10,13 @@ This approach avoids the need for a manually-compiled list of functions to compi
 and then the model infers via context (specifically the ``use_numba``
 flag) whether or not to apply the compilation.
 
-We also re-export ``prange`` and ``objmode`` here since these are
-overloaded by pure-Python defaults where appropriate.
+We also re-export ``prange`` and ``objmode`` here so that physics modules
+do not import numba directly.
 """
 
-import contextlib
-
-# prange / objmode: real Numba versions if Numba is installed, else no-op
-# numba.prange behaves like range outside of parallel njit
-try:
-    from numba import prange, objmode
-except ImportError:  # pragma: no cover - exercised only without numba installed
-    prange = range  # pylint: disable=invalid-name
-
-    @contextlib.contextmanager
-    def objmode(*args, **kwargs):
-        """Dummy context manager for objmode when numba is not installed."""
-        yield
+# numba.prange behaves like range, and objmode like a no-op passthrough,
+# in uncompiled (pure-Python) code - so these are safe in both modes
+from numba import prange, objmode  # noqa: F401  (re-exported)
 
 
 # tracks all functions decorated by @kernel

@@ -10,10 +10,11 @@ grid<->netCDF engine in ``monarchs.io.grid_serialisation``.
 import os
 import numpy as np
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
+from monarchs.core import metadata
 from monarchs.io import grid_serialisation as gs
 
 
-def write_checkpoint(fname, grid, met_start_idx, met_end_idx):
+def write_checkpoint(fname, grid, met_start_idx, met_end_idx, model_setup=None):
     """
     MONARCHS can sometimes crash, or throw an error. This function allows for
     the model state to be saved into a file (name determined by
@@ -47,10 +48,11 @@ def write_checkpoint(fname, grid, met_start_idx, met_end_idx):
     netCDF file with filename <fname>.
 
     """
-    folder_path = fname.rsplit("/", 1)[0]
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
+    folder_path = os.path.dirname(fname)
+    if folder_path:
+        os.makedirs(folder_path, exist_ok=True)
     with Dataset(fname, clobber=True, mode="w") as data:
+        data.setncatts(metadata.global_attrs(model_setup))
         gs.create_grid_dimensions(data, grid, include_time=False)
         # keys = dir(grid[0][0])
         keys = list(grid.dtype.names)
@@ -63,6 +65,7 @@ def write_checkpoint(fname, grid, met_start_idx, met_end_idx):
                 )
                 var_write = data.createVariable(key, dtype, dims)
                 var_write[:] = var
+                metadata.apply_variable_metadata(var_write, key)
         met_start_write = data.createVariable("met_start_idx", "i4")
         met_end_write = data.createVariable("met_end_idx", "i4")
         met_start_write[:] = met_start_idx

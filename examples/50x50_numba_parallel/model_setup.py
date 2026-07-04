@@ -67,7 +67,6 @@ rho_sfc = 500  # Initial surface density, if using empirical formula for initial
 Met data parameters
 """
 met_input_filepath = "../../data/ERA5_small.nc"
-met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
 
 met_timestep = "hourly"
