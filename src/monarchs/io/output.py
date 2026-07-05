@@ -47,7 +47,7 @@ def initialise_output(
         Size of the vertical grid for interpolation. If False, uses the existing
         vertical grid size from the model grid. Default is False.
     model_setup : ModelSetup, optional
-        If given, run-provenance metadata (code/dependency versions and the
+        If given, metadata (code/dependency versions and the
         resolved configuration) is written as global attributes.
     Returns
     -------
@@ -80,7 +80,7 @@ def add_lat_long(vars_to_save):
 
 
 # We need to pass everything in here, and using a config object
-# would be overkill, so disable the pylint warninnu.
+# would be overkill, so disable the pylint warning.
 # pylint: disable=too-many-arguments, too-many-positional-arguments
 def create_variable(data, key, var, dtype, grid, vert_grid_size=20):
     """

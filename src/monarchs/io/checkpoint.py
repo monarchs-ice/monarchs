@@ -3,8 +3,7 @@ Functions to handle dumping of model state, so that runs can be restarted
 upon failure.
 Separate from model output (``monarchs.io.output``), which just handles a
 user-defined subset of the outputs (i.e. ones that are useful scientifically,
-rather than everything needed to restart the model). Both share the
-grid<->netCDF engine in ``monarchs.io.grid_serialisation``.
+rather than everything needed to restart the model).
 """
 
 import os
