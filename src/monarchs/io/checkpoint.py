@@ -11,7 +11,7 @@ import os
 import numpy as np
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from monarchs.core import metadata
-from monarchs.io import grid_serialisation as gs
+from monarchs.io import netcdf_utils as nu
 
 
 def write_checkpoint(fname, grid, met_start_idx, met_end_idx, model_setup=None):
@@ -53,15 +53,15 @@ def write_checkpoint(fname, grid, met_start_idx, met_end_idx, model_setup=None):
         os.makedirs(folder_path, exist_ok=True)
     with Dataset(fname, clobber=True, mode="w") as data:
         data.setncatts(metadata.global_attrs(model_setup))
-        gs.create_grid_dimensions(data, grid, include_time=False)
+        nu.create_grid_dimensions(data, grid, include_time=False)
         # keys = dir(grid[0][0])
         keys = list(grid.dtype.names)
         for key in keys:
             if not key.startswith("_"):
-                var = gs.extract_field(grid, key)
-                dtype = gs.netcdf_dtype(var)
-                dims = gs.variable_dimensions(
-                    key, is_vector=gs.is_vector_field(var), include_time=False
+                var = nu.extract_field(grid, key)
+                dtype = nu.netcdf_dtype(var)
+                dims = nu.variable_dimensions(
+                    key, is_vector=nu.is_vector_field(var), include_time=False
                 )
                 var_write = data.createVariable(key, dtype, dims)
                 var_write[:] = var

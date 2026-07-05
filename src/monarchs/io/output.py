@@ -13,7 +13,7 @@ import numpy as np
 from monarchs.core.kernels import kernel
 from monarchs.core import metadata
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
-from monarchs.io import grid_serialisation as gs
+from monarchs.io import netcdf_utils as nu
 
 # pylint: disable=duplicate-code
 DEFAULT_VARS = (
@@ -56,14 +56,14 @@ def initialise_output(
     with Dataset(fname, clobber=True, mode="w") as data:
         data.setncatts(metadata.global_attrs(model_setup))
         vert_grid_size = vert_grid_size or grid["vert_grid"][0][0]
-        gs.create_grid_dimensions(
+        nu.create_grid_dimensions(
             data, grid, vert_grid_size=vert_grid_size, include_time=True
         )
 
         vars_loop = add_lat_long(vars_to_save)
         for key in vars_loop:
-            var = gs.extract_field(grid, key)
-            dtype = gs.netcdf_dtype(var)
+            var = nu.extract_field(grid, key)
+            dtype = nu.netcdf_dtype(var)
             create_variable(data, key, var, dtype, grid, vert_grid_size=vert_grid_size)
 
 
@@ -80,7 +80,7 @@ def add_lat_long(vars_to_save):
 
 
 # We need to pass everything in here, and using a config object
-# would be overkill, so disable the pylint warnings.
+# would be overkill, so disable the pylint warninnu.
 # pylint: disable=too-many-arguments, too-many-positional-arguments
 def create_variable(data, key, var, dtype, grid, vert_grid_size=20):
     """
@@ -116,8 +116,8 @@ def create_variable(data, key, var, dtype, grid, vert_grid_size=20):
         metadata.apply_variable_metadata(var_write, key)
         return
 
-    if gs.is_vector_field(var):
-        dims = gs.variable_dimensions(key, is_vector=True, include_time=True)
+    if nu.is_vector_field(var):
+        dims = nu.variable_dimensions(key, is_vector=True, include_time=True)
         if vert_grid_size != grid["vert_grid"][0][0] and "vert_grid" in dims:
             var = interpolate_model_output(grid, vert_grid_size, var)
         var_write = data.createVariable(key, dtype, dims)
@@ -164,7 +164,7 @@ def interpolate_model_output(grid, vert_grid_size, var):
 
 
 # We have many optional arguments here, and using a config object
-# would be overkill, so disable the pylint warnings.
+# would be overkill, so disable the pylint warninnu.
 # pylint: disable=too-many-arguments, too-many-positional-arguments
 def append_output(
     fname,
@@ -216,7 +216,7 @@ def append_output(
 
     with Dataset(fname, clobber=True, mode="a") as data:
         for key in vars_to_save:
-            var = gs.extract_field(grid, key)
+            var = nu.extract_field(grid, key)
             var_write = data.variables[key]
             if "vert_grid" in var_write.dimensions:
                 if (

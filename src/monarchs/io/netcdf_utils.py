@@ -1,5 +1,5 @@
 """
-Shared grid<->netCDF serialisation engine for MONARCHS I/O.
+Utilities for dealing with netCDF files.
 
 Both the time-series model output (``monarchs.io.output``) and the full-state
 checkpoint (``monarchs.io.checkpoint``) map the NumPy structured model grid to
