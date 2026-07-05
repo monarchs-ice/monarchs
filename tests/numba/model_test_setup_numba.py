@@ -53,7 +53,6 @@ parallel = True  # run in parallel or serial. Parallel is of course much faster 
 # wish to run serial if doing single-column calculations.
 # Note that this is not yet compatible with Numba. The code will fail if you attempt to run with both
 # this switch and use_numba both True.
-spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 cores = (  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
     "all"
 )

@@ -3,8 +3,6 @@
 # TODO - module-level docstring
 import netCDF4
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy.interpolate import RegularGridInterpolator
 from monarchs.met_data.index_map import apply_index_map, build_coarse_index_map
 from monarchs.physics.constants import rho_water
 
@@ -240,133 +238,6 @@ def grid_subset(
     return var_dict
 
 
-def interpolate_grid(var_dict, num_rows, num_cols):
-    """
-    Take an input grid, and interpolate it from the native grid to the MONARCHS
-    model grid.
-    Ensure that you have first restricted your met data file to the correct
-    bounds using grid_subset.
-
-    Parameters
-    ----------
-    var_dict : dict
-        Dictionary of variables from the input netCDF.
-    num_rows : int
-        Number of rows in the model grid.
-    num_cols : int
-        Number of columns in the model grid.
-    Returns
-    -------
-    var_dict : dict
-        Amended input dictionary.
-
-    """
-    var_dict = dict(var_dict)
-    routine_name = "interpolate_grid"
-    print(f"{MODULE_NAME}.{routine_name}: Interpolating ERA5 data")
-    new_lat = np.nan
-    new_long = np.nan
-    for key in var_dict.keys():
-        if key in ["lat", "long", "time"]:
-            continue
-        interp = RegularGridInterpolator(
-            (var_dict["time"][:], var_dict["lat"], var_dict["long"][:]),
-            var_dict[key][:, :, :],
-        )
-        new_lat = np.linspace(var_dict["lat"][-1], var_dict["lat"][0], num_cols)
-        new_long = np.linspace(var_dict["long"][0], var_dict["long"][-1], num_rows)
-        X, Y, Z = np.meshgrid(var_dict["time"], new_lat, new_long, indexing="ij")
-        var_dict[key] = interp((X, Y, Z))
-    var_dict["lat"] = new_lat
-    var_dict["long"] = new_long
-    return var_dict
-
-
-def generate_met_dem_diagnostic_plots(old_era5_grid, era5_grid, ilats, ilons, iheights):
-    """
-    Generate diagnostic plots to visualise the regridding of ERA5 data onto the
-    DEM mesh.
-
-    Parameters
-    ----------
-    old_era5_grid
-    era5_grid
-    ilats
-    ilons
-    iheights
-
-    Returns
-    -------
-
-    """
-    # pylint: disable=
-    import cartopy.crs as ccrs
-    import cartopy
-
-    routine_name = "generate_met_dem_diagnostic_plots"
-    print(f"{MODULE_NAME}.{routine_name}: Generating diagnostic plots")
-    latmax = ilats.max()
-    latmin = ilats.min()
-    lonmax = ilons.max()
-    lonmin = ilons.min()
-    fig1 = plt.figure()
-    cmap = "viridis"
-    projection = ccrs.PlateCarree()
-    ax1 = fig1.add_subplot(211, projection=projection)
-    ax1.set_title("Original vs regridded met data")
-    ax1.set_extent([lonmin, lonmax, latmin, latmax], crs=ccrs.PlateCarree())
-    ax1.coastlines()
-    ax1.gridlines(draw_labels=True)
-    lons = old_era5_grid["long"][:]
-    lats = old_era5_grid["lat"][:]
-    temperature = old_era5_grid["temperature"][:]
-    vmin = np.min(temperature[0])
-    vmax = np.max(temperature[0])
-    levels = np.linspace(vmin, vmax, 20)
-    ax1.contourf(
-        lons,
-        lats,
-        temperature[0],
-        cmap=cmap,
-        transform=projection,
-        levels=levels,
-        vmin=vmin,
-        vmax=vmax,
-    )
-    ax2 = fig1.add_subplot(212, projection=projection)
-    ax2.coastlines()
-    ax2.gridlines(draw_labels=True)
-    ax2.set_extent([lonmin, lonmax, latmin, latmax], crs=ccrs.PlateCarree())
-    ax2.add_feature(cartopy.feature.LAND)
-    cont = ax2.contourf(
-        ilons,
-        ilats,
-        era5_grid["temperature"][0],
-        cmap=cmap,
-        transform=projection,
-        levels=levels,
-        vmin=vmin,
-        vmax=vmax,
-    )
-    cbar_ax = fig1.add_axes((0.85, 0.15, 0.05, 0.7))
-    fig1.colorbar(cont, ticks=levels, extend="both", cax=cbar_ax)
-    fig2 = plt.figure()
-    ax3 = fig2.add_subplot(111, projection=projection)
-    ax3.coastlines()
-    ax3.gridlines(draw_labels=True)
-    cont = ax3.contourf(
-        ilons,
-        ilats,
-        iheights,
-        cmap=cmap,
-        levels=20,
-        transform=ccrs.PlateCarree(),
-    )
-    ax3.title.set_text("Initial DEM height profile")
-    fig2.colorbar(cont, extend="both")
-    plt.show()
-
-
 def get_met_bounds_from_DEM(
     model_setup, era5_grid, lat_array, lon_array, diagnostic_plots=False
 ):
@@ -418,6 +289,8 @@ def get_met_bounds_from_DEM(
     era5_grid["coarse_lon"] = coarse_lon
 
     if diagnostic_plots:
+        from monarchs.met_data.diagnostics import generate_met_dem_diagnostic_plots
+
         # diagnostic plots still need the expanded data, so build it here
         # only if actually needed — avoids the cost in normal runs
         expanded = dict(era5_grid)
@@ -428,62 +301,3 @@ def get_met_bounds_from_DEM(
         generate_met_dem_diagnostic_plots(era5_grid, expanded, ilats, ilons, iheights)
 
     return era5_grid, lat_indices, lon_indices
-
-
-if __name__ == "__main__":
-    ERA5_input = "../../../data/ERA5_small.nc"
-    ERA5_data = netCDF4.Dataset(ERA5_input)
-    ERA5_vars = ERA5_to_variables(ERA5_input)
-    row_amount = 5
-    col_amount = 5
-    ERA5_vars_subset_interpolated = interpolate_grid(ERA5_vars, row_amount, col_amount)
-    import cartopy.crs as ccrs
-
-    fig, ax = plt.subplots()
-    projection = ccrs.PlateCarree(central_longitude=0)
-    lons = ERA5_vars_subset_interpolated["long"][:]
-    lats = ERA5_vars_subset_interpolated["lat"][:]
-    T = ERA5_vars_subset_interpolated["temperature"][0]
-    plt.figure()
-    plt.imshow(T)
-    plt.figure()
-    plt.imshow(ERA5_vars["temperature"][0])
-    vmin = np.min(T)
-    vmax = np.max(T)
-    cmap = "viridis"
-    ax1 = fig.add_subplot(211, projection=projection)
-    ax1.coastlines()
-    ax1.gridlines(draw_labels=True)
-    frames = 364 * 24
-    cont = ax1.contourf(
-        lons,
-        lats,
-        T,
-        cmap=cmap,
-        transform=projection,
-        levels=20,
-        vmin=vmin,
-        vmax=vmax,
-    )
-    ax2 = fig.add_subplot(212, projection=projection)
-    ax2.coastlines()
-    ax2.gridlines(draw_labels=True)
-    orig_lons = ERA5_data.variables["longitude"][:]
-    orig_lats = ERA5_data.variables["latitude"][:]
-    orig_T = ERA5_data.variables["t2m"][0]
-    cont = ax2.contourf(
-        orig_lons,
-        orig_lats,
-        orig_T,
-        cmap=cmap,
-        transform=projection,
-        levels=20,
-        vmin=vmin,
-        vmax=vmax,
-    )
-
-    def animate_T(frame, im):
-        day = int(np.floor(frame / 24))
-        hour = frame % 24 + 1
-        im.set_data(T[frame])
-        ax.set_title(f"Temperature, day = {day}, hour = {hour}")

@@ -12,6 +12,7 @@ from monarchs.physics.constants import (
     stefan_boltzmann,
     rho_water,
     cp_water,
+    J,
 )
 from monarchs.physics.Numba import extract_args
 
@@ -106,7 +107,6 @@ def lake_development_eqn(x, output, args):
     output : float
         Estimate of the surface lake temperature [K].
     """
-    J = 0.1 * (9.8 * 5 * 10**-5 * (1.19 * 10**-7) ** 2 / 10**-6) ** (1 / 3)
     (
         vert_grid,
         firn_depth,

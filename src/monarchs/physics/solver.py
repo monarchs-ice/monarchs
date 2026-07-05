@@ -17,6 +17,7 @@ from monarchs.physics.constants import (
     stefan_boltzmann,
     rho_water,
     cp_water,
+    J,
 )
 
 
@@ -444,7 +445,6 @@ def lake_development_eqn(x, args):
     output : array_like, float, shape (1,)
         Residual of the surface energy balance equation.
     """
-    J = 0.1 * (9.8 * 5e-5 * (1.19e-7) ** 2 / 1e-6) ** (1 / 3)
 
     (
         albedo,

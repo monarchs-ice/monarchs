@@ -28,6 +28,7 @@ from monarchs.physics.constants import (
     tau_water,
     tau_ice,
     saturated_firn_albedo,
+    J,
 )
 
 MODULE_NAME = "monarchs.physics.lake"
@@ -164,8 +165,6 @@ def turbulent_mixing(cell, sw_in, dt, k):
     -------
     None (amends cell inplace).
     """
-    # pylint: disable=invalid-name
-    J = 0.1 * (9.8 * 5 * 10**-5 * (1.19 * 10**-7) ** 2 / 10**-6) ** (1 / 3)
     # pylint: enable=invalid-name
     # If lake is below 0.1 m deep then it is no longer turbulent
     if cell["lake_depth"] < 0.1:

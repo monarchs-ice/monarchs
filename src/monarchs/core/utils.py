@@ -4,7 +4,7 @@ Utilities module containing various helper functions or wrappers.
 
 import numpy as np
 import pathos
-from monarchs.physics.constants import rho_ice, rho_water, cp_water
+from monarchs.physics.constants import rho_ice, rho_water
 from monarchs.core.kernels import kernel
 
 
@@ -177,52 +177,6 @@ def add_edge_water(grid, max_grid_row, max_grid_col):
             grid["water_level"][i][j] = (
                 grid["lake_depth"][i][j] + grid["firn_depth"][i][j]
             )
-
-
-def check_energy_conservation(grid):
-    """ """
-    #     TODO - WIP.
-    energy = 0
-    for row in grid:
-        for cell in row:
-            if cell["valid_cell"]:
-                cp_ice = 1000 * (7.16 * 10**-3 * cell["firn_temperature"] + 0.138)
-                cp = (
-                    cp_water * cell["Lfrac"]
-                    + 1004 * (1 - cell["Sfrac"] - cell["Lfrac"])
-                    + cp_ice * cell["Sfrac"]
-                )
-                cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
-                energy += cell["rho"] * cell["firn_temperature"] * cp
-    print("Total energy = ", np.sum(energy))
-
-
-def spinup(cell, x, args):
-    """
-    Attempt to force the model into a solvable state if the initial conditions
-    are unsuitable.
-
-    Parameters
-    ----------
-    cell : numpy structured array
-        Element of the model grid we are operating on.
-    x : array_like, dimension(vert_grid)
-        Initial guess temperature [K]
-    args : array_like
-        list of arguments to pass to the solver. See extract_args for details.
-    Returns
-    -------
-    None (amends the instance of cell passed to it)
-
-    Raises
-    ------
-    ValueError
-        If solution does not converge, then rather than attempting to continue
-        it raises an error. The user should re-consider their initial
-        conditions in this case.
-    """
-    #     TODO - This is a work in progress. Need to update this further.
-    return cell, x, args
 
 
 def get_num_cores(model_setup):

@@ -106,16 +106,14 @@ def update_water_level(cell):
 
     # Add lake depth into water for the purposes of moving it around if a lake
     # is present.
+    # TODO (physics, future) - a cell with lake_depth > 0.1 but cell["lake"]
+    # unset falls through to no branch here (water_level left stale). A
+    # previous defensive branch for this never ran (it raised on attribute
+    # access), so if that state is reachable it needs handling here.
     elif cell["lake"] and not cell["lid"]:
         cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
         # Determine the water level from the water on top + the firn depth.
         cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
-
-    elif cell["lake_depth"] > 0.1 and not cell["lid"]:
-        # Same again - account for a bug where lake switch doesn't activate
-        cell["water_level"] = cell["lake_depth"] + cell["firn_depth"]
-        cell["water"] = cell["Lfrac"] * (cell["firn_depth"] / cell["vert_grid"])
-        cell["water"][0] += cell.lake_depth
 
     elif cell["lid"]:
         # shouldn't matter, as water can't move from a lid

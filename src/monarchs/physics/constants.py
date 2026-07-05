@@ -18,6 +18,11 @@ cp_water = 4217  # J kg^-1 K^-1
 stefan_boltzmann = 5.670374e-8  # W m^-2 K^-4
 emissivity = 0.98  # emissivity of ice/water
 pore_closure = 830  # density in kg m^-3 where firn pores close
+# pylint: disable=invalid-name
+J = 0.1 * (9.8 * 5 * 10**-5 * (1.19 * 10**-7) ** 2 / 10**-6) ** (
+    1 / 3
+)  # turbulent mixing constant
+
 sfc_absorbed_frac = (
     0.5  # fraction of solar radiation absorbed in surface layer of water or ice
 )

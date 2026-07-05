@@ -228,7 +228,6 @@ def create_defaults_for_missing_flags(model_setup):
         "densification_toggle",
         "ignore_errors",
         "dump_data",
-        "spinup",
         "reload_from_dump",
         "met_dem_diagnostic_plots",
         "bbox_top_right",
