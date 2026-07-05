@@ -76,7 +76,7 @@ def lake_formation_eqn(x, output, args):
         p_air,
         dew_point_temperature,
         wind,
-        x[0],
+        firn_temperature[0],
     )
     # set output[0] rather than just output else we will just return our
     # initial guess.

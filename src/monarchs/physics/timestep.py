@@ -247,7 +247,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             # Then find the other points that are saturated and perform the
             # same calculation here also.
             saturation_points = np.where(cell["Lfrac"] + cell["Sfrac"] > 1)
-            for saturation_point in saturation_points[0][::-1]:
+            for saturation_point in saturation_points[::-1][0]:
                 percolation.calc_saturation(cell, saturation_point, end=True)
             # Check again. We however will tolerate any instances where the
             # solid + liquid fraction goes above 1 (unless Sfrac is above 1).

@@ -5,7 +5,6 @@ Only invoked when a diagnostic-plot flag is set in the model setup.
 """
 
 import numpy as np
-from matplotlib import pyplot as plt
 
 MODULE_NAME = "monarchs.met_data.diagnostics"
 
@@ -29,6 +28,7 @@ def generate_met_dem_diagnostic_plots(old_era5_grid, era5_grid, ilats, ilons, ih
     """
     import cartopy.crs as ccrs
     import cartopy
+    from matplotlib import pyplot as plt
 
     routine_name = "generate_met_dem_diagnostic_plots"
     print(f"{MODULE_NAME}.{routine_name}: Generating diagnostic plots")

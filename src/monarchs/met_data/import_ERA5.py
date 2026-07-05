@@ -4,7 +4,6 @@
 import netCDF4
 import numpy as np
 from monarchs.met_data.index_map import apply_index_map, build_coarse_index_map
-from monarchs.physics.constants import rho_water
 
 MODULE_NAME = "monarchs.met_data.import_ERA5"
 
@@ -176,9 +175,8 @@ def ERA5_to_variables(
             np.shape(era5_data.variables["t2m"][start_index:end_index])
         )  # Kuipers Munekke 2015
 
-    # Convert snow amount from ERA5 units (in water equivalent) to actual snow depth
-    # downstream code treats this as a snow depth in m and gets mass via snow_dens
-    var_dict["snowfall"] = var_dict["snowfall"] * rho_water / var_dict["snow_dens"]
+    # TODO - mwe conversion needs to be actually applied, for next branch
+    var_dict["snowfall"] = var_dict["snowfall"]  # * rho_water / var_dict["snow_dens"]
     era5_data.close()
     return var_dict
 

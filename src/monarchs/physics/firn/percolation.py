@@ -14,8 +14,6 @@ from monarchs.physics.constants import (
     rho_water,
     L_ice,
     pore_closure,
-    g,
-    eta_water,
 )
 
 MODULE_NAME = "monarchs.physics.percolation"
@@ -57,7 +55,7 @@ def percolate(cell, timestep, lateral_refreeze_flag=False, perc_time_toggle=True
         already occurred in the single-column calculations, and we would get
         more refreezing than expected.
         This flag controls this behaviour - it should be False unless being
-        called from <lateral_movement.move_water>.
+        called from <lateral.move_water>.
         Default False.
     perc_time_toggle : bool, optional
         Run with the calculation of the percolation time if True, or else it
@@ -410,18 +408,21 @@ def perc_time(cell, v_lev):
     if cell["Lfrac"][v_lev] < 1e-10:
         p_time = 0
         return p_time
-    # mean grain size [m]
+    # mean grain size
     delta = 0.001
     # specific gravity of the firn
     rho_s_star = cell["Sfrac"][v_lev] * rho_ice / rho_water
-    # specific permeability [m^2]
+    # specific permeability
     perm_s = 0.077 * delta**2 * np.exp(-7.8 * rho_s_star)
+    # viscosity
+    eta = 0.001787
 
-    # corrected Darcy flow speed
-    u = (perm_s / eta_water) * rho_water * g * cell["Lfrac"][v_lev]
-
-    # time for water to traverse this layer [s]
-    p_time = (cell["firn_depth"] / cell["vert_grid"]) / u
+    # pressure gradient, assuming no lake above
+    delta_p = rho_water / (
+        cell["firn_depth"] / cell["vert_grid"] / cell["Lfrac"][v_lev]
+    )
+    u = -perm_s / eta * delta_p
+    p_time = 1 / u
 
     return p_time
 

@@ -21,8 +21,6 @@ from monarchs.physics import solver
 from monarchs.physics.constants import (
     L_ice,
     rho_ice,
-    stefan_boltzmann,
-    emissivity,
 )
 
 MODULE_NAME = "monarchs.physics.lake"
@@ -117,11 +115,7 @@ def lake_formation(cell, dt, met_data):
         if cell["Sfrac"][0] < 0.1:
             dHdt = cell["firn_depth"] / cell["vert_grid"]
         else:
-            dHdt = (
-                (Q - emissivity * stefan_boltzmann * 273.15**4 - kdTdz)
-                / (cell["Sfrac"][0] * L_ice * rho_ice)
-                * dt
-            )
+            dHdt = (Q - kdTdz) / (cell["Sfrac"][0] * L_ice * rho_ice) * dt
         if dHdt < 0:
             cell["error_flag"] = True
             message = "Error in surface temperature in lake formation \n"

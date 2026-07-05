@@ -3,7 +3,6 @@ Sets up a test case using a Gaussian elevation map with two lakes in the
 upper left and bottom right corners.
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
@@ -54,6 +53,8 @@ def export_gaussian_dem(num_points=20, diagnostic_plots=False):
     interpolated_heights = interpolate_func_to_dem(heights, scale)
     interpolated_heights = (interpolated_heights + interpolated_heights[::-1, ::-1]) / 2
     if diagnostic_plots:
+        import matplotlib.pyplot as plt
+
         plt.figure(figsize=(4, 2))
         plt.imshow(interpolated_heights, vmin=0, vmax=1)
         plt.set_cmap("Reds")

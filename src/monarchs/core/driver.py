@@ -28,7 +28,7 @@ from monarchs.core.error_handling import (
     check_for_single_column_errors,
 )
 
-from monarchs.physics import lateral_movement
+from monarchs.physics import lateral
 from monarchs.met_data.load import update_met_conditions, met_window
 from monarchs.core.initialise import check_for_reload_from_dump, initialise_model_data
 from monarchs.core.diagnostics import (
@@ -212,7 +212,7 @@ def lateral_movement_step(grid, model_setup):
     water lost from the catchment this day (0 unless catchment_outflow).
     """
     print("Moving water laterally...")
-    grid, out_water = lateral_movement.move_water(
+    grid, out_water = lateral.move_water(
         grid,
         model_setup.row_amount,
         model_setup.col_amount,
@@ -279,7 +279,7 @@ def run_model(model_setup, grid):
     """
     The model time loop. Each day this calls loop_over_grid (which in turn
     calls timestep_loop for the single-column physics, <t_steps_per_day>
-    times), then lateral_movement (i.e. water movement), then handles
+    times), then lateral movement (i.e. water movement), then handles
     checkpointing and output via netCDF.
 
     Parameters
