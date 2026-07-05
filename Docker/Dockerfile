@@ -8,12 +8,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /opt/monarchs
 
-COPY requirements.txt .
-
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN pip install -r requirements.txt
+# ensure we install the Numba dependencies with [numba]
+COPY . /opt/monarchs/MONARCHS
+RUN pip install -e "/opt/monarchs/MONARCHS[numba]"
 
 FROM python:3.11-slim-bookworm AS build-image
 
@@ -25,11 +25,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV PATH="/opt/venv/bin:$PATH"
 COPY --from=compile-image /opt/venv /opt/venv
-
-# .git must be included in the build context: the package version is
-# derived from the git tag at install time (hatch-vcs)
-COPY . /opt/monarchs/MONARCHS
-RUN pip install -e /opt/monarchs/MONARCHS
+# the editable install points at this path, so carry the source over from the
+# compile stage rather than re-copying and re-installing
+COPY --from=compile-image /opt/monarchs/MONARCHS /opt/monarchs/MONARCHS
 
 WORKDIR /opt/monarchs/MONARCHS
 

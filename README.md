@@ -57,13 +57,10 @@ You may first need to do
 If you want changes you have made to be picked up on your system, ensure that you use the `-e` flag when installing. See `pyproject.toml` for details.
 
 ## Installing optional dependencies
-The simplest way to install the extra MONARCHS dependencies from an existing build is doing
+MONARCHS' optional dependencies are declared in `pyproject.toml`. To install the
+Numba solver support (`NumbaMinpack`) alongside the package, use
 
-`python -m pip install -r requirements.txt`
-
-Alternatively, you can install MONARCHS from scratch with all optional dependencies using 
-
-`python -m pip install -e .[mpi,numba]`
+`python -m pip install -e ".[numba]"`
 
 Some systems may be incompatible with certain libraries. For example. the install will fail on ```NumbaMinpack```
 if you don't have a Fortran/C++ compiler. 

@@ -72,7 +72,7 @@ You can install MONARCHS with its advanced dependencies using (from the top leve
     pip install -e .[numba]
 
 .. note::
-    Not all of the modules in requirements.txt are required to make MONARCHS work, but are required to enable certain features.
+    Not all of the optional dependencies (declared in ``pyproject.toml``) are required to make MONARCHS work, but are required to enable certain features.
     If the install fails on the following, MONARCHS will still work, but only without the
     relevant ``model_setup`` flags enabled.
 
