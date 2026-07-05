@@ -11,7 +11,7 @@ for e.g. restarting a run.
 
 import numpy as np
 from monarchs.core.kernels import kernel
-from monarchs.core import metadata
+from monarchs.io import metadata
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from monarchs.io import netcdf_utils as nu
 

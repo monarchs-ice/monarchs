@@ -9,7 +9,7 @@ rather than everything needed to restart the model).
 import os
 import numpy as np
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
-from monarchs.core import metadata
+from monarchs.io import metadata
 from monarchs.io import netcdf_utils as nu
 
 
