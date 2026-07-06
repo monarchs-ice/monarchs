@@ -5,6 +5,7 @@ includes all MONARCHS parameters explicitly. Since this is a Python script,
 you can specify parameters e.g. as numpy arrays."""
 
 import numpy as np
+from monarchs.data import era5_example_path
 
 """
 Spatial parameters
@@ -183,8 +184,9 @@ Meteorological parameters and input
 """
 # TODO - write full list of variable names that can be read into MONARCHS
 
-# met_input_filepath = "data/ERA5_new_dem_fixed.nc"
-met_input_filepath = "data/ERA5_small.nc"
+# Defaults to the bundled example dataset; replace with the path to your own
+# ERA5 netCDF, e.g. met_input_filepath = "data/my_era5.nc"
+met_input_filepath = era5_example_path()
 
 # It will roll the array so that it fits this length.
 

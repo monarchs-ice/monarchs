@@ -4,6 +4,7 @@ Sparse runscript for
 """
 
 import numpy as np
+from monarchs.data import era5_example_path
 
 """
 Spatial parameters
@@ -33,11 +34,9 @@ lateral_timestep = (
 firn_depth = np.array([[35, 30], [30, 35]])
 rho_sfc = 500  # Initial surface density, if using empirical formula for initial density profile. Otherwise, it is 500.
 
-# TODO - the ERA5 test data now lives in the package at src/monarchs/_data.
-# It should be referenced as importable package data (e.g. via
-# importlib.resources.files("monarchs._data")) rather than by a hard-coded
-# relative path, so tests/examples work regardless of the working directory.
-met_input_filepath = "../../src/monarchs/_data/ERA5_small.nc"
+# bundled example ERA5 data, resolved via the package so this works regardless
+# of the working directory
+met_input_filepath = era5_example_path()
 # It will roll the array so that it fits this length.
 met_output_filepath = "./parallel_test_met_data.nc"
 

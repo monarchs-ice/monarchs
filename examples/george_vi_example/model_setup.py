@@ -5,6 +5,8 @@ The template includes all MONARCHS parameters explicitly.
 Since this is a Python script, you can specify parameters e.g. as numpy arrays.
 """
 
+from monarchs.data import era5_example_path
+
 """
 Spatial parameters
 """
@@ -157,7 +159,7 @@ Meteorological parameters and input
 # TODO - write full list of variable names that can be read into MONARCHS
 
 # met_input_filepath = "data/ERA5_new_dem_fixed.nc"
-met_input_filepath = f"{data_dir}/ERA5_small.nc"
+met_input_filepath = era5_example_path()
 
 # It will roll the array so that it fits this length.
 

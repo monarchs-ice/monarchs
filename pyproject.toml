@@ -80,6 +80,8 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/monarchs"]
+# ship the bundled example dataset even though *.nc is git-ignored globally
+artifacts = ["src/monarchs/data/*.nc"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

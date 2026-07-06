@@ -17,6 +17,7 @@ a large number of cores.
 """
 
 import numpy as np
+from monarchs.data import era5_example_path
 
 """
 Spatial parameters
@@ -66,7 +67,7 @@ rho_sfc = 500  # Initial surface density, if using empirical formula for initial
 """
 Met data parameters
 """
-met_input_filepath = "../../data/ERA5_small.nc"
+met_input_filepath = era5_example_path()
 # It will roll the array so that it fits this length.
 
 met_timestep = "hourly"
