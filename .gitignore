@@ -20,7 +20,6 @@ DEM/geotiff_test.py
 create_flowchart.py
 scripts/netcdf_1d_to_csv.py
 docs/build
-!src/monarchs/data/era5_example.nc
 dist/
 validation/*.png
 validation/AntarcticLakes/

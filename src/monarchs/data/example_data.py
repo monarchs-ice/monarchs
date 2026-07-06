@@ -10,4 +10,4 @@ def era5_example_path():
     """
     Absolute path to the bundled example ERA5 dataset (``era5_example.nc``).
     """
-    return str(files("monarchs").joinpath("", "era5_example.nc"))
+    return str(files(__package__).joinpath("era5_example.nc"))
