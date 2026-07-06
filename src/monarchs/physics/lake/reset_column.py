@@ -14,7 +14,7 @@ from monarchs.physics.constants import rho_ice, rho_water
 
 @kernel()
 def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
-    routine_name = "monarchs.physics.reset_column.combine_lid_firn"
+    routine_name = "monarchs.physics.lake.reset_column.combine_lid_firn"
 
     # ensure that the density is up-to-date
     cell["rho"] = (cell["Sfrac"] * rho_ice) + (cell["Lfrac"] * rho_water)

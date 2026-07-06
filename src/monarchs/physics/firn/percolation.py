@@ -16,7 +16,7 @@ from monarchs.physics.constants import (
     pore_closure,
 )
 
-MODULE_NAME = "monarchs.physics.percolation"
+MODULE_NAME = "monarchs.physics.firn.percolation"
 
 
 @kernel()

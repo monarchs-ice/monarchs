@@ -11,7 +11,7 @@ from monarchs.physics.constants import (
     stefan_boltzmann,
 )
 
-MODULE_NAME = "monarchs.physics.lid"
+MODULE_NAME = "monarchs.physics.lid.lid"
 
 
 @kernel()

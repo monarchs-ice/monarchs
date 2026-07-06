@@ -31,7 +31,7 @@ from monarchs.physics.constants import (
     J,
 )
 
-MODULE_NAME = "monarchs.physics.lake"
+MODULE_NAME = "monarchs.physics.lake.development"
 
 
 @kernel()

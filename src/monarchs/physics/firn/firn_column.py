@@ -24,7 +24,7 @@ from monarchs.physics.constants import (
     L_ice,
 )
 
-MODULE_NAME = "monarchs.physics.firn_column"
+MODULE_NAME = "monarchs.physics.firn.firn_column"
 
 
 @kernel()

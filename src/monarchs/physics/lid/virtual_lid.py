@@ -15,7 +15,7 @@ from monarchs.physics.constants import (
     k_water,
 )
 
-MODULE_NAME = "monarchs.physics.virtual_lid"
+MODULE_NAME = "monarchs.physics.lid.virtual_lid"
 
 
 @kernel()

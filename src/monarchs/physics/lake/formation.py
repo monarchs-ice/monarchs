@@ -23,7 +23,7 @@ from monarchs.physics.constants import (
     rho_ice,
 )
 
-MODULE_NAME = "monarchs.physics.lake"
+MODULE_NAME = "monarchs.physics.lake.formation"
 
 
 @kernel()

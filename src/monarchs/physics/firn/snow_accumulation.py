@@ -12,7 +12,7 @@ from monarchs.physics.firn.percolation import calc_saturation
 from monarchs.core.error_handling import generic_error
 from monarchs.physics.constants import rho_ice, rho_water
 
-MODULE_NAME = "monarchs.physics.snow_accumulation"
+MODULE_NAME = "monarchs.physics.firn.snow_accumulation"
 
 
 @kernel()

@@ -218,7 +218,7 @@ def move_water(
     # otherwise it will trigger when we have e.g. floating point errors.
     if abs(total_water - new_water - catchment_out_water) > 0.0001:
         raise ValueError(
-            "monarchs.physics.lateral_functions.move_water:Too much water has"
+            "monarchs.physics.lateral.move_water:Too much water has"
             " appeared out of nowhere during lateral functions"
         )
     return grid, catchment_out_water

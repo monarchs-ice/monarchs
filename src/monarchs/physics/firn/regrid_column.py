@@ -162,7 +162,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     """
     # check if we need to merge any fully liquid layers into the lake first, if
     # one exists.
-    routine_name = "monarchs.physics.regrid_column"
+    routine_name = "monarchs.physics.firn.regrid_column"
     if lake:
         height_change = merge_cells_into_lake(cell, height_change)
     if height_change <= 0.0:
@@ -249,7 +249,7 @@ def regrid_after_freeze(cell, height_change, water_loss):
         cell : numpy structured array
         (amended) Element of the model grid we are operating on.
     """
-    routine_name = "monarchs.physics.regrid_column.regrid_after_freeze"
+    routine_name = "monarchs.physics.firn.regrid_column.regrid_after_freeze"
 
     if height_change <= 0:
         return
