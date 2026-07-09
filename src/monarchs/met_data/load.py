@@ -1,10 +1,9 @@
 """
 Read-side of the MONARCHS met cache.
 
-Loads one day of meteorological data at a time from the netCDF cache written
-by ``monarchs.met_data.setup_met_data`` (which owns the write side of the
-same format), expanding coarse ERA5 data onto the model grid via index maps
-where present. Called by the driver each model day.
+Loads one day of meteorological data at a time from the netCDF file written
+by ``monarchs.met_data.setup_met_data``. For large 2D grids, use an index
+mapping to tie each model gridpoint to an ERA5 gridpoint.
 """
 
 import numpy as np

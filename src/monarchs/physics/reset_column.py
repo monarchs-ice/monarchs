@@ -1,6 +1,12 @@
-""" """
+"""
+Functions to handle resetting the model state back to a single column of firn.
 
-# TODO - module-level docstring, other docstring
+If a lid either fully freezes the lake below, or begins to melt from the top
+due to the atmospheric conditions changing, we need to combine everything
+back into one firn profile so the model can continue. This allows us to
+run over multiple melt/freezing cycles without breaking the model.
+"""
+
 # disable pylint warnings for broad exceptions as they are needed with Numba
 # pylint: disable=broad-exception-raised, raise-missing-from
 import numpy as np
@@ -14,7 +20,7 @@ from monarchs.physics.constants import rho_ice, rho_water
 
 @kernel()
 def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
-    routine_name = "monarchs.physics.lake.reset_column.combine_lid_firn"
+    routine_name = "monarchs.physics.reset_column.combine_lid_firn"
 
     # ensure that the density is up-to-date
     cell["rho"] = (cell["Sfrac"] * rho_ice) + (cell["Lfrac"] * rho_water)
@@ -109,7 +115,7 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     if surface_slush:
         cell["melt"] = True
         cell["exposed_water"] = True
-        cell["lake_depth"] = cell["lid_sfc_melt"]
+        # cell["lake_depth"] = cell["lid_sfc_melt"]
 
     cell["lid_sfc_melt"] = 0.0
     cell["lake_refreeze_counter"] = 0

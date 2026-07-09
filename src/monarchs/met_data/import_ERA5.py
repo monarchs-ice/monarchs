@@ -4,6 +4,7 @@
 import netCDF4
 import numpy as np
 from monarchs.met_data.index_map import apply_index_map, build_coarse_index_map
+from monarchs.physics.constants import rho_water
 
 MODULE_NAME = "monarchs.met_data.import_ERA5"
 
@@ -32,9 +33,11 @@ def ERA5_to_variables(
     """
     routine_name = "ERA5_to_variables"
     var_dict = {}
-    # met_timestep is the number of met timesteps per day (24 = hourly,
-    # 8 = three-hourly, ...). ERA5 radiation is *accumulated* [J m^-2] over
-    # each step, so the conversion to W m^-2 must divide by the step length.
+
+    # divide 24h in seconds by the met timestep (default 1h)
+    # to get the correct unit conversion for the radiation
+    # variables, which are aggregated over 1h periods by default
+    # in ERA5 ([J m^-2] -> [W m^-2])
     seconds_per_step = 86400 // met_timestep
     # Determine indices for start and end of the year.
     # We write only in one-yearly segments.
@@ -175,8 +178,8 @@ def ERA5_to_variables(
             np.shape(era5_data.variables["t2m"][start_index:end_index])
         )  # Kuipers Munekke 2015
 
-    # TODO - mwe conversion needs to be actually applied, for next branch
-    var_dict["snowfall"] = var_dict["snowfall"]  # * rho_water / var_dict["snow_dens"]
+    # convert snowfall from mwe to a height analogous to the firn height
+    var_dict["snowfall"] = var_dict["snowfall"] * rho_water / var_dict["snow_dens"]
     era5_data.close()
     return var_dict
 

@@ -2,7 +2,6 @@
 FROM python:3.11-slim-bookworm AS compile-image
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gfortran \
     build-essential \
     git \
     && rm -rf /var/lib/apt/lists/*
@@ -12,16 +11,12 @@ WORKDIR /opt/monarchs
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# ensure we install the Numba dependencies with [numba]
 COPY . /opt/monarchs/MONARCHS
-# NumbaMinpack ships a pre-3.5 cmake_minimum_required, which modern CMake refuses
-# without this policy shim (mirrors the CMAKE_POLICY_VERSION_MINIMUM env in CI)
-RUN CMAKE_POLICY_VERSION_MINIMUM=3.5 pip install -e "/opt/monarchs/MONARCHS[numba]"
+RUN pip install -e "/opt/monarchs/MONARCHS"
 
 FROM python:3.11-slim-bookworm AS build-image
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gfortran \
     vim \
     nano \
     && rm -rf /var/lib/apt/lists/*

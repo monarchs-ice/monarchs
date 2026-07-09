@@ -20,10 +20,7 @@ It can also arise if the solid or liquid fraction in a cell goes above 1. It may
 to a higher value in the model setup script, and using ``min_height_handler = 'extend'`` to ensure that the model
 minimum firn height is not too small.
 
-``ImportError`` : One of the required modules is missing. If this is ``NumbaMinpack``, then likely your system does not have
-``CMake`` and a compatible Fortran compiler installed. You can still run the model however using ``use_numba = False``,
-in which case this ``ImportError`` should disappear. If you are running with ``use_numba = False`` and still get
-``ImportError`` on NumbaMinpack, please submit an Issue on GitHub..
+``ImportError`` : One of the required modules is missing. Please submit an Issue on GitHub.
 
 It may also occur when trying to load in a DEM.
 

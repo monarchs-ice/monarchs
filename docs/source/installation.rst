@@ -60,38 +60,19 @@ Once you have the code cloned or downloaded, do (ideally in a virtual environmen
 
 from the top level MONARCHS folder.
 
-This will install MONARCHS with all of its required dependencies, except those required for specific optimisation flags
-designed for use on HPC systems (see below). If when trying to run MONARCHS you get an ``ImportError``, please submit
-an Issue on GitHub.
+This will install MONARCHS with all of its required dependencies. If when trying to run MONARCHS you get an
+``ImportError``, please submit an Issue on GitHub.
 
 Installation for use on HPC
 -------------------------------
-You can install MONARCHS with its advanced dependencies using (from the top level MONARCHS folder):
-
-.. code-block:: console
-    pip install -e .[numba]
-
-.. note::
-    Not all of the optional dependencies (declared in ``pyproject.toml``) are required to make MONARCHS work, but are required to enable certain features.
-    If the install fails on the following, MONARCHS will still work, but only without the
-    relevant ``model_setup`` flags enabled.
-
-.. warning::
-    The install will fail on ``NumbaMinpack`` if you don't have a Fortran/C++ compiler.
-    To solve, on Windows, you need to get a Fortran compiler. See https://fortran-lang.org/compilers/
-    On linux, doing ``apt-get install gfortran build-essential`` will work.
-    On HPC, you may need to use ``module load <name>`` to load in whichever compiler setup your HPC has.
-    You can get around the need for ``NumbaMinpack`` by setting ``use_numba = False`` in ``model_setup.py``.
-
-.. note::
-    It should be re-iterated that NumbaMinpack is not required to be installed for the code to run,
-    provided that you set ``use_numba = False`` in ``model_setup.py``.
+No extra dependencies are needed for HPC use: the standard install above includes everything required to run
+with Numba acceleration (``use_numba = True`` in ``model_setup.py``), including on HPC systems. No Fortran/C++
+compiler is required.
 
 Singularity/Docker image
 ========================
 Instead of cloning the repo and installing the requirements yourself, you can get MONARCHS via a Docker image. This image
-contains a barebones Linux distribution, with all of the required libraries (including a Fortran compiler)
-pre-installed.
+contains a barebones Linux distribution, with all of the required libraries pre-installed.
 
 To obtain this, please get in touch with the model maintainers for access as the image is currently private.
 

@@ -9,7 +9,7 @@ See monarchs.physics.constants for definitions of e.g. densities.
 
 Ice thermal conductivity and heat capacity formulae are defined in
  Alexiades & Solomon (1993),
-  "Mathematical Modeling of Melting and Freezing Processes", pg. 8.
+  "Mathematical Modelling of Melting and Freezing Processes", pg. 8.
 """
 
 import numpy as np

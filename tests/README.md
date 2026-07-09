@@ -12,8 +12,7 @@ runscript into the model configuration.
 
 Tests in `serial` are the main model physics unit tests and comparisons to known good output.
 
-Tests in `numba` are the tests that ensure that the code can be `jit`-compiled, and that the results obtained from 
-the `NumbaMinpack` version of the solver are equal to those with the `scipy.optimize` version.
+Tests in `numba` are the tests that ensure that the code can be `jit`-compiled and run end-to-end.
 
 Tests in `parallel` are there to check that MONARCHS runs in parallel and the results obtained are equal to the serial 
 version.
