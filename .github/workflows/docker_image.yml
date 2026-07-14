@@ -17,7 +17,7 @@ jobs:
       id-token: write
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # full history + tags: the image build pip-installs the package,
           # whose version is derived from the git tag (hatch-vcs)
