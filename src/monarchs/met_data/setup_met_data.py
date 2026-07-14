@@ -22,7 +22,6 @@ def met_data_from_era5(
     """
     Convert ERA5 input data into a netCDF in MONARCHS format.
     """
-    # TODO - docstring, refactor to break up with a few helper functions
     func_name = "monarchs.core.initial_conditions.met_data_from_era5"
     # Determine the timestep index - either a string (in which case convert to int),
     # or int directly
@@ -42,15 +41,16 @@ def met_data_from_era5(
     # TODO - model_setup parameter whether we have a - single file or multiple.
     num_model_years = get_model_years(model_setup.num_days, chunk_size=CHUNKSIZE)
     for year in range(num_model_years):
-        start_index = year * CHUNKSIZE * 24 // index
-
         era5_grid = process_year(model_setup, year, index, lat_array, lon_array)
 
-        if index > 1:
-            # Repeat each timestep index times to get to hourly data.
-            repeat_to_make_hourly(era5_grid, index)
+        resample_met_to_model_timestep(
+            era5_grid, index, 24 / model_setup.t_steps_per_day
+        )
+        # chunk offset in *model* timesteps, since the met cache is written
+        # at model resolution
+        start_index = year * CHUNKSIZE * model_setup.t_steps_per_day
 
-        print(f"{func_name}: Writing data for" f" year {year + 1} into netCDF...")
+        print(f"{func_name}: Writing data for year {year + 1} into netCDF...")
 
         write_to_netcdf(
             model_setup.met_output_filepath,
@@ -218,8 +218,7 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     missing = [key for key in required if key not in era5_grid]
     if missing:
         raise ValueError(
-            "write_to_netcdf requires index-mapped ERA5 data; "
-            f"missing keys: {missing}"
+            f"write_to_netcdf requires index-mapped ERA5 data; missing keys: {missing}"
         )
 
     # Keys that require special handling or are stored separately.
@@ -236,7 +235,6 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     }
 
     with Dataset(era5_grid_path, mode) as f:
-
         if start_index == 0:
             # Use coarse_lat/coarse_lon when present (after get_met_bounds_from_DEM
             # overwrites lat/long with 2-D fine arrays)
@@ -267,7 +265,7 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
             f.createDimension("fine_row", model_setup.row_amount)
             f.createDimension("fine_col", model_setup.col_amount)
 
-            # ── Static coordinate variables ───────────────────────────────
+            # coordinate variables
             v = f.createVariable("coarse_lat", "f8", ("coarse_lat",))
             v.long_name = "ERA5 coarse latitude"
             v[:] = coarse_lat_1d
@@ -341,6 +339,9 @@ def prescribed_met_data(model_setup):
     Full-grid prescribed data are written directly on the MONARCHS model grid:
     - time-varying variables use dimensions (time, row, column)
     - optional cell_latitude / cell_longitude use dimensions (row, column)
+
+    If prescribing a snow amount, make sure this is defined in metres and not
+    MWE.
     """
     func_name = "prescribed_met_data"
     met_data = dict(model_setup.met_data)
@@ -439,22 +440,73 @@ def has_user_defined_bounds(model_setup):
     )
 
 
-def repeat_to_make_hourly(era5_grid, index):
-    """If our timestep is e.g. 3-hourly, repeat each timestep index times to get to hourly data.
-    to be used in MONARCHS"""
-    TIME_VARYING_KEYS = {
-        "time",
-        "wind",
-        "temperature",
-        "dew_point_temperature",
-        "pressure",
-        "snowfall",
-        "SW_surf",
-        "LW_surf",
-        "snow_albedo",
-        "snow_dens",
-    }
+# state-like variables: repeated when refining, averaged when coarsening
+STATE_KEYS = {
+    "wind",
+    "temperature",
+    "dew_point_temperature",
+    "pressure",
+    "SW_surf",
+    "LW_surf",
+    "snow_albedo",
+    "snow_dens",
+}
+# accumulation-like variables: split evenly when refining, summed when
+# coarsening (snowfall is a per-step depth)
+ACCUMULATION_KEYS = {"snowfall"}
 
-    for var in TIME_VARYING_KEYS:
-        if var in era5_grid:
-            era5_grid[var] = np.repeat(era5_grid[var], index, axis=0)
+
+def resample_met_to_model_timestep(era5_grid, met_hours, model_hours):
+    """
+    Resample met data from its native resolution to the model timestep,
+    in place.
+
+    Refining (e.g. three-hourly met, hourly model): state variables are
+    repeated; accumulations are divided evenly across the finer steps.
+    Coarsening (e.g. hourly met, three-hourly model): state variables are
+    block-averaged; accumulations are summed. Only integer ratios between
+    the two resolutions are supported.
+
+    """
+    routine_name = "resample_met_to_model_timestep"
+    if met_hours == model_hours:
+        return
+    if met_hours > model_hours:
+        factor = met_hours / model_hours
+        if factor != int(factor):
+            raise ValueError(
+                f"{MODULE_NAME}.{routine_name}: met resolution ({met_hours} h)"
+                f" must be an integer multiple of the model timestep"
+                f" ({model_hours} h)."
+            )
+        factor = int(factor)
+        for var in STATE_KEYS:
+            if var in era5_grid:
+                era5_grid[var] = np.repeat(era5_grid[var], factor, axis=0)
+        for var in ACCUMULATION_KEYS:
+            if var in era5_grid:
+                era5_grid[var] = np.repeat(era5_grid[var] / factor, factor, axis=0)
+    else:
+        factor = model_hours / met_hours
+        if factor != int(factor):
+            raise ValueError(
+                f"{MODULE_NAME}.{routine_name}: model timestep ({model_hours} h)"
+                f" must be an integer multiple of the met resolution"
+                f" ({met_hours} h)."
+            )
+        factor = int(factor)
+        for var in STATE_KEYS | ACCUMULATION_KEYS:
+            if var not in era5_grid:
+                continue
+            v = era5_grid[var]
+            if len(v) % factor != 0:
+                raise ValueError(
+                    f"{MODULE_NAME}.{routine_name}: length of met variable"
+                    f" '{var}' ({len(v)}) is not divisible by the coarsening"
+                    f" factor {factor}."
+                )
+            blocks = v.reshape(-1, factor, *v.shape[1:])
+            if var in ACCUMULATION_KEYS:
+                era5_grid[var] = blocks.sum(axis=1)
+            else:
+                era5_grid[var] = blocks.mean(axis=1)

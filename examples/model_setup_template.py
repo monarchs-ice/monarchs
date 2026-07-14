@@ -5,6 +5,7 @@ includes all MONARCHS parameters explicitly. Since this is a Python script,
 you can specify parameters e.g. as numpy arrays."""
 
 import numpy as np
+from monarchs.data import era5_example_path
 
 """
 Spatial parameters
@@ -48,9 +49,7 @@ bbox_top_right = [
 bbox_bottom_left = [
     (-66.289, -64.68)
 ]  # bounding box bottom left coordinates, [(lat, long)]
-bbox_top_left = [
-    (-66.04, -63.42)
-]  # bounding box top left coordinates, [(lat, long)]
+bbox_top_left = [(-66.04, -63.42)]  # bounding box top left coordinates, [(lat, long)]
 bbox_bottom_right = [
     (-66.778, -64.099)
 ]  # bounding box bottom right coordinates, [(lat, long)]
@@ -58,13 +57,9 @@ bbox_bottom_right = [
 """
 Timestepping parameters
 """
-num_days = (
-    1000  # number of days to run the model for (assuming t_steps = 24 below)
-)
+num_days = 1000  # number of days to run the model for (assuming t_steps = 24 below)
 t_steps_per_day = 24  # hours to run in each iteration, i.e. 24 = 1h resolution
-lateral_timestep = (
-    3600 * t_steps_per_day
-)  # Timestep for each iteration of lateral
+lateral_timestep = 3600 * t_steps_per_day  # Timestep for each iteration of lateral
 # water flow calculation (in s)
 # It is highly unlikely this should be anything other than 3600 * t_steps.
 
@@ -189,10 +184,10 @@ Meteorological parameters and input
 """
 # TODO - write full list of variable names that can be read into MONARCHS
 
-# met_input_filepath = "data/ERA5_new_dem_fixed.nc"
-met_input_filepath = "data/ERA5_small.nc"
+# Defaults to the bundled example dataset; replace with the path to your own
+# ERA5 netCDF, e.g. met_input_filepath = "data/my_era5.nc"
+met_input_filepath = era5_example_path()
 
-met_start = 0  # Index at which to start the met data, in case you want to start the model from an intermediate point.
 # It will roll the array so that it fits this length.
 
 met_timestep = "hourly"
@@ -268,24 +263,17 @@ dump_data = True
 dump_filepath = (  # Filename of our previously dumped state
     "../MONARCHS_runs/progress_df.nc"
 )
-reload_from_dump = (
-    False  # Flag to determine whether to reload the state or not
-)
-dump_format = (  # Format to save the dump file in. Default is NETCDF4, but can be changed to "pickle"
-    "NETCDF4"
-)
+reload_from_dump = False  # Flag to determine whether to reload the state or not
 dump_timestep = 1
 """
 Computing and numerical parameters
 """
 use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
-parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you mayTru
+parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
 # wish to run serial if doing single-column calculations.
-use_mpi = False  # Enable to use MPI-based parallelism for HPC, if running on a non-cluster machine set this False
 # Note that this is not yet compatible with Numba. The code will fail if you attempt to run with both
 # this switch and use_numba both True.
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
-verbose_logging = False  # if True, output logs every "timestep" (hour). # Otherwise, log only every "iteration" (day).
 cores = 24  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
 
 """
@@ -294,7 +282,9 @@ All of these default to True.
 """
 snowfall_toggle = True
 firn_column_toggle = True
-firn_heat_toggle = True  # if firn_column_toggle is False, this just triggers during lake formation
+firn_heat_toggle = (
+    True  # if firn_column_toggle is False, this just triggers during lake formation
+)
 lake_development_toggle = True  # also triggers lake formation
 lid_development_toggle = True  # also triggers lid formation
 lateral_movement_toggle = True
@@ -303,24 +293,14 @@ densification_toggle = False
 percolation_toggle = True  # only works if firn_column_toggle also True
 perc_time_toggle = True  # Determines if percolation occurs over timescales,
 # or all water can percolate until it can no longer move
-catchment_outflow = (
-    False  # Determines if water on the edge of the catchment area will
-)
+catchment_outflow = False  # Determines if water on the edge of the catchment area will
 # preferentially stay within the model grid,
 # or flow out of the catchment area (resulting in us 'losing' water)
-flow_into_land = (
-    False  # Determines if water will flow into land cells at local minima
-)
+flow_into_land = False  # Determines if water will flow into land cells at local minima
 """
 Other flags for doing tests - e.g. adding water from outside catchment area
 """
-simulated_water_toggle = False  # 0.001  # False if off, otherwise float
-if simulated_water_toggle:
-    print("model_setup: Simulated water is on")
 ignore_errors = False  # don't flag if model reaches unphysical state
-heateqn_res_toggle = (
-    False  # True for testing low resolution heat equation runs
-)
 
 met_dem_diagnostic_plots = False
 radiation_forcing_factor = 1

@@ -4,15 +4,17 @@
 # disable pylint warnings for broad exceptions as they are needed with Numba
 # pylint: disable=broad-exception-raised, raise-missing-from
 import numpy as np
-from monarchs.physics import percolation
+from monarchs.core.kernels import kernel
+from monarchs.physics.firn import percolation
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
-from monarchs.physics.regrid_column import conservative_regrid
+from monarchs.physics.firn.regrid_column import conservative_regrid
 from monarchs.physics.constants import rho_ice, rho_water
 
 
+@kernel()
 def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
-    routine_name = "monarchs.physics.reset_column.combine_lid_firn"
+    routine_name = "monarchs.physics.lake.reset_column.combine_lid_firn"
 
     # ensure that the density is up-to-date
     cell["rho"] = (cell["Sfrac"] * rho_ice) + (cell["Lfrac"] * rho_water)
@@ -129,6 +131,7 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     )
 
 
+@kernel()
 def mass_conserving_profile(cell, orig_lid_depth, var="Sfrac", freeze_lake=False):
     if cell["vert_grid_lid"] > 0 and orig_lid_depth > 0:
         lid_dz = np.full(cell["vert_grid_lid"], orig_lid_depth / cell["vert_grid_lid"])

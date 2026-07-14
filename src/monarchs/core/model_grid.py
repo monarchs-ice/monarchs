@@ -176,7 +176,8 @@ def initialise_iceshelf(
         "lid_sfc_melt": lid_sfc_melt,
     }
 
-    hourly_diagnostics = {}  # Placeholder for future use
+    # Placeholder for future use:
+    # hourly_diagnostics = {}
     # Example structure:
     # hourly_diagnostics = {
     #     "example_diagnostic": np.zeros((num_rows, num_cols,
@@ -235,21 +236,21 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("row", np.int32),
             ("firn_depth", np.float64),
             ("vert_grid", np.int32),
-            ("vertical_profile", np.float64, vert_grid_size),
+            ("vertical_profile", np.float64, (vert_grid_size,)),
             ("vert_grid_lake", np.int32),
             ("vert_grid_lid", np.int32),
-            ("rho", np.float64, vert_grid_size),
-            ("rho_lid", np.float64, vert_grid_lid),
-            ("firn_temperature", np.float64, vert_grid_size),
-            ("Sfrac", np.float64, vert_grid_size),
-            ("Lfrac", np.float64, vert_grid_size),
+            ("rho", np.float64, (vert_grid_size,)),
+            ("rho_lid", np.float64, (vert_grid_lid,)),
+            ("firn_temperature", np.float64, (vert_grid_size,)),
+            ("Sfrac", np.float64, (vert_grid_size,)),
+            ("Lfrac", np.float64, (vert_grid_size,)),
             ("albedo", np.float64),
-            ("meltflag", np.float64, vert_grid_size),
-            ("saturation", np.float64, vert_grid_size),
-            ("lake_temperature", np.float64, vert_grid_lake),
-            ("lid_temperature", np.float64, vert_grid_lid),
+            ("meltflag", np.float64, (vert_grid_size,)),
+            ("saturation", np.float64, (vert_grid_size,)),
+            ("lake_temperature", np.float64, (vert_grid_lake,)),
+            ("lid_temperature", np.float64, (vert_grid_lid,)),
             ("water_level", np.float64),
-            ("water", np.float64, vert_grid_size),
+            ("water", np.float64, (vert_grid_size,)),
             ("melt", np.bool_),
             ("exposed_water", np.bool_),
             ("lake", np.bool_),
@@ -278,7 +279,7 @@ def get_spec(vert_grid_size, vert_grid_lake, vert_grid_lid):
             ("size_dx", np.float64),
             ("size_dy", np.float64),
             ("numba", np.bool_),
-            ("water_direction", np.int32, 8),
+            ("water_direction", np.int32, (8,)),
             ("firn_boundary_change", np.float64),
             ("lake_boundary_change", np.float64),
             ("lid_boundary_change", np.float64),

@@ -3,7 +3,6 @@ Sets up a test case using a planar DEM that slopes from a maximum to a minimum
 from left to right.
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 from monarchs.dem_utils.create_dem_gaussian_test_case import (
     interpolate_func_to_dem,
@@ -46,6 +45,8 @@ def export_planar_dem(num_points=20, diagnostic_plots=False):
 
     interpolated_heights = interpolate_func_to_dem(heights, scale)
     if diagnostic_plots:
+        import matplotlib.pyplot as plt
+
         plt.figure(figsize=(4, 2))
         plt.imshow(interpolated_heights, vmin=0, vmax=1)
         plt.set_cmap("Reds")

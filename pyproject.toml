@@ -1,8 +1,10 @@
 [project]
 name = 'monarchs-ice'
-version = '1.0.3'
+# version is derived from the latest git tag (vX.Y.Z) via hatch-vcs -
+# create a GitHub release/tag to set it; do not hardcode it here
+dynamic = ['version']
 description = 'A numerical model of ice shelf development'
-requires-python = ">3.8"
+requires-python = ">=3.10"
 authors = [
     {name = "Jon Elsey", email = "j.d.elsey@leeds.ac.uk"},
     {name = "Sammie Buzzard", email = 'sammie.buzzard@northumbria.ac.uk'}
@@ -27,21 +29,35 @@ dependencies = [
 ]
 
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+
 ]
 
 [project.optional-dependencies]
 
-mpi = [
-    'mpi4py',
-]
 numba = [
     'NumbaMinpack',
 ]
+
+[dependency-groups]
+
+dev = [
+    'pytest',
+    'pytest-cov',
+    'ruff',
+    'pre-commit',
+    'tox'
+    ]
+
+docs = [
+    'sphinx',
+    'sphinx-rtd-theme',
+    'myst-parser',
+    'sphinx-autoapi'
+    ]
 
 [project.scripts]
 monarchs = 'monarchs.run_monarchs:run_from_cli'
@@ -54,10 +70,50 @@ Homepage = "https://monarchs-ice.github.io/monarchs/"
 
 [build-system]
 build-backend = 'hatchling.build'
-requires = ['hatchling']
+requires = ['hatchling', 'hatch-vcs']
+
+[tool.hatch.version]
+source = 'vcs'
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/monarchs"]
+# ship the bundled example dataset even though *.nc is git-ignored globally
+artifacts = ["src/monarchs/data/*.nc"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+minversion = "7"
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+xfail_strict = true
+log_cli_level = "INFO"
+filterwarnings = [
+    "error",
+    # netCDF is compiled against a different version
+    # of numpy than the model uses, which causes a warning to
+    # be raised since there is a header being expanded, we
+    # can safely ignore as the version we use is newer
+    "ignore:numpy.ndarray size changed:RuntimeWarning",
+]
+
+[tool.ruff]
+target-version = "py310"
+
+# deferred for a future branch - lots of changes and work to make this pass
+# [tool.ruff.lint]
+# extend-select = ["B", "UP", "I"]  # bugbear, pyupgrade, isort
+# see https://docs.astral.sh/ruff/rules/
+
+[tool.tox]
+requires = ["tox>=4.15.0"]
+env_list = ["3.10", "3.11", "3.12", "3.13"]
+
+[tool.tox.env_run_base]
+extras = ["dev"]
+commands = [
+    ["ruff", "format", "--check"],
+    ["ruff", "check"],
+    ["pytest"]
+]

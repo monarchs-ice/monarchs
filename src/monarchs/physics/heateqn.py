@@ -3,42 +3,15 @@
 # TODO - module-level docstring, flesh out other docstrings
 import numpy as np
 from monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics import material_properties
 from monarchs.physics.constants import (
     cp_air,
-    cp_water,
-    k_air,
-    k_water,
     emissivity,
     rho_ice,
-    rho_water,
-    rho_air,
     stefan_boltzmann,
     sfc_absorbed_frac,
     tau_ice,
 )
-
-
-def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
-    # precompute some values
-
-    air_frac = 1.0 - sfrac - lfrac
-    k_ice = np.zeros(np.shape(T), dtype=np.float64)
-    k_ice[T < 273.15] = 1000 * (
-        2.24e-03 + 5.975e-06 * ((273.15 - T[T < 273.15]) ** 1.156)
-    )
-    k_ice[T >= 273.15] = 2.24
-    k = sfrac * k_ice + (1 - sfrac - lfrac) * k_air + lfrac * k_water
-    cp_ice = 7.16 * T + 138
-    cv_ice = sfrac * rho_ice * cp_ice
-    cv_water = lfrac * rho_water * cp_water
-    cv_air = air_frac * rho_air * cp_air
-
-    C_vol = cv_ice + cv_water + cv_air
-
-    # Avoid divide by zero if C_vol is somehow 0
-    # Diffusivity [m^2 s^-1]
-    kappa = k / C_vol
-    return k, kappa
 
 
 def heateqn(
@@ -73,7 +46,7 @@ def heateqn(
     Sfrac = cell["Sfrac"]
     Lfrac = cell["Lfrac"]
 
-    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
+    k, kappa = material_properties.k_and_kappa(T_old, Sfrac, Lfrac)
 
     residual = np.zeros_like(x)
     # Surface temperature equation (residual)
@@ -118,7 +91,7 @@ def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     T_old = cell["firn_temperature"][N:]
     Sfrac = cell["Sfrac"][N:]
     Lfrac = cell["Lfrac"][N:]
-    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
+    k, kappa = material_properties.k_and_kappa(T_old, Sfrac, Lfrac)
     # Total number of layers in the firn column
     total_len = np.shape(cell["firn_temperature"])[0]
     n = total_len - N  # Number of layers below the nonlinear region
@@ -232,15 +205,13 @@ def heateqn_lid(
         roots of the function, used by scipy.optimize.fsolve to determine
         the new firn temperature
     """
-    cp_ice = 1000 * (0.00716 * cell["lid_temperature"] + 0.138)
+    cp_ice = material_properties.cp_ice(cell["lid_temperature"])
     cp = Sfrac_lid * cp_ice + (1 - Sfrac_lid) * cp_air
-    k_lid = 1000 * (
-        2.24e-03 + 5.975e-06 * ((273.15 - cell["lid_temperature"]) ** 1.156)
-    )
+    k_lid = material_properties.k_ice(cell["lid_temperature"])
     kappa = k_lid / (cp * rho_ice)
     epsilon = emissivity
     sigma = stefan_boltzmann
-    rho = 917
+    rho = rho_ice
 
     Q = sfc_flux(
         cell["albedo"],

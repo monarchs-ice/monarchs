@@ -8,7 +8,9 @@ contained in percolation.py.
 # pylint: disable=broad-exception-raised, raise-missing-from
 # TODO - flesh out module-level docstring
 import numpy as np
-from monarchs.physics import percolation, surface_fluxes, solver, regrid_column
+from monarchs.core.kernels import kernel
+from monarchs.physics.firn import percolation, regrid_column
+from monarchs.physics import surface_fluxes, solver, material_properties
 from monarchs.core import utils
 from monarchs.core.error_handling import (
     check_for_mass_conservation,
@@ -19,11 +21,13 @@ from monarchs.physics.constants import (
     rho_water,
     emissivity,
     stefan_boltzmann,
+    L_ice,
 )
 
-MODULE_NAME = "monarchs.physics.firn_column"
+MODULE_NAME = "monarchs.physics.firn.firn_column"
 
 
+@kernel()
 def firn_column(
     cell,
     dt,
@@ -133,7 +137,6 @@ def firn_column(
                 cell,
                 dt,
                 met_data,
-                root,
             )
             # print('height change:', height_change)
             if np.isnan(height_change):
@@ -170,11 +173,11 @@ def firn_column(
     check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
 
 
+@kernel()
 def calc_height_change(
     cell,
     timestep,
     met_data,
-    surface_temp,
 ):
     """
     Determine the amount of firn height change that arises due to melting.
@@ -188,9 +191,6 @@ def calc_height_change(
     met_data : dict
         Dictionary containing the meteorological data for the current timestep.
         See firn_column for details.
-    surf_T : float
-        Calculated surface temperature of the firn from the initial (non-fixed
-        surface) implementation of the heat equation. [K]
 
     Returns
     -------
@@ -202,7 +202,6 @@ def calc_height_change(
     sigma = stefan_boltzmann
 
     dz = cell["firn_depth"] / cell["vert_grid"]
-    L_fus = 334000
     if (
         cell["firn_temperature"][0] > 273.14999999
         and cell["firn_temperature"][0] < 273.151
@@ -213,12 +212,9 @@ def calc_height_change(
         and cell["firn_temperature"][1] < 273.151
     ):
         cell["firn_temperature"][1] = 273.15
-    k_sfc = (
-        1000 * 2.24 * 10**-3
-        + 5.975
-        * 10**-6
-        * (273.15 - (cell["firn_temperature"][0] + cell["firn_temperature"][1]) / 2)
-        ** 1.156
+    # conductivity of the ice in the top two layers
+    k_sfc = material_properties.k_ice(
+        (cell["firn_temperature"][0] + cell["firn_temperature"][1]) / 2
     )
     # Update cell albedo
     cell["albedo"] = surface_fluxes.sfc_albedo(
@@ -255,7 +251,7 @@ def calc_height_change(
     #     dHdt = cell["firn_depth"] / cell["vert_grid"]
     dHdt = (
         (Q - epsilon * sigma * (cell["firn_temperature"][0]) ** 4 - k_sfc * dtdz)
-        / (rho_ice * (cell["Sfrac"][0] * L_fus))
+        / (rho_ice * (cell["Sfrac"][0] * L_ice))
         * timestep
     )
     # Melt maximum one layer per timestep to avoid instability

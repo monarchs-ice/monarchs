@@ -19,6 +19,10 @@ jobs:
     steps:
       # retrieve your distributions here
       - uses: actions/checkout@v3
+        with:
+          # full history + tags, so hatch-vcs can derive the package
+          # version from the release tag
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v3
         with:

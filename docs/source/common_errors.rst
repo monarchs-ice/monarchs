@@ -32,8 +32,8 @@ Debugging
 =========
 When using the Python debugger, you need to ensure that you run with ``use_numba = False`` and ``parallel == False``.
 I like to take advantage of the fact that the model setup script is a Python script and add in an extra variable
-``debug_mode``, which when set to ``True`` sets via an ``if`` block  ``use_numba``, ``parallel``, ``use_mpi`` and
-``reload_from_dump`` to ``False``/``False``/``False``/``True`` respectively , so that I can speedily load in the
+``debug_mode``, which when set to ``True`` sets via an ``if`` block  ``use_numba``, ``parallel`` and
+``reload_from_dump`` to ``False``/``False``/``True`` respectively , so that I can speedily load in the
 state immediately before the model crashes and run it in a debugger to diagnose the problem.
 
 If an error happens during the lateral movement step, and you don't want to run the entire single-column phase in

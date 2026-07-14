@@ -4,7 +4,8 @@ response to melting.
 """
 
 import numpy as np
-from monarchs.physics import percolation
+from monarchs.core.kernels import kernel
+from monarchs.physics.firn import percolation
 from monarchs.core import utils
 from monarchs.core.error_handling import (
     check_for_mass_conservation,
@@ -13,6 +14,7 @@ from monarchs.core.error_handling import (
 from monarchs.physics.constants import rho_ice, rho_water
 
 
+@kernel()
 def _integrate_piecewise_constant(edges, values, z0, z1):
     """
     Integrate layer-by-layer, assuming piecewise-constant values.
@@ -48,6 +50,7 @@ def _integrate_piecewise_constant(edges, values, z0, z1):
     return total
 
 
+@kernel()
 def conservative_regrid(old_edges, old_values, new_edges):
     """
     Mass/volume-conserving interpolation for piecewise-constant values.
@@ -71,6 +74,7 @@ def conservative_regrid(old_edges, old_values, new_edges):
     return new_values
 
 
+@kernel()
 def merge_cells_into_lake(cell, height_change):
     """
     Check for and merge all fully liquid firn layers. e.g. if we
@@ -130,6 +134,7 @@ def merge_cells_into_lake(cell, height_change):
     return height_change
 
 
+@kernel()
 def regrid_after_melt(cell, height_change, lake=False):
     """
     After melting occurs, subtract the amount of melting from the firn height,
@@ -157,7 +162,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     """
     # check if we need to merge any fully liquid layers into the lake first, if
     # one exists.
-    routine_name = "monarchs.physics.regrid_column"
+    routine_name = "monarchs.physics.firn.regrid_column"
     if lake:
         height_change = merge_cells_into_lake(cell, height_change)
     if height_change <= 0.0:
@@ -170,7 +175,7 @@ def regrid_after_melt(cell, height_change, lake=False):
 
     if height_change > old_depth:
         message = (
-            "Height change must be less than the column depth. Got {height_change}"
+            f"Height change must be less than the column depth. Got {height_change}"
         )
         generic_error(cell, routine_name, message)
 
@@ -188,7 +193,6 @@ def regrid_after_melt(cell, height_change, lake=False):
     new_depth = old_depth - height_change
     new_edges = np.linspace(height_change, old_depth, nz + 1)
     if height_change > old_depth / nz:
-
         print("Warning: height change greater than one layer thickness.")
         print("height_change =", height_change)
 
@@ -228,6 +232,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     check_for_mass_conservation(cell, mass_before, mass_after, routine_name)
 
 
+@kernel()
 def regrid_after_freeze(cell, height_change, water_loss):
     """
     As regrid_after_melt, but in the rare occurrence we have a freezing event (if temperatures go below
@@ -244,7 +249,7 @@ def regrid_after_freeze(cell, height_change, water_loss):
         cell : numpy structured array
         (amended) Element of the model grid we are operating on.
     """
-    routine_name = "monarchs.physics.regrid_column.regrid_after_freeze"
+    routine_name = "monarchs.physics.firn.regrid_column.regrid_after_freeze"
 
     if height_change <= 0:
         return

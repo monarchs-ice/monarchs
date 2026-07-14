@@ -111,7 +111,6 @@ def loop_over_grid(
     flat_grid = grid.flatten()
     met_data_grid = met_data
     if parallel:
-        print("Running timstep in parallel")
         # Dynamic chunk size for load balancing
         chunksize = max(1, len(flat_grid) // (ncores * 2))
 
@@ -140,7 +139,7 @@ def loop_over_grid(
             )  # Use "threads" for I/O-bound tasks
             end_compute = time.time()
             print(f"Execution time: {end_compute - start_compute:.2f}s")
-            print("Total time (submit + exec):" f" {end_compute - start_submit:.2f}s")
+            print(f"Total time (submit + exec): {end_compute - start_submit:.2f}s")
             results = [
                 item for sublist in results for item in sublist
             ]  # Flatten results

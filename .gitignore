@@ -15,11 +15,11 @@ DEM/geotiff_test.py
 *.gif
 *.dat
 *.nc
+!src/monarchs/data/era5_example.nc
 *.pkl
 create_flowchart.py
 scripts/netcdf_1d_to_csv.py
 docs/build
-!data/ERA5_small.nc
 dist/
 validation/*.png
 validation/AntarcticLakes/

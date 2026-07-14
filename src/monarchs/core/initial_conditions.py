@@ -1,6 +1,6 @@
 """
 Functions used by run_monarchs.py to convert a model runscript
-(default model_setup.py) to the format actually usedb y MONARCHS.
+(default model_setup.py) to the format actually used by MONARCHS.
 This includes setting up the initial firn profile information,
 loading in meteorological data and interpolating it, and loading
 in/interpolating the digital elevation model (DEM) if applicable.
@@ -67,7 +67,6 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     firn_depth_under_35_flag = False
     if hasattr(model_setup, "firn_min_height"):
         if model_setup.min_height_handler == "clip":
-
             firn_depth = np.clip(
                 firn_depth, a_min=model_setup.firn_min_height, a_max=None
             )
@@ -99,8 +98,10 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
         -1,
     )
 
-    if hasattr(model_setup, "rho_init") and model_setup.rho_init != "default":
-        rho = model_setup.rho_init
+    # initialise density from model setup script or default values
+    rho_init = getattr(model_setup, "rho_init", "default")
+    if not isinstance(rho_init, str):
+        rho = rho_init
     else:
         if hasattr(model_setup, "rho_sfc"):
             rho_sfc = model_setup.rho_sfc
@@ -131,8 +132,9 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                             rho_temp,
                         )[::-1]
 
-    if hasattr(model_setup, "T_init") and model_setup.rho_init != "default":
-        temperature = model_setup.T_init
+    T_init = getattr(model_setup, "T_init", "default")
+    if not isinstance(T_init, str):
+        temperature = T_init
     else:
         t_init = np.linspace(253.15, 263.15, model_setup.vertical_points_firn)[::-1]
         temperature = np.zeros(
@@ -147,7 +149,8 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             print(f"{func_name}: ")
             print(
                 "T_init not specified in run configuration file - using"
-                " default profile (linear 260->240 K top to bottom"
+                " default profile (linear 263.15 K at surface -> 253.15 K"
+                " at bottom)"
             )
 
     # else return null values for the lat/long arrays which aren't used

@@ -334,30 +334,20 @@ how many CPU cores to use if running in parallel, and whether to use Numba to ji
         Determines whether or not to run in parallel, or serially. If running in parallel, then performance is improved
         since the model will many of the single-column gridpoints at the same time.
 
-        The exact flavour of parallelism is determined by other flags - if ``use_numba`` and ``use_mpi`` are False, then
+        The exact flavour of parallelism is determined by other flags - if ``use_numba`` is False, then
         parallelism is via ``dask``.
         If ``use_numba`` is enabled, then this comes via Numba's ``prange`` function, which works similarly to an OpenMP parallel do loop.
-        If ``use_mpi`` is enabled, then ``mpi4py`` is used. This functionality is WIP, and may be removed in favour of
-        a ``dask`` Client.
 
     dask_scheduler : str, optional
 
         Default ``'processes'``. Other options available are ``distributed`` for running on multiple nodes, and
         ``'threads'``.
 
-        Determines which scheduler to use for parallelism if ``use_numba`` and ``use_mpi`` are both False.
+        Determines which scheduler to use for parallelism if ``use_numba`` is False.
         It is recommended to use ``use_numba`` for large workloads if possible, as this gives significantly better
         performance. For running lots of very small workloads (e.g. running lots of 1D columns),
         you may get good performance using ``threads``. For other purposes, e.g. if running on Windows without a
         working Fortran compiler, for medium-sized workloads, ``processes`` is recommended.
-
-    use_mpi : bool, optional
-        Default ``False``.
-
-        Toggle whether to use MPI parallelism to run across multiple nodes. This is an experimental WIP feature.
-        This should give large performance boosts if you have the HPC architecture to use it, as it allows for running
-        MONARCHS on more than one compute node. However, it is not yet compatible with Numba, so there is also
-        some opportunity cost. Not recommended unless you can run on multiple nodes.
 
     cores : str, bool or ``int``, optional
         Default ``'all'``.

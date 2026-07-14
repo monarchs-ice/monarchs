@@ -1,14 +1,11 @@
 from netCDF4 import Dataset
 from matplotlib import pyplot as plt
-import numpy.ma as ma
 import matplotlib
 from matplotlib.animation import ArtistAnimation
 
 matplotlib.use("TkAgg")
-dumppath = (
-    "/path/to/progress_file"
-)
-diagpath  = "/path/to/model_output_file"
+dumppath = "/path/to/progress_file"
+diagpath = "/path/to/model_output_file"
 
 
 # Load in the data - just focusing on lake depth from the diagnostics file

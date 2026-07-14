@@ -17,15 +17,10 @@ from numba import cfunc, njit
 from NumbaMinpack import minpack_sig
 from monarchs.physics.Numba import extract_args
 from monarchs.physics.surface_fluxes import sfc_flux
+from monarchs.physics.material_properties import k_and_kappa, k_ice, cp_ice
 from monarchs.physics.constants import (
-    cp_air,
-    cp_water,
-    k_air,
-    k_water,
     emissivity,
     rho_ice,
-    rho_water,
-    rho_air,
     stefan_boltzmann,
     tau_ice,
     sfc_absorbed_frac,
@@ -33,35 +28,11 @@ from monarchs.physics.constants import (
 
 
 @njit
-def get_k_and_kappa(T, sfrac, lfrac, cp_air, cp_water, k_air, k_water):
-    # precompute some values
-
-    air_frac = 1.0 - sfrac - lfrac
-    k_ice = np.zeros(np.shape(T), dtype=np.float64)
-    k_ice[T < 273.15] = 1000 * (
-        2.24e-03 + 5.975e-06 * ((273.15 - T[T < 273.15]) ** 1.156)
-    )
-    k_ice[T >= 273.15] = 2.24
-    k = sfrac * k_ice + (1 - sfrac - lfrac) * k_air + lfrac * k_water
-    cp_ice = 7.16 * T + 138
-    cv_ice = sfrac * rho_ice * cp_ice
-    cv_water = lfrac * rho_water * cp_water
-    cv_air = air_frac * rho_air * cp_air
-
-    C_vol = cv_ice + cv_water + cv_air
-
-    # Avoid divide by zero if C_vol is somehow 0
-    # Diffusivity [m^2 s^-1]
-    kappa = k / C_vol
-    return k, kappa
-
-
-@njit
 def propagate_temperature(cell, dz, dt, T_bc_top, N=10):
     T_old = cell["firn_temperature"][N:]
     Sfrac = cell["Sfrac"][N:]
     Lfrac = cell["Lfrac"][N:]
-    k, kappa = get_k_and_kappa(T_old, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
+    k, kappa = k_and_kappa(T_old, Sfrac, Lfrac)
     # total number of layers in the firn column
     total_len = np.shape(cell["firn_temperature"])[0]
     # number of layers below the nonlinear region
@@ -196,7 +167,7 @@ def heateqn(x, output, args):
         x[0],
     )
 
-    k, kappa = get_k_and_kappa(T, Sfrac, Lfrac, cp_air, cp_water, k_air, k_water)
+    k, kappa = k_and_kappa(T, Sfrac, Lfrac)
     # Surface temperature equation (residual)
     output[0] = k[0] * ((x[0] - x[1]) / dz) - (Q - epsilon * sigma * x[0] ** 4)
 
@@ -267,11 +238,10 @@ def heateqn_lid(x, output, args):
         extract_args.extract_lid_variables(args)
     )
 
-    k_lid = 1000 * (2.24e-03 + 5.975e-06 * ((273.15 - lid_temperature) ** 1.156))
+    k_lid = k_ice(lid_temperature)
 
-    cp_ice = 1000 * (0.00716 * lid_temperature + 0.138)
-    cp = cp_ice
-    rho = 917
+    cp = cp_ice(lid_temperature)
+    rho = rho_ice
     # thermal diffusivity [m^2 s^-1]
     kappa = k_lid / (cp * rho)
     epsilon = emissivity

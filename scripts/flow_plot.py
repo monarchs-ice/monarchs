@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from monarchs.core.utils import get_2d_grid
-from matplotlib.patches import FancyArrow
 from matplotlib.animation import ArtistAnimation
 
 
@@ -23,10 +22,10 @@ def get_arrow_directions(width, height, data):
     )  # mirrored from MONARCHS as dx, dy is the way they are accessed later, whereas MONARCHS works on [row, col]
 
     xx, yy = np.meshgrid(np.arange(width), np.arange(height))
-    x_flat = xx.flatten()
-    y_flat = yy.flatten()
-    dx = np.zeros_like(xx)
-    dy = np.zeros_like(yy)
+    xx.flatten()
+    yy.flatten()
+    np.zeros_like(xx)
+    np.zeros_like(yy)
 
     x_arrows, y_arrows, u_arrows, v_arrows = [], [], [], []
     for i in range(height):
@@ -38,12 +37,8 @@ def get_arrow_directions(width, height, data):
                     direction = directions[k]
                     x_arrows.append(j)  # x position of the grid point
                     y_arrows.append(i)  # y position of the grid point
-                    u_arrows.append(
-                        direction[0]
-                    )  # u = x-component of direction
-                    v_arrows.append(
-                        direction[1]
-                    )  # v = y-component of direction
+                    u_arrows.append(direction[0])  # u = x-component of direction
+                    v_arrows.append(direction[1])  # v = y-component of direction
 
     # Convert lists to numpy arrays
     x_arrows = np.array(x_arrows)
@@ -67,9 +62,7 @@ def flow_plot(grid, netcdf=False, index=0, fig=False, ax=False):
     if not fig:
         fig, ax = plt.subplots(figsize=(6, 6))
 
-    x_arrows, y_arrows, u_arrows, v_arrows = get_arrow_directions(
-        width, height, data
-    )
+    x_arrows, y_arrows, u_arrows, v_arrows = get_arrow_directions(width, height, data)
 
     ax.grid(
         True,

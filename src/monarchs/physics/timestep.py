@@ -6,22 +6,18 @@ accordingly.
 """
 
 import numpy as np
-from monarchs.physics import (
-    firn_column,
-    lake,
-    solver,
-    lid,
-    percolation,
-    virtual_lid,
-    snow_accumulation,
-    reset_column,
-)
+from monarchs.core.kernels import kernel
+from monarchs.physics.firn import firn_column, percolation, snow_accumulation
+from monarchs.physics import lake, solver
+from monarchs.physics.lid import lid, virtual_lid
+from monarchs.physics.lake import reset_column
 from monarchs.physics.constants import rho_ice, rho_water
 from monarchs.core.error_handling import generic_error, check_correct
 
 MODULE_NAME = "monarchs.physics.timestep"
 
 
+@kernel()
 def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     """
     Main timestepping loop applied to an instance of the model grid.
@@ -97,8 +93,12 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     cell["lake_boundary_change"] = 0
     cell["lid_boundary_change"] = 0
 
-    if np.isnan(cell["firn_temperature"]).any():
-        message = "NaN in firn temperature"
+    # error handling - if we have NaNs, then we have a problem
+    if np.isnan(cell["firn_temperature"]).any() or np.isnan(cell["firn_depth"]):
+        message = "NaN in firn temperature or firn depth"
+        generic_error(cell, routine_name, message)
+        return cell
+
     cell["t_step"] = 1
     for t_step in range(t_steps_per_day):
         # Validation of model state at the start of the timestep
@@ -167,12 +167,16 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             if cell["lake_depth"] == 0:
                 cell["exposed_water"] = False
 
+            # placeholder flux in case we don't define lake development,
+            # for isolated/debug
+            # lid calculations
+            Fu = 0.0
+
             if not cell["lake"]:
                 if lake_development_toggle:
                     lake.lake_formation(cell, dt, met_data[t_step])
 
             elif cell["lake"] and not cell["lid"]:
-
                 if lake_development_toggle:
                     Fu = lake.lake_development(cell, dt, met_data[t_step])
                 # TODO - add refreezing calculation here - relevant if we have
@@ -197,7 +201,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         reset_column.combine_lid_firn(cell, freeze_lake=False)
 
             elif cell["lake"] and cell["lid"]:
-
                 if lid_development_toggle:
                     # turn virtual lid off if full lid present
                     cell["v_lid"] = False
@@ -216,12 +219,12 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                     )
                 # Check for if we need to reset the column - two possible
                 # conditions - if lake depth v small,
-                #            - or if lid melt count > 6 (i.e. lid has been
+                #            - or if lid melt count > 12 (i.e. lid has been
                 #              melting for half a day, and therefore has
                 #              significant slush/water on the surface)
                 if cell["lake_depth"] <= 1e-5:
-                    #print("Combining lid and firn column")
-                    #print("Lid melt count:", cell["lid_melt_count"])
+                    # print("Combining lid and firn column")
+                    # print("Lid melt count:", cell["lid_melt_count"])
                     reset_column.combine_lid_firn(cell, surface_slush=False)
                 elif cell["lid_melt_count"] > 12:
                     reset_column.combine_lid_firn(cell, surface_slush=True)
@@ -231,7 +234,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         # region of liquid water inside the firn. We need to ensure that this
         # continues to freeze based on the conditions what we take to be our
         # new "firn column" - much as it did when it was a lake under a lid.
-        # Effectively, we need to mimick the behaviour of the lid refreezing,
+        # Effectively, we need to mimic the behaviour of the lid refreezing,
         # so that the water doesn't just sit there forever.
 
         # If we have Sfrac + Lfrac > 1, we need to ensure that Lfrac is
@@ -257,8 +260,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 and cell["Sfrac"][0] <= 1
             ):
                 message = (
-                    "Lfrac + Sfrac > 1 after regridding, after saturation"
-                    " calculation."
+                    "Lfrac + Sfrac > 1 after regridding, after saturation calculation."
                 )
                 generic_error(cell, routine_name, message)
         if not ignore_errors:

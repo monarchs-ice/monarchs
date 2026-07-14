@@ -1,7 +1,12 @@
 # MONARCHS
 
-[![DOI](https://zenodo.org/badge/890500319.svg)](https://doi.org/10.5281/zenodo.14217406)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![CI](https://github.com/monarchs-ice/monarchs/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/monarchs-ice/monarchs/actions/workflows/python-package.yml)
+[![PyPI](https://img.shields.io/pypi/v/monarchs-ice)](https://pypi.org/project/monarchs-ice/)
+[![Python versions](https://img.shields.io/pypi/pyversions/monarchs-ice)](https://pypi.org/project/monarchs-ice/)
+[![Docker](https://img.shields.io/docker/v/jelsey92/monarchs?label=docker)](https://hub.docker.com/r/jelsey92/monarchs)
+[![License: GPL v3+](https://img.shields.io/badge/license-GPLv3+-blue)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14217406.svg)](https://doi.org/10.5281/zenodo.14217406)
 
 MOdel of aNtARtic iCe shelf Hydrology and Stability 
 
@@ -29,7 +34,7 @@ Todos
 - Type hints 
 - Full unit test suite
 - Longer term - a MONARCHS GUI may be really handy for specifying the inputs in model_setup.
-- MPI - still WIP to get working on e.g. ARCHER2
+- MPI - still WIP
 
 Installation
 ------------
@@ -52,13 +57,10 @@ You may first need to do
 If you want changes you have made to be picked up on your system, ensure that you use the `-e` flag when installing. See `pyproject.toml` for details.
 
 ## Installing optional dependencies
-The simplest way to install the extra MONARCHS dependencies from an existing build is doing
+MONARCHS' optional dependencies are declared in `pyproject.toml`. To install the
+Numba solver support (`NumbaMinpack`) alongside the package, use
 
-`python -m pip install -r requirements.txt`
-
-Alternatively, you can install MONARCHS from scratch with all optional dependencies using 
-
-`python -m pip install -e .[mpi,numba]`
+`python -m pip install -e ".[numba]"`
 
 Some systems may be incompatible with certain libraries. For example. the install will fail on ```NumbaMinpack```
 if you don't have a Fortran/C++ compiler. 
@@ -76,6 +78,15 @@ On Linux, ```apt-get install mpich``` should suffice. This is only suggested for
 
 It should be re-iterated that neither NumbaMinpack nor Pyina are required to be installed for the code to run, 
 provided that you set ```use_numba = False``` and/or ```use_mpi = False``` in your runscript (see below).
+
+Install with the ``[dev]`` option if you want to contribute to the codebase, as this will install the required
+dependencies. You can also run
+
+```python -m pip install pre-commit```
+
+```pre-commit install``` 
+
+in the project root directory. This gets you access to the pre-commit hooks for automatic code formatting and linting.
 
 
 Running the model

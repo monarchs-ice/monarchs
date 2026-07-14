@@ -1,7 +1,6 @@
 from matplotlib import pyplot as plt
 import numpy as np
 from monarchs.physics.heateqn import heateqn
-from monarchs.physics.surface_fluxes import sfc_flux
 from scipy.optimize import root
 from monarchs.core.initial_conditions import rho_init_emp
 
@@ -87,7 +86,7 @@ if __name__ == "__main__":
         plt.plot(
             T_sol,
             vertical_profile[: int(np.floor(dz * scaling_factor))],
-            label=f"dz={3500/dz:.2f} cm",
+            label=f"dz={3500 / dz:.2f} cm",
             color=colours[k],
         )
     plt.gca().invert_yaxis()

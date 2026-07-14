@@ -96,7 +96,7 @@ def solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method="h
         !!    ten iterations.
 
     """
-
+    N = len(cell["firn_temperature"])
     N = max(50, cell["vert_grid"] // 10)
     x = cell["firn_temperature"][:N]
     # Need to pack arguments into a single array, so we can pass them into the

@@ -1,43 +1,38 @@
-#Deriving the latest base image
-FROM python:3.11-slim-bullseye AS compile-image
 
-# set working directory
-WORKDIR .
+FROM python:3.11-slim-bookworm AS compile-image
 
-# copy requirements.txt file from local (source) to file structure of container (destination) 
-COPY ../requirements.txt requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gfortran \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Run update on base image so we can locate gfortran later
-RUN apt -y update && apt -y upgrade && apt-get install -y \
-gfortran \
-build-essential 
-RUN apt-get install mpich -y
+WORKDIR /opt/monarchs
 
-# Install the requirements specified in file using RUN
-# switch to virtual environment first
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN pip install -r requirements.txt
+# ensure we install the Numba dependencies with [numba]
+COPY . /opt/monarchs/MONARCHS
+# NumbaMinpack ships a pre-3.5 cmake_minimum_required, which modern CMake refuses
+# without this policy shim (mirrors the CMAKE_POLICY_VERSION_MINIMUM env in CI)
+RUN CMAKE_POLICY_VERSION_MINIMUM=3.5 pip install -e "/opt/monarchs/MONARCHS[numba]"
 
-# copy all items in current local directory (source) to current container directory (destination)
-COPY .. ./MONARCHS
+FROM python:3.11-slim-bookworm AS build-image
 
-FROM python:3.11-slim-bullseye AS build-image
-RUN apt -y update && apt -y upgrade && apt-get install -y \
-gfortran \
-build-essential \
-vim
-RUN apt-get install nano -y 
-RUN apt-get install mpich -y
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gfortran \
+    vim \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/opt/venv/bin:$PATH"
 COPY --from=compile-image /opt/venv /opt/venv
-COPY .. ./MONARCHS
-RUN echo $PWD | ls -l
-RUN pip install -e ./MONARCHS/.
+# the editable install points at this path, so carry the source over from the
+# compile stage rather than re-copying and re-installing
+COPY --from=compile-image /opt/monarchs/MONARCHS /opt/monarchs/MONARCHS
 
-# command to run when image is executed inside a container
-# CMD [ "bash" ]
-# don't perform any commands when the container is run
-CMD tail -f /dev/null
+WORKDIR /opt/monarchs/MONARCHS
+
+# keep the container alive when run detached so users can exec/shell in
+CMD ["tail", "-f", "/dev/null"]

@@ -167,10 +167,9 @@ def export_DEM(
         lat_subset = subset_raster.y.values
         lon_subset = subset_raster.x.values
         if len(lat_subset) != 0 and len(lon_subset) != 0:
-
-            from matplotlib import pyplot as plt
-
             if diagnostic_plots:
+                from matplotlib import pyplot as plt
+
                 bounding_box_diagnostic_plots(
                     input_raster,
                     subset_raster,
@@ -179,11 +178,12 @@ def export_DEM(
                     lon_subset,
                     lat_subset,
                 )
+                plt.figure()
+                plt.imshow(subset_raster.values[0])
+                plt.title("reprojected")
             # set the values that we use from here to the subset values
             lon_array, lat_array = np.meshgrid(lon_subset, lat_subset)
-            plt.figure()
-            plt.imshow(subset_raster.values[0])
-            plt.title("reprojected")
+
     else:
         heights = input_raster.values[0]
 
@@ -266,7 +266,7 @@ def bounding_box_diagnostic_plots(
         np.nanmax(subset_raster.values[0]),
         1,
     )
-    cont = ax1.contourf(
+    ax1.contourf(
         lon_array,
         lat_array,
         input_raster.values[0],
@@ -279,7 +279,7 @@ def bounding_box_diagnostic_plots(
     ax1.coastlines()
     ax1.gridlines(draw_labels=True)
     ax1.title.set_text("DEM height profile with subset")
-    cont = ax1.contourf(
+    ax1.contourf(
         lon_subset,
         lat_subset,
         subset_raster.values[0],
@@ -333,7 +333,7 @@ def generate_diagnostic_plots(
     ax1.coastlines()
     bounds = np.arange(0, 500, 1)
 
-    cont = ax1.contourf(
+    ax1.contourf(
         lons,
         lats,
         heights,
@@ -374,5 +374,5 @@ def generate_diagnostic_plots(
         "After interpolating to our grid size "
         f"({len(new_heights_interpolated)}x{len(new_heights_interpolated[0])})"
     )
-    cb = fig.colorbar(cs)
+    fig.colorbar(cs)
     plt.show()
