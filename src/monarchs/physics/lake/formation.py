@@ -5,8 +5,6 @@ Contains functions for the early-stage evolution of exposed meltwater at the
 firn surface, before a full lake (depth >= 10 cm) has developed.
 """
 
-# TODO - module level docstring, split/refactor lake_formation and
-#      - lake_development if possible
 import numpy as np
 from monarchs.core.kernels import kernel
 from monarchs.physics import surface_fluxes, material_properties

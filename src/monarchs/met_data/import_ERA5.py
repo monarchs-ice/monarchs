@@ -32,9 +32,11 @@ def ERA5_to_variables(
     """
     routine_name = "ERA5_to_variables"
     var_dict = {}
-    # met_timestep is the number of met timesteps per day (24 = hourly,
-    # 8 = three-hourly, ...). ERA5 radiation is *accumulated* [J m^-2] over
-    # each step, so the conversion to W m^-2 must divide by the step length.
+
+    # divide 24h in seconds by the met timestep (default 1h)
+    # to get the correct unit conversion for the radiation
+    # variables, which are aggregated over 1h periods by default
+    # in ERA5 ([J m^-2] -> [W m^-2])
     seconds_per_step = 86400 // met_timestep
     # Determine indices for start and end of the year.
     # We write only in one-yearly segments.

@@ -22,7 +22,6 @@ def met_data_from_era5(
     """
     Convert ERA5 input data into a netCDF in MONARCHS format.
     """
-    # TODO - docstring, refactor to break up with a few helper functions
     func_name = "monarchs.core.initial_conditions.met_data_from_era5"
     # Determine the timestep index - either a string (in which case convert to int),
     # or int directly
@@ -266,7 +265,7 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
             f.createDimension("fine_row", model_setup.row_amount)
             f.createDimension("fine_col", model_setup.col_amount)
 
-            # ── Static coordinate variables ───────────────────────────────
+            # coordinate variables
             v = f.createVariable("coarse_lat", "f8", ("coarse_lat",))
             v.long_name = "ERA5 coarse latitude"
             v[:] = coarse_lat_1d
@@ -468,7 +467,6 @@ def resample_met_to_model_timestep(era5_grid, met_hours, model_hours):
     block-averaged; accumulations are summed. Only integer ratios between
     the two resolutions are supported.
 
-    ("time" is left at met resolution - it is not written to the met cache.)
     """
     routine_name = "resample_met_to_model_timestep"
     if met_hours == model_hours:
