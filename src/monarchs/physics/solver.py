@@ -166,11 +166,7 @@ def newton_tridiagonal(residual, jacobian, x0, args):
     n_iter : int
         Number of Newton-Raphson iterations used.
     """
-    n = len(x0)
     x = x0.copy()
-    a = np.empty(n - 1)
-    b = np.empty(n)
-    c = np.empty(n - 1)
     resid_tol = max(SOLVER_TOL, SOLVER_TOL * np.max(np.abs(x0)))
     success = False
     n_iter = 0
@@ -180,6 +176,6 @@ def newton_tridiagonal(residual, jacobian, x0, args):
         if np.max(np.abs(fvec)) < resid_tol:
             success = True
             break
-        jacobian(x, a, b, c, args)
+        a, b, c = jacobian(x, args)
         x += solve_tridiagonal(a, b, c, -fvec)
     return np.around(x, decimals=8), success, n_iter

@@ -184,7 +184,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 # lakes underneath a frozen lid that gets combined
                 if firn_heat_toggle:
                     for lev in range(cell["vert_grid"]):
-                        percolation.calc_refreezing(cell, lev)
+                        # only layers holding liquid can refreeze
+                        if cell["Lfrac"][lev] > 0:
+                            percolation.calc_refreezing(cell, lev)
 
                 if cell["v_lid"]:
                     if lid_development_toggle:
@@ -211,7 +213,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         met_data[t_step],
                     )
                     for lev in range(cell["vert_grid"]):
-                        percolation.calc_refreezing(cell, lev)
+                        # only layers holding liquid can refreeze
+                        if cell["Lfrac"][lev] > 0:
+                            percolation.calc_refreezing(cell, lev)
                     lid.lid_development(
                         cell,
                         dt,

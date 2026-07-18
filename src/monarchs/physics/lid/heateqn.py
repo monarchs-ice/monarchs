@@ -96,11 +96,11 @@ def heateqn_lid(x, cell, met_data, dt, dz, Sfrac_lid):
 
 
 @kernel()
-def newton_jacobian_lid(x, kappa, k0, dz, dt, dq_val, a, b, c):
+def newton_jacobian_lid(x, kappa, k0, dz, dt, dq_val):
     """
-    Assemble the tridiagonal Jacobian J = dF/dT of the lid heat equation into
-    caller-provided diagonal arrays. The residual F comes from ``heateqn_lid``
-    (this is only the derivative). The absorbed-solar source is additive and
+    Assemble the tridiagonal Jacobian J = dF/dT of the lid heat equation,
+    returning the sub/main/super diagonals (a, b, c). The residual F comes
+    from ``heateqn_lid``. The absorbed-solar source is additive and
     state-independent, so it does not appear in the Jacobian.
 
     Rows match ``heateqn_lid``: surface energy balance (as the firn system),
@@ -108,6 +108,9 @@ def newton_jacobian_lid(x, kappa, k0, dz, dt, dq_val, a, b, c):
     lake-lid boundary to 273.15 K. Parameters as ``firn.heateqn.newton_jacobian_firn``.
     """
     n = x.shape[0]
+    a = np.empty(n - 1)
+    b = np.empty(n)
+    c = np.empty(n - 1)
     fac = dt / (dz * dz)
 
     # Surface row: identical form to the firn system.
@@ -124,6 +127,7 @@ def newton_jacobian_lid(x, kappa, k0, dz, dt, dq_val, a, b, c):
     # Bottom row: Dirichlet, lake-lid boundary at the melting point.
     a[n - 2] = 0.0
     b[n - 1] = 1.0
+    return a, b, c
 
 
 @kernel()
@@ -134,14 +138,14 @@ def _lid_residual(x, args):
 
 
 @kernel()
-def _lid_jacobian(x, a, b, c, args):
-    """Adapter filling the lid tridiagonal Jacobian for the driver, taking the
-    surface flux derivative dQ/dT by finite difference."""
+def _lid_jacobian(x, args):
+    """Adapter returning the lid tridiagonal Jacobian for the driver, taking
+    the surface flux derivative dQ/dT by finite difference."""
     cell, met_data, dz, dt, kappa, k0, Sfrac_lid = args
     q = sfc_flux(cell, met_data, x[0])
     q_p = sfc_flux(cell, met_data, x[0] + DQ_DT_STEP)
     dq = (q_p - q) / DQ_DT_STEP
-    newton_jacobian_lid(x, kappa, k0, dz, dt, dq, a, b, c)
+    return newton_jacobian_lid(x, kappa, k0, dz, dt, dq)
 
 
 @kernel()

@@ -95,7 +95,7 @@ def heateqn_firn(x, cell, met_data, dz, dt, fixed_sfc=False):
 
 
 @kernel()
-def newton_jacobian_firn(x, kappa, k0, dz, dt, dq_val, a, b, c, fixed_sfc=False):
+def newton_jacobian_firn(x, kappa, k0, dz, dt, dq_val, fixed_sfc=False):
     """
     Assemble the Jacobian J = dF/dT of the firn heat equation. Since
     the temperature of a given point x only depends on x-1 and x+1,
@@ -121,13 +121,19 @@ def newton_jacobian_firn(x, kappa, k0, dz, dt, dq_val, a, b, c, fixed_sfc=False)
         Timestep [s].
     dq_val : float
         dQ/dT at x[0] [W m^-2 K^-1].
-    a, b, c : array_like, float
-        Sub/main/super diagonals, filled in place.
     fixed_sfc : bool, optional
         If True, match ``heateqn_firn``'s Dirichlet surface row (x[0] pinned):
         the surface diagonal is 1 with no coupling to x[1]. Default False.
+
+    Returns
+    -------
+    a, b, c : array_like, float
+        Sub/main/super diagonals of the Jacobian.
     """
     n = x.shape[0]
+    a = np.empty(n - 1)
+    b = np.empty(n)
+    c = np.empty(n - 1)
     fac = dt / (dz * dz)  # dt/dz^2
 
     # surface - no ``a`` term as top of column so nothing above
@@ -154,6 +160,7 @@ def newton_jacobian_firn(x, kappa, k0, dz, dt, dq_val, a, b, c, fixed_sfc=False)
     alpha = fac * kappa[i]
     a[i - 1] = alpha
     b[i] = -1.0 - alpha
+    return a, b, c
 
 
 @kernel()
@@ -169,7 +176,7 @@ def _firn_residual(x, args):
 
 
 @kernel()
-def _firn_jacobian(x, a, b, c, args):
+def _firn_jacobian(x, args):
     """
     Argument packer for the Jacobian calculation. As with ``_firn_residual``,
     constructing it like this with a wrapper function lets the solever take
@@ -182,7 +189,7 @@ def _firn_jacobian(x, a, b, c, args):
         q = sfc_flux(cell, met_data, x[0])
         q_p = sfc_flux(cell, met_data, x[0] + DQ_DT_STEP)
         dq = (q_p - q) / DQ_DT_STEP
-    newton_jacobian_firn(x, kappa, k0, dz, dt, dq, a, b, c, fixed_sfc)
+    return newton_jacobian_firn(x, kappa, k0, dz, dt, dq, fixed_sfc)
 
 
 @kernel()
