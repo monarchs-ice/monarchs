@@ -14,9 +14,7 @@ from monarchs.physics.constants import emissivity, stefan_boltzmann
 @kernel()
 def sfc_energy_lid(x, args):
     """
-    Residual of the full-lid surface energy balance [W m^-2]: surface flux
-    and emission balanced against conduction into the first lid layer.
-    Solved by lid_seb_solver when ``cell["v_lid"]`` is False.
+    Residual of the full-lid surface energy balance [W m^-2]
 
     Parameters
     ----------
@@ -36,10 +34,7 @@ def sfc_energy_lid(x, args):
 @kernel()
 def sfc_energy_virtual_lid(x, args):
     """
-    Residual of the virtual-lid surface energy balance [W m^-2]: surface flux
-    and emission balanced against conduction through the combined thermal
-    resistance of the virtual-lid ice plus the upper half-layer of lake
-    water. Solved by lid_seb_solver when ``cell["v_lid"]`` is True.
+    Residual of the virtual-lid surface energy balance [W m^-2]
 
     Parameters
     ----------
@@ -61,7 +56,7 @@ def sfc_energy_virtual_lid(x, args):
 def lid_seb_solver(cell, met_data, k_lid):
     """
     Solve the lid surface energy balance (full or virtual lid form) with the
-    scalar Newton solver. Runs identically on both backends.
+    scalar Newton solver.
 
     Called in lid.initialise_lid and lid.virtual_lid.
 
@@ -83,11 +78,9 @@ def lid_seb_solver(cell, met_data, k_lid):
     n_iter : int
         Number of Newton iterations used.
     """
-    # Initial guess: current virtual-lid surface temperature (as before,
-    # for both the full-lid and virtual-lid branches).
-    x0 = cell["virtual_lid_temperature"]
 
     if cell["v_lid"]:
+        x0 = cell["virtual_lid_temperature"]
         # Combined thermal resistance: virtual-lid ice + half-lake water
         total_thickness = cell["v_lid_depth"] + cell["lake_depth"] / (
             cell["vert_grid_lake"] / 2
@@ -95,6 +88,7 @@ def lid_seb_solver(cell, met_data, k_lid):
         args = (cell, met_data, k_lid, total_thickness)
         x, success, n_iter = newton_scalar(sfc_energy_virtual_lid, x0, args)
     else:
+        x0 = cell["lid_temperature"][0]
         # sub_T: first lid layer, used as the sub-surface boundary condition
         args = (
             cell,

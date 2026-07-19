@@ -11,12 +11,11 @@ run over multiple melt/freezing cycles without breaking the model.
 # pylint: disable=broad-exception-raised, raise-missing-from
 import numpy as np
 from monarchs.core.kernels import kernel
-from monarchs.physics import material_properties
 from monarchs.physics.firn import percolation
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
 from monarchs.physics.firn.regrid_column import conservative_regrid
-from monarchs.physics.constants import rho_ice, rho_water, cp_water
+from monarchs.physics.constants import rho_ice, rho_water
 
 
 @kernel()
@@ -38,71 +37,51 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
         else cell["lake_depth"]
     )
 
-    # Lid + lake + firn as one stack on its true layer thicknesses (dropping
-    # any zero-thickness region), so mass and heat are remapped from a single
-    # consistent source. The lid is solid ice, the lake liquid water (or ice
-    # if freeze_lake), the firn keeps its own fractions and temperature.
-    if cell["vert_grid_lid"] > 0 and orig_lid_depth > 0:
-        n = cell["vert_grid_lid"]
-        lid_dz = np.full(n, orig_lid_depth / n)
-        lid_S = np.ones(n)
-        lid_L = np.zeros(n)
-        lid_T = cell["lid_temperature"].copy()
-    else:
-        lid_dz = np.zeros(0)
-        lid_S = np.zeros(0)
-        lid_L = np.zeros(0)
-        lid_T = np.zeros(0)
+    # old depth grid - lid + lake + firn
+    old_depth_grid = np.concatenate(
+        (
+            np.linspace(0.0, orig_lid_depth, cell["vert_grid_lid"]),
+            np.linspace(
+                orig_lid_depth,
+                orig_lid_depth + lake_depth_eff,
+                cell["vert_grid_lake"],
+            ),
+            np.linspace(
+                orig_lid_depth + lake_depth_eff,
+                orig_lid_depth + lake_depth_eff + cell["firn_depth"],
+                cell["vert_grid"],
+            ),
+        )
+    )
 
-    if cell["vert_grid_lake"] > 0 and cell["lake_depth"] > 0:
-        n = cell["vert_grid_lake"]
-        lake_dz = np.full(n, lake_depth_eff / n)
-        if freeze_lake:
-            lake_S = np.ones(n)
-            lake_L = np.zeros(n)
-        else:
-            lake_S = np.zeros(n)
-            lake_L = np.ones(n)
-        lake_T = cell["lake_temperature"].copy()
-    else:
-        lake_dz = np.zeros(0)
-        lake_S = np.zeros(0)
-        lake_L = np.zeros(0)
-        lake_T = np.zeros(0)
-
-    firn_dz = np.full(cell["vert_grid"], cell["firn_depth"] / cell["vert_grid"])
-    dz_full = np.concatenate((lid_dz, lake_dz, firn_dz))
-    src_edges = np.concatenate((np.array([0.0]), np.cumsum(dz_full)))
-    src_Sfrac = np.concatenate((lid_S, lake_S, cell["Sfrac"]))
-    src_Lfrac = np.concatenate((lid_L, lake_L, cell["Lfrac"]))
-    src_T = np.concatenate((lid_T, lake_T, cell["firn_temperature"]))
-
-    total_depth = src_edges[-1]
+    # new depth grid over combined total
     new_vert_grid = cell["vert_grid"]
-    target_edges = np.linspace(0.0, total_depth, new_vert_grid + 1)
-    new_depth_grid = np.linspace(0.0, total_depth, new_vert_grid)
-
-    sfrac_new = np.clip(
-        conservative_regrid(src_edges, src_Sfrac, target_edges), 0.0, 1.0
-    )
-    lfrac_new = np.clip(
-        conservative_regrid(src_edges, src_Lfrac, target_edges), 0.0, 1.0
+    new_depth_grid = np.linspace(
+        0.0,
+        orig_lid_depth + lake_depth_eff + cell["firn_depth"],
+        new_vert_grid,
     )
 
-    # Temperature by conservative remap of sensible heat content
-    # h = cv (T - Tm) [J m^-3], with a fixed reference cp so the regrid
-    # conserves sensible enthalpy; T is recovered from the new heat capacity.
-    cp_ice_ref = material_properties.cp_ice(273.15)
-    src_cv = src_Sfrac * rho_ice * cp_ice_ref + src_Lfrac * rho_water * cp_water
-    h_new = conservative_regrid(src_edges, src_cv * (src_T - 273.15), target_edges)
-    cv_new = sfrac_new * rho_ice * cp_ice_ref + lfrac_new * rho_water * cp_water
-    new_firn_temperature = 273.15 + h_new / np.maximum(cv_new, 1e-6)
+    # temperature interpolation - fix lake to 273.15 K
+    new_firn_temperature = np.interp(
+        new_depth_grid,
+        old_depth_grid,
+        np.concatenate(
+            (
+                cell["lid_temperature"],
+                cell["lake_temperature"],
+                cell["firn_temperature"],
+            )
+        ),
+    )
 
-    # A layer holding no liquid cannot sit above the melting point.
-    for i in range(len(new_firn_temperature)):
-        if lfrac_new[i] < 1e-9 and new_firn_temperature[i] > 273.15:
-            new_firn_temperature[i] = 273.15
-
+    # get new solid and liquid fractions
+    sfrac_new = mass_conserving_profile(
+        cell, orig_lid_depth, var="Sfrac", freeze_lake=freeze_lake
+    )
+    lfrac_new = mass_conserving_profile(
+        cell, orig_lid_depth, var="Lfrac", freeze_lake=freeze_lake
+    )
     # Density is derived directly from the new mass-conserved fractions.
     # Interpolating rho directly causes mass errors when layer sizes change.
     new_rho = (sfrac_new * rho_ice) + (lfrac_new * rho_water)
@@ -156,3 +135,46 @@ def combine_lid_firn(cell, freeze_lake=False, surface_slush=False):
     check_for_mass_conservation(
         cell, original_mass, new_mass, routine_name, tol=original_mass / 100
     )
+
+
+@kernel()
+def mass_conserving_profile(cell, orig_lid_depth, var="Sfrac", freeze_lake=False):
+    if cell["vert_grid_lid"] > 0 and orig_lid_depth > 0:
+        lid_dz = np.full(cell["vert_grid_lid"], orig_lid_depth / cell["vert_grid_lid"])
+    else:
+        lid_dz = np.zeros(0)
+
+    if cell["vert_grid_lake"] > 0 and cell["lake_depth"] > 0:
+        if freeze_lake:
+            lake_depth_eff = cell["lake_depth"] * (rho_water / rho_ice)
+        else:
+            lake_depth_eff = cell["lake_depth"]
+        lake_dz = np.full(
+            cell["vert_grid_lake"], lake_depth_eff / cell["vert_grid_lake"]
+        )
+    else:
+        lake_dz = np.zeros(0)
+
+    column_dz = np.full(cell["vert_grid"], cell["firn_depth"] / cell["vert_grid"])
+
+    dz_full = np.concatenate((lid_dz, lake_dz, column_dz))
+    source_edges = np.concatenate((np.array([0.0]), np.cumsum(dz_full)))
+
+    if var == "Sfrac":
+        val_lid = np.ones(len(lid_dz))
+        val_lake = np.ones(len(lake_dz)) if freeze_lake else np.zeros(len(lake_dz))
+        val_firn = cell["Sfrac"]
+    else:  # Lfrac
+        val_lid = np.zeros(len(lid_dz))
+        val_lake = np.zeros(len(lake_dz)) if freeze_lake else np.ones(len(lake_dz))
+        val_firn = cell["Lfrac"]
+
+    source_vals = np.concatenate((val_lid, val_lake, val_firn))
+
+    total_depth = source_edges[-1]
+    nz = cell["vert_grid"]
+    target_edges = np.linspace(0, total_depth, nz + 1)
+
+    new_vals = conservative_regrid(source_edges, source_vals, target_edges)
+
+    return np.clip(new_vals, 0.0, 1.0)

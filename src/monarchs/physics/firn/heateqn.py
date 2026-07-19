@@ -12,12 +12,6 @@ linear except at the surface, which means we can get away with a tridiagonal
 solver since we only have a single nonlinear row and therefore a tridiagonal
 Jacobian. We can determine this analytically for all terms except dQ/dT,
 which we obtain by finite difference.
-
-Previously, we used MINPACK (via either Scipy or a bespoke Numba-compatible
-library) to solve this. However, this was bad architecturally (required
-two incompatible paths to make it actually work with the two versions)
-and slower than this version since we calculate a tridiagonal Jacobian
-rather than a dense one, and exploit a fast tridiagonal solver.
 """
 
 import numpy as np
@@ -49,9 +43,7 @@ def heateqn_firn(x, cell, met_data, dz, dt, fixed_sfc=False):
     dt: int
         Timestep [s].
     fixed_sfc: bool, optional
-        If True, the surface is melting: replace the atmosphere-forced surface
-        row with a Dirichlet constraint pinning x[0] to 273.15 K. The interior
-        is unchanged, so the whole system becomes linear. Default False.
+        If True, force the surface to 273.15 K. Default False.
 
     Returns
     -------
@@ -179,7 +171,7 @@ def _firn_residual(x, args):
 def _firn_jacobian(x, args):
     """
     Argument packer for the Jacobian calculation. As with ``_firn_residual``,
-    constructing it like this with a wrapper function lets the solever take
+    constructing it like this with a wrapper function lets the solver take
     arbitrary number of arguments packed into a single tuple ``args``.
     """
     cell, met_data, dz, dt, kappa, k0, fixed_sfc = args
@@ -195,21 +187,7 @@ def _firn_jacobian(x, args):
 @kernel()
 def firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=False):
     """
-    Solve the full-column firn heat equation via the ``newton_tridiagonal``
-    driver: it supplies the firn residual and Jacobian, the driver runs the
-    Newton loop (one Thomas solve per iteration).
-
-    Called in <firn_column>, <timestep>, <lake.formation>. Runs identically
-    on the pure-Python and Numba backends.
-
-    The residual F(T) = 0 is ``heateqn_firn`` (implicit diffusion with
-    properties lagged at T_old, coupled to the surface energy balance through
-    Q(T0)); its Jacobian is exact and tridiagonal apart from dQ/dT, taken by
-    finite difference. Convergence is declared when max |F| falls below a
-    tolerance scaled from SOLVER_TOL. Because the system is near-linear (only
-    the scalar surface term is nonlinear), the full Newton step converges from
-    the previous timestep's profile without a line search - verified over a
-    multi-year run with lake/lid/combine events.
+    Solve the full-column firn heat equation.
 
     Parameters
     ----------
@@ -223,9 +201,7 @@ def firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=False):
     dz : float
         Layer thickness [m].
     fixed_sfc : bool, optional
-        If True, the surface is melting: the surface row becomes a Dirichlet
-        constraint pinning x[0] to 273.15 K, which makes the whole system
-        linear so Newton converges in a single step. Default False.
+        If True, force the surface to 273.15 K. Default False.
 
     Returns
     -------
@@ -234,12 +210,10 @@ def firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=False):
     success : bool
         True if the iteration converged.
     n_iter : int
-        Number of Newton iterations used (a single step for the fixed-surface
+        Number of Newton-Raphson iterations used (a single step for the fixed-surface
         path, since that system is linear).
     """
     T_old = cell["firn_temperature"]
-    # k and kappa are lagged at T_old (see module docstring), so compute once
-    # and pass through to the Jacobian via args.
     k, kappa = material_properties.k_and_kappa(T_old, cell["Sfrac"], cell["Lfrac"])
     args = (cell, met_data, dz, dt, kappa, k[0], fixed_sfc)
     return newton_tridiagonal(_firn_residual, _firn_jacobian, T_old, args)

@@ -66,8 +66,7 @@ This will install MONARCHS with all of its required dependencies. If when trying
 Installation for use on HPC
 -------------------------------
 No extra dependencies are needed for HPC use: the standard install above includes everything required to run
-with Numba acceleration (``use_numba = True`` in ``model_setup.py``), including on HPC systems. No Fortran/C++
-compiler is required.
+with Numba acceleration (``use_numba = True`` in ``model_setup.py``), including on HPC systems. 
 
 Singularity/Docker image
 ========================

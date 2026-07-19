@@ -1,18 +1,11 @@
 """
 Frozen-lid heat equation: residual, Jacobian, and Newton driver.
 
-The lid heat equation has the same structure as the firn one
-(``firn/heateqn.py``) - implicit diffusion with lagged properties, coupled to
-the surface energy balance - with two differences: an absorbed-solar source
-term in the interior, and a *Dirichlet* bottom row pinning the lake-lid
-boundary to 273.15 K. So the Jacobian is again exactly tridiagonal and each
-Newton step is one Thomas solve.
-
-- ``heateqn_lid``: the residual F(T), single definition of the lid system.
-- ``newton_jacobian_lid``: the tridiagonal Jacobian J = dF/dT only.
-- ``lid_heateqn_solver``: builds the lid residual/Jacobian and hands them to
-  the shared ``solver.newton_tridiagonal`` driver (the same loop the firn
-  solver uses).
+The system is very similar to the firn heat equation from
+ ``physics.firn.heateqn``, although we have an additional
+internal forcing term due to SW radiation penetrating inside the lid,
+and an additional fixed boundary at 273.15 at the bottom of the lid,
+rather than the ghost-point boundary from the firn case.
 """
 
 import numpy as np
@@ -100,12 +93,8 @@ def newton_jacobian_lid(x, kappa, k0, dz, dt, dq_val):
     """
     Assemble the tridiagonal Jacobian J = dF/dT of the lid heat equation,
     returning the sub/main/super diagonals (a, b, c). The residual F comes
-    from ``heateqn_lid``. The absorbed-solar source is additive and
-    state-independent, so it does not appear in the Jacobian.
-
-    Rows match ``heateqn_lid``: surface energy balance (as the firn system),
-    interior implicit diffusion, and a *Dirichlet* bottom row pinning the
-    lake-lid boundary to 273.15 K. Parameters as ``firn.heateqn.newton_jacobian_firn``.
+    from ``heateqn_lid``. The SW radiation term is not present here, since
+    the partial derivative w.r.t. temperature is 0.
     """
     n = x.shape[0]
     a = np.empty(n - 1)
@@ -113,18 +102,18 @@ def newton_jacobian_lid(x, kappa, k0, dz, dt, dq_val):
     c = np.empty(n - 1)
     fac = dt / (dz * dz)
 
-    # Surface row: identical form to the firn system.
+    # surface row - driven by SEB
     b[0] = k0 / dz - (dq_val - 4.0 * emissivity * stefan_boltzmann * x[0] ** 3)
     c[0] = -k0 / dz
 
-    # Interior rows: implicit diffusion stencil (constant in x).
+    # interior rows - heat diffusion
     for i in range(1, n - 1):
         alpha = fac * kappa[i]
         a[i - 1] = alpha
         b[i] = -1.0 - 2.0 * alpha
         c[i] = alpha
 
-    # Bottom row: Dirichlet, lake-lid boundary at the melting point.
+    # bottom row is fixed to 273.15
     a[n - 2] = 0.0
     b[n - 1] = 1.0
     return a, b, c
@@ -132,15 +121,14 @@ def newton_jacobian_lid(x, kappa, k0, dz, dt, dq_val):
 
 @kernel()
 def _lid_residual(x, args):
-    """Adapter binding the lid residual to the ``newton_tridiagonal`` driver."""
+    """Helper to pack the arguments to pass into the heat equation in the solver"""
     cell, met_data, dz, dt, kappa, k0, Sfrac_lid = args
     return heateqn_lid(x, cell, met_data, dt, dz, Sfrac_lid)
 
 
 @kernel()
 def _lid_jacobian(x, args):
-    """Adapter returning the lid tridiagonal Jacobian for the driver, taking
-    the surface flux derivative dQ/dT by finite difference."""
+    """Helper to pack the arguments needed to compute the Jacobian"""
     cell, met_data, dz, dt, kappa, k0, Sfrac_lid = args
     q = sfc_flux(cell, met_data, x[0])
     q_p = sfc_flux(cell, met_data, x[0] + DQ_DT_STEP)
@@ -151,12 +139,8 @@ def _lid_jacobian(x, args):
 @kernel()
 def lid_heateqn_solver(cell, met_data, dt, dz):
     """
-    Solve the full-column frozen-lid heat equation via the ``newton_tridiagonal``
-    driver: it supplies the lid residual and Jacobian, the driver runs the
-    Newton loop (one Thomas solve per iteration). Runs identically on both
-    backends.
-
-    Called in lid.lid_development. The residual F(T) = 0 is ``heateqn_lid``.
+    Call the heat equation solver to calculate the updated temperature
+    at time t1 = t0 + dt.
 
     Parameters
     ----------
@@ -180,8 +164,6 @@ def lid_heateqn_solver(cell, met_data, dt, dz):
     """
     T_old = cell["lid_temperature"]
 
-    # Lagged thermal properties (solid ice); computed once and passed to the
-    # Jacobian via args. Frozen lid is solid ice, so Sfrac_lid is all ones.
     k_lid = material_properties.k_ice(T_old)
     cp = material_properties.cp_ice(T_old)
     kappa = k_lid / (cp * rho_ice)

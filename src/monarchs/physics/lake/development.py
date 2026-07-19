@@ -244,6 +244,7 @@ def lake_development(cell, dt, met_data):
         cell["lake_temperature"][0] = lake_seb_solver(cell, met_data, formation=False)[
             0
         ]
+
         # If surface cooled below freezing, create virtual lid
         if cell["lake_temperature"][0] < 273.15:
             # print("Lake surface below freezing, creating virtual lid")
