@@ -44,9 +44,13 @@ jobs:
       run: |
         ruff check src/monarchs tests
 
+
     - name: Test with pytest
+      # run all tests first, then run Numba tests separately
+      # to avoid issues with non-reversible compilation in the runner
       run: |
         cd tests
-        pytest . 
-        
+        pytest --ignore=numba .
+        pytest numba
+
 

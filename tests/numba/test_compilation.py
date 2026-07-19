@@ -1,9 +1,13 @@
+import os
+
 import numpy as np
 
 """
 Test to ensure that the model compiles and runs for a very simple
 test case. This also tests for whether we can import ERA5 data from netCDF.
 """
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def run(model_setup):
@@ -36,11 +40,13 @@ def run(model_setup):
 
 
 def test_numba_compilation():
-    """Run a very simple case for 10 days. This is mostly to make sure that the code compiles correctly without
-    any Numba-specific errors."""
+    """Run a very simple case for 10 days. This mostly checks that the code
+    compiles and runs without any Numba-specific errors."""
     from monarchs.core import load_model_setup, configuration, kernels
 
-    model_setup = load_model_setup.get_model_setup("model_test_setup_numba.py")
+    model_setup = load_model_setup.get_model_setup(
+        os.path.join(HERE, "model_test_setup_numba.py")
+    )
     configuration.handle_incompatible_flags(model_setup)
     configuration.handle_invalid_values(model_setup)
     configuration.create_defaults_for_missing_flags(model_setup)
