@@ -2,10 +2,26 @@
 Utilities module containing various helper functions or wrappers.
 """
 
+import time
 import numpy as np
 import pathos
 from monarchs.physics.constants import rho_ice, rho_water
 from monarchs.core.kernels import kernel
+
+
+class Timer:
+    """Context manager that prints '<label> time: X.XXs' on exit."""
+
+    def __init__(self, label):
+        self.label = label
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
+
+    def __exit__(self, *exc):
+        print(f"{self.label} time: {time.perf_counter() - self.start:.2f}s")
+        return False
 
 
 @kernel()

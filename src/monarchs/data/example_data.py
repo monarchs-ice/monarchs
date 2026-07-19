@@ -23,7 +23,8 @@ def checkpoint_path(regime):
     """
     Absolute path to a bundled 1-D full-state checkpoint. ``regime`` is
     ``"lake"`` (open lake + thin virtual lid) or ``"lid"`` (established lid).
-    Load with ``monarchs.io.checkpoint.read_checkpoint(path, get_spec(500, 20, 20))``.
+    Load with ``monarchs.io.checkpoint.read_checkpoint(path, build_dtype(500, 20, 20))``
+    (``from monarchs.variables import build_dtype``).
     """
     return str(files(__package__).joinpath("checkpoints", f"1d_{regime}_checkpoint.nc"))
 

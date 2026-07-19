@@ -63,8 +63,14 @@ Adding new diagnostics or physics
 **********************************
 
 If adding new variables to the code, you will need to do the following:
-    - Add the variable into the ``spec``, found in ``monarchs.core.model_grid``, and initialising it if appropriate in ``monarchs.core.initial_conditions.create_model_grid``. This is required since we need to ensure that our code is compilable with Numba, which forces strict typing.
+    - Add a single row for the variable to the catalogue in ``monarchs.variables.catalogue``. You will need to define:
+        - Data type (e.g. Boolean for a toggle, or e.g. 'INT'/'FLOAT' for a physical variable
+        - Dimension (a scalar per cell, or a per-layer profile)
+        - Initial/default value
+        - Output metadata (units, long name)
+        - Optionally, a ``description`` (a full sentence, on its own continuation line) that feeds the generated variable reference (``python scripts/gen_variable_docs.py``)
     - Add the variable into the model code itself. This likely involves making the relevant changes to the various files/functions in ``monarchs.physics``.
+    - If your variable depends on other variables, you can define a function for this and put it in ``variables.initial_value_functions.py``. See the examples there for details.
     - If your new variable is a diagnostic, add the variable to ``vars_to_save`` in your runscript, so that the code knows to track it over time and save it to the output netCDF file.
     - If your new variable relies on a toggle or other ``model_setup`` variable, set a default value for this in ``monarchs.core.configuration.create_defaults_for_missing_flags``.
 

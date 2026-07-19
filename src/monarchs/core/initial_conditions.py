@@ -7,10 +7,9 @@ in/interpolating the digital elevation model (DEM) if applicable.
 
 """
 
-# TODO - further refactor initialise_firn_profile, docstrings
 import numpy as np
 from monarchs.dem_utils.load_dem import export_DEM
-from monarchs.core.model_grid import initialise_iceshelf, get_spec
+from monarchs.variables import make_grid
 
 
 def initialise_firn_profile(model_setup, diagnostic_plots=False):
@@ -56,14 +55,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             firn_depth = np.clip(firn_depth, 0, model_setup.firn_max_height)
         elif model_setup.max_height_handler == "filter":
             valid_cells[np.where(firn_depth > model_setup.firn_max_height)] = False
-            # with np.printoptions(threshold=np.inf):
-            # print(
-            #    f"{func_name}:"
-            #    " Filtering out cells according to the following mask"
-            #    " (False = filtered out), since they exceed the firn"
-            #    " height threshold:"
-            # )
-            # print("Valid cells = ", valid_cells)
+
     firn_depth_under_35_flag = False
     if hasattr(model_setup, "firn_min_height"):
         if model_setup.min_height_handler == "clip":
@@ -232,110 +224,64 @@ def rho_init_emp(z, rho_sfc, z_t):
     rho_sfc : float
         Density that you desire for the surface firn layer. [kg m^-3]
     z_t : float
-
-
+        Depth scale for the density profile. [m]
     Returns
     -------
-
+    rho : float
+        Density profile of the firn column. [kg m^-3]
     """
     rho = 917 - (917 - rho_sfc) * np.exp(-(1.9 / z_t) * z)
     return rho
 
 
-# This function sets up the entire model grid, and splitting it up reduces
-# readability significantly, so we disable the pylint warnings here.
-# pylint: disable=too-many-arguments, too-many-locals, too-many-statements
-def create_model_grid(
-    model_setup,
-    firn_depth,
-    rho,
-    firn_temperature,
-    # default values
-    sfrac=np.array([np.nan]),
-    lfrac=np.array([np.nan]),
-    meltflag=np.array([np.nan]),
-    saturation=np.array([np.nan]),
-    lake_depth=0.0,
-    lake_temperature=np.array([np.nan]),
-    lid_depth=0.0,
-    lid_temperature=np.array([np.nan]),
-    melt=False,
-    exposed_water=False,
-    lake=False,
-    v_lid=False,
-    lid=False,
-    water_level=0,
-    water=np.array([np.nan]),
-    ice_lens=False,
-    has_had_lid=False,
-    lid_sfc_melt=0.0,
-    lid_melt_count=0,
-    melt_hours=0,
-    exposed_water_refreeze_counter=0,
-    virtual_lid_temperature=273.15,
-    total_melt=0.0,
-    valid_cells=np.array([np.nan]),
-    lats=np.array([np.nan]),
-    lons=np.array([np.nan]),
-    size_dx=1000.0,
-    size_dy=1000.0,
-):
+def create_model_grid(model_setup, firn_depth, rho, firn_temperature, **overrides):
     """
-    Creates the model grid by initializing the ice shelf with the provided
-    parameters.
+    Build the initial model grid.
+
+    ``firn_depth``, ``rho`` and ``firn_temperature`` are the required physics
+    inputs. Any other grid field may be set by keyword using its catalogue name
+    (e.g. ``lake_depth=0.5``, ``valid_cell=mask``, ``lat=lats``) when invoking
+    this function. See ``monarchs.variables`` for the full list.
+
+    If a field is unset (or np.nan everywhere), then use the catalogue default.
     """
+
+    def _is_set(value):
+        """False if ``value`` is an all-NaN float array (i.e. not specified);
+        True otherwise."""
+        return not (
+            isinstance(value, np.ndarray)
+            and value.dtype.kind == "f"
+            and np.isnan(value).any()
+        )
+
+    # setup the actual grid points
     y, x = np.meshgrid(
         np.arange(0, model_setup.row_amount, 1),
         np.arange(0, model_setup.col_amount, 1),
         indexing="ij",
     )
-    dtype = get_spec(
-        model_setup.vertical_points_firn,
-        model_setup.vertical_points_lake,
-        model_setup.vertical_points_lid,
-    )
-    grid = initialise_iceshelf(
-        model_setup,
+    # core inputs
+    inputs = {
+        "column": x,
+        "row": y,
+        "firn_depth": firn_depth,
+        "rho": rho,
+        "firn_temperature": firn_temperature,
+        "numba": model_setup.use_numba,
+    }
+    # update with any override values specified by the user
+    # TODO - ideally we'd like to make some of these definable in a
+    # model setup script! e.g. if we just say lake_depth = 0.5, it'd be
+    # cool if the model actually sees that and passes it into here
+    inputs.update({k: v for k, v in overrides.items() if _is_set(v)})
+    # invoke make_grid from the variables subpackage - this is what actually
+    # reads the schema and populates the model grid
+    return make_grid(
         model_setup.row_amount,
         model_setup.col_amount,
         model_setup.vertical_points_firn,
         model_setup.vertical_points_lake,
         model_setup.vertical_points_lid,
-        dtype,
-        x,
-        y,
-        firn_depth,
-        rho,
-        firn_temperature,
-        sfrac=sfrac,
-        lfrac=lfrac,
-        meltflag=meltflag,
-        saturation=saturation,
-        lake_depth=lake_depth,
-        lake_temperature=lake_temperature,
-        lid_depth=lid_depth,
-        lid_temperature=lid_temperature,
-        melt=melt,
-        exposed_water=exposed_water,
-        lake=lake,
-        v_lid=v_lid,
-        lid=lid,
-        water_level=water_level,
-        water=water,
-        ice_lens=ice_lens,
-        ice_lens_depth=model_setup.vertical_points_firn + 1,
-        has_had_lid=has_had_lid,
-        lid_sfc_melt=lid_sfc_melt,
-        lid_melt_count=lid_melt_count,
-        melt_hours=melt_hours,
-        exposed_water_refreeze_counter=exposed_water_refreeze_counter,
-        virtual_lid_temperature=virtual_lid_temperature,
-        total_melt=total_melt,
-        valid_cells=valid_cells,
-        numba=model_setup.use_numba,
-        lat=lats,
-        lon=lons,
-        size_dx=size_dx,
-        size_dy=size_dy,
+        inputs=inputs,
     )
-    return grid

@@ -269,7 +269,7 @@ every ``output_timestep`` days.
 
         Tuple containing the names of the variables that we wish to save during the evolution of MONARCHS over time.
         If you want to save a particular diagnostic, then you should add it here.
-        See ``monarchs.core.model_grid`` for details on the full list of variables that ``vars_to_save`` accepts.
+        See the variable catalogue in ``monarchs.variables`` for the full list of variables that ``vars_to_save`` accepts.
 
     output_filepath : str, optional (required if ``save_output`` is ``True``)
         Path to the file that you want to save output into, including file extension.

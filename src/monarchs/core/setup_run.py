@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 from monarchs.core import initial_conditions
 from monarchs.io import read_checkpoint
-from monarchs.core.model_grid import get_spec as get_iceshelf_spec
+from monarchs.variables import build_dtype
 from monarchs.met_data import setup_met_data
 
 
@@ -57,7 +57,7 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
                 first_iteration,
             ) = read_checkpoint(
                 reload_name,
-                get_iceshelf_spec(
+                build_dtype(
                     model_setup.vertical_points_firn,
                     model_setup.vertical_points_lake,
                     model_setup.vertical_points_lid,
@@ -146,9 +146,9 @@ def initialise_model_data(model_setup):
         firn_depth,
         rho,
         firn_temperature,
-        valid_cells=valid_cells,
-        lats=lat_array,
-        lons=lon_array,
+        valid_cell=valid_cells,
+        lat=lat_array,
+        lon=lon_array,
         size_dx=dx,
         size_dy=dy,
     )

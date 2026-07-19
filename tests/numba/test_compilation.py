@@ -29,9 +29,9 @@ def run(model_setup):
         firn_depth,
         rho,
         T_firn,
-        valid_cells=valid_cells,
-        lats=lat_array,
-        lons=lon_array,
+        valid_cell=valid_cells,
+        lat=lat_array,
+        lon=lon_array,
     )
 
     grid = driver.run_model(model_setup, grid)

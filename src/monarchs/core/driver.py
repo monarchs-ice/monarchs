@@ -8,8 +8,8 @@ initial data, then calls run_model(), the model time loop. Each model day
 ("iteration"), run_model calls core.loop_over_grid for the single-column
 physics (which loops over each timestep, by default 1 hour), then the
 lateral movement functions, and handles saving the data - both the model
-state (also known as a "dump"), and the variables that the user wants to
-track over time.
+state (also known as a "dump" or checkpoint), and the variables that the
+user wants to track over time.
 """
 
 import time
@@ -19,9 +19,7 @@ import pathos
 from monarchs.core import configuration, kernels
 from monarchs.core.load_model_setup import get_model_setup
 from monarchs.io import write_checkpoint, initialise_output, append_output
-from monarchs.core.utils import (
-    get_num_cores,
-)
+from monarchs.core.utils import get_num_cores, Timer
 from monarchs.core.error_handling import (
     calc_grid_mass,
     check_grid_correctness,
@@ -30,7 +28,7 @@ from monarchs.core.error_handling import (
 
 from monarchs.physics import lateral
 from monarchs.met_data.load import update_met_conditions, met_window
-from monarchs.core.initialise import check_for_reload_from_dump, initialise_model_data
+from monarchs.core.setup_run import check_for_reload_from_dump, initialise_model_data
 from monarchs.core.diagnostics import (
     print_model_end_of_timestep_messages,
 )
@@ -40,21 +38,6 @@ logger = logging.getLogger(__name__)
 # dummy init value for Dask client which may be used later - this needs to be
 # global
 CLIENT = None
-
-
-class Timer:
-    """Context manager that prints '<label> time: X.XXs' on exit."""
-
-    def __init__(self, label):
-        self.label = label
-
-    def __enter__(self):
-        self.start = time.perf_counter()
-        return self
-
-    def __exit__(self, *exc):
-        print(f"{self.label} time: {time.perf_counter() - self.start:.2f}s")
-        return False
 
 
 def setup_toggle_dict(model_setup):
@@ -287,8 +270,8 @@ def run_model(model_setup, grid):
     model_setup : ModelSetup
         The loaded model configuration (see monarchs.core.load_model_setup).
     grid : numpy structured array
-        Model grid, containing the data specified in get_spec() of
-        monarchs.core.model_grid.
+        Model grid, containing the data specified by the variable catalogue
+        in monarchs.variables (see build_dtype).
 
     Returns
     -------
