@@ -19,7 +19,10 @@ DEM/geotiff_test.py
 *.pkl
 create_flowchart.py
 scripts/netcdf_1d_to_csv.py
+scripts/gen_variable_docs.py
 docs/build
+# generated from the variable catalogue during the docs build (conf.py)
+docs/source/variables.md
 dist/
 validation/*.png
 validation/AntarcticLakes/

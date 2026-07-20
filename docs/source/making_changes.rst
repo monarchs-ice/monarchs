@@ -68,7 +68,7 @@ If adding new variables to the code, you will need to do the following:
         - Dimension (a scalar per cell, or a per-layer profile)
         - Initial/default value
         - Output metadata (units, long name)
-        - Optionally, a ``description`` (a full sentence, on its own continuation line) that feeds the generated variable reference (``python scripts/gen_variable_docs.py``)
+        - Optionally, a ``description`` (a full sentence, on its own continuation line) that feeds the variable reference page, which is regenerated from the catalogue whenever the docs are built
     - Add the variable into the model code itself. This likely involves making the relevant changes to the various files/functions in ``monarchs.physics``.
     - If your variable depends on other variables, you can define a function for this and put it in ``variables.initial_value_functions.py``. See the examples there for details.
     - If your new variable is a diagnostic, add the variable to ``vars_to_save`` in your runscript, so that the code knows to track it over time and save it to the output netCDF file.

@@ -1,10 +1,17 @@
 """
-The MONARCHS variable catalogue - the single place to add or edit model grid
-variables.
+The MONARCHS variable catalogue.
 
-Everything the model stores per grid cell is defined here as a
-``Variable`` row. To add a variable, add a row, to remove it just delete
-it from here (and wherever it is used in the code).
+This is where all MONARCHS model variables (i.e. everything that you can
+use as an argument to cell['<argument>']) are defined. So if you need
+to add any new model variables, just define them here, and then you can
+use it in the code freely.
+
+Everything is defined here as a ``Variable``, which is a class defined
+in ``definitions.py`` describing the main fields that a model variable needs
+or wants in order to both a) run the code and b) be useful as an output.
+
+To add a variable, add a row (see the other Variables for how to do this!)
+and to remove it just delete it from here (and wherever it is used in the code).
 
 i.e. use the Variable class and populate the fields below
     Variable(name, dtype, dim, default_value, units=..., long_name=..., group=..., output=...)
@@ -44,9 +51,13 @@ The fields are:
 
     description str    Detailed description of the variable - i.e. what you would
                        want to read if you were reading a manual describing what
-                       the thing does!
+                       the thing does! This should describe intent if it is not
+                       obvious why a variable is needed, and ideally where it is
+                       actually used.
 
-    Only ``name``, ``dtype`` and ``dim`` are required.
+    Only ``name``, ``dtype`` and ``dim`` are required as these are what is needed
+    by the actual code. The other variables are entirely for documentation and
+    provenance/metadata purposes.
 
 An example of this is:
 
@@ -77,6 +88,7 @@ from monarchs.variables.initial_value_functions import (
     vertical_profile,
 )
 
+# tell `ruff` to not autoformat this bit
 # fmt: off
 # catalogue is spaced by group
 CATALOGUE = [
@@ -101,7 +113,6 @@ CATALOGUE = [
     Variable("Lfrac", FLOAT, FIRN, 0.0, long_name="Liquid (water) volume fraction", group="firn"),
     Variable("meltflag", FLOAT, FIRN, 0.0, long_name="Meltwater present at layer (flag)", group="firn"),
     Variable("saturation", FLOAT, FIRN, 0.0, long_name="Layer saturated (flag)", group="firn"),
-    Variable("pore_closure", FLOAT, SCALAR, 0.0, units="kg m-3", long_name="Pore close-off density (unused; see constants)", group="firn"),
     Variable("ice_lens", BOOL, SCALAR, False, long_name="Ice lens present (flag)", group="firn"),
     Variable("ice_lens_depth", INT, SCALAR, ice_lens_below_column, long_name="Layer index of highest ice lens", group="firn"),
 
@@ -110,7 +121,6 @@ CATALOGUE = [
     Variable("melt", BOOL, SCALAR, False, long_name="Surface melt this step (flag)", group="surface"),
     Variable("exposed_water", BOOL, SCALAR, False, long_name="Exposed surface water (flag)", group="surface"),
     Variable("total_melt", FLOAT, SCALAR, 0.0, units="m", long_name="Cumulative melt depth", group="surface"),
-    Variable("snow_added", FLOAT, SCALAR, 0.0, units="m", long_name="Snow depth added", group="surface"),
 
     # Lake variables
     Variable("lake", BOOL, SCALAR, False, long_name="Lake present (flag)", group="lake"),
@@ -121,7 +131,6 @@ CATALOGUE = [
     Variable("lid", BOOL, SCALAR, False, long_name="Frozen lid present (flag)", group="lid"),
     Variable("lid_depth", FLOAT, SCALAR, 0.0, units="m", long_name="Frozen lid depth", group="lid"),
     Variable("lid_temperature", FLOAT, LID, 273.15, units="K", long_name="Frozen lid temperature profile", group="lid"),
-    Variable("rho_lid", FLOAT, LID, 0.0, units="kg m-3", long_name="Frozen lid density", group="lid"),
     Variable("v_lid", BOOL, SCALAR, False, long_name="Virtual lid present (flag)", group="lid"),
     Variable("v_lid_depth", FLOAT, SCALAR, 0.0, units="m", long_name="Virtual lid depth", group="lid"),
     Variable("virtual_lid_temperature", FLOAT, SCALAR, 273.15, units="K", long_name="Virtual lid temperature", group="lid"),
@@ -149,8 +158,9 @@ CATALOGUE = [
     Variable("t_step", INT, SCALAR, 0, long_name="Timestep within the current day", group="counter", output=False),
     Variable("day", INT, SCALAR, 0, long_name="Model day", group="counter", output=False),
     Variable("visit_count", INT, SCALAR, 0, long_name="Times this cell has been visited", group="counter", output=False),
-    Variable("reset_combine", BOOL, SCALAR, False, long_name="Lid/firn just combined (flag)", group="internal", output=False),
+    Variable("reset_combine", BOOL, SCALAR, False, long_name="Lid/firn just combined (flag)", group="internal", output=False,
+             description="Flag indicating whether a lid/lake/firn system has reached a trigger that combines everything "
+                         "back into a single firn column."),
     Variable("error_flag", BOOL, SCALAR, False, long_name="Cell hit an error state (flag)", group="internal", output=False),
-    Variable("numba", BOOL, SCALAR, False, long_name="Running under Numba (flag)", group="internal", output=False),
 ]
 # fmt: on

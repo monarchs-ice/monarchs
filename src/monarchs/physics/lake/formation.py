@@ -52,7 +52,6 @@ def lake_formation(cell, dt, met_data):
         print("Error (start of timestep) - lake depth is NaN")
         cell["error_flag"] = 1
     original_mass = utils.calc_mass_sum(cell)
-    dz = cell["firn_depth"] / cell["vert_grid"]
     # firn conductivity term
     k = material_properties.k_mixture(
         cell["firn_temperature"], cell["Sfrac"], cell["Lfrac"]
@@ -60,7 +59,7 @@ def lake_formation(cell, dt, met_data):
 
     # Update cell albedo
     cell["albedo"] = surface_fluxes.sfc_albedo(cell)
-    root, success, _ = firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=True)
+    root, success, _ = firn_heateqn_solver(cell, met_data, dt, fixed_sfc=True)
     if success:
         cell["firn_temperature"] = root
 

@@ -268,7 +268,6 @@ def create_model_grid(model_setup, firn_depth, rho, firn_temperature, **override
         "firn_depth": firn_depth,
         "rho": rho,
         "firn_temperature": firn_temperature,
-        "numba": model_setup.use_numba,
     }
     # update with any override values specified by the user
     # TODO - ideally we'd like to make some of these definable in a

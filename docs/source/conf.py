@@ -14,6 +14,14 @@ import sys
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath("../../src"))
 
+# Generate the variable reference (variables.md) from the catalogue on every
+# build, so the docs always match the code.
+from pathlib import Path
+
+from monarchs.variables import to_markdown
+
+Path(__file__).with_name("variables.md").write_text(to_markdown())
+
 project = "MONARCHS"
 copyright = "2024, Sammie Buzzard, Jon Elsey and Alex Robel"
 author = "Sammie Buzzard, Jon Elsey and Alex Robel"
@@ -30,6 +38,7 @@ extensions = [
 ]
 
 extensions.append("autoapi.extension")
+extensions.append("myst_parser")  # render Markdown sources (e.g. variables.md)
 
 autoapi_dirs = ["../../src/monarchs"]
 autoapi_ignore = ["*venv*", "*.run*", "*data*", "*conf.py*", "tests"]

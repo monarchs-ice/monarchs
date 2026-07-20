@@ -32,7 +32,6 @@ MODULE_NAME = "monarchs.physics.firn.firn_column"
 def firn_column(
     cell,
     dt,
-    dz,
     met_data,
     toggle_dict,
 ):
@@ -62,8 +61,6 @@ def firn_column(
         Element of the model grid we are operating on.
     dt : int
         Number of seconds in the current timestep [s]
-    dz : float
-        Height of each vertical point in the cell. [m]
     met_data : dict
         Dictionary containing the meteorological data for the current timestep.
         This contains the following keys:
@@ -101,17 +98,15 @@ def firn_column(
 
     # Update cell albedo
     cell["albedo"] = surface_fluxes.sfc_albedo(cell)
-    root, success, _ = firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=False)
+    root, success, _ = firn_heateqn_solver(cell, met_data, dt, fixed_sfc=False)
     # If the solver didn't fail (e.g. due to too many iterations), and we have
     # a surface temperature above the freezing point, then melt will occur.
     # Since the firn column has a fixed boundary condition (273.15 K),
     # recalculate the firn column temperature and regrid the column to account
     # for the height change that occurs due to melting.
     if (root[0] > 273.15) and success:
-        dz = cell["firn_depth"] / cell["vert_grid"]
-
         root_fs, success_fixedsfc, _ = firn_heateqn_solver(
-            cell, met_data, dt, dz, fixed_sfc=True
+            cell, met_data, dt, fixed_sfc=True
         )
         # if *this* solver works, then update the firn temperature and regrid
         # the firn column, accounting for the melt.

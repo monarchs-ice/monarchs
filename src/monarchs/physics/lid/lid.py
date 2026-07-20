@@ -74,7 +74,7 @@ def lid_development(cell, dt, met_data, Fu):
     # If this is the first time we have a lid for the current state,
     # then initialise its temperature profile
     if not cell["has_had_lid"]:
-        initialise_lid(cell, met_data, dt, 0, k_lid_seb)
+        initialise_lid(cell, met_data, k_lid_seb)
 
     # Assume no water present in lid or snow above it
     k_ice, _ = calc_k_and_cp(cell)
@@ -82,14 +82,13 @@ def lid_development(cell, dt, met_data, Fu):
     # cell["lid_melt_count"] accordingly. If this is above a certain threshold,
     # then we have too much melt at the surface, and the lid and firn are later
     # combined into one profile (see `combine_lid_firn` and `timestep.py`).
-    dz = cell["lid_depth"] / cell["vert_grid_lid"]
 
     # Update cell albedo
     cell["albedo"] = surface_fluxes.sfc_albedo(cell)
     # Solve the heat equation for the lid (including surface energy balance)
     # Force lake-lid boundary temperature to 273.15 before and after.
     cell["lid_temperature"][-1] = 273.15
-    cell["lid_temperature"], success, _ = lid_heateqn_solver(cell, met_data, dt, dz)
+    cell["lid_temperature"], success, _ = lid_heateqn_solver(cell, met_data, dt)
     cell["lid_temperature"] = np.clip(cell["lid_temperature"], 0, 273.15)
     cell["lid_temperature"][-1] = 273.15
 
@@ -305,7 +304,7 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
 
 
 @kernel()
-def initialise_lid(cell, met_data, dt, dz, k_lid):
+def initialise_lid(cell, met_data, k_lid):
     """
     Check to determine if a lid has been formed previously - if not, then
     initialise the lid by calculating its surface energy balance

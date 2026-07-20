@@ -104,6 +104,9 @@ def read_checkpoint(fname, dtype, keys="all"):
             desired_keys = [key for key in data.variables.keys() if key not in scalars]
         else:
             desired_keys = keys
+        # skip any file variables the current catalogue no longer defines, so a
+        # checkpoint written by a different catalogue version still restarts
+        desired_keys = [key for key in desired_keys if key in dtype.names]
 
         # Create the structured array
         grid_shape = (len(data.dimensions["x"]), len(data.dimensions["y"]))
