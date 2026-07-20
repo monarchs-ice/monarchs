@@ -85,6 +85,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
     lake_development_toggle = toggle_dict["lake_development_toggle"]
     lid_development_toggle = toggle_dict["lid_development_toggle"]
     ignore_errors = toggle_dict["ignore_errors"]
+    legacy_stefan_balance = toggle_dict["legacy_stefan_balance"]
 
     if not cell["valid_cell"]:
         return cell
@@ -179,7 +180,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
             elif cell["lake"] and not cell["lid"]:
                 if lake_development_toggle:
-                    Fu = lake.lake_development(cell, dt, met_data[t_step])
+                    Fu = lake.lake_development(
+                        cell, dt, met_data[t_step], legacy_stefan_balance
+                    )
                 # TODO - add refreezing calculation here - relevant if we have
                 # lakes underneath a frozen lid that gets combined
                 if firn_heat_toggle:
@@ -211,6 +214,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         cell,
                         dt,
                         met_data[t_step],
+                        legacy_stefan_balance,
                     )
                     for lev in range(cell["vert_grid"]):
                         # only layers holding liquid can refreeze
@@ -221,6 +225,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         dt,
                         met_data[t_step],
                         Fu,
+                        legacy_stefan_balance,
                     )
                 # Check for if we need to reset the column - two possible
                 # conditions - if lake depth v small,

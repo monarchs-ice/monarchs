@@ -135,7 +135,7 @@ def radiative_transfer(cell, sw_in):
 
 
 @kernel()
-def turbulent_mixing(cell, sw_in, dt, k):
+def turbulent_mixing(cell, sw_in, dt, k, legacy_stefan_balance=False):
     """
     The lake has a temperature profile governed by its boundary conditions
     - 0 degrees at the firn-lake boundary, and driven by the surface energy
@@ -205,7 +205,9 @@ def turbulent_mixing(cell, sw_in, dt, k):
         # apply mixed core temp to interior nodes
         indices = np.arange(1, cell["vert_grid_lake"] - 1)
         cell["lake_temperature"][indices] = lake_core_temp
-    dh_change, cap_reached = calc_height_adjustment(cell, k, net_lower_flux_for_dh)
+    dh_change, cap_reached = calc_height_adjustment(
+        cell, k, net_lower_flux_for_dh, legacy_stefan_balance
+    )
     # TODO - dh uses only the final substep's bottom flux - need to accumulate the
     # flux over substeps instead.
     dh += dh_change * dt
@@ -217,7 +219,7 @@ def turbulent_mixing(cell, sw_in, dt, k):
 
 
 @kernel()
-def lake_development(cell, dt, met_data):
+def lake_development(cell, dt, met_data, legacy_stefan_balance=False):
     """
     Once a lake of at least 10 cm deep is present this function calculates
     its evolution through a Stefan problem calculation of the lake-ice
@@ -232,6 +234,11 @@ def lake_development(cell, dt, met_data):
         Number of seconds in the timestep, most likely 3600 (i.e. 1 hour) [s]
     met_data : numpy structured array
         Structured array containing meteorological data used in the model.
+    legacy_stefan_balance : bool, optional
+        If True, use the legacy MATLAB lake-base treatment: basal melt is
+        driven only by conduction from the near-bottom lake water, discarding
+        the turbulent + transmitted-solar flux (see calc_height_adjustment).
+        Default False (energy-conserving Stefan boundary).
     Returns
     -------
 
@@ -271,7 +278,9 @@ def lake_development(cell, dt, met_data):
     # Compute dh using the actual fluxes over the timestep rather
     # than the instantaneous flux at the end of the timestep * dt
     """ Height change calculation is embedded in turbulent_mixing """
-    Fu, boundary_change = turbulent_mixing(cell, met_data["SW_down"], dt, k)
+    Fu, boundary_change = turbulent_mixing(
+        cell, met_data["SW_down"], dt, k, legacy_stefan_balance
+    )
 
     # Regrid the firn column to account for the change in boundary
     # (which is subtracted from the firn and added to the lake in
@@ -299,7 +308,60 @@ def lake_development(cell, dt, met_data):
 
 
 @kernel()
-def calc_height_adjustment(cell, k, Fl):
+def lake_boundary_flux_legacy(cell, k):
+    """
+    Legacy MATLAB lake-base flux into the interface [W m^-2].
+
+    This is *not* energy-conserving - the turbulent fluxes are discarded.
+
+    Parameters
+    ----------
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    k : array_like, float
+        Firn mixture thermal conductivity; only ``k[0]`` (the interface layer)
+        is used.
+
+    Returns
+    -------
+    float
+        Flux into the lake-firn interface [W m^-2].
+    """
+    dz = cell["firn_depth"] / cell["vert_grid"]
+    return (cell["lake_temperature"][-2] - 273.15) * abs(k[0]) / (2.0 * dz)
+
+
+@kernel()
+def lake_boundary_flux(cell, k, Fl):
+    """
+    Energy-conserving Stefan lake-base flux into the interface [W m^-2].
+
+    Parameters
+    ----------
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    k : array_like, float
+        Firn mixture thermal conductivity; only ``k[0]`` is used.
+    Fl : float
+        Delivered lake-base flux [W m^-2] (turbulent + transmitted solar).
+
+    Returns
+    -------
+    float
+        Net flux into the lake-firn interface [W m^-2].
+    """
+    routine_name = f"{MODULE_NAME}.lake_boundary_flux"
+    dz = cell["firn_depth"] / cell["vert_grid"]
+    kdTdz = (cell["firn_temperature"][0] - cell["firn_temperature"][1]) * abs(k[0]) / dz
+    if kdTdz < 0:
+        message = "Error in lake development kdTdz < 0\n"
+        message += f"kdTdz = {kdTdz}\n"
+        generic_error(cell, routine_name, message)
+    return Fl - kdTdz
+
+
+@kernel()
+def calc_height_adjustment(cell, k, Fl, legacy_stefan_balance=False):
     routine_name = f"{MODULE_NAME}.calc_height_adjustment"
     # If lake is above freezing it will begin to melt the firn below it
     boundary_change = 0
@@ -308,15 +370,7 @@ def calc_height_adjustment(cell, k, Fl):
     if cell["lake_temperature"][-2] > 273.15:
         # but only if the firn isn't completely melted.
         if cell["firn_depth"] > 0:
-            # coordinate system is defined in depth terms. Therefore, if the
-            # firn is colder than the lake, the gradient is positive, so heat
-            # flows in the positive direction (downwards).
-            # get avg_k from average of k from 0:2
-            kdTdz = (
-                (cell["firn_temperature"][0] - cell["firn_temperature"][1])
-                * abs(k[0])
-                / (cell["firn_depth"] / cell["vert_grid"])
-            )
+            dz = cell["firn_depth"] / cell["vert_grid"]
             # First work out the maximum available amount of melt based
             # on the solid fraction of the top cell
             # Limit sfrac_top to a minimum of 1e-2 to avoid zero division error
@@ -326,13 +380,16 @@ def calc_height_adjustment(cell, k, Fl):
                     "Warning - Sfrac at top of firn very low in calc_height_adjustment"
                 )
 
-            # Fl is positive going *into* interface, kdTdz is positive going
-            # *out of interface into the firn*, so to get the net flux we need to
-            # subtract them (e.g. if Fl is 10 W/m^2 into interface, and kdTdz is 5 W/m^2
-            # out of interface, net flux into interface is 5 W/m^2)
-            boundary_change_raw = (Fl - kdTdz) / (sfrac_top * L_ice * rho_ice)
+            # Use the energy-conserving Stefan boundary calculation,
+            # or the legacy conductive-only MATLAB form of the Stefan boundary
+            if legacy_stefan_balance:
+                flux_into_interface = lake_boundary_flux_legacy(cell, k)
+            else:
+                flux_into_interface = lake_boundary_flux(cell, k, Fl)
 
-            cap = cell["firn_depth"] / cell["vert_grid"]
+            boundary_change_raw = flux_into_interface / (sfrac_top * L_ice * rho_ice)
+
+            cap = dz
 
             # Take the minimum by absolute value, but keep the
             # sign of boundary_change_raw
@@ -342,13 +399,6 @@ def calc_height_adjustment(cell, k, Fl):
                 # print("Cap reached in calc_height_adjustment")
             else:
                 boundary_change = boundary_change_raw
-
-            # Raise an error if we have unphysical kdTdz (i.e. firn temperature
-            # below the boundary is warmer than at the boundary)
-            if kdTdz < 0:
-                message = "Error in lake development kdTdz < 0\n"
-                message += f"kdTdz = {kdTdz}\n"
-                generic_error(cell, routine_name, message)
 
             cell["lake_boundary_change"] += boundary_change
             cell["firn_boundary_change"] -= boundary_change

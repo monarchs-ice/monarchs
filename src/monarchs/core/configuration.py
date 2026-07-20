@@ -227,6 +227,7 @@ def create_defaults_for_missing_flags(model_setup):
     optional_args_to_false = [
         "densification_toggle",
         "ignore_errors",
+        "legacy_stefan_balance",
         "dump_data",
         "reload_from_dump",
         "met_dem_diagnostic_plots",

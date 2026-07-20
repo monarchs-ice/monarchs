@@ -287,6 +287,8 @@ firn_heat_toggle = (
 )
 lake_development_toggle = True  # also triggers lake formation
 lid_development_toggle = True  # also triggers lid formation
+legacy_stefan_balance = False  # if True, use the legacy MATLAB Stefan-boundary
+# fluxes at both the lake-firn and lake-lid interfaces
 lateral_movement_toggle = True
 lateral_movement_percolation_toggle = True
 densification_toggle = False

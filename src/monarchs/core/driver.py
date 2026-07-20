@@ -87,6 +87,7 @@ def setup_toggle_dict(model_setup):
         "perc_time_toggle": model_setup.perc_time_toggle,
         "densification_toggle": model_setup.densification_toggle,
         "ignore_errors": model_setup.ignore_errors,
+        "legacy_stefan_balance": model_setup.legacy_stefan_balance,
     }
 
     if model_setup.use_numba:

@@ -20,6 +20,7 @@ from monarchs.physics.constants import (
     L_ice,
     rho_ice,
     rho_water,
+    k_water,
     emissivity,
     stefan_boltzmann,
 )
@@ -28,7 +29,7 @@ MODULE_NAME = "monarchs.physics.lid.lid"
 
 
 @kernel()
-def lid_development(cell, dt, met_data, Fu):
+def lid_development(cell, dt, met_data, Fu, legacy_stefan_balance=False):
     """
     Once a permanent lid forms, it can refreeze the lake below. This function
     calculates this refreezing, as well as the surface energy balance and heat
@@ -58,6 +59,9 @@ def lid_development(cell, dt, met_data, Fu):
         Dew-point temperature at the surface. [K]
     wind : float
         Wind speed. [m s^-1].
+    legacy_stefan_balance : bool, optional
+        If True, use the legacy MATLAB lid-base flux for lid growth
+        (see adjust_lid_height). Default False (energy-conserving).
     Returns
     -------
     None (amends cell inplace)
@@ -114,7 +118,7 @@ def lid_development(cell, dt, met_data, Fu):
     # of lids on top of lakes. This is an area for future development.
     # As mentioned above, if we have too much surface melt, then we reset
     # the profile to a firn column only.
-    adjust_lid_height(cell, dt, Fu, k_ice)
+    adjust_lid_height(cell, dt, Fu, k_ice, legacy_stefan_balance)
     new_mass = utils.calc_mass_sum(cell)
     check_for_mass_conservation(cell, original_mass, new_mass, routine_name)
     if np.any(np.isnan(k_ice)):
@@ -252,7 +256,74 @@ def calc_k_and_cp(cell):
 
 
 @kernel()
-def adjust_lid_height(cell, dt, Fu, k_ice):
+def lid_boundary_flux_legacy(cell):
+    """
+    Legacy MATLAB flux at the lake-lid interface [W m^-2], positive downward.
+    This uses the conductive fluxes across the boundary only,
+    and is kept for comparison purposes.
+
+    Parameters
+    ----------
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+
+    Returns
+    -------
+    float
+        Flux at the lake-lid interface [W m^-2], positive downward
+        (negative = upward heat loss = lid growth).
+    """
+    z_water = cell["lake_depth"] / (cell["vert_grid_lake"] / 2)
+    return (
+        k_water
+        * (cell["lid_temperature"][0] - cell["lake_temperature"][1])
+        / (z_water + cell["lid_depth"])
+    )
+
+
+@kernel()
+def lid_boundary_flux(cell, k_ice, Fu):
+    """
+    Energy-conserving Stefan flux at the lake-lid interface [W m^-2],
+    positive downward.
+
+    Conduction across the bottom lid layer (ice conductivity, interface
+    pinned at 273.15 K), net of the turbulent flux ``Fu`` the lake delivers
+    to the lid underside.
+
+    Parameters
+    ----------
+    cell : numpy structured array
+        Element of the model grid we are operating on.
+    k_ice : array_like, float, dimension(cell.vert_grid_lid)
+        Thermal conductivity of the ice lid [W m^-1 K^-1]; only ``k_ice[-1]``
+        (the layer above the interface) is used.
+    Fu : float
+        Heat flux from the lake into the lid [W m^-2], positive downward.
+
+    Returns
+    -------
+    float
+        Net flux at the lake-lid interface [W m^-2], positive downward
+        (negative = upward heat loss = lid growth).
+    """
+    dz_i = cell["lid_depth"] / cell["vert_grid_lid"]
+    T_int = 273.15
+    T_above = cell["lid_temperature"][-2]
+    q_ice = k_ice[-1] * (T_above - T_int) / dz_i  # positive downwards
+    if np.isnan(q_ice):
+        print("ERROR: monarchs.physics.lid.lid_boundary_flux: Q ice = np.nan")
+        cell["error_flag"] = 1
+    if np.isnan(Fu):
+        Fu = 0.0
+    # net fluxes at interface. fluxes are positive downwards.
+    # which means we want flux down into interface (positive)
+    # minus (- Fu) as Fu is positive *downwards* also
+    return q_ice - Fu  # Fu positive downward by convention
+
+
+@kernel()
+def adjust_lid_height(cell, dt, Fu, k_ice, legacy_stefan_balance=False):
     """
     Adjust the lid and lake heights based on the temperature gradient at the
     lake-lid boundary. Called in lid_development.
@@ -267,6 +338,10 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
         Heat flux from the lake into the lid [W m^-2]
     k_ice: array_like, float, dimension(cell.vert_grid_lid)
         Thermal conductivity of the ice lid [W m^-1 K^-1]
+    legacy_stefan_balance : bool, optional
+        If True, use the legacy MATLAB lid-base flux (lid_boundary_flux_legacy):
+        whole-path water conduction with the lake turbulent flux discarded.
+        Default False (energy-conserving lid_boundary_flux).
 
     Returns
     -------
@@ -274,19 +349,13 @@ def adjust_lid_height(cell, dt, Fu, k_ice):
     """
     # Adjust lake and lid heights. We "measure" from the surface of the lid
     # down to the centre of the lake (fluxes +ve downwards)
-    dz_i = cell["lid_depth"] / cell["vert_grid_lid"]
-    T_int = 273.15
-    T_above = cell["lid_temperature"][-2]
-    q_ice = k_ice[-1] * (T_above - T_int) / dz_i  # positive downwards
-    if np.isnan(Fu):
-        Fu = 0.0
-    # net fluxes at interface. fluxes are positive downwards.
-    # which means we want flux down into interface (positive)
-    # minus (- Fu) as Fu is positive *downwards* also
-    q_net = q_ice - Fu  # Fu positive downward by convention
-    if np.isnan(q_ice):
-        print("ERROR: monarchs.physics.lid.adjust_lid_height: Q ice = np.nan")
-        cell["error_flag"] = 1
+    # Use either the old MATLAB energy balance, or the new, energy-conserving
+    # form of the energy balance. The old one is kept for 1D runs only, where
+    # the reduced melt may offset missing processes in 1D such as drainage.
+    if legacy_stefan_balance:
+        q_net = lid_boundary_flux_legacy(cell)
+    else:
+        q_net = lid_boundary_flux(cell, k_ice, Fu)
     # - sign as freezing - flux is upwards (negative) when freezing,
     # but want dh to be positive when lid grows
     dh = -(q_net / (rho_ice * L_ice)) * dt
