@@ -47,7 +47,7 @@ SCALAR, FIRN, LAKE, LID, DIRECTIONS = (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Variable:
     """
     Defines a MONARCHS model variable.
@@ -57,14 +57,14 @@ class Variable:
     """
 
     name: str
-    dtype: type  # FLOAT, INT or BOOL
+    dtype: type
     dim: Dim = SCALAR
     #: a constant, the INPUT sentinel, or a callable ``f(ctx) -> value``
     default_value: Any = 0
     # CF-style units string ("m", "K", "1", ...)
     # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/ch03.html
-    # human-readable name for output/plots
     units: str = "1"
+    # human-readable name for output/plots
     long_name: str = ""  # long name (as in CF)
     description: str = ""  # detailed description of the variable
     group: str = "state"  # grouping, for organisation/readability

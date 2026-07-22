@@ -14,13 +14,18 @@ import sys
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath("../../src"))
 
-# Generate the variable reference (variables.md) from the catalogue on every
-# build, so the docs always match the code.
+# Generate the catalogue-derived references (variables.md, settings.md) from
+# their catalogues on every build, so the docs always match the code.
 from pathlib import Path
 
-from monarchs.variables import to_markdown
+from monarchs.config import to_markdown as _settings_markdown
+from monarchs.variables import to_markdown as _variables_markdown
+from monarchs.met_data import to_markdown as _met_markdown
 
-Path(__file__).with_name("variables.md").write_text(to_markdown())
+_HERE = Path(__file__).parent
+(_HERE / "variables.md").write_text(_variables_markdown())
+(_HERE / "settings.md").write_text(_settings_markdown())
+(_HERE / "met.md").write_text(_met_markdown())
 
 project = "MONARCHS"
 copyright = "2024, Sammie Buzzard, Jon Elsey and Alex Robel"

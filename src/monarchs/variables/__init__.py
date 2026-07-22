@@ -28,7 +28,7 @@ __all__ = [
 
 
 def build_dtype(vert_grid, vert_grid_lake, vert_grid_lid, n_directions=8):
-    """Structured-array dtype for the model grid (drop-in for get_spec)."""
+    """Structured-array dtype for the model grid."""
     return build.build_dtype(
         CATALOGUE, vert_grid, vert_grid_lake, vert_grid_lid, n_directions
     )

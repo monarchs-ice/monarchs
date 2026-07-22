@@ -17,7 +17,7 @@ def write_checkpoint(fname, grid, met_start_idx, met_end_idx, model_setup=None):
     """
     MONARCHS can sometimes crash, or throw an error. This function allows for
     the model state to be saved into a file (name determined by
-    <model_setup.reload_file>).
+    <model_setup.dump_filepath>).
     This allows for restarting of the code from this saved state, which can be
     useful either to keep progress in the event of an error outside of
     MONARCHS' control, or to debug the cause of an error

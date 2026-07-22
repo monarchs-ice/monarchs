@@ -72,7 +72,7 @@ If adding new variables to the code, you will need to do the following:
     - Add the variable into the model code itself. This likely involves making the relevant changes to the various files/functions in ``monarchs.physics``.
     - If your variable depends on other variables, you can define a function for this and put it in ``variables.initial_value_functions.py``. See the examples there for details.
     - If your new variable is a diagnostic, add the variable to ``vars_to_save`` in your runscript, so that the code knows to track it over time and save it to the output netCDF file.
-    - If your new variable relies on a toggle or other ``model_setup`` variable, set a default value for this in ``monarchs.core.configuration.create_defaults_for_missing_flags``.
+    - If your new variable relies on a toggle or other ``model_setup`` variable, add a ``Setting`` row for it to the settings catalogue in ``monarchs.config.catalogue``.
 
 
 Merging your changes into the MONARCHS source

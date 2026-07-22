@@ -1,14 +1,28 @@
 """
 Render the variable catalogue as a Markdown reference.
 
-Reads the columns (name, dimension, units, default, description) from
-the ``Variable`` rows in ``catalogue.py``, and organise them by ``group``.
+Reads the columns (name, dimension, units, default, description) from the
+``Variable`` rows in ``catalogue.py``, organised by ``group``, using the shared
+`monarchs.docs_tables` helpers. The met-forcing catalogue has its own reference
+(`monarchs.met_data.docs`).
 
-Run ``scripts/gen_variable_docs.py`` to write the reference out.
+Run ``scripts/gen_docs.py`` to write the reference out.
 """
 
+from monarchs.docs_tables import group_order, render_reference
 from monarchs.variables.catalogue import CATALOGUE
 from monarchs.variables.definitions import INPUT
+
+_COLUMNS = ["Variable", "Long name", "Dim", "Units", "Default", "Description"]
+
+_INTRO = [
+    "List of MONARCHS model grid variables. Generated automatically from the "
+    "variable catalogue (`monarchs.variables`).  "
+    "run `python scripts/gen_docs.py` to regenerate!",
+    "",
+    "Units broadly follow the CF conventions - see "
+    "https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/ch03.html for details.",
+]
 
 
 def _default_cell(value):
@@ -20,46 +34,21 @@ def _default_cell(value):
     return f"`{value!r}`"
 
 
-def _groups_in_order(catalogue):
-    """Group names in order as determined by the catalogue."""
-    order = []
-    for var in catalogue:
-        if var.group not in order:
-            order.append(var.group)
-    return order
+def _row(var):
+    return [
+        f"`{var.name}`",
+        var.long_name,
+        var.dim.value,
+        var.units,
+        _default_cell(var.default_value),
+        var.description,
+    ]
 
 
 def to_markdown(catalogue=CATALOGUE):
-    """Return the whole catalogue as a Markdown reference."""
-    out = [
-        "# MONARCHS grid variables",
-        "",
-        "List of MONARCHS model grid variables. Generated from the "
-        "variable catalogue (`monarchs.variables`). Don't edit this manually, "
-        "run `python scripts/gen_variable_docs.py` to regenerate!"
-        "",
-        "Units broadly follow the CF conventions - see "
-        "https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/ch03.html for details.",
-        "",
+    """Return the variable catalogue as a Markdown reference."""
+    sections = [
+        (group.capitalize(), [_row(v) for v in catalogue if v.group == group])
+        for group in group_order(catalogue, lambda v: v.group)
     ]
-    header = "| Variable | Long name | Dim | Units | Default | Description |"
-    rule = "| --- | --- | --- | --- | --- | --- |"
-    # iterate over all the groups we can find in the catalogue
-    for group in _groups_in_order(catalogue):
-        # make a header for that group
-        out += [f"## {group.capitalize()}", "", header, rule]
-        for var in catalogue:
-            # ignore if not in the current group
-            if var.group != group:
-                continue
-            out.append(
-                f"| `{var.name}` | {var.long_name} | {var.dim.value} "
-                f"| {var.units} | {_default_cell(var.default_value)} "
-                f"| {var.description} |"
-            )
-        out.append("")
-    return "\n".join(out).rstrip() + "\n"
-
-
-if __name__ == "__main__":
-    print(to_markdown(), end="")
+    return render_reference("MONARCHS grid variables", _INTRO, _COLUMNS, sections)

@@ -1,13 +1,12 @@
 """
 Module containing the ModelSetup class, used to load in and hold the
 configuration used by MONARCHS.
-
-Note that runscripts are ordinary Python and execute with the user's
-privileges - treat them like code, not data.
 """
 
 import importlib.util
 import ast
+
+from monarchs.config import REQUIRED, SETTINGS
 
 
 MODULE_NAME = "monarchs.core.load_model_setup"
@@ -15,7 +14,14 @@ MODULE_NAME = "monarchs.core.load_model_setup"
 
 class ModelSetup:
     """
-    Class to load in the model setup from a user-specified Python script.
+    MONARCHS configuration class.
+    This handles the input of the configuration from the input Python file,
+    and validates some of the inputs. This is mutable by design, so we can
+    assign some default values for missing flags, etc.
+
+    This is then fed into `monarchs.config` - which runs some validation on the
+    config to make sure that it is valid, and turns it into an immutable
+    dataclass so that it cannot change during runtime.
     """
 
     def __init__(self, script_path):
@@ -81,16 +87,10 @@ class ModelSetup:
         method_name = (
             "monarchs.core.load_model_setup.ModelSetup.check_for_key_variables"
         )
-        # List of variables that are required to be present in order for
-        # MONARCHS to accept the model setup script
-        required_vars = [
-            "row_amount",
-            "col_amount",
-            "vertical_points_firn",
-            "vertical_points_lake",
-            "vertical_points_lid",
-            "num_days",
-        ]
+        # Variables that must be present for MONARCHS to accept the model setup
+        # script. Taken straight from the settings catalogue (the REQUIRED rows)
+        # so this list never drifts from the schema.
+        required_vars = [s.name for s in SETTINGS if s.default is REQUIRED]
 
         with open(self.script_path, "r", encoding="utf-8") as f:
             tree = ast.parse(f.read(), filename=self.script_path)

@@ -18,6 +18,7 @@ import numpy as np
 import pathos
 from monarchs.core import configuration, kernels
 from monarchs.core.load_model_setup import get_model_setup
+from monarchs.config import SETTINGS, configure
 from monarchs.io import write_checkpoint, initialise_output, append_output
 from monarchs.core.utils import get_num_cores, Timer
 from monarchs.core.error_handling import (
@@ -39,6 +40,11 @@ logger = logging.getLogger(__name__)
 # global
 CLIENT = None
 
+# switches the single-column timestepping kernel reads, gathered into the numba
+# toggle_dict. Declared in the settings catalogue (kernel_toggle=True), so this
+# stays in sync with what the kernel actually reads.
+_KERNEL_TOGGLES = [s.name for s in SETTINGS if s.kernel_toggle]
+
 
 def setup_toggle_dict(model_setup):
     """
@@ -49,6 +55,10 @@ def setup_toggle_dict(model_setup):
     (and cannot be dynamically set to be one), so will not work with Numba.
     We therefore need a numba.typed.Dict object in this instance.
 
+    The switches are those the kernel reads (``_KERNEL_TOGGLES``), declared in
+    the settings catalogue (kernel_toggle=True), so this dict stays in sync
+    with the kernel automatically.
+
     Parameters
     ----------
     model_setup
@@ -58,19 +68,7 @@ def setup_toggle_dict(model_setup):
 
     """
 
-    toggle_dict = {
-        "parallel": model_setup.parallel,
-        "use_numba": model_setup.use_numba,
-        "snowfall_toggle": model_setup.snowfall_toggle,
-        "firn_column_toggle": model_setup.firn_column_toggle,
-        "firn_heat_toggle": model_setup.firn_heat_toggle,
-        "lake_development_toggle": model_setup.lake_development_toggle,
-        "lid_development_toggle": model_setup.lid_development_toggle,
-        "percolation_toggle": model_setup.percolation_toggle,
-        "perc_time_toggle": model_setup.perc_time_toggle,
-        "densification_toggle": model_setup.densification_toggle,
-        "ignore_errors": model_setup.ignore_errors,
-    }
+    toggle_dict = {name: getattr(model_setup, name) for name in _KERNEL_TOGGLES}
 
     if model_setup.use_numba:
         # in this case we need to convert to a Numba typed dict
@@ -412,11 +410,10 @@ def monarchs():
     # so use_numba may or may not be a model_setup attribute at this point.
     kernels.compile_all(getattr(model_setup, "use_numba", False))
 
-    # Model configuration steps
+    # Validate the setup and freeze it into an immutable config for the run.
+    model_setup = configure(model_setup)
+    # Create output folders now that filepaths (and their defaults) are resolved.
     configuration.create_output_folders(model_setup)
-    configuration.handle_incompatible_flags(model_setup)
-    configuration.handle_invalid_values(model_setup)
-    configuration.create_defaults_for_missing_flags(model_setup)
 
     # Set up the data, then run the model physics.
     grid = initialise_model_data(model_setup)

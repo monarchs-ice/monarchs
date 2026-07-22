@@ -113,7 +113,7 @@ def process_year(model_setup, year, index, lat_array, lon_array):
     )
 
     use_user_bounds = has_user_defined_bounds(model_setup)
-    use_dem_bounds = getattr(model_setup, "lat_bounds", None) == "dem"
+    use_dem_bounds = model_setup.lat_bounds == "dem"
 
     if use_user_bounds and use_dem_bounds:
         raise ValueError(
@@ -193,6 +193,13 @@ def process_year(model_setup, year, index, lat_array, lon_array):
     return era5_vars
 
 
+def _write_var(f, name, dtype, dims, value, long_name):
+    """Create a netCDF variable, set its long_name, and write its value."""
+    var = f.createVariable(name, dtype, dims)
+    var.long_name = long_name
+    var[:] = value
+
+
 def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     """
     Write ERA5 data to the met netCDF. This data is either index-mapped or
@@ -209,7 +216,7 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     """
     routine_name = "write_to_netcdf"
     start_index = int(start_index)
-    end_index = int(start_index + len(era5_grid["SW_surf"]))
+    end_index = int(start_index + len(era5_grid["SW_down"]))
 
     mode = "w" if start_index == 0 else "a"
 
@@ -266,54 +273,63 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
             f.createDimension("fine_col", model_setup.col_amount)
 
             # coordinate variables
-            v = f.createVariable("coarse_lat", "f8", ("coarse_lat",))
-            v.long_name = "ERA5 coarse latitude"
-            v[:] = coarse_lat_1d
+            _write_var(
+                f,
+                "coarse_lat",
+                "f8",
+                ("coarse_lat",),
+                coarse_lat_1d,
+                "ERA5 coarse latitude",
+            )
+            _write_var(
+                f,
+                "coarse_lon",
+                "f8",
+                ("coarse_lon",),
+                coarse_lon_1d,
+                "ERA5 coarse longitude",
+            )
 
-            v = f.createVariable("coarse_lon", "f8", ("coarse_lon",))
-            v.long_name = "ERA5 coarse longitude"
-            v[:] = coarse_lon_1d
-
+            # fine-grid coords + index maps: 2-D (fine_row, fine_col) for DEM
+            # maps, else 1-D (fine_col for latitude, fine_row for longitude)
+            spatial = ("fine_row", "fine_col")
+            lat_dims = spatial if is_2d else ("fine_col",)
+            lon_dims = spatial if is_2d else ("fine_row",)
+            _write_var(
+                f, "fine_lat", "f8", lat_dims, fine_lat, "Model grid latitude (fine)"
+            )
+            _write_var(
+                f, "fine_lon", "f8", lon_dims, fine_lon, "Model grid longitude (fine)"
+            )
+            _write_var(
+                f,
+                "lat_idx",
+                "i4",
+                lat_dims,
+                lat_idx,
+                "Nearest coarse-lat index per fine column/cell",
+            )
+            _write_var(
+                f,
+                "lon_idx",
+                "i4",
+                lon_dims,
+                lon_idx,
+                "Nearest coarse-lon index per fine row/cell",
+            )
             if is_2d:
-                v = f.createVariable("fine_lat", "f8", ("fine_row", "fine_col"))
-                v.long_name = "Model grid latitude (fine)"
-                v[:] = fine_lat
-
-                v = f.createVariable("fine_lon", "f8", ("fine_row", "fine_col"))
-                v.long_name = "Model grid longitude (fine)"
-                v[:] = fine_lon
-
-                v = f.createVariable("lat_idx", "i4", ("fine_row", "fine_col"))
-                v.long_name = "Nearest coarse-lat index for each fine cell"
-                v[:] = lat_idx
-
-                v = f.createVariable("lon_idx", "i4", ("fine_row", "fine_col"))
-                v.long_name = "Nearest coarse-lon index for each fine cell"
-                v[:] = lon_idx
-
-                v = f.createVariable("cell_latitude", "f8", ("fine_row", "fine_col"))
-                v.long_name = "Latitude of grid cell"
-                v[:] = fine_lat
-
-                v = f.createVariable("cell_longitude", "f8", ("fine_row", "fine_col"))
-                v.long_name = "Longitude of grid cell"
-                v[:] = fine_lon
-            else:
-                v = f.createVariable("fine_lat", "f8", ("fine_col",))
-                v.long_name = "Model grid latitude (fine)"
-                v[:] = fine_lat
-
-                v = f.createVariable("fine_lon", "f8", ("fine_row",))
-                v.long_name = "Model grid longitude (fine)"
-                v[:] = fine_lon
-
-                v = f.createVariable("lat_idx", "i4", ("fine_col",))
-                v.long_name = "Nearest coarse-lat index for each fine-grid column"
-                v[:] = lat_idx
-
-                v = f.createVariable("lon_idx", "i4", ("fine_row",))
-                v.long_name = "Nearest coarse-lon index for each fine-grid row"
-                v[:] = lon_idx
+                # 2-D maps also store the full per-cell coordinates for the reader
+                _write_var(
+                    f, "cell_latitude", "f8", spatial, fine_lat, "Latitude of grid cell"
+                )
+                _write_var(
+                    f,
+                    "cell_longitude",
+                    "f8",
+                    spatial,
+                    fine_lon,
+                    "Longitude of grid cell",
+                )
 
         # Time-varying met variables at coarse resolution
         for key, value in era5_grid.items():
@@ -411,33 +427,26 @@ def scale_by_factor(model_setup, era5_grid):
     Scale the shortwave and longwave radiation by a factor for testing purposes.
     """
     func_name = "scale_by_factor"
-    if hasattr(model_setup, "radiation_forcing_factor"):
-        if model_setup.radiation_forcing_factor not in [False, 1]:
-            era5_grid["SW_surf"] *= model_setup.radiation_forcing_factor
-            era5_grid["LW_surf"] *= model_setup.radiation_forcing_factor
-            print(f"{MODULE_NAME}.{func_name}: ")
-            print(
-                "Scaling SW_surf and LW_surf by a factor of"
-                f" {model_setup.radiation_forcing_factor} for testing"
-            )
+    if model_setup.radiation_forcing_factor not in [False, 1]:
+        era5_grid["SW_down"] *= model_setup.radiation_forcing_factor
+        era5_grid["LW_down"] *= model_setup.radiation_forcing_factor
+        print(f"{MODULE_NAME}.{func_name}: ")
+        print(
+            "Scaling SW_down and LW_down by a factor of"
+            f" {model_setup.radiation_forcing_factor} for testing"
+        )
 
 
 def get_model_years(num_days, chunk_size=365):
-    """Helper function to determine how many years of data we need to process
-    based on the chunk size."""
-    # For a 365-day chunk size, it will return 1 always.
-    years = max(1, num_days // chunk_size + 1)
-    # if the number of days is less than the chunk size, then fill the chunk
-    return years - 1 if num_days % chunk_size == 0 else years
+    """Number of chunk-sized (default one-year) segments needed to cover
+    num_days, i.e. ceil(num_days / chunk_size)."""
+    return (num_days + chunk_size - 1) // chunk_size
 
 
 def has_user_defined_bounds(model_setup):
     """Returns True if the model_setup has valid lat/long bounds defined."""
     bounds = ["latmax", "latmin", "longmax", "longmin"]
-    return all(
-        hasattr(model_setup, attr) and not np.isnan(getattr(model_setup, attr))
-        for attr in bounds
-    )
+    return all(not np.isnan(getattr(model_setup, attr)) for attr in bounds)
 
 
 # state-like variables: repeated when refining, averaged when coarsening
@@ -445,9 +454,9 @@ STATE_KEYS = {
     "wind",
     "temperature",
     "dew_point_temperature",
-    "pressure",
-    "SW_surf",
-    "LW_surf",
+    "surf_pressure",
+    "SW_down",
+    "LW_down",
     "snow_albedo",
     "snow_dens",
 }

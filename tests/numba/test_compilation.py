@@ -1,7 +1,5 @@
 import os
 
-import numpy as np
-
 """
 Test to ensure that the model compiles and runs for a very simple
 test case. This also tests for whether we can import ERA5 data from netCDF.
@@ -12,43 +10,23 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 def run(model_setup):
     from monarchs.core import driver
-    from monarchs.core import initial_conditions
-    from monarchs.met_data import setup_met_data
+    from monarchs.core.setup_run import initialise_model_data
 
-    T_firn, rho, firn_depth, valid_cells, dx, dy, _, _ = (
-        initial_conditions.initialise_firn_profile(model_setup, diagnostic_plots=False)
-    )
-
-    lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
-    lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
-    # Set up meteorological data and return the path to the grid actually used by MONARCHS
-    setup_met_data.met_data_from_era5(model_setup, lat_array, lon_array)
-    # Initialise the model grid.
-    grid = initial_conditions.create_model_grid(
-        model_setup,
-        firn_depth,
-        rho,
-        T_firn,
-        valid_cell=valid_cells,
-        lat=lat_array,
-        lon=lon_array,
-    )
-
-    grid = driver.run_model(model_setup, grid)
-
-    return grid
+    # initialise_model_data runs the whole production setup path (firn profile,
+    # met data, model grid) from the frozen config.
+    grid = initialise_model_data(model_setup)
+    return driver.run_model(model_setup, grid)
 
 
 def test_numba_compilation():
     """Run a very simple case for 10 days. This mostly checks that the code
     compiles and runs without any Numba-specific errors."""
-    from monarchs.core import load_model_setup, configuration, kernels
+    from monarchs.core import load_model_setup, kernels
+    from monarchs.config import configure
 
     model_setup = load_model_setup.get_model_setup(
         os.path.join(HERE, "model_test_setup_numba.py")
     )
-    configuration.handle_incompatible_flags(model_setup)
-    configuration.handle_invalid_values(model_setup)
-    configuration.create_defaults_for_missing_flags(model_setup)
+    model_setup = configure(model_setup)
     kernels.compile_all(model_setup.use_numba)
     run(model_setup)

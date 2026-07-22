@@ -28,7 +28,9 @@ Contents
    dem
    met_data
    model_setup_reference
+   settings
    variables
+   met
    common_errors
    making_changes
    structure

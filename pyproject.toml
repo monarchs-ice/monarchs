@@ -77,9 +77,9 @@ packages = ["src/monarchs"]
 # ship the bundled datasets (ERA5 example + 1-D test checkpoints/met) even
 # though *.nc is git-ignored globally
 artifacts = [
-    "src/monarchs/data/met_data/*.nc",
-    "src/monarchs/data/checkpoints/*.nc",
-    "src/monarchs/data/met_data/*.npy",
+    "src/monarchs/example_data/met_data/*.nc",
+    "src/monarchs/example_data/checkpoints/*.nc",
+    "src/monarchs/example_data/met_data/*.npy",
 ]
 
 [tool.pytest.ini_options]

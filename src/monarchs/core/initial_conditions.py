@@ -26,7 +26,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     lon_array = 0
 
     print(f"{func_name}: Setting up firn profile")
-    if hasattr(model_setup, "DEM_path"):
+    if model_setup.DEM_path is not None:
         print(f"{func_name}: Reading in firn depth from DEM")
 
         firn_depth, lat_array, lon_array, dx, dy = export_DEM(
@@ -39,7 +39,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             bottom_left=model_setup.bbox_bottom_left,
             input_crs=model_setup.input_crs,
         )
-    elif hasattr(model_setup, "firn_depth"):
+    elif model_setup.firn_depth is not None:
         firn_depth = model_setup.firn_depth
         dx = model_setup.lat_grid_size
         dy = model_setup.lat_grid_size
@@ -50,33 +50,32 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             " specify this in your model configuration file."
         )
     valid_cells = np.ones((model_setup.row_amount, model_setup.col_amount), dtype=bool)
-    if hasattr(model_setup, "firn_max_height"):
-        if model_setup.max_height_handler == "clip":
-            firn_depth = np.clip(firn_depth, 0, model_setup.firn_max_height)
-        elif model_setup.max_height_handler == "filter":
-            valid_cells[np.where(firn_depth > model_setup.firn_max_height)] = False
+    # firn_max_height / firn_min_height always carry catalogue defaults, so the
+    # selected handler always runs (it is the handler that decides whether the
+    # firn depth or the valid-cell mask actually changes).
+    if model_setup.max_height_handler == "clip":
+        firn_depth = np.clip(firn_depth, 0, model_setup.firn_max_height)
+    elif model_setup.max_height_handler == "filter":
+        valid_cells[np.where(firn_depth > model_setup.firn_max_height)] = False
 
     firn_depth_under_35_flag = False
-    if hasattr(model_setup, "firn_min_height"):
-        if model_setup.min_height_handler == "clip":
-            firn_depth = np.clip(
-                firn_depth, a_min=model_setup.firn_min_height, a_max=None
+    if model_setup.min_height_handler == "clip":
+        firn_depth = np.clip(firn_depth, a_min=model_setup.firn_min_height, a_max=None)
+    elif model_setup.min_height_handler == "filter":
+        valid_cells[np.where(firn_depth < model_setup.firn_min_height)] = False
+        with np.printoptions(threshold=np.inf):
+            print(
+                f"{func_name}:"
+                " Filtering out cells according to the following mask"
+                " (False = filtered out), since they are below the firn"
+                " height threshold:"
             )
-        elif model_setup.min_height_handler == "filter":
-            valid_cells[np.where(firn_depth < model_setup.firn_min_height)] = False
-            with np.printoptions(threshold=np.inf):
-                print(
-                    f"{func_name}:"
-                    " Filtering out cells according to the following mask"
-                    " (False = filtered out), since they are below the firn"
-                    " height threshold:"
-                )
-                print("Valid cells = ", valid_cells)
-        elif model_setup.min_height_handler == "extend":
-            if firn_depth.min() < model_setup.firn_min_height:
-                firn_depth += model_setup.firn_min_height - firn_depth.min()
-        elif model_setup.min_height_handler == "normalise":
-            firn_depth_under_35_flag = True
+            print("Valid cells = ", valid_cells)
+    elif model_setup.min_height_handler == "extend":
+        if firn_depth.min() < model_setup.firn_min_height:
+            firn_depth += model_setup.firn_min_height - firn_depth.min()
+    elif model_setup.min_height_handler == "normalise":
+        firn_depth_under_35_flag = True
 
     valid_cells_old = valid_cells
     valid_cells = check_for_isolated_cells(valid_cells)
@@ -90,22 +89,13 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
         -1,
     )
 
-    # initialise density from model setup script or default values
-    rho_init = getattr(model_setup, "rho_init", "default")
+    # initialise density from the model setup script (an array), or from the
+    # empirical profile for the "default" keyword
+    rho_init = model_setup.rho_init
     if not isinstance(rho_init, str):
         rho = rho_init
     else:
-        if hasattr(model_setup, "rho_sfc"):
-            rho_sfc = model_setup.rho_sfc
-        else:
-            rho_sfc = 500
-        if not hasattr(model_setup, "rho_init"):
-            print(
-                f"{func_name}:"
-                " rho_init not specified in run configuration file - using"
-                " default profile (empirical formula with z_t = 37 and rho_sfc"
-                f" = {rho_sfc})"
-            )
+        rho_sfc = model_setup.rho_sfc
         rho = rho_init_emp(firn_columns, rho_sfc, 37)
         if firn_depth_under_35_flag:
             print("Correcting firn profile\n\n\n")
@@ -124,7 +114,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                             rho_temp,
                         )[::-1]
 
-    T_init = getattr(model_setup, "T_init", "default")
+    T_init = model_setup.T_init
     if not isinstance(T_init, str):
         temperature = T_init
     else:
@@ -137,13 +127,6 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             )
         )
         temperature[:][:] = t_init
-        if not hasattr(model_setup, "T_init"):
-            print(f"{func_name}: ")
-            print(
-                "T_init not specified in run configuration file - using"
-                " default profile (linear 263.15 K at surface -> 253.15 K"
-                " at bottom)"
-            )
 
     # else return null values for the lat/long arrays which aren't used
     # pylint: disable=duplicate-code
@@ -240,21 +223,10 @@ def create_model_grid(model_setup, firn_depth, rho, firn_temperature, **override
 
     ``firn_depth``, ``rho`` and ``firn_temperature`` are the required physics
     inputs. Any other grid field may be set by keyword using its catalogue name
-    (e.g. ``lake_depth=0.5``, ``valid_cell=mask``, ``lat=lats``) when invoking
-    this function. See ``monarchs.variables`` for the full list.
-
-    If a field is unset (or np.nan everywhere), then use the catalogue default.
+    (e.g. ``valid_cell=mask``, ``lat=lats``), or from a runscript via the
+    ``initial_conditions`` setting (e.g. ``initial_conditions={'lake_depth':
+    0.5}``). See ``monarchs.variables`` for the full list of grid fields.
     """
-
-    def _is_set(value):
-        """False if ``value`` is an all-NaN float array (i.e. not specified);
-        True otherwise."""
-        return not (
-            isinstance(value, np.ndarray)
-            and value.dtype.kind == "f"
-            and np.isnan(value).any()
-        )
-
     # setup the actual grid points
     y, x = np.meshgrid(
         np.arange(0, model_setup.row_amount, 1),
@@ -269,11 +241,23 @@ def create_model_grid(model_setup, firn_depth, rho, firn_temperature, **override
         "rho": rho,
         "firn_temperature": firn_temperature,
     }
-    # update with any override values specified by the user
-    # TODO - ideally we'd like to make some of these definable in a
-    # model setup script! e.g. if we just say lake_depth = 0.5, it'd be
-    # cool if the model actually sees that and passes it into here
-    inputs.update({k: v for k, v in overrides.items() if _is_set(v)})
+    # internal overrides passed by the caller (valid_cell, lat/lon, size_dx/dy)
+    inputs.update(overrides)
+    # user-specified initial-condition overrides from the runscript. make_grid
+    # validates the keys against the variable catalogue; guard the fields we have
+    # already populated from the firn profile / DEM so a stray key can't silently
+    # clobber them.
+    user_overrides = getattr(model_setup, "initial_conditions", None)
+    if user_overrides:
+        protected = set(inputs) & set(user_overrides)
+        if protected:
+            raise ValueError(
+                "monarchs.core.initial_conditions.create_model_grid:"
+                f" initial_conditions may not override {sorted(protected)} - these"
+                " are set from the firn profile / DEM (use firn_depth, rho_init,"
+                " T_init or a DEM instead)."
+            )
+        inputs.update(user_overrides)
     # invoke make_grid from the variables subpackage - this is what actually
     # reads the schema and populates the model grid
     return make_grid(

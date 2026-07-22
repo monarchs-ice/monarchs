@@ -32,7 +32,7 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
     """
     # TODO - add support for reloading from pickle
 
-    if hasattr(model_setup, "dump_filepath"):
+    if getattr(model_setup, "dump_filepath", None) is not None:
         reload_name = model_setup.dump_filepath
     else:
         reload_name = ""
@@ -87,36 +87,29 @@ def initialise_model_data(model_setup):
     MONARCHS.
     """
     func_name = "monarchs.core.driver.initialise_model_data"
-    # Load in the initial firn profile, either from a whole DEM, or a
-    # user-defined subset
-    if hasattr(model_setup, "lat_bounds") and model_setup.lat_bounds.lower() == "dem":
-        (
-            firn_temperature,
-            rho,
-            firn_depth,
-            valid_cells,
-            dx,
-            dy,
-            lat_array,
-            lon_array,
-        ) = initial_conditions.initialise_firn_profile(
-            model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
-        )
-    else:
-        (
-            firn_temperature,
-            rho,
-            firn_depth,
-            valid_cells,
-            dx,
-            dy,
-            _,
-            _,
-        ) = initial_conditions.initialise_firn_profile(
-            model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
-        )
-        lat_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
-        lon_array = np.zeros((model_setup.row_amount, model_setup.col_amount)) * np.nan
+    # Load in the initial firn profile (from a DEM or a user-defined firn depth).
+    (
+        firn_temperature,
+        rho,
+        firn_depth,
+        valid_cells,
+        dx,
+        dy,
+        lat_array,
+        lon_array,
+    ) = initial_conditions.initialise_firn_profile(
+        model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
+    )
+    # DEM-derived coordinates are only used when lat_bounds == "dem". Otherwise
+    # fall back to NaN for the met interpolation, and leave the grid lat/lon at
+    # their catalogue default (see create_model_grid below).
+    use_dem_coords = (
+        isinstance(model_setup.lat_bounds, str)
+        and model_setup.lat_bounds.lower() == "dem"
+    )
+    if not use_dem_coords:
+        lat_array = np.full((model_setup.row_amount, model_setup.col_amount), np.nan)
+        lon_array = np.full((model_setup.row_amount, model_setup.col_amount), np.nan)
 
     # Set up meteorological data, from either ERA5-format input ("ERA5") or
     # user-defined values from their model configuration ("user_defined")
@@ -140,16 +133,14 @@ def initialise_model_data(model_setup):
     elif model_setup.met_data_source == "user_defined":
         setup_met_data.prescribed_met_data(model_setup)
 
-    # Write all of the initial ice shelf values into the model grid
+    # Write all of the initial ice shelf values into the model grid. Only pass
+    # DEM-derived coordinates; without a DEM lat/lon fall back to the catalogue
+    # default.
+    grid_inputs = dict(valid_cell=valid_cells, size_dx=dx, size_dy=dy)
+    if use_dem_coords:
+        grid_inputs["lat"] = lat_array
+        grid_inputs["lon"] = lon_array
     grid = initial_conditions.create_model_grid(
-        model_setup,
-        firn_depth,
-        rho,
-        firn_temperature,
-        valid_cell=valid_cells,
-        lat=lat_array,
-        lon=lon_array,
-        size_dx=dx,
-        size_dy=dy,
+        model_setup, firn_depth, rho, firn_temperature, **grid_inputs
     )
     return grid

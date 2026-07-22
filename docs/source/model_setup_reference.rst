@@ -5,8 +5,8 @@ This document is effectively an API reference for the MONARCHS runscript (by def
 If adding new MONARCHS setup parameters, please document them here.
 
 Optional parameters may be optional either because they are not needed for the code to run, or because they have a default value.
-These default values are specified in ``monarchs.core.configuration.create_defaults_for_missing_flags``, in case you
-want to look these up or change them.
+These default values are specified in the settings catalogue in ``monarchs.config.catalogue``, in case you
+want to look these up or change them - see also the generated :doc:`settings` reference.
 
 Spatial resolution parameters
 ------------------------------------------------------
