@@ -1,0 +1,4 @@
+monarchs.physics.lake.combine_lid_firn
+======================================
+
+.. py:function:: monarchs.physics.lake.combine_lid_firn(cell, freeze_lake=False, surface_slush=False)

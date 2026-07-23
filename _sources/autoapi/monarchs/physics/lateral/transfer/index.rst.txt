@@ -1,0 +1,33 @@
+monarchs.physics.lateral.transfer
+=================================
+
+.. py:module:: monarchs.physics.lateral.transfer
+
+.. autoapi-nested-parse::
+
+   Functions for determining how water moves to and from different types
+   of gridcells.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lateral/transfer/handle_edge_cases
+   /autoapi/monarchs/physics/lateral/transfer/handle_invalid_neighbour_cell
+   /autoapi/monarchs/physics/lateral/transfer/move_from_ice_lens
+   /autoapi/monarchs/physics/lateral/transfer/move_from_lake
+   /autoapi/monarchs/physics/lateral/transfer/move_to_neighbours
+
+.. autoapisummary::
+
+   monarchs.physics.lateral.transfer.handle_edge_cases
+   monarchs.physics.lateral.transfer.handle_invalid_neighbour_cell
+   monarchs.physics.lateral.transfer.move_from_ice_lens
+   monarchs.physics.lateral.transfer.move_from_lake
+   monarchs.physics.lateral.transfer.move_to_neighbours
+
+

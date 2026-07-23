@@ -1,0 +1,12 @@
+monarchs.physics.material_properties.k_ice
+==========================================
+
+.. py:function:: monarchs.physics.material_properties.k_ice(T)
+
+   Thermal conductivity of solid ice [W m^-1 K^-1].
+
+   k = 2.24 + 5.975e-3 * (273.15 - T)^1.156 (Alexiades & Solomon, pg. 8),
+   clamped at the melting point (k = 2.24 for T >= 273.15 K).
+
+   Works elementwise on scalars or arrays.
+

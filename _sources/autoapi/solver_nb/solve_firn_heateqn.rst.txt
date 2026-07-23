@@ -1,0 +1,42 @@
+solver_nb.solve_firn_heateqn
+============================
+
+.. py:function:: solver_nb.solve_firn_heateqn(cell, met_data, dt, dz, fixed_sfc=False, solver_method='hybr')
+
+   Numba-compatible solver function to be used within the model.
+   Solves physics.Numba.heateqn.
+   This loads in the relevant arguments from the cell, packages them
+   into an array form via pack_args, and passes them into the hybrd solver.
+
+   Called in <firn_column>.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*dict*) -- Dictionary containing the meteorological data for the current timestep.
+                  See documentation in firn_column for details.
+                * **dt** (*int*) -- Number of seconds in the current timestep [s]
+                * **dz** (*float*) -- Size of each vertical point in the cell. [m]
+                * **fixed_sfc** (*bool, optional*) -- Boolean flag to determine whether to use the fixed surface form of the
+                  heat equation.
+
+   :returns: * **root** (*array_like, float, dimension(core.iceshelf_class.IceShelf.vert_grid)*) -- Vector containing the calculated firn column temperature, either after
+               successful completion or
+               at the end of the final iteration for an unsuccessful solution. [K]
+             * **fvec** (*array_like, float, dimension(core.iceshelf_class.IceShelf.vert_grid)*) -- Vector containing the function evaluated at root, i.e. the raw output.
+             * **success** (*bool*) -- Boolean flag determining whether the solution converged, or whether
+               there was an error.
+             * **info** (*int*) -- Integer flag containing information on the status of the solution.
+               From the Minpack hybrd documentation:
+               !!  * ***info = 0*** improper input parameters.
+               !!  * ***info = 1*** relative error between two consecutive iterates
+               !!    is at most `xtol`.
+               !!  * ***info = 2*** number of calls to `fcn` has reached or exceeded
+               !!    `maxfev`.
+               !!  * ***info = 3*** `xtol` is too small. no further improvement in
+               !!    the approximate solution `x` is possible.
+               !!  * ***info = 4*** iteration is not making good progress, as
+               !!    measured by the improvement from the last
+               !!    five jacobian evaluations.
+               !!  * ***info = 5*** iteration is not making good progress, as
+               !!    measured by the improvement from the last
+               !!    ten iterations.
+

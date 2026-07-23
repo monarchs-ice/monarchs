@@ -1,0 +1,40 @@
+monarchs.physics.lid.virtual_lid
+================================
+
+.. py:module:: monarchs.physics.lid.virtual_lid
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.lid.virtual_lid.MODULE_NAME
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lid/virtual_lid/freeze_virtual_lid
+   /autoapi/monarchs/physics/lid/virtual_lid/melt_virtual_lid
+   /autoapi/monarchs/physics/lid/virtual_lid/update_virtual_lid_temperature
+   /autoapi/monarchs/physics/lid/virtual_lid/virtual_lid_development
+
+.. autoapisummary::
+
+   monarchs.physics.lid.virtual_lid.freeze_virtual_lid
+   monarchs.physics.lid.virtual_lid.melt_virtual_lid
+   monarchs.physics.lid.virtual_lid.update_virtual_lid_temperature
+   monarchs.physics.lid.virtual_lid.virtual_lid_development
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.physics.lid.virtual_lid'
+
+

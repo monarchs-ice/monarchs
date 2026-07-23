@@ -1,0 +1,42 @@
+monarchs.io.netcdf_utils
+========================
+
+.. py:module:: monarchs.io.netcdf_utils
+
+.. autoapi-nested-parse::
+
+   Utilities for dealing with netCDF files.
+
+   Both the time-series model output (``monarchs.io.output``) and the full-state
+   checkpoint (``monarchs.io.checkpoint``) map the NumPy structured model grid to
+   and from a netCDF file. They differ in *what* they write (a user-defined subset
+   over an unlimited time dimension vs. the entire grid state as a single snapshot),
+   but they share the same underlying operations: creating the grid dimensions,
+   deciding which dimensions a given variable uses, converting dtypes for netCDF
+   compatibility, and extracting a field from the grid as a dense array.
+
+   This module uses ``netCDF4`` so cannot be JIT-compiled with Numba.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/io/netcdf_utils/create_grid_dimensions
+   /autoapi/monarchs/io/netcdf_utils/extract_field
+   /autoapi/monarchs/io/netcdf_utils/is_vector_field
+   /autoapi/monarchs/io/netcdf_utils/netcdf_dtype
+   /autoapi/monarchs/io/netcdf_utils/variable_dimensions
+
+.. autoapisummary::
+
+   monarchs.io.netcdf_utils.create_grid_dimensions
+   monarchs.io.netcdf_utils.extract_field
+   monarchs.io.netcdf_utils.is_vector_field
+   monarchs.io.netcdf_utils.netcdf_dtype
+   monarchs.io.netcdf_utils.variable_dimensions
+
+

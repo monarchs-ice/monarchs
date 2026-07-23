@@ -1,0 +1,29 @@
+monarchs.physics.surface_fluxes.sfc_albedo
+==========================================
+
+.. py:function:: monarchs.physics.surface_fluxes.sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_lid)
+
+   Determine the effective surface albedo depending on the situation at the
+   top of the ice shelf (i.e. is there exposed water, firn or snow etc.)
+
+   TODO - two-band albedo scheme. We split SW radiative transfer into
+   a "skin" absorption (SWIR/NIR) and that which penetrates (visible).
+   Currently though, we use a single-value reflectance, which is
+   somewhere between the SWIR and visible values. A better
+   approach would be to split this.
+
+   TODO - We also want to better consider how the albedo changes.
+   Right now, we have a bunch of switches. This is mostly fine, but
+   there is more likely to be a smooth transition between reflectances
+   over time than hard swaps like this.
+
+   :Parameters: * **melt** (*bool*) -- Flag which indicates whether melting has occurred.
+                * **exposed_water** (*bool*) -- Flag which describes whether there is exposed water at the surface.
+                * **lid** (*bool*) -- Flag which indicates whether there is a lid at the surface due to
+                  refreezing.
+                * **lake** (*bool*) -- Flag which indicates whether there is a lake present.
+                * **lake_depth** (*float*) -- Depth of the lake [m]
+
+   :returns: **alpha** -- Effective surface albedo for shortwave radiation.
+   :rtype: float
+

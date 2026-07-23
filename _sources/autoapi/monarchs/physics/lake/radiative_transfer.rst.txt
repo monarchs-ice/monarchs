@@ -1,0 +1,61 @@
+monarchs.physics.lake.radiative_transfer
+========================================
+
+.. py:function:: monarchs.physics.lake.radiative_transfer(cell, sw_in)
+
+   # JE - I'm thinking about the solar radiation in the lake.
+   # I'm a bit concerned about how it was handled before. The assumption is
+   # that we use surface_fluxes to calculate Q. But this assumes that all of
+   # the shortwave radiation is absorbed at the surface. This is *basically*
+   # true for firn. But for a lake, we have to consider the spectral absorption
+   # coefficient. For SWIR and NIR, most of the radiation will be absorbed near
+   # the surface (absorption coefficient ~1-10 m^-1).
+   # But for visible/UV, the absorption coefficient is much lower (~0.1 m^-1).
+   # I think this means that in order to budget energy correctly, we need
+   # data on the absorption spectrum of water. We know that heuristically the
+   # incoming radiation is ~50% in the UV/Vis, ~20% in the NIR and ~30% in the
+   # SWIR.
+   # The datasets I am using for this heuristic are:
+   # https://omlc.org/spectra/water/abs/buiteveld94.html
+   # L.Kou, D.Labrie, P.Chylek, "Refractive indices of water and ice in
+   # the 0.65-2.5 µm spectral range,"
+   # Appl.Opt., 32, 3531 - 3540(1993).  #
+   # https://omlc.org/spectra/water/data/kou93b.txt
+   # for the SWIR/NIR, and
+   # R. M. Pope, E. S. Fry, "Absorption spectrum (380-700 nm) of pure water. II.
+   # Integrating cavity measurements," Appl. Opt.,36, 8710-8723, (1997).
+   # https://omlc.org/spectra/water/data/pope97.txt
+   # for the vis.
+   # Looking at the datasets, some conservative suggested values are:
+   # UV/Vis (380-700 nm): k ~ 0.025 - 0.1 m^-1
+   # NIR (700-1000 nm): k ~ 5-10 m^-1
+   # SWIR (1000-2500 nm): k ~ 500 m^-1
+   # this accounts for the median values weighted by incoming radiation.
+   # - n.b. these values are for clear water. We probably have some level
+   # of turbidity? Which will increase the absorption coefficients a bit.
+   # Using these values, we can estimate the depth penetration of the
+   # different bands. Assuming a surface layer of a couple cm:
+   # SWIR - almost everything is absorbed extremely quickly
+   # NIR - Optical depth of 1 at ~10-20 cm^-1. So most absorbed in top few
+   # cm.
+   # Vis - Optical depth of 1 at ~10s of m. So basically all of it penetrates
+   # into the lake.
+   # So we need to:
+   # weight surface_fluxes by the amount we absorb specifically
+   # at the surface. We can heuristically use ~0.5 as a fractional
+   # absorption at the surface (i.e. 50% penetrates).
+   # Then, get an estimated combined NIR+Vis absorption coefficient to use
+   # to model the penetration of the rest of the radiation into the lake.
+   # The rest of the radiation will penetrate all the way to the
+   # firn-lake boundary. In this case, what happens?
+   # I think that the boundary will basically absorb everything, minus some
+   # fraction that will be reflected. I am assuming this will be based
+   # on the saturated firn albedo (0.6).
+   # We also need to consider that the lake water will be turbid, and
+   # not pure (it will be grainy meltwater). So we should use a higher
+   # absorption coefficient than pure water.
+
+   Section 4.1.2 of Leppäranta (2015): Freezing of Lakes and the Evolution of
+   their Ice Cover explicitly mentions a factor of ~0.45-0.5 for the
+   surface absorption fraction. This is defined in monarchs.physics.constants.
+

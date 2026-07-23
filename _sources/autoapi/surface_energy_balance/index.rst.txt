@@ -1,0 +1,31 @@
+surface_energy_balance
+======================
+
+.. py:module:: surface_energy_balance
+
+.. autoapi-nested-parse::
+
+   Numba-compatible surface energy balance equations for lake/lid formation and
+   development.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/surface_energy_balance/lake_development_eqn
+   /autoapi/surface_energy_balance/lake_formation_eqn
+   /autoapi/surface_energy_balance/sfc_energy_lid
+   /autoapi/surface_energy_balance/sfc_energy_virtual_lid
+
+.. autoapisummary::
+
+   surface_energy_balance.lake_development_eqn
+   surface_energy_balance.lake_formation_eqn
+   surface_energy_balance.sfc_energy_lid
+   surface_energy_balance.sfc_energy_virtual_lid
+
+

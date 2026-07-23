@@ -1,0 +1,51 @@
+monarchs.physics.lake
+=====================
+
+.. py:module:: monarchs.physics.lake
+
+.. autoapi-nested-parse::
+
+   Lake physics subpackage.
+
+   Public API
+   ----------
+   lake_formation           : Evolve shallow (<10 cm) exposed water toward a lake.
+   lake_development         : Evolve a deep (>=10 cm) open lake.
+   radiative_transfer       : Compute solar radiation penetration into the lake.
+   turbulent_mixing         : Compute turbulent heat exchange and boundary change.
+   combine_lid_firn         : Merge lid + lake + firn into a single firn column.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/monarchs/physics/lake/development/index
+   /autoapi/monarchs/physics/lake/formation/index
+   /autoapi/monarchs/physics/lake/reset_column/index
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lake/combine_lid_firn
+   /autoapi/monarchs/physics/lake/lake_development
+   /autoapi/monarchs/physics/lake/lake_formation
+   /autoapi/monarchs/physics/lake/radiative_transfer
+   /autoapi/monarchs/physics/lake/turbulent_mixing
+
+.. autoapisummary::
+
+   monarchs.physics.lake.combine_lid_firn
+   monarchs.physics.lake.lake_development
+   monarchs.physics.lake.lake_formation
+   monarchs.physics.lake.radiative_transfer
+   monarchs.physics.lake.turbulent_mixing
+
+

@@ -1,0 +1,8 @@
+monarchs.core.driver.write_outputs
+==================================
+
+.. py:function:: monarchs.core.driver.write_outputs(model_setup, grid, day, output_counter, output_grid_size, met_start_idx, met_end_idx)
+
+   End-of-day writes: restart checkpoint, time-series output, and any extra
+   numbered checkpoints. Returns the updated output counter.
+

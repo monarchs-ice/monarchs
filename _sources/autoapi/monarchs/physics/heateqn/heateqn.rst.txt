@@ -1,0 +1,4 @@
+monarchs.physics.heateqn.heateqn
+================================
+
+.. py:function:: monarchs.physics.heateqn.heateqn(x, cell, lw_in, sw_in, air_temp, p_air, dew_point_temperature, wind, dz, dt, epsilon=emissivity, sigma=stefan_boltzmann)

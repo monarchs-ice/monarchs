@@ -1,0 +1,12 @@
+monarchs.core.driver.setup_parallelism
+======================================
+
+.. py:function:: monarchs.core.driver.setup_parallelism(model_setup)
+
+   Select and prepare the grid-loop implementation for this run.
+
+   Numba mode compiles the prange-based loop with the user's parallel flag;
+   otherwise the Dask-based loop is used, with a distributed Client created
+   if requested (stored in the module-global CLIENT, which process_chunk
+   workers read).
+

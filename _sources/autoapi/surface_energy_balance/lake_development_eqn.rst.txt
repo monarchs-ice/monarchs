@@ -1,0 +1,15 @@
+surface_energy_balance.lake_development_eqn
+===========================================
+
+.. py:function:: surface_energy_balance.lake_development_eqn(x, output, args)
+
+   Numba-compatible form of the lake development version of the surface
+   temperature equation.
+
+   :Parameters: * **x** (*array_like, float, dimension(vert_grid_lake)*) -- Initial estimate of the lake temperature. [K]
+                * **args** (*array_like*) -- Array of input arguments to be extracted into the relevant variables
+                  (J, Q, vert_grid_lake and lake_temperature).
+
+   :returns: **output** -- Estimate of the surface lake temperature [K].
+   :rtype: float
+

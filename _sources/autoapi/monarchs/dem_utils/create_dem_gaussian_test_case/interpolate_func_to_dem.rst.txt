@@ -1,0 +1,8 @@
+monarchs.dem_utils.create_dem_gaussian_test_case.interpolate_func_to_dem
+========================================================================
+
+.. py:function:: monarchs.dem_utils.create_dem_gaussian_test_case.interpolate_func_to_dem(heights, scale)
+
+   Interpolate the DEM from the original Gaussian to the scale that we
+   want
+

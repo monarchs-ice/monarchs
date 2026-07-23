@@ -1,0 +1,79 @@
+monarchs.core.driver
+====================
+
+.. py:module:: monarchs.core.driver
+
+.. autoapi-nested-parse::
+
+   Core functions used in the running of MONARCHS.
+   This module contains the core functions that drive the code
+   when it is executed.
+
+   When the code is run, monarchs() loads and validates the configuration and
+   initial data, then calls run_model(), the model time loop. Each model day
+   ("iteration"), run_model calls core.loop_over_grid for the single-column
+   physics (which loops over each timestep, by default 1 hour), then the
+   lateral movement functions, and handles saving the data - both the model
+   state (also known as a "dump"), and the variables that the user wants to
+   track over time.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.core.driver.CLIENT
+   monarchs.core.driver.logger
+
+
+Classes
+-------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/driver/Timer
+
+.. autoapisummary::
+
+   monarchs.core.driver.Timer
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/driver/lateral_movement_step
+   /autoapi/monarchs/core/driver/monarchs
+   /autoapi/monarchs/core/driver/run_model
+   /autoapi/monarchs/core/driver/setup_parallelism
+   /autoapi/monarchs/core/driver/setup_toggle_dict
+   /autoapi/monarchs/core/driver/single_column_step
+   /autoapi/monarchs/core/driver/validate_visits
+   /autoapi/monarchs/core/driver/write_outputs
+
+.. autoapisummary::
+
+   monarchs.core.driver.lateral_movement_step
+   monarchs.core.driver.monarchs
+   monarchs.core.driver.run_model
+   monarchs.core.driver.setup_parallelism
+   monarchs.core.driver.setup_toggle_dict
+   monarchs.core.driver.single_column_step
+   monarchs.core.driver.validate_visits
+   monarchs.core.driver.write_outputs
+
+
+Module Contents
+---------------
+
+.. py:data:: CLIENT
+   :value: None
+
+
+.. py:data:: logger
+

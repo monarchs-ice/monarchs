@@ -1,0 +1,54 @@
+monarchs.io.output
+==================
+
+.. py:module:: monarchs.io.output
+
+.. autoapi-nested-parse::
+
+   Time-series model output. This handles a user-defined subset of the model
+   variables (i.e. ones that are useful scientifically, rather than everything
+   needed to restart the model), written per timestep into an unlimited ``time``
+   dimension so that the evolution of the model over time can be analysed as
+   results.
+
+   Separate from ``monarchs.io.checkpoint``, which captures the full model state
+   for e.g. restarting a run.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.io.output.DEFAULT_VARS
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/io/output/add_lat_long
+   /autoapi/monarchs/io/output/append_output
+   /autoapi/monarchs/io/output/create_variable
+   /autoapi/monarchs/io/output/initialise_output
+   /autoapi/monarchs/io/output/interpolate_model_output
+
+.. autoapisummary::
+
+   monarchs.io.output.add_lat_long
+   monarchs.io.output.append_output
+   monarchs.io.output.create_variable
+   monarchs.io.output.initialise_output
+   monarchs.io.output.interpolate_model_output
+
+
+Module Contents
+---------------
+
+.. py:data:: DEFAULT_VARS
+   :value: ('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth')
+
+

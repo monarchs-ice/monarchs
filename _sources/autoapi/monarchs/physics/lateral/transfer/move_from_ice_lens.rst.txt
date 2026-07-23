@@ -1,0 +1,10 @@
+monarchs.physics.lateral.transfer.move_from_ice_lens
+====================================================
+
+.. py:function:: monarchs.physics.lateral.transfer.move_from_ice_lens(cell, grid, temporary_cell, temporary_neighbour, row, col, n_s_index, w_e_index, water_frac, split)
+
+   Move water from an ice-lens source cell into the neighbour in direction
+   (n_s_index, w_e_index). The amount and the source layers are set by the
+   available ice-lens water. Returns the updated (temporary_cell,
+   temporary_neighbour).
+

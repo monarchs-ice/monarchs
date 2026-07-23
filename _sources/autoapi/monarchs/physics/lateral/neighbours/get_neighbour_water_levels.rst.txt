@@ -1,0 +1,12 @@
+monarchs.physics.lateral.neighbours.get_neighbour_water_levels
+==============================================================
+
+.. py:function:: monarchs.physics.lateral.neighbours.get_neighbour_water_levels(cell, grid, col, row, max_grid_col, max_grid_row)
+
+   Get an array of water level differences between the grid cell and its neighbours.
+   Previously this was a whole load of if/else logic based on the direction.
+   Now we just loop over the possible directions defined in ``lateral.directions``.
+
+   If a neighbour is beyond the edge, then it is given a value of -999 so that it can't be
+   flowed into or from.
+

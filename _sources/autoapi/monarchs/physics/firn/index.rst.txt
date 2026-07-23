@@ -1,0 +1,30 @@
+monarchs.physics.firn
+=====================
+
+.. py:module:: monarchs.physics.firn
+
+.. autoapi-nested-parse::
+
+   Firn column physics subpackage.
+
+   Public API
+   ----------
+   firn_column      : Single-timestep firn column evolution (heat equation + melt).
+   percolation      : Meltwater percolation and refreezing within the firn column.
+   regrid_column    : Conservative regridding after melt or freeze events.
+   snow_accumulation: Snowfall accumulation on the firn surface.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/monarchs/physics/firn/firn_column/index
+   /autoapi/monarchs/physics/firn/percolation/index
+   /autoapi/monarchs/physics/firn/regrid_column/index
+   /autoapi/monarchs/physics/firn/snow_accumulation/index
+
+

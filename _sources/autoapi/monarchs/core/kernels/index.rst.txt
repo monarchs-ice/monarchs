@@ -1,0 +1,58 @@
+monarchs.core.kernels
+=====================
+
+.. py:module:: monarchs.core.kernels
+
+.. autoapi-nested-parse::
+
+   This module defines the ``@kernel`` decorator. This should be applied to all
+   physics code - i.e. all code at the level of ``timestep_loop`` and below.
+
+   The decorator itself registers the function for compilation later, but
+   compilation is triggered later on,
+
+   This approach avoids the need for a manually-compiled list of functions to compile
+   - instead we just add ``@kernel`` to anything we want to do so,
+   and then the model infers via context (specifically the ``use_numba``
+   flag) whether or not to apply the compilation.
+
+   We also re-export ``prange`` and ``objmode`` here so that physics modules
+   do not import numba directly.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.core.kernels._KERNELS
+   monarchs.core.kernels._NUMBA_OVERRIDES
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/kernels/compile_all
+   /autoapi/monarchs/core/kernels/kernel
+
+.. autoapisummary::
+
+   monarchs.core.kernels.compile_all
+   monarchs.core.kernels.kernel
+
+
+Module Contents
+---------------
+
+.. py:data:: _KERNELS
+   :value: []
+
+
+.. py:data:: _NUMBA_OVERRIDES
+   :value: [('monarchs.physics.solver', 'monarchs.physics.Numba.solver_nb')]
+
+

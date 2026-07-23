@@ -1,0 +1,475 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>extract_args &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="extract_args.extract_firn_arrays" href="extract_firn_arrays.html" />
+    <link rel="prev" title="heateqn_nb.solve_tridiagonal" href="../heateqn_nb/solve_tridiagonal.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plots.html">Generating plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../model_setup_reference.html"><code class="docutils literal notranslate"><span class="pre">model_setup</span></code> variable reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../structure.html">Code structure</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../monarchs/index.html">monarchs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../solver_nb/index.html">solver_nb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../heateqn_nb/index.html">heateqn_nb</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">extract_args</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#attributes">Attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="extract_firn_arrays.html">extract_args.extract_firn_arrays</a></li>
+<li class="toctree-l4"><a class="reference internal" href="extract_lake_variables.html">extract_args.extract_lake_variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="extract_lid_variables.html">extract_args.extract_lid_variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="extract_met_data.html">extract_args.extract_met_data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="extract_scalars.html">extract_args.extract_scalars</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pack_args.html">extract_args.pack_args</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.HEADER_SIZE"><code class="docutils literal notranslate"><span class="pre">HEADER_SIZE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_AIR_TEMP"><code class="docutils literal notranslate"><span class="pre">IDX_AIR_TEMP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_ALBEDO"><code class="docutils literal notranslate"><span class="pre">IDX_ALBEDO</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_DP_TEMP"><code class="docutils literal notranslate"><span class="pre">IDX_DP_TEMP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_DT"><code class="docutils literal notranslate"><span class="pre">IDX_DT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_DZ"><code class="docutils literal notranslate"><span class="pre">IDX_DZ</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_EXPOSED_WATER"><code class="docutils literal notranslate"><span class="pre">IDX_EXPOSED_WATER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_FIRN_DEPTH"><code class="docutils literal notranslate"><span class="pre">IDX_FIRN_DEPTH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_K_LID_SCALAR"><code class="docutils literal notranslate"><span class="pre">IDX_K_LID_SCALAR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_LAKE"><code class="docutils literal notranslate"><span class="pre">IDX_LAKE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_LAKE_DEPTH"><code class="docutils literal notranslate"><span class="pre">IDX_LAKE_DEPTH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_LID"><code class="docutils literal notranslate"><span class="pre">IDX_LID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_LID_DEPTH"><code class="docutils literal notranslate"><span class="pre">IDX_LID_DEPTH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_LW_IN"><code class="docutils literal notranslate"><span class="pre">IDX_LW_IN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_MELT"><code class="docutils literal notranslate"><span class="pre">IDX_MELT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_N_GRID"><code class="docutils literal notranslate"><span class="pre">IDX_N_GRID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_P_AIR"><code class="docutils literal notranslate"><span class="pre">IDX_P_AIR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_SCALARS_END"><code class="docutils literal notranslate"><span class="pre">IDX_SCALARS_END</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_SFRAC_LID_SCALAR"><code class="docutils literal notranslate"><span class="pre">IDX_SFRAC_LID_SCALAR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_SNOW_LID"><code class="docutils literal notranslate"><span class="pre">IDX_SNOW_LID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_SW_IN"><code class="docutils literal notranslate"><span class="pre">IDX_SW_IN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_V_LID"><code class="docutils literal notranslate"><span class="pre">IDX_V_LID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_V_LID_DEPTH"><code class="docutils literal notranslate"><span class="pre">IDX_V_LID_DEPTH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_V_LID_TEMP"><code class="docutils literal notranslate"><span class="pre">IDX_V_LID_TEMP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.IDX_WIND"><code class="docutils literal notranslate"><span class="pre">IDX_WIND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.PTR_FIRN_T"><code class="docutils literal notranslate"><span class="pre">PTR_FIRN_T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.PTR_LAKE_T"><code class="docutils literal notranslate"><span class="pre">PTR_LAKE_T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.PTR_LFRAC"><code class="docutils literal notranslate"><span class="pre">PTR_LFRAC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.PTR_LID_T"><code class="docutils literal notranslate"><span class="pre">PTR_LID_T</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.PTR_SFRAC"><code class="docutils literal notranslate"><span class="pre">PTR_SFRAC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract_args.PTR_SIZE"><code class="docutils literal notranslate"><span class="pre">PTR_SIZE</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../loop_over_grid/index.html">loop_over_grid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surface_energy_balance/index.html">surface_energy_balance</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">API Reference</a></li>
+      <li class="breadcrumb-item active">extract_args</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/autoapi/extract_args/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-extract_args">
+<span id="extract-args"></span><h1>extract_args<a class="headerlink" href="#module-extract_args" title="Link to this heading"></a></h1>
+<p>NumbaMinpack requires all arguments to be passed as a single flat array.
+This module provides functions to pack and unpack model variables
+into/from such a flat array, supporting variable grid sizes and optional arrays.</p>
+<p>This is done using a mapping of indices for each scalar variable in the packed array,
+as well as pointers to the start of variable-length arrays (e.g. firn temperature, lid temperature).</p>
+<p>The intent here is to ensure that we just have one set of logic to move data from
+the Python structured array format into the flat array format required by NumbaMinpack,
+and one set of functions we can use and re-use to extract the relevant parameters from
+this packed array.</p>
+<p>The indices defined below is the “canonical” mapping of model variables to positions
+in the packed args array. If you want to use a new variable inside
+the heat equation solver (or equivalently surface fluxes, since this is called inside
+the heat equation solver), you need to add it here.</p>
+<p>We define functions to extract the specific parameters we need, which is determined by the needs
+of the specific physics functions.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.HEADER_SIZE" title="extract_args.HEADER_SIZE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HEADER_SIZE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_AIR_TEMP" title="extract_args.IDX_AIR_TEMP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_AIR_TEMP</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_ALBEDO" title="extract_args.IDX_ALBEDO"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_ALBEDO</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_DP_TEMP" title="extract_args.IDX_DP_TEMP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_DP_TEMP</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_DT" title="extract_args.IDX_DT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_DT</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_DZ" title="extract_args.IDX_DZ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_DZ</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_EXPOSED_WATER" title="extract_args.IDX_EXPOSED_WATER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_EXPOSED_WATER</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_FIRN_DEPTH" title="extract_args.IDX_FIRN_DEPTH"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_FIRN_DEPTH</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_K_LID_SCALAR" title="extract_args.IDX_K_LID_SCALAR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_K_LID_SCALAR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_LAKE" title="extract_args.IDX_LAKE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_LAKE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_LAKE_DEPTH" title="extract_args.IDX_LAKE_DEPTH"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_LAKE_DEPTH</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_LID" title="extract_args.IDX_LID"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_LID</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_LID_DEPTH" title="extract_args.IDX_LID_DEPTH"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_LID_DEPTH</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_LW_IN" title="extract_args.IDX_LW_IN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_LW_IN</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_MELT" title="extract_args.IDX_MELT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_MELT</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_N_GRID" title="extract_args.IDX_N_GRID"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_N_GRID</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_P_AIR" title="extract_args.IDX_P_AIR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_P_AIR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_SCALARS_END" title="extract_args.IDX_SCALARS_END"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_SCALARS_END</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_SFRAC_LID_SCALAR" title="extract_args.IDX_SFRAC_LID_SCALAR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_SFRAC_LID_SCALAR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_SNOW_LID" title="extract_args.IDX_SNOW_LID"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_SNOW_LID</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_SW_IN" title="extract_args.IDX_SW_IN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_SW_IN</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_V_LID" title="extract_args.IDX_V_LID"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_V_LID</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_V_LID_DEPTH" title="extract_args.IDX_V_LID_DEPTH"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_V_LID_DEPTH</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.IDX_V_LID_TEMP" title="extract_args.IDX_V_LID_TEMP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_V_LID_TEMP</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.IDX_WIND" title="extract_args.IDX_WIND"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IDX_WIND</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.PTR_FIRN_T" title="extract_args.PTR_FIRN_T"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PTR_FIRN_T</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.PTR_LAKE_T" title="extract_args.PTR_LAKE_T"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PTR_LAKE_T</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.PTR_LFRAC" title="extract_args.PTR_LFRAC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PTR_LFRAC</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.PTR_LID_T" title="extract_args.PTR_LID_T"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PTR_LID_T</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#extract_args.PTR_SFRAC" title="extract_args.PTR_SFRAC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PTR_SFRAC</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#extract_args.PTR_SIZE" title="extract_args.PTR_SIZE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PTR_SIZE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+</div>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="extract_firn_arrays.html#extract_args.extract_firn_arrays" title="extract_args.extract_firn_arrays"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_firn_arrays</span></code></a>(args)</p></td>
+<td><p>Extract only the variable-length firn arrays from the packed args array.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="extract_lake_variables.html#extract_args.extract_lake_variables" title="extract_args.extract_lake_variables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_lake_variables</span></code></a>(args)</p></td>
+<td><p>Extract only the variable-length lake arrays from the packed args array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="extract_lid_variables.html#extract_args.extract_lid_variables" title="extract_args.extract_lid_variables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_lid_variables</span></code></a>(args)</p></td>
+<td><p>Extract only the variable-length lid arrays from the packed args array.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="extract_met_data.html#extract_args.extract_met_data" title="extract_args.extract_met_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_met_data</span></code></a>(args)</p></td>
+<td><p>Extract only the meteorological data from the packed args array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="extract_scalars.html#extract_args.extract_scalars" title="extract_args.extract_scalars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_scalars</span></code></a>(args)</p></td>
+<td><p>Extract only the scalar parameters from the packed args array.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pack_args.html#extract_args.pack_args" title="extract_args.pack_args"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pack_args</span></code></a>(cell, met_data, dt, dz[, N, k_lid, Sfrac_lid])</p></td>
+<td><p>Convert the variables from the model grid into a unified flat buffer.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.HEADER_SIZE">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">HEADER_SIZE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">25</span></span><a class="headerlink" href="#extract_args.HEADER_SIZE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_AIR_TEMP">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_AIR_TEMP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></span><a class="headerlink" href="#extract_args.IDX_AIR_TEMP" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_ALBEDO">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_ALBEDO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8</span></span><a class="headerlink" href="#extract_args.IDX_ALBEDO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_DP_TEMP">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_DP_TEMP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">22</span></span><a class="headerlink" href="#extract_args.IDX_DP_TEMP" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_DT">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_DT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">9</span></span><a class="headerlink" href="#extract_args.IDX_DT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_DZ">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_DZ</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></span><a class="headerlink" href="#extract_args.IDX_DZ" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_EXPOSED_WATER">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_EXPOSED_WATER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#extract_args.IDX_EXPOSED_WATER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_FIRN_DEPTH">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_FIRN_DEPTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">15</span></span><a class="headerlink" href="#extract_args.IDX_FIRN_DEPTH" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_K_LID_SCALAR">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_K_LID_SCALAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">11</span></span><a class="headerlink" href="#extract_args.IDX_K_LID_SCALAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_LAKE">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_LAKE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></span><a class="headerlink" href="#extract_args.IDX_LAKE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_LAKE_DEPTH">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_LAKE_DEPTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6</span></span><a class="headerlink" href="#extract_args.IDX_LAKE_DEPTH" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_LID">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_LID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></span><a class="headerlink" href="#extract_args.IDX_LID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_LID_DEPTH">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_LID_DEPTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></span><a class="headerlink" href="#extract_args.IDX_LID_DEPTH" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_LW_IN">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_LW_IN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">18</span></span><a class="headerlink" href="#extract_args.IDX_LW_IN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_MELT">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_MELT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#extract_args.IDX_MELT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_N_GRID">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_N_GRID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#extract_args.IDX_N_GRID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_P_AIR">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_P_AIR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">21</span></span><a class="headerlink" href="#extract_args.IDX_P_AIR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_SCALARS_END">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_SCALARS_END</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">17</span></span><a class="headerlink" href="#extract_args.IDX_SCALARS_END" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_SFRAC_LID_SCALAR">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_SFRAC_LID_SCALAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">12</span></span><a class="headerlink" href="#extract_args.IDX_SFRAC_LID_SCALAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_SNOW_LID">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_SNOW_LID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></span><a class="headerlink" href="#extract_args.IDX_SNOW_LID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_SW_IN">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_SW_IN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">19</span></span><a class="headerlink" href="#extract_args.IDX_SW_IN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_V_LID">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_V_LID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">13</span></span><a class="headerlink" href="#extract_args.IDX_V_LID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_V_LID_DEPTH">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_V_LID_DEPTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">14</span></span><a class="headerlink" href="#extract_args.IDX_V_LID_DEPTH" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_V_LID_TEMP">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_V_LID_TEMP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">16</span></span><a class="headerlink" href="#extract_args.IDX_V_LID_TEMP" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.IDX_WIND">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">IDX_WIND</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">23</span></span><a class="headerlink" href="#extract_args.IDX_WIND" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.PTR_FIRN_T">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">PTR_FIRN_T</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">27</span></span><a class="headerlink" href="#extract_args.PTR_FIRN_T" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.PTR_LAKE_T">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">PTR_LAKE_T</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">26</span></span><a class="headerlink" href="#extract_args.PTR_LAKE_T" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.PTR_LFRAC">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">PTR_LFRAC</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">29</span></span><a class="headerlink" href="#extract_args.PTR_LFRAC" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.PTR_LID_T">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">PTR_LID_T</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">25</span></span><a class="headerlink" href="#extract_args.PTR_LID_T" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.PTR_SFRAC">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">PTR_SFRAC</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">28</span></span><a class="headerlink" href="#extract_args.PTR_SFRAC" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="extract_args.PTR_SIZE">
+<span class="sig-prename descclassname"><span class="pre">extract_args.</span></span><span class="sig-name descname"><span class="pre">PTR_SIZE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">30</span></span><a class="headerlink" href="#extract_args.PTR_SIZE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../heateqn_nb/solve_tridiagonal.html" class="btn btn-neutral float-left" title="heateqn_nb.solve_tridiagonal" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="extract_firn_arrays.html" class="btn btn-neutral float-right" title="extract_args.extract_firn_arrays" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

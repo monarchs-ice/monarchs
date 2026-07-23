@@ -1,0 +1,17 @@
+monarchs.core.driver.run_model
+==============================
+
+.. py:function:: monarchs.core.driver.run_model(model_setup, grid)
+
+   The model time loop. Each day this calls loop_over_grid (which in turn
+   calls timestep_loop for the single-column physics, <t_steps_per_day>
+   times), then lateral movement (i.e. water movement), then handles
+   checkpointing and output via netCDF.
+
+   :Parameters: * **model_setup** (*ModelSetup*) -- The loaded model configuration (see monarchs.core.load_model_setup).
+                * **grid** (*numpy structured array*) -- Model grid, containing the data specified in get_spec() of
+                  monarchs.core.model_grid.
+
+   :returns: **grid** -- Model grid at the end of the run.
+   :rtype: numpy structured array
+

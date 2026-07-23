@@ -1,0 +1,9 @@
+extract_args.extract_lid_variables
+==================================
+
+.. py:function:: extract_args.extract_lid_variables(args)
+
+   Extract only the variable-length lid arrays from the packed args array.
+
+   :Parameters: **args** (*np.ndarray*) -- Unified flat buffer containing model variables.
+

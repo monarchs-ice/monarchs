@@ -1,0 +1,45 @@
+monarchs.physics.lid
+====================
+
+.. py:module:: monarchs.physics.lid
+
+.. autoapi-nested-parse::
+
+   Lid physics subpackage.
+
+   Contains the development of frozen lids over melt lakes:
+     - lid     : full lid (depth >= 10 cm) heat equation and surface energy balance
+     - virtual_lid : thin lid (depth < 10 cm) treated as a single-layer slab
+
+   Public API
+   ----------
+   lid_development          : Evolve a full frozen lid over a lake.
+   virtual_lid_development  : Evolve a thin virtual lid over a lake.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/monarchs/physics/lid/lid/index
+   /autoapi/monarchs/physics/lid/virtual_lid/index
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lid/lid_development
+   /autoapi/monarchs/physics/lid/virtual_lid_development
+
+.. autoapisummary::
+
+   monarchs.physics.lid.lid_development
+   monarchs.physics.lid.virtual_lid_development
+
+

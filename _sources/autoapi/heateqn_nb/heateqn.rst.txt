@@ -1,0 +1,21 @@
+heateqn_nb.heateqn
+==================
+
+.. py:function:: heateqn_nb.heateqn(x, output, args)
+
+   Heat equation function to be passed into a solver (e.g. hybrd). This uses
+   the finite difference method, which is combined with the hybrd root-finding
+   algorithm.
+
+   :Parameters: * **x** (*float64[:]*) -- Starting estimate for the roots of the PDE we are trying to solve.
+                  This is by default cell.firn_temperature.
+                * **output** (*float64[:]*) -- Output array, i.e. the values of x such that F(x) = 0.
+                  This array is handled automatically by the solver, so does not need
+                  to be initialised and explicitly entered as an argument.
+                * **args** (*float64[:]*) -- Vector describing arguments to the system of equations being solved.
+                  This comprises many of the attributes of an IceShelf instance, and
+                  some physical variables such as specific humidity, wind etc.
+                  See extract_args for more details.
+
+   :rtype: None. (the output is handled by the solver)
+

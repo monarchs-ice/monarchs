@@ -1,0 +1,24 @@
+monarchs.physics.surface_fluxes.bulk_fluxes
+===========================================
+
+.. py:function:: monarchs.physics.surface_fluxes.bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid)
+
+   Calculate the latent and sensible heat fluxes given the wind speed and
+   surface meteorology.
+
+   :Parameters: * **wind** (*float*) -- Wind speed. [m s^-1].
+                * **air_temp** (*float*) -- Surface-layer air temperature. [K].
+                * **T_sfc** (*float*) -- Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
+                * **p_air** (*float*) -- Surface air pressure. [hPa]
+                * **dew_point_temperature** (*float*) -- 2m dewpoint temperature. [K]
+                * **lid**
+                * **lake**
+
+   :returns: * **Flat** (*float*) -- Latent heat flux. [W m^-2].
+             * **Fsens** (*float*) -- Sensible heat flux.   [W m^-2].
+             * *Documentation on how the saturation vapour pressure is calculated can be*
+             * *found in Section 12 of*
+             * **https** (*//www.ecmwf.int/sites/default/files/elibrary/2021/20198-ifs-*)
+             * *documentation-cy47r3-part-vi-physical-processes.pdf*
+             * *=======*
+

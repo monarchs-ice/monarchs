@@ -1,0 +1,16 @@
+monarchs.physics.solver.sfc_energy_virtual_lid
+==============================================
+
+.. py:function:: monarchs.physics.solver.sfc_energy_virtual_lid(x, args)
+
+   Surface energy balance for the virtual lid.
+   Called in lid_seb_solver when ``cell["v_lid"]`` is True.
+
+   :Parameters: * **x** (*array_like, float, shape (1,)*) -- Current estimate of the virtual-lid surface temperature [K].
+                * **args** (*tuple*) -- ``(albedo, lid, lake, lw_in, sw_in, air_temp, p_air,
+                  dew_point_temperature, wind, k_v_lid, lake_depth,
+                  vert_grid_lake, v_lid_depth)``
+
+   :returns: **output** -- Residual of the surface energy balance equation.
+   :rtype: array_like, float, shape (1,)
+

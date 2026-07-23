@@ -1,0 +1,8 @@
+monarchs.physics.material_properties.cv_mixture
+===============================================
+
+.. py:function:: monarchs.physics.material_properties.cv_mixture(T, sfrac, lfrac)
+
+   Volumetric heat capacity of an ice/water/air mixture [J m^-3 K^-1],
+   volume-fraction weighted.
+

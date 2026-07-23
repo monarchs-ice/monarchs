@@ -1,0 +1,16 @@
+monarchs.core.driver.Timer
+==========================
+
+.. py:class:: monarchs.core.driver.Timer(label)
+
+   Context manager that prints '<label> time: X.XXs' on exit.
+
+
+   .. py:method:: __enter__()
+
+
+   .. py:method:: __exit__(*exc)
+
+
+   .. py:attribute:: label
+

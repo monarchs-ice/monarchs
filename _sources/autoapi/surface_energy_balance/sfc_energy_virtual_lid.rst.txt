@@ -1,0 +1,12 @@
+surface_energy_balance.sfc_energy_virtual_lid
+=============================================
+
+.. py:function:: surface_energy_balance.sfc_energy_virtual_lid(x, output, args)
+
+   Surface energy balance for virtual lid using combined thermal resistance
+   through ice + water to upper lake.
+
+   :Parameters: * **x** (*array_like, float*) -- Surface temperature being solved for [K]
+                * **output** (*array_like, float*) -- Energy balance residual
+                * **args** (*array_like*) -- Input arguments
+

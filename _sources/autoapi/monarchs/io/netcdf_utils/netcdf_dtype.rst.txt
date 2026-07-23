@@ -1,0 +1,7 @@
+monarchs.io.netcdf_utils.netcdf_dtype
+=====================================
+
+.. py:function:: monarchs.io.netcdf_utils.netcdf_dtype(var)
+
+   Convert boolean dtypes to 'b' for NetCDF compatibility.
+

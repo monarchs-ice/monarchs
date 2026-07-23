@@ -1,0 +1,19 @@
+monarchs.core.debug
+===================
+
+.. py:module:: monarchs.core.debug
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/debug/neighbourhood_check
+
+.. autoapisummary::
+
+   monarchs.core.debug.neighbourhood_check
+
+

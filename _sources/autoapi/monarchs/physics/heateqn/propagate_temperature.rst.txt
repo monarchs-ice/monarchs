@@ -1,0 +1,16 @@
+monarchs.physics.heateqn.propagate_temperature
+==============================================
+
+.. py:function:: monarchs.physics.heateqn.propagate_temperature(cell, dz, dt, T_bc_top, N=10)
+
+   The solution of the heat equation involves a highly nonlinear part in the
+   top N layers, which is driven by the surface energy balance, and a linear
+   part, which is the diffusion of heat through the rest of the firn column.
+   This function handles the linear part of this calculation.
+
+   :Parameters: * **cell**
+                * **dz**
+                * **dt**
+                * **T_bc_top**
+                * **N**
+

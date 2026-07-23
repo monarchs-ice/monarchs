@@ -1,0 +1,9 @@
+monarchs.core.driver.monarchs
+=============================
+
+.. py:function:: monarchs.core.driver.monarchs()
+
+   Main function for running MONARCHS.
+   This works a level above initialise, which handles the initial setup
+   of the model configuration (as opposed to initialising the model data).
+

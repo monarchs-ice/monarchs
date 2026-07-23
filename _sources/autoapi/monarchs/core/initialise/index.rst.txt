@@ -1,0 +1,30 @@
+monarchs.core.initialise
+========================
+
+.. py:module:: monarchs.core.initialise
+
+.. autoapi-nested-parse::
+
+   Model initialisation functions for MONARCHS.
+
+   Contains the functions responsible for setting up the initial model state:
+   loading the firn profile, building the met data, creating the model grid,
+   and handling restart from a checkpoint dump.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/initialise/check_for_reload_from_dump
+   /autoapi/monarchs/core/initialise/initialise_model_data
+
+.. autoapisummary::
+
+   monarchs.core.initialise.check_for_reload_from_dump
+   monarchs.core.initialise.initialise_model_data
+
+

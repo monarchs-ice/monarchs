@@ -1,0 +1,17 @@
+monarchs.core.kernels.compile_all
+=================================
+
+.. py:function:: monarchs.core.kernels.compile_all(use_numba)
+
+   Compile all registered kernels and rebind references to them.
+
+   No-op if ``use_numba`` is False. Steps:
+
+   1. Import every module in the ``monarchs`` package so the registry is
+      fully populated (kernels register themselves at import time).
+   2. Compile each registered kernel with ``numba.njit`` and its options.
+   3. Rebind, across every imported ``monarchs`` module, any attribute that *is*
+      one of the compiled kernels (matched by ``id``) to its compiled version.
+   4. Apply whole-module Numba variant overrides (e.g. ``solver`` <-
+      ``solver_nb``).
+
