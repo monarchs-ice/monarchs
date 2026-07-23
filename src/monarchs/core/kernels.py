@@ -22,12 +22,6 @@ from numba import prange, objmode  # noqa: F401  (re-exported)
 # tracks all functions decorated by @kernel
 _KERNELS = []
 
-# a couple of overrides here - these *are* hard-coded but future work will hopefully
-# remove them in favour of a unified solver approach
-_NUMBA_OVERRIDES = [
-    ("monarchs.physics.solver", "monarchs.physics.Numba.solver_nb"),
-]
-
 
 def kernel(**njit_opts):
     """
@@ -73,8 +67,6 @@ def compile_all(use_numba):
     2. Compile each registered kernel with ``numba.njit`` and its options.
     3. Rebind, across every imported ``monarchs`` module, any attribute that *is*
        one of the compiled kernels (matched by ``id``) to its compiled version.
-    4. Apply whole-module Numba variant overrides (e.g. ``solver`` <-
-       ``solver_nb``).
     """
     if not use_numba:
         return
@@ -87,10 +79,8 @@ def compile_all(use_numba):
     print("\nmonarchs.core.kernels.compile_all: compiling Numba kernels")
 
     # Step 1
-    # Import every module in the package. Skip the
-    # .Numba modules since these contain cfuncs that require the
-    # kernels it uses as dependencies first as they are compiled
-    # eagerly rather than lazily - step 4 handles this
+    # Import every module in the package. Skip the .Numba modules,
+    # since these are hard-coded to be compiled anyway.
     import monarchs  # pylint: disable=import-outside-toplevel
 
     for _, modname, _ in pkgutil.walk_packages(
@@ -116,17 +106,5 @@ def compile_all(use_numba):
             compiled = jitted.get(id(val))
             if compiled is not None:
                 setattr(module, attr, compiled)
-
-    # Step 4
-    # Apply the overrides for the heat equation code that relies
-    # on cfuncs (see step 1). This code has the appropriate
-    # decorators already applied in the source as it is only
-    # ever invoked in the Numba path
-    for target_name, source_name in _NUMBA_OVERRIDES:
-        target = importlib.import_module(target_name)
-        source = importlib.import_module(source_name)
-        for attr, val in vars(source).items():
-            if not attr.startswith("__"):
-                setattr(target, attr, val)
 
     print(f"monarchs.core.kernels.compile_all: compiled {len(jitted)} kernels")

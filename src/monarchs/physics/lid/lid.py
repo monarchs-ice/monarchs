@@ -1,6 +1,19 @@
+"""
+True lid development functions. Lid *formation* is handled in
+``lake.development`` and ``lid.virtual_lid``.
+These routines handle the *evolution* of the true lid after it has formed.
+
+At the moment this is limited to further freezing of the lake underneath and
+subsequent lid growth. When the conditions change to melting, if the lid has
+not fully frozen the lake underneath, we combine the lid with the firn column
+and treat the unfrozen water as a subglacial lake.
+"""
+
 import numpy as np
 from monarchs.core.kernels import kernel
-from monarchs.physics import surface_fluxes, solver, material_properties
+from monarchs.physics import surface_fluxes, material_properties
+from monarchs.physics.lid.heateqn import lid_heateqn_solver
+from monarchs.physics.lid.seb import lid_seb_solver
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
 from monarchs.physics.constants import (
@@ -72,50 +85,18 @@ def lid_development(cell, dt, met_data, Fu):
     dz = cell["lid_depth"] / cell["vert_grid_lid"]
 
     # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
+    cell["albedo"] = surface_fluxes.sfc_albedo(cell)
     # Solve the heat equation for the lid (including surface energy balance)
     # Force lake-lid boundary temperature to 273.15 before and after.
     cell["lid_temperature"][-1] = 273.15
-    cell["lid_temperature"], ierr, success, info = solver.lid_heateqn_solver(
-        cell,
-        met_data,
-        dt,
-        dz,
-    )
+    cell["lid_temperature"], success, _ = lid_heateqn_solver(cell, met_data, dt, dz)
     cell["lid_temperature"] = np.clip(cell["lid_temperature"], 0, 273.15)
     cell["lid_temperature"][-1] = 273.15
 
     x = cell["lid_temperature"]
     # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
-    Q = surface_fluxes.sfc_flux(
-        cell["albedo"],
-        cell["lid"],
-        cell["lake"],
-        met_data["LW_down"],
-        met_data["SW_down"],
-        met_data["temperature"],
-        met_data["surf_pressure"],
-        met_data["dew_point_temperature"],
-        met_data["wind"],
-        x[0],
-    )
+    cell["albedo"] = surface_fluxes.sfc_albedo(cell)
+    Q = surface_fluxes.sfc_flux(cell, met_data, x[0])
     if cell["lid_temperature"][0] < 273.15:  # and cell["lid_sfc_melt"] > 0:  # frozen
         # Decrement lid_melt_count if the lid is freezing.
         surface_freezing(cell, dt, Q)
@@ -342,12 +323,9 @@ def initialise_lid(cell, met_data, dt, dz, k_lid):
     """
 
     cell["has_had_lid"] = True
-    # Surface energy balance for the lid
-    # need the [0][0] as we want the first
-    # element of the output array for initialisation
-    cell["lid_temperature"][0] = solver.lid_seb_solver(cell, met_data, dt, dz, k_lid)[
-        0
-    ][0]
+    # Surface energy balance for the lid; [0] takes the solved surface
+    # temperature (the solver also returns success and iteration count).
+    cell["lid_temperature"][0] = lid_seb_solver(cell, met_data, k_lid)[0]
     # assume it is linear from surface to bottom of lid at 0C
     cell["lid_temperature"] = np.linspace(
         cell["lid_temperature"][0], 273.15, cell["vert_grid_lid"]

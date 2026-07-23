@@ -36,12 +36,6 @@ classifiers = [
 
 ]
 
-[project.optional-dependencies]
-
-numba = [
-    'NumbaMinpack',
-]
-
 [dependency-groups]
 
 dev = [
@@ -80,8 +74,13 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/monarchs"]
-# ship the bundled example dataset even though *.nc is git-ignored globally
-artifacts = ["src/monarchs/data/*.nc"]
+# ship the bundled datasets (ERA5 example + 1-D test checkpoints/met) even
+# though *.nc is git-ignored globally
+artifacts = [
+    "src/monarchs/data/met_data/*.nc",
+    "src/monarchs/data/checkpoints/*.nc",
+    "src/monarchs/data/met_data/*.npy",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
