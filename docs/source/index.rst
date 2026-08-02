@@ -26,7 +26,6 @@ Contents
    usage
    MONARCHS_model_setup
    dem
-   plots
    met_data
    model_setup_reference
    common_errors

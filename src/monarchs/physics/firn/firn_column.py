@@ -1,16 +1,17 @@
 """
-Module containing functions relating to the firn column. Some physics is
-contained in percolation.py.
+Module containing functions relating to the firn column.
+This mostly pertains to the thermodynamic properties
+of the firn, and surface melt.
 
+Physics related to percolation and saturation/refreezing of
+meltwater are contained in percolation.py.
 """
 
-# for Numba compatibility - need to use broad exceptions, not specific ones
-# pylint: disable=broad-exception-raised, raise-missing-from
-# TODO - flesh out module-level docstring
 import numpy as np
 from monarchs.core.kernels import kernel
 from monarchs.physics.firn import percolation, regrid_column
-from monarchs.physics import surface_fluxes, solver, material_properties
+from monarchs.physics import surface_fluxes, material_properties
+from monarchs.physics.firn.heateqn import firn_heateqn_solver
 from monarchs.core import utils
 from monarchs.core.error_handling import (
     check_for_mass_conservation,
@@ -98,24 +99,9 @@ def firn_column(
     # condition, which is driven by the meteorology/surface fluxes, so we need
     # to pass these variables into the solver.
 
-    # Hard-coding "hybr" as the MINPACK solver method, as other methods are not
-    # supported by the Numba cfunc.
-    # If you are running with Scipy, you could consider changing this or adding
-    # it as a namelist parameter.
-
     # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
-    root, _, success, _ = solver.solve_firn_heateqn(
-        cell, met_data, dt, dz, fixed_sfc=False, solver_method="hybr"
-    )
+    cell["albedo"] = surface_fluxes.sfc_albedo(cell)
+    root, success, _ = firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=False)
     # If the solver didn't fail (e.g. due to too many iterations), and we have
     # a surface temperature above the freezing point, then melt will occur.
     # Since the firn column has a fixed boundary condition (273.15 K),
@@ -124,8 +110,8 @@ def firn_column(
     if (root[0] > 273.15) and success:
         dz = cell["firn_depth"] / cell["vert_grid"]
 
-        root_fs, _, success_fixedsfc, _ = solver.solve_firn_heateqn(
-            cell, met_data, dt, dz, fixed_sfc=True, solver_method="hybr"
+        root_fs, success_fixedsfc, _ = firn_heateqn_solver(
+            cell, met_data, dt, dz, fixed_sfc=True
         )
         # if *this* solver works, then update the firn temperature and regrid
         # the firn column, accounting for the melt.
@@ -217,28 +203,9 @@ def calc_height_change(
         (cell["firn_temperature"][0] + cell["firn_temperature"][1]) / 2
     )
     # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
+    cell["albedo"] = surface_fluxes.sfc_albedo(cell)
     # now calculate surface flux
-    Q = surface_fluxes.sfc_flux(
-        cell["albedo"],
-        cell["lid"],
-        cell["lake"],
-        met_data["LW_down"],
-        met_data["SW_down"],
-        met_data["temperature"],
-        met_data["surf_pressure"],
-        met_data["dew_point_temperature"],
-        met_data["wind"],
-        cell["firn_temperature"][0],
-    )
+    Q = surface_fluxes.sfc_flux(cell, met_data, cell["firn_temperature"][0])
 
     # Strictly speaking, since the MONARCHS grid is defined from the surface
     # downward, this is actually the "wrong" way round. It is simpler

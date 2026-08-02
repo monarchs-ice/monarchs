@@ -110,12 +110,20 @@ def read_checkpoint(fname, dtype, keys="all"):
         grid = np.zeros(grid_shape, dtype=dtype)
 
         # Load data into the structured array
+        print(f"monarchs.io.checkpoint.read_checkpoint: reading checkpoint {fname}")
         for key in desired_keys:
-            print(f"Loading key {key} into structured array")
-            if len(data.variables[key].shape) > 2:
-                grid[key] = data.variables[key][:, :, :].data
-            else:
-                grid[key] = data.variables[key][:, :].data
+            try:
+                if len(data.variables[key].shape) > 2:
+                    grid[key] = data.variables[key][:, :, :].data
+                else:
+                    grid[key] = data.variables[key][:, :].data
+            # raise and tell us which key actually fails to load
+            # if we hit an error
+            except (KeyError, ValueError, IndexError) as exc:
+                raise ValueError(
+                    "monarchs.io.checkpoint.read_checkpoint: failed to load key"
+                    f" '{key}' from {fname} - {exc}"
+                ) from exc
 
         # Load scalar values
         met_start_idx = int(data.variables["met_start_idx"][:].data)

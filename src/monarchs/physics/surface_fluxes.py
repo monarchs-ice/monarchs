@@ -1,6 +1,20 @@
-""" """
+"""
+Surface energy fluxes and albedo at the top of the ice shelf.
+These functions determine the surface energy balance and therefore
+melt/freezing on the ice shelf/lake/lid.
 
-# TODO - module-level docstring
+The main functions used in the model are surface_fluxes
+and sfc_albedo. surface_fluxes calculates the surface energy
+balance given meteorological input and the state of the firn column.
+
+sfc_albedo is called before we run sfc_flux,
+but is not included in the sfc_flux call since otherwise it
+would run during every iteration of the heat equation solver.
+So if you are adding a call to sfc_flux, make sure that
+sfc_albedo is called first in case something has modified
+the cell state since the last call!
+"""
+
 import numpy as np
 from monarchs.core.kernels import kernel
 from monarchs.physics.constants import (
@@ -16,44 +30,18 @@ from monarchs.physics.constants import (
 
 
 @kernel()
-def sfc_flux(
-    alpha,
-    lid,
-    lake,
-    lw_in,
-    sw_in,
-    air_temp,
-    p_air,
-    dew_point_temperature,
-    wind,
-    xsurf,
-):
+def sfc_flux(cell, met_data, xsurf):
     """
     Calculate the surface heat flux from the input shortwave and longwave
     fluxes and latent/sensible heat fluxes.
 
     Parameters
     ----------
-    alpha: float
-        Surface albedo.
-    lid : bool
-        Flag which indicates whether there is a lid at the surface due to
-        refreezing. Used here to determine which form of bulk fluxes to use.
-    lake : bool
-        Flag which indicates whether there is a lake present. Used here to
-        determine which form of bulk fluxes to use.
-    lw_in : float
-        Incoming longwave radiation. [W m^-2].
-    sw_in : float
-        Incoming shortwave (solar) radiation. [W m^-2].
-    air_temp : float
-        Surface-layer air temperature. [K].
-    p_air : float
-        Surface-layer air pressure. [hPa].
-    dew_point_temperature : float
-        Dew-point temperature at the surface. [K]
-    wind : float
-        Wind speed. [m s^-1].
+    cell : numpy structured array
+        Element of the model grid.
+    met_data : numpy structured array
+        Meteorological data for the current timestep (``LW_down``, ``SW_down``,
+        ``temperature``, ``surf_pressure``, ``dew_point_temperature``, ``wind``).
     xsurf : float
         Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
 
@@ -63,11 +51,14 @@ def sfc_flux(
         Surface energy flux. [W m^-2].
 
     """
+    alpha = cell["albedo"]
+    lw_in = met_data["LW_down"]
+    sw_in = met_data["SW_down"]
+    lid = cell["lid"]
+    lake = cell["lake"]
 
     # positive going into ice shelf
-    Flat, Fsens = bulk_fluxes(
-        wind, air_temp, xsurf, p_air, dew_point_temperature, lake, lid
-    )
+    Flat, Fsens = bulk_fluxes(cell, met_data, xsurf)
     epsilon = emissivity  # emissivity
 
     if lid:
@@ -82,7 +73,7 @@ def sfc_flux(
 
 
 @kernel()
-def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_lid):
+def sfc_albedo(cell):
     """
     Determine the effective surface albedo depending on the situation at the
     top of the ice shelf (i.e. is there exposed water, firn or snow etc.)
@@ -100,17 +91,8 @@ def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_
 
     Parameters
     ----------
-    melt : bool
-        Flag which indicates whether melting has occurred.
-    exposed_water : bool
-        Flag which describes whether there is exposed water at the surface.
-    lid : bool
-        Flag which indicates whether there is a lid at the surface due to
-        refreezing.
-    lake : bool
-        Flag which indicates whether there is a lake present.
-    lake_depth : float
-        Depth of the lake [m]
+    cell : numpy structured array
+        Element of the model grid.
 
     Returns
     -------
@@ -118,14 +100,20 @@ def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_
         Effective surface albedo for shortwave radiation.
 
     """
+    melt = cell["melt"]
+    exposed_water = cell["exposed_water"]
+    lid = cell["lid"]
+    lake = cell["lake"]
+    lake_depth = cell["lake_depth"]
+
     if melt:
         if exposed_water:
             if lid:
                 # JE - if we have a "full" lid (white ice), then the albedo
-                # is actually higher?
+                # is actually higher than 0.413?
                 # https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JC014161
                 # this implies (Fig. 1) that it should be ~0.6
-                alpha = bare_ice_albedo  # bare dry ice lid albedo
+                alpha = bare_ice_albedo  # bare dry ice lid albedo, 0.413 default
             elif lake:
                 h = lake_depth
                 alpha = (9702 + 1000 * np.exp(3.6 * h)) / (
@@ -145,14 +133,14 @@ def sfc_albedo(melt, exposed_water, lid, lake, virtual_lid, lake_depth, snow_on_
     # if snow_on_lid == 1:
     #     alpha = dry_snow_albedo  # snow albedo
     # elif snow_on_lid == 2:
-    #     if == 2, then lid has undergone melt with snow on top so update albedo
+    #     # if == 2, then lid has undergone melt with snow on top so update albedo
     #     alpha = wet_snow_albedo # wet snow albedo
 
     return alpha
 
 
 @kernel()
-def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid):
+def bulk_fluxes(cell, met_data, xsurf):
     """
     Calculate the latent and sensible heat fluxes given the wind speed and
     surface meteorology.
@@ -160,18 +148,14 @@ def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid):
     Parameters
     ----------
 
-    wind : float
-        Wind speed. [m s^-1].
-    air_temp : float
-        Surface-layer air temperature. [K].
-    T_sfc : float
+    cell : numpy structured array
+        Element of the model grid.
+    met_data : numpy structured array
+        Meteorological data for the current timestep (``temperature``,
+        ``surf_pressure``, ``dew_point_temperature``, ``wind``).
+    xsurf : float
         Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
-    p_air : float
-        Surface air pressure. [hPa]
-    dew_point_temperature : float
-        2m dewpoint temperature. [K]
-    lid
-    lake
+
     Returns
     -------
     Flat : float
@@ -186,6 +170,14 @@ def bulk_fluxes(wind, air_temp, T_sfc, p_air, dew_point_temperature, lake, lid):
 
     =======
     """
+
+    lid = cell["lid"]
+    lake = cell["lake"]
+    air_temp = met_data["temperature"]
+    p_air = met_data["surf_pressure"]
+    dew_point_temperature = met_data["dew_point_temperature"]
+    wind = met_data["wind"]
+    T_sfc = xsurf
     # Gravity
     g = 9.8
     b = 20

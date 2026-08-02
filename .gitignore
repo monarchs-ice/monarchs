@@ -1,7 +1,6 @@
 __pycache__/
 .idea/
 .run
-src/monarchs/plots/outputs/
 venv/
 data/*.tif
 data/*.jpg
@@ -15,7 +14,8 @@ DEM/geotiff_test.py
 *.gif
 *.dat
 *.nc
-!src/monarchs/data/era5_example.nc
+!src/monarchs/data/met_data/era5_example.nc
+!src/monarchs/data/checkpoints/*.nc
 *.pkl
 create_flowchart.py
 scripts/netcdf_1d_to_csv.py
@@ -33,4 +33,4 @@ output/
 validation/
 .DS_Store
 examples/.DS_Store
-
+uv.lock

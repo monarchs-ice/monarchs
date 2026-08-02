@@ -1,13 +1,16 @@
-""" """
+"""
+Routines to handle virtual lids. These are thin layers of ice that are
+too thin to justify running full physics (e.g. heat equation) on, but
+can grow and shrink. Virtual lids that go above 10cm in size are switched
+to true lids, and their physics is handled in ``lid.py``.
+"""
 
-# disable pylint warnings for broad exceptions as they are needed with Numba
-# pylint: disable=broad-exception-raised
-# TODO - module-level docstring, other docstrings
 import numpy as np
 from monarchs.core.kernels import kernel
 from monarchs.core import utils
 from monarchs.core.error_handling import check_for_mass_conservation
-from monarchs.physics import surface_fluxes, solver, material_properties
+from monarchs.physics import surface_fluxes, material_properties
+from monarchs.physics.lid.seb import lid_seb_solver
 from monarchs.physics.constants import (
     L_ice,
     rho_ice,
@@ -70,15 +73,7 @@ def virtual_lid_development(cell, dt, met_data, turbulent_flux_upper):
     # not going to be *all* of it, even it it may be a bit higher than
     # for a lake.
     # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
+    cell["albedo"] = surface_fluxes.sfc_albedo(cell)
 
     # Surface energy balance calculation to determine the virtual lid
     # temperature
@@ -124,21 +119,11 @@ def virtual_lid_development(cell, dt, met_data, turbulent_flux_upper):
 @kernel()
 def update_virtual_lid_temperature(cell, met_data, dt):
     # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
+    cell["albedo"] = surface_fluxes.sfc_albedo(cell)
 
     k_v_lid = material_properties.k_ice(cell["virtual_lid_temperature"])
 
-    cell["virtual_lid_temperature"] = solver.lid_seb_solver(
-        cell, met_data, dt, 0, k_v_lid
-    )[0][0]
+    cell["virtual_lid_temperature"] = lid_seb_solver(cell, met_data, k_v_lid)[0]
 
 
 @kernel()

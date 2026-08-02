@@ -6,8 +6,6 @@ Contains functions for the thermodynamic evolution of a fully-formed lake
 the water column, and adjustment of the lake-firn boundary.
 """
 
-# TODO - module level docstring, split/refactor lake_formation and
-#      - lake_development if possible
 import numpy as np
 from monarchs.core.kernels import kernel
 from monarchs.physics import surface_fluxes, material_properties
@@ -18,7 +16,7 @@ from monarchs.core.error_handling import (
     check_for_mass_conservation,
     generic_error,
 )
-from monarchs.physics import solver
+from monarchs.physics.lake.seb import lake_seb_solver
 from monarchs.physics.constants import (
     L_ice,
     rho_ice,
@@ -86,23 +84,15 @@ def radiative_transfer(cell, sw_in):
     # fraction that will be reflected. I am assuming this will be based
     # on the saturated firn albedo (0.6).
     # We also need to consider that the lake water will be turbid, and
-    # not pure (it will be grainy meltwater). So we should use a higher
-    # absorption coefficient than pure water.
+    # not pure (it will be grainy meltwater). So should we use a higher
+    # absorption coefficient than pure water?
 
     Section 4.1.2 of Leppäranta (2015): Freezing of Lakes and the Evolution of
     their Ice Cover explicitly mentions a factor of ~0.45-0.5 for the
     surface absorption fraction. This is defined in monarchs.physics.constants.
     """
 
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
+    cell["albedo"] = surface_fluxes.sfc_albedo(cell)
     not_absorbed_frac = (
         1 - sfc_absorbed_frac
     )  # fraction of sw_in that penetrates lake surface
@@ -250,18 +240,11 @@ def lake_development(cell, dt, met_data):
     original_mass = utils.calc_mass_sum(cell)
     if not cell["v_lid"] and not cell["lid"]:
         # Solve lake surface temperature
-        cell["albedo"] = surface_fluxes.sfc_albedo(
-            cell["melt"],
-            cell["exposed_water"],
-            cell["lid"],
-            cell["lake"],
-            cell["v_lid"],
-            cell["lake_depth"],
-            cell["snow_on_lid"],
-        )
-        cell["lake_temperature"][0] = solver.lake_seb_solver(
-            cell, met_data, dt, 0, formation=False
-        )[0][0]
+        cell["albedo"] = surface_fluxes.sfc_albedo(cell)
+        cell["lake_temperature"][0] = lake_seb_solver(cell, met_data, formation=False)[
+            0
+        ]
+
         # If surface cooled below freezing, create virtual lid
         if cell["lake_temperature"][0] < 273.15:
             # print("Lake surface below freezing, creating virtual lid")

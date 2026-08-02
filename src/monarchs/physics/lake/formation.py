@@ -15,7 +15,8 @@ from monarchs.core.error_handling import (
     check_for_mass_conservation,
     generic_error,
 )
-from monarchs.physics import solver
+from monarchs.physics.firn.heateqn import firn_heateqn_solver
+from monarchs.physics.lake.seb import lake_seb_solver
 from monarchs.physics.constants import (
     L_ice,
     rho_ice,
@@ -58,46 +59,17 @@ def lake_formation(cell, dt, met_data):
     )
 
     # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
-    root, _, success, _ = solver.solve_firn_heateqn(
-        cell, met_data, dt, dz, fixed_sfc=True, solver_method="hybr"
-    )
+    cell["albedo"] = surface_fluxes.sfc_albedo(cell)
+    root, success, _ = firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=True)
     if success:
         cell["firn_temperature"] = root
 
     x = cell["lake_temperature"]
     # Update cell albedo
-    cell["albedo"] = surface_fluxes.sfc_albedo(
-        cell["melt"],
-        cell["exposed_water"],
-        cell["lid"],
-        cell["lake"],
-        cell["v_lid"],
-        cell["lake_depth"],
-        cell["snow_on_lid"],
-    )
-    Q = surface_fluxes.sfc_flux(
-        cell["albedo"],
-        cell["lid"],
-        cell["lake"],
-        met_data["LW_down"],
-        met_data["SW_down"],
-        met_data["temperature"],
-        met_data["surf_pressure"],
-        met_data["dew_point_temperature"],
-        met_data["wind"],
-        x[0],
-    )
+    cell["albedo"] = surface_fluxes.sfc_albedo(cell)
+    Q = surface_fluxes.sfc_flux(cell, met_data, x[0])
 
-    old_T_sfc = solver.lake_seb_solver(cell, met_data, dt, dz, formation=True)[0][0]
+    old_T_sfc = lake_seb_solver(cell, met_data, formation=True)[0]
 
     # Check for conservation of mass
     new_mass = utils.calc_mass_sum(cell)
@@ -131,12 +103,6 @@ def lake_formation(cell, dt, met_data):
 
     # If no melt and the surface is below freezing, count towards refreezing
     # the exposed water.
-    # TODO (physics, future) - once the counter exceeds ~48 h with lake_depth
-    # < 0.1 m, refreeze the shallow "pre-lake" into the firn column: convert
-    # the water depth to an equivalent ice thickness (rho_water/rho_ice),
-    # add it as a pure-ice surface layer via regrid_after_freeze, and clear
-    # the exposed-water flags. Currently the counter increments but nothing
-    # acts on it.
     else:
         cell["exposed_water_refreeze_counter"] += 1
 

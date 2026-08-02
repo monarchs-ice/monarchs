@@ -14,8 +14,6 @@ The MONARCHS source code is split into the following folders:
                 (e.g. the heat equation, surface energy balance, lake and lid formation) and lateral movement
                 of water between these single columns.
 
-    ``plots`` - Utilities and code to handle generation of plots using model output data.
-
     There are flowcharts located in ``docs/flowcharts`` which may help visualise which parts of the model are called where.
     These are:
 

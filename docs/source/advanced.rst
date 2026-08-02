@@ -16,10 +16,9 @@ myriad other reasons. However, one of the drawbacks of Python is that it is slow
 such as C and Fortran. A compromise is to make use of Numba, a just-in-time compiler for Python. This significantly
 bridges the performance gap between these languages, at the cost of somewhat more complex code.
 
-In many cases, this is "free". However, since we need to use ``hybrd`` from MINPACK to solve the heat equation, and the standard
-Python implmentation is not ``Numba`` compatible (``scipy.optimize.fsolve``), we instead make use of ``NumbaMinpack``, a
-Python library that calls MINPACK from a compiled Fortran source using Numba's ``ctypes`` compatability. This makes the
-resulting source code a little more complex.
+In many cases, this is "free". The heat equation and surface energy balance solvers are written as Newton iterations
+in Numba-compatible Python (see ``monarchs.physics.solver`` and ``monarchs.physics.heateqn``), so the same solver
+code runs compiled or uncompiled - no external solver library is needed.
 
 Numba also has great support for parallel Python via OpenMP, which we use in MONARCHS. Since the single-column physics
 does not affect other columns, this approach is very efficient; resulting in speedups to the overall runtime of ~50x
@@ -45,15 +44,10 @@ are enabled, and then after the code crashes, run the model from this dump with 
 
 What parts of the code are actually different if using Numba?
 =============================================================
--  ``timestep_loop`` and all functions called by ``timestep_loop`` or deeper are called by Numba's ``jit`` function,
-   equivalent to decorating them using the ``@jit`` decorator. This is controlled by the ``jit_modules`` function
-   in ``monarchs.core.configuration``.
--  Different versions of the firn heat equation, lake surface energy balance, and lid heat equation/surface energy balance
-   solver functions are selected. This is because of the different input formatting requirements of the Scipy and Numba
-   implementations. In the non-Numba implementation, these are solved using ``scipy.optimize.fsolve``. In the Numba
-   implementation, an external library ``NumbaMinpack`` (developed by Nicholas Wogan) is used to call the Fortran
-   MINPACK library's ``hybrd`` function. In future, this will use a dedicated fork of this library built into MONARCHS,
-   to ensure that it is maintained.
+None - the same code runs in both modes. Physics functions are marked with the ``@kernel`` decorator
+(``monarchs.core.kernels``); when ``use_numba`` is enabled, ``kernels.compile_all`` compiles every registered
+kernel with ``numba.njit`` and rebinds references to the compiled versions. With ``use_numba = False`` the
+decorator is a no-op and the identical functions run as pure Python.
 
 Are there any differences between the two versions?
 ===================================================

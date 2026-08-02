@@ -1,7 +1,7 @@
 # MONARCHS Docker image
 
-A prebuilt image with MONARCHS and all of its dependencies (including a Fortran
-compiler and `NumbaMinpack`) installed. The MONARCHS source lives at
+A prebuilt image with MONARCHS and all of its dependencies installed. The
+MONARCHS source lives at
 `/opt/monarchs/MONARCHS` inside the container, and the `monarchs` CLI is on
 `$PATH`.
 

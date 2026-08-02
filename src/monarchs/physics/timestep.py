@@ -8,9 +8,10 @@ accordingly.
 import numpy as np
 from monarchs.core.kernels import kernel
 from monarchs.physics.firn import firn_column, percolation, snow_accumulation
-from monarchs.physics import lake, solver
+from monarchs.physics import lake
+from monarchs.physics.firn.heateqn import firn_heateqn_solver
 from monarchs.physics.lid import lid, virtual_lid
-from monarchs.physics.lake import reset_column
+from monarchs.physics import reset_column
 from monarchs.physics.constants import rho_ice, rho_water
 from monarchs.core.error_handling import generic_error, check_correct
 
@@ -147,8 +148,8 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             # print("Exposed water present")
 
             if firn_heat_toggle:
-                sol, fvec, success, info = solver.solve_firn_heateqn(
-                    cell, met_data[t_step], dt, dz, fixed_sfc=True, solver_method="hybr"
+                sol, success, _ = firn_heateqn_solver(
+                    cell, met_data[t_step], dt, dz, fixed_sfc=True
                 )
                 if success:
                     cell["firn_temperature"] = sol
@@ -183,7 +184,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 # lakes underneath a frozen lid that gets combined
                 if firn_heat_toggle:
                     for lev in range(cell["vert_grid"]):
-                        percolation.calc_refreezing(cell, lev)
+                        # only layers holding liquid can refreeze
+                        if cell["Lfrac"][lev] > 0:
+                            percolation.calc_refreezing(cell, lev)
 
                 if cell["v_lid"]:
                     if lid_development_toggle:
@@ -210,7 +213,9 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                         met_data[t_step],
                     )
                     for lev in range(cell["vert_grid"]):
-                        percolation.calc_refreezing(cell, lev)
+                        # only layers holding liquid can refreeze
+                        if cell["Lfrac"][lev] > 0:
+                            percolation.calc_refreezing(cell, lev)
                     lid.lid_development(
                         cell,
                         dt,
