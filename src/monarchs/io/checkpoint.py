@@ -9,8 +9,11 @@ rather than everything needed to restart the model).
 import os
 import numpy as np
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
+
 from monarchs.io import metadata
 from monarchs.io import netcdf_utils as nu
+from monarchs.variables import CATALOGUE
+from monarchs.variables.definitions import INPUT
 
 
 def write_checkpoint(fname, grid, met_start_idx, met_end_idx, model_setup=None):
@@ -112,6 +115,20 @@ def read_checkpoint(fname, dtype, keys="all"):
         grid_shape = (len(data.dimensions["x"]), len(data.dimensions["y"]))
         grid = np.zeros(grid_shape, dtype=dtype)
 
+        # use variable catalogue defaults for anything added to the model after
+        # a checkpoint was set up.
+        loaded = set(desired_keys)
+        for var in CATALOGUE:
+            if var.name in loaded or var.name not in dtype.names:
+                continue
+            if var.default_value is INPUT or callable(var.default_value):
+                continue
+            grid[var.name] = var.default_value
+            print(
+                f"monarchs.io.checkpoint.read_checkpoint: {var.name}",
+                " set to catalogue default value, as was not present in"
+                " the checkpoint file.",
+            )
         # Load data into the structured array
         print(f"monarchs.io.checkpoint.read_checkpoint: reading checkpoint {fname}")
         for key in desired_keys:

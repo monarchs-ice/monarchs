@@ -23,7 +23,7 @@ from monarchs.physics.constants import emissivity, stefan_boltzmann
 
 
 @kernel()
-def heateqn_firn(x, cell, met_data, dz, dt, fixed_sfc=False):
+def heateqn_firn(x, cell, met_data, dz, dt, kappa, k0, fixed_sfc=False):
     """
     Function called by the Newtwon-Raphson solver.
 
@@ -42,6 +42,10 @@ def heateqn_firn(x, cell, met_data, dz, dt, fixed_sfc=False):
         Layer thickness [m].
     dt: int
         Timestep [s].
+    kappa: array_like, float
+        Thermal diffusivity from the previous timestep [m^2 s^-1].
+    k0: float
+        Surface thermal conductivity from the previous timestep [W m^-1 K^-1].
     fixed_sfc: bool, optional
         If True, force the surface to 273.15 K. Default False.
 
@@ -51,12 +55,6 @@ def heateqn_firn(x, cell, met_data, dz, dt, fixed_sfc=False):
         Residual of the firn heat equation at ``x``. From this we can
         determine the temperature column.
     """
-    T_old = cell["firn_temperature"]
-    Sfrac = cell["Sfrac"]
-    Lfrac = cell["Lfrac"]
-
-    k, kappa = material_properties.k_and_kappa(T_old, Sfrac, Lfrac)
-
     residual = np.zeros_like(x)
     # fixed surface - always 273.15 so just subtract this for the residual
     if fixed_sfc:
@@ -65,17 +63,19 @@ def heateqn_firn(x, cell, met_data, dz, dt, fixed_sfc=False):
         # This is the part forced by the atmosphere, so is a nonlinear
         # upper boundary condition
         Q = sfc_flux(cell, met_data, x[0])
-        residual[0] = k[0] * ((x[0] - x[1]) / dz) - (
+        residual[0] = k0 * ((x[0] - x[1]) / dz) - (
             Q - emissivity * stefan_boltzmann * x[0] ** 4
         )
-    idx = np.arange(1, len(x) - 1)
 
+    T_old = cell["firn_temperature"]
+    dz_sq = dz**2
     # inner columns, linear in x, diffusion
-    residual[idx] = (
-        cell["firn_temperature"][idx]
-        - x[idx]
-        + dt * kappa[idx] * (x[idx + 1] - 2 * x[idx] + x[idx - 1]) / dz**2
-    )
+    # explicit loop here as with Numba this is faster than a vectorised Numpy operation since
+    # fewer allocations, particularly with multiple threads
+    for i in range(1, x.shape[0] - 1):
+        residual[i] = (
+            T_old[i] - x[i] + dt * kappa[i] * (x[i + 1] - 2 * x[i] + x[i - 1]) / dz_sq
+        )
 
     # ghost-cell lower boundary condition
     residual[-1] = (
@@ -164,7 +164,7 @@ def _firn_residual(x, args):
     firn and lid (which have different argument lengths).
     """
     cell, met_data, dz, dt, kappa, k0, fixed_sfc = args
-    return heateqn_firn(x, cell, met_data, dz, dt, fixed_sfc)
+    return heateqn_firn(x, cell, met_data, dz, dt, kappa, k0, fixed_sfc)
 
 
 @kernel()
@@ -173,6 +173,7 @@ def _firn_jacobian(x, args):
     Argument packer for the Jacobian calculation. As with ``_firn_residual``,
     constructing it like this with a wrapper function lets the solver take
     arbitrary number of arguments packed into a single tuple ``args``.
+
     """
     cell, met_data, dz, dt, kappa, k0, fixed_sfc = args
     if fixed_sfc:

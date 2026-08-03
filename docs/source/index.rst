@@ -33,6 +33,7 @@ Contents
    met
    common_errors
    making_changes
+   performance
    structure
    autoapi/index
 

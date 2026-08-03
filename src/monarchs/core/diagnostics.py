@@ -73,12 +73,13 @@ def print_model_end_of_timestep_messages(
     toc = time.perf_counter()
     print("\n*******************************************\n")
     print("End of timestep diagnostics:")
-    if np.isnan(calc_grid_mass(grid)):
+    total_mass = calc_grid_mass(grid)
+    if np.isnan(total_mass):
         raise ValueError(
             "Total mass of grid is NaN. This likely indicates that in the single-column physics "
             "a variable has become undefined due to a divide-by-zero. Check the logs for more details."
         )
-    print(f"Total mass at end of iteration {day + 1} = ", calc_grid_mass(grid))
+    print(f"Total mass at end of iteration {day + 1} = ", total_mass)
     if model_setup.snowfall_toggle and model_setup.catchment_outflow:
         print(
             "Original mass accounting for catchment outflow and snowfall = ",

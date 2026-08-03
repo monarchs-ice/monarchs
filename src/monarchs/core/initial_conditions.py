@@ -243,6 +243,11 @@ def create_model_grid(model_setup, firn_depth, rho, firn_temperature, **override
     }
     # internal overrides passed by the caller (valid_cell, lat/lon, size_dx/dy)
     inputs.update(overrides)
+    # optional turbulent mixing substep from the runscript. read in as a grid field
+    # but active TODO to refactor
+    substep = getattr(model_setup, "turbulent_mixing_substep", None)
+    if substep is not None:
+        inputs["turbulent_mixing_substep"] = substep
     # user-specified initial-condition overrides from the runscript. make_grid
     # validates the keys against the variable catalogue; guard the fields we have
     # already populated from the firn profile / DEM so a stray key can't silently

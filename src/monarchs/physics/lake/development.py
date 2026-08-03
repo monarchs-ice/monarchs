@@ -135,6 +135,24 @@ def radiative_transfer(cell, sw_in):
 
 
 @kernel()
+def turbulent_fluxes(T_core, T_surface, rho_cp_water):
+    """
+    Turbulent heat fluxes into the top and out of the bottom of the lake
+    [W m^-2], both positive downward.
+    """
+    flux_upper = (
+        np.sign(T_surface - T_core)
+        * rho_cp_water
+        * J
+        * abs(T_surface - T_core) ** (4 / 3)
+    )
+    flux_lower = (
+        np.sign(T_core - 273.15) * rho_cp_water * J * abs(T_core - 273.15) ** (4 / 3)
+    )
+    return flux_upper, flux_lower
+
+
+@kernel()
 def turbulent_mixing(cell, sw_in, dt, k):
     """
     The lake has a temperature profile governed by its boundary conditions
@@ -161,57 +179,51 @@ def turbulent_mixing(cell, sw_in, dt, k):
         return 0, 0
     lake_absorbed_solar, radiation_at_bottom = radiative_transfer(cell, sw_in)
 
-    # dt scaling - factor by which you want to scale the temporal resolution
+    # nsteps - calculated via the parameter turbulent_mixing_substep.
+    # this is a factor that scales the temporal resolution
     # of this calculation. the pure Python implementation is very slow
     # (taking up to half of the overall model runtime when not using Numba),
     # as native Python loops are slow.
     # Increasing this value up to the max value (dt) will make the
-    # model run faster, but you increase the likelihood of
-    # numerical instability.
-    dt_scaling = 1
-    nsteps = int(dt / dt_scaling)
+    # model run faster, but at the cost of accuracy.
+    # TODO - make a config parameter, consider alternatives to this calculation?
+    nsteps = int(dt / cell["turbulent_mixing_substep"])
+    if nsteps < 1:
+        nsteps = 1
+    dt_scaling = dt / nsteps
     dh = 0
 
     # volumetric heat capacity of the lake water (cp_water is the ~0 C value)
     # = 1000 * 4181
     rho_cp_water = rho_water * cp_water
+    # JE - have hoisted these lines outside of the loop, lots of repeated
+    # allocations here which slows things down significantly
+    indices = np.arange(1, cell["vert_grid_lake"] - 1)
+    lake_core_temp = cell["lake_temperature"][int(cell["vert_grid_lake"] / 2)]
+    T_surface = cell["lake_temperature"][0]
+    depth = cell["lake_depth"]
+
     for _ in range(nsteps):
-        lake_core_temp = cell["lake_temperature"][int(cell["vert_grid_lake"] / 2)]
-
-        flux_upper = (
-            np.sign(cell["lake_temperature"][0] - lake_core_temp)
-            * rho_cp_water
-            * J
-            * abs(cell["lake_temperature"][0] - lake_core_temp) ** (4 / 3)
+        flux_upper, flux_lower = turbulent_fluxes(
+            lake_core_temp, T_surface, rho_cp_water
         )
-
-        flux_lower = (
-            np.sign(lake_core_temp - 273.15)
-            * rho_cp_water
-            * J
-            * abs(lake_core_temp - 273.15) ** (4 / 3)
-        )
-        # temp change
         # signs - positive downward into lake
+        # adjust core temperature each substep
         temp_change = (flux_upper - flux_lower + lake_absorbed_solar) / (
-            rho_cp_water * cell["lake_depth"]
+            rho_cp_water * depth
         )
-
         lake_core_temp += temp_change * dt_scaling
         net_lower_flux_for_dh = flux_lower + radiation_at_bottom
-        # record energy removed from lake by the bottom flux this substep
-        # (flux_lower positive downward => energy leaving lake if positive)
 
-        # apply mixed core temp to interior nodes
-        indices = np.arange(1, cell["vert_grid_lake"] - 1)
-        cell["lake_temperature"][indices] = lake_core_temp
+    # apply mixed core temp to interior nodes
+    # JE - again, hoist this outside of the loop as it is only used later
+    cell["lake_temperature"][indices] = lake_core_temp
     dh_change, cap_reached = calc_height_adjustment(cell, k, net_lower_flux_for_dh)
     # TODO - dh uses only the final substep's bottom flux - need to accumulate the
     # flux over substeps instead.
     dh += dh_change * dt
     if dh > (cell["firn_depth"] / cell["vert_grid"]):
         dh = cell["firn_depth"] / cell["vert_grid"]
-        # print("Melting entire layer")
     # return both the bottom flux (W/m^2) and the cumulative energy moved there (J/m^2)
     return flux_upper, dh
 
@@ -344,11 +356,13 @@ def calc_height_adjustment(cell, k, Fl):
                 boundary_change = boundary_change_raw
 
             # Raise an error if we have unphysical kdTdz (i.e. firn temperature
-            # below the boundary is warmer than at the boundary)
-            if kdTdz < 0:
-                message = "Error in lake development kdTdz < 0\n"
-                message += f"kdTdz = {kdTdz}\n"
-                generic_error(cell, routine_name, message)
+            # below the boundary is warmer than at the boundary), within rounding
+            # tolerance
+            if kdTdz < -1e-4:
+                # a float interpolated into an f-string renders as its type in
+                # nopython mode, so print the value alongside instead
+                print("Error in lake development - kdTdz =", kdTdz)
+                generic_error(cell, routine_name, "Error in lake development kdTdz < 0")
 
             cell["lake_boundary_change"] += boundary_change
             cell["firn_boundary_change"] -= boundary_change

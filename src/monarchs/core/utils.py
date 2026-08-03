@@ -85,27 +85,14 @@ def get_2d_grid(grid, attr, index=False, mask_invalid=False):
     if index is False:
         index = 0
 
-    valid_mask = None
+    arr = grid[attr]
+
     dtype_names = getattr(grid.dtype, "names", None)
     if mask_invalid and dtype_names is not None and "valid_cell" in dtype_names:
-        valid_mask = grid["valid_cell"]
-
-    out = []
-    for row_idx, row in enumerate(grid):
-        out_row = []
-        for col_idx, _ in enumerate(row):
-            value = grid[attr][row_idx][col_idx]
-
-            if valid_mask is not None and (not valid_mask[row_idx][col_idx]):
-                if isinstance(value, np.ndarray):
-                    value = np.full(value.shape, np.nan, dtype=float)
-                else:
-                    value = np.nan
-
-            out_row.append(value)
-        out.append(out_row)
-
-    arr = np.array(out)
+        # astype float so we catch nans, and so the grid itself is
+        # never written to (copy not a view)
+        arr = arr.astype(float)
+        arr[~grid["valid_cell"]] = np.nan
 
     if index == "all":
         return arr

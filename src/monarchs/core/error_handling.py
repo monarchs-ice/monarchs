@@ -1,6 +1,6 @@
 import numpy as np
 from monarchs.core.utils import calc_mass_sum
-from monarchs.core.kernels import kernel, objmode
+from monarchs.core.kernels import kernel, objmode, prange
 
 
 @kernel()
@@ -68,13 +68,14 @@ def generic_error(cell, routine_name, message):
     -------
     None
     """
+    cell["error_flag"] = 1
     with objmode:
         r = int(cell["row"])
         c = int(cell["column"])
         print(f"{routine_name} - ERROR at [{r}, {c}]: {message}")
-        cell["error_flag"] = 1
 
 
+@kernel(parallel=True)
 def calc_grid_mass(grid):
     """
     Calculate the total mass inside the grid, to check for mass conservation.
@@ -90,10 +91,12 @@ def calc_grid_mass(grid):
     total_mass : float
         Total mass of the whole grid, in arbitrary units.
     """
-    total_mass = 0
+    total_mass = 0.0
 
-    for row in grid:
-        for cell in row:
+    # pylint: disable=not-an-iterable
+    for row in prange(grid.shape[0]):
+        for col in range(grid.shape[1]):
+            cell = grid[row][col]
             if cell["valid_cell"]:
                 total_mass += calc_mass_sum(cell)
     return total_mass
@@ -114,22 +117,22 @@ def check_for_single_column_errors(grid):
     bool
         True if any cell has error_flag == 1, False otherwise.
     """
-    flag = False
-    for row in grid:
-        for cell in row:
-            if cell["error_flag"] == 1:
-                print("----------------------------------------")
-                print("monarchs.core.utils.check_for_single_column_errors:")
-                print(
-                    "Error detected in cell at [",
-                    int(cell["row"]),
-                    ",",
-                )
-                print(" ", int(cell["column"]), "]")
-                print("after the single-column physics step. ")
-                print("Check the output logs for details on the error.")
-                flag = True
-    return flag
+    # array mask for failed cells
+    failed = grid["error_flag"] == 1
+    if not failed.any():
+        return False
+    for cell in grid[failed]:
+        print("----------------------------------------")
+        print("monarchs.core.utils.check_for_single_column_errors:")
+        print(
+            "Error detected in cell at [",
+            int(cell["row"]),
+            ",",
+        )
+        print(" ", int(cell["column"]), "]")
+        print("after the single-column physics step. ")
+        print("Check the output logs for details on the error.")
+    return True
 
 
 @kernel()
@@ -210,11 +213,10 @@ def check_correct(cell):
         )
 
 
+@kernel(parallel=True)
 def check_grid_correctness(grid):
     """
     Wraps check_correct for each cell in the grid.
-    We do not run in parallel, as there are issues with error
-    handling inside numba prange loops.
 
     Parameters
     ----------
@@ -224,7 +226,7 @@ def check_grid_correctness(grid):
     -------
 
     """
-
-    for i in range(len(grid)):  # pylint: disable=not-an-iterable
-        for j in range(len(grid[0])):
+    # pylint: disable=not-an-iterable
+    for i in prange(grid.shape[0]):
+        for j in range(grid.shape[1]):
             check_correct(grid[i][j])

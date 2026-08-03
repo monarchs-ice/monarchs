@@ -63,15 +63,11 @@ def conservative_regrid(old_edges, old_values, new_edges):
     old_mass_cum[1:] = np.cumsum(old_values * old_dz)
 
     # interpolate the cumulative sum of the masses onto the new grid.
-    # our function is piecewise constant, so this interpolation is exact
-    new_values = np.zeros(len(new_edges) - 1)
-    for i in range(len(new_values)):
-        z0, z1 = new_edges[i], new_edges[i + 1]
-        m0 = np.interp(z0, old_edges, old_mass_cum)
-        m1 = np.interp(z1, old_edges, old_mass_cum)
-        dz = z1 - z0
-        new_values[i] = (m1 - m0) / dz if dz > 0 else 0.0
-    return new_values
+    # have changed this to be vectorised as previously was doing np.interp
+    # a scalar, which adds a lot of overhead
+    mass = np.interp(new_edges, old_edges, old_mass_cum)
+    dz = np.diff(new_edges)
+    return np.where(dz > 0, np.diff(mass) / dz, 0.0)
 
 
 @kernel()
@@ -173,7 +169,7 @@ def regrid_after_melt(cell, height_change, lake=False):
     old_depth = float(cell["firn_depth"])
     nz = int(cell["vert_grid"])
 
-    if height_change > old_depth:
+    if height_change >= old_depth:
         message = (
             f"Height change must be less than the column depth. Got {height_change}"
         )

@@ -86,6 +86,9 @@ artifacts = [
 testpaths = ["tests"]
 minversion = "7"
 addopts = ["-ra", "--strict-config", "--strict-markers"]
+markers = [
+    "slow: long-running tests (whole model runs); deselect with -m 'not slow'",
+]
 xfail_strict = true
 log_cli_level = "INFO"
 filterwarnings = [

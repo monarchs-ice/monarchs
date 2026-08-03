@@ -272,20 +272,20 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
         cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
 
         cell["t_step"] += 1
-        # Update vertical profile to ensure we account for any firn depth
-        # changes
-        cell["vertical_profile"] = np.linspace(0, cell["firn_depth"], cell["vert_grid"])
     # If firn depth goes below 5, then we now consider this cell to be
     # invalid. This prevents situations where points where water concentrates
     # and melts through the firn column causing the whole model to crash.
     # Update - this now *will* cause the model to crash, in driver.py where we
     # traverse valid cells, but this is probably desirable since this indicates
     # the potential for unphysical conditions.
+
     if cell["firn_depth"] < 5:
         print("Firn depth below 5 m - setting cell to invalid")
         print("Location of firn depth below 5 m - ", cell["row"], cell["column"])
         cell["valid_cell"] = False
 
     cell["day"] += 1
-
+    # Update the vertical profile to ensure we account for any firn depth changes
+    # Do this once per day as we only ever use this in the lateral flow calculation
+    cell["vertical_profile"] = np.linspace(0, cell["firn_depth"], cell["vert_grid"])
     return cell

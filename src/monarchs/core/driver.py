@@ -141,6 +141,9 @@ def single_column_step(
     met_data_grid = np.moveaxis(met_data_grid, 0, -1)
 
     visit_grid = np.copy(grid["visit_count"])
+    # timestep_loop bumps visit_count before it checks valid_cell, so cells the
+    # loop skips still need theirs incremented
+    grid["visit_count"][~grid["valid_cell"]] += 1
     grid = loop_over_grid(
         model_setup.row_amount,
         model_setup.col_amount,
@@ -169,22 +172,19 @@ def validate_visits(grid, visit_grid):
     """Check that each valid cell was visited exactly once this day.
     This ensures that the model does not silently give incorrect results if
     a gridcell exits early due to e.g. a numerical error"""
-    visit_flag = False
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            if grid[i][j]["valid_cell"] and (
-                grid[i][j]["visit_count"] != visit_grid[i][j] + 1
-            ):
-                logger.error(
-                    "i = %s j = %s old visit count = %s new visit count = %s",
-                    i,
-                    j,
-                    visit_grid[i][j],
-                    grid[i][j]["visit_count"],
-                )
-                visit_flag = True
-    if visit_flag:
-        raise ValueError("Cells not being visited in single-column physics step")
+    bad = grid["valid_cell"] & (grid["visit_count"] != visit_grid + 1)
+    if not bad.any():
+        return
+    # vectorised now rather than explicit double loop as this is not @kernel
+    for i, j in np.argwhere(bad):
+        logger.error(
+            "i = %s j = %s old visit count = %s new visit count = %s",
+            i,
+            j,
+            visit_grid[i][j],
+            grid[i][j]["visit_count"],
+        )
+    raise ValueError("Cells not being visited in single-column physics step")
 
 
 def lateral_movement_step(grid, model_setup):
@@ -212,13 +212,22 @@ def lateral_movement_step(grid, model_setup):
 
 
 def write_outputs(
-    model_setup, grid, day, output_counter, output_grid_size, met_start_idx, met_end_idx
+    model_setup,
+    grid,
+    day,
+    output_counter,
+    output_grid_size,
+    met_start_idx,
+    met_end_idx,
 ):
     """
     End-of-day writes: restart checkpoint, time-series output, and any extra
     numbered checkpoints. Returns the updated output counter.
     """
-    if model_setup.dump_data and day % model_setup.dump_timestep == 0:
+    dumping = model_setup.dump_data and day % model_setup.dump_timestep == 0
+    saving = model_setup.save_output and day % model_setup.output_timestep == 0
+
+    if dumping:
         print(f"Dumping model state to {model_setup.dump_filepath}...")
         with Timer("Dumping model state"):
             write_checkpoint(
@@ -229,7 +238,7 @@ def write_outputs(
                 model_setup=model_setup,
             )
 
-    if model_setup.save_output and day % model_setup.output_timestep == 0:
+    if saving:
         with Timer("Updating model output"):
             output_counter += 1
             append_output(
@@ -388,6 +397,39 @@ def run_model(model_setup, grid):
         )
         print(f"Serial time total: {time.perf_counter() - serial_start:.2f}s")
         print(f"Total time for day {day + 1}: {time.perf_counter() - day_start:.2f}s")
+
+    # dump state at the end of the model run regardless of
+    # dump frequency (if remainder !=0 wouldnt dump otherwise)
+    final_day = model_setup.num_days - 1
+    loop_ran = final_day >= first_iteration
+    if (
+        model_setup.dump_data
+        and loop_ran
+        and final_day % model_setup.dump_timestep != 0
+    ):
+        print(f"Writing final model state to {model_setup.dump_filepath}...")
+        write_checkpoint(
+            model_setup.dump_filepath,
+            grid,
+            met_start_idx,
+            met_end_idx,
+            model_setup=model_setup,
+        )
+    # likewise with output file
+    if (
+        model_setup.save_output
+        and loop_ran
+        and final_day % model_setup.output_timestep != 0
+    ):
+        print(f"Writing final model output to {model_setup.output_filepath}...")
+        output_counter += 1
+        append_output(
+            model_setup.output_filepath,
+            grid,
+            output_counter,
+            vars_to_save=model_setup.vars_to_save,
+            vert_grid_size=output_grid_size,
+        )
 
     print("\n*******************************************\n")
     print("MONARCHS has finished running successfully!")

@@ -24,5 +24,7 @@ def setup_cell():
     cell["lake_boundary_change"] = 0.0
     cell["firn_boundary_change"] = 0.0
     cell["lid_boundary_change"] = 0.0
+    # highest resolution turbulent mixing substep
+    cell["turbulent_mixing_substep"] = 1.0
 
     return cell

@@ -20,6 +20,10 @@ SOLVER_TOL = 1e-10
 SOLVER_MAXITER = 60
 # finite-differencing step size for surface flux jacobians
 DQ_DT_STEP = 1e-3
+# largest surface-temperature change allowed in one Newton step
+# this stops the estimate from overshooting, which reduces the number of
+# iterations needed
+SOLVER_MAX_SFC_STEP = 20
 # tolerances/parameters for the Newton-Raphson solver used for the
 # SEB
 FTOL = 1e-11
@@ -43,21 +47,20 @@ def solve_tridiagonal(a, b, c, d):
     """
 
     n = np.shape(d)[0]
-    # Copy to avoid modifying input arrays
+    # don't need to copy c as it only ever read, so avoid one extra array allocation
     bc = b.copy()
-    cc = c.copy()
     dc = d.copy()
     # Forward elimination
     for i in range(1, n):
         m = a[i - 1] / bc[i - 1]
-        bc[i] -= m * cc[i - 1]
+        bc[i] -= m * c[i - 1]
         dc[i] -= m * dc[i - 1]
 
     # Back substitution
     x = np.zeros(n)
     x[-1] = dc[-1] / bc[-1]
     for i in range(n - 2, -1, -1):
-        x[i] = (dc[i] - cc[i] * x[i + 1]) / bc[i]
+        x[i] = (dc[i] - c[i] * x[i + 1]) / bc[i]
 
     return x
 
@@ -177,5 +180,11 @@ def newton_tridiagonal(residual, jacobian, x0, args):
             success = True
             break
         a, b, c = jacobian(x, args)
-        x += solve_tridiagonal(a, b, c, -fvec)
+        step = solve_tridiagonal(a, b, c, -fvec)
+
+        # limit step size to stop estimate from overshooting
+        # this saves iterations in almost all cases
+        if np.abs(step[0]) > SOLVER_MAX_SFC_STEP:
+            step = step * (SOLVER_MAX_SFC_STEP / np.abs(step[0]))
+        x += step
     return np.around(x, decimals=8), success, n_iter

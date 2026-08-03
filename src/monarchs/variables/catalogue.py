@@ -132,6 +132,18 @@ CATALOGUE = [
         group="fixed values",
     ),
     Variable(
+        name="turbulent_mixing_substep",
+        dtype=FLOAT,
+        dim=SCALAR,
+        default_value=60.0,
+        units="s",
+        long_name="Lake turbulent-mixing substep",
+        description="Substepping for the turbulent mixing routine. Check the description in the "
+        "config schema for more details.",
+        group="fixed values",
+        output=False,
+    ),
+    Variable(
         name="lat",
         dtype=FLOAT,
         dim=SCALAR,

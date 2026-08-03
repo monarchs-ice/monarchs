@@ -108,8 +108,10 @@ def loop_over_grid(
     -------
     None. The function amends the instance of <grid> passed to it.
     """
-    flat_grid = grid.flatten()
+    flat_grid = grid.reshape(row_amount * col_amount)
     met_data_grid = met_data
+    # only step valid cells
+    cell_order = np.flatnonzero(flat_grid["valid_cell"])
     if parallel:
         # Dynamic chunk size for load balancing
         chunksize = max(1, len(flat_grid) // (ncores * 2))
@@ -184,7 +186,7 @@ def loop_over_grid(
 
     # Sequential version - with inplace modification
     else:
-        for i in range(row_amount * col_amount):
+        for i in cell_order:
             timestep_loop(
                 flat_grid[i],
                 dt,
@@ -192,5 +194,5 @@ def loop_over_grid(
                 t_steps_per_day,
                 toggle_dict,
             )
-        grid[:] = flat_grid.reshape(grid.shape)
+        # flat_grid is a view of grid, so the updates are already in place
         return grid

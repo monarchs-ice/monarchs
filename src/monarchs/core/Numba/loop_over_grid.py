@@ -75,21 +75,28 @@ def loop_over_grid_numba(
         nthreads = numba.config.NUMBA_DEFAULT_NUM_THREADS  # pylint: disable=no-member
 
     numba.set_num_threads(nthreads)
-    # append everything to a new 1D instance of a Numba typed list, flatten,
-    # and loop over that.
-    flat_grid = grid.flatten()
+    # was previously flatten, use reshape as it avoids a memory copy,
+    # which doubles the memory use of the model and messes up locality
+    # don't need to reshape back as the original elements in [row][col] are
+    # pointers to the same elements in the flattened array
+    flat_grid = grid.reshape(row_amount * col_amount)
+    # only run timesteps in valid cells - get the indices of these
+    cell_order = np.flatnonzero(flat_grid["valid_cell"])
     # disable linting for prange not being an iterable as it is
     # when running with use_numba=True as it is decorated with
     # jit in driver.py at runtime (this lets us determine whether
     # the user wants to run in parallel or not, e.g. if running
     # on a shared machine without a scheduler)
     # pylint: disable=not-an-iterable
-    for i in prange(row_amount * col_amount):
+    for i in prange(cell_order.shape[0]):
+        # this basically handles chunking for valid cells only
+        j = cell_order[i]
         timestep_loop(
-            flat_grid[i],
+            flat_grid[j],
             dt,
-            met_data[i],
+            met_data[j],
             t_steps_per_day,
             toggle_dict,
         )
-    return np.reshape(flat_grid, (row_amount, col_amount))  # reshape
+    # flat_grid is a view, so grid has already been updated in place
+    return grid

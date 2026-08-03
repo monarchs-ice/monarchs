@@ -18,10 +18,6 @@ need to be included, the appropriate validator should be set here to ensure
 that it is included. We also include a message to raise if this is the case.
 
 The cross-setting consistency checks (`RULES`) live in `rules.py`.
-
-Both `Setting` and `Rule` are keyword-only, so every row reads as
-``Setting(name=..., dtype=..., ...)`` - clearer than a run of positional
-arguments.
 """
 
 import numpy as np
@@ -67,6 +63,18 @@ SETTINGS = [
     # Timestepping
     Setting(name="num_days", dtype=int, default=REQUIRED, group="timestepping"),
     Setting(name="t_steps_per_day", dtype=int, default=24, group="timestepping"),
+    Setting(
+        name="turbulent_mixing_substep",
+        dtype=float,
+        default=60.0,
+        group="timestepping",
+        validator=lambda v: v > 0.0,
+        validator_doc="greater than 0",
+        description="Turbulent mixing substep. Turbulent mixing is one of the slowest "
+        "parts of the model, since it runs on (up to) a 3600 second substep for "
+        "each model day. This defaults to 60 seconds, but if accuracy is important "
+        "then set this to 3600 - this will however slow lake days down significantly.",
+    ),
     Setting(
         name="lateral_timestep",
         dtype=int,
@@ -257,7 +265,17 @@ SETTINGS = [
         group="io",
         default_doc="vertical_points_firn",
     ),
-    Setting(name="output_timestep", dtype=int, default=1, group="io"),
+    Setting(
+        name="output_timestep",
+        dtype=int,
+        default=30,
+        group="io",
+        description=(
+            "Days between time-series output steps. `time` is a dimension here "
+            "(measured in days since the start of the model, and the final timestep "
+            "is always output regardless. Defaults to 30, i.e. monthly."
+        ),
+    ),
     Setting(
         name="vars_to_save",
         dtype=tuple,
@@ -282,7 +300,16 @@ SETTINGS = [
         description="Where checkpoints are written (required if dump_data/reload_from_dump).",
     ),
     Setting(name="dump_format", dtype=str, default="NETCDF4", group="io"),
-    Setting(name="dump_timestep", dtype=int, default=1, group="io"),
+    Setting(
+        name="dump_timestep",
+        dtype=int,
+        default=30,
+        group="io",
+        description=(
+            "Days between restart checkpoints. The final day of a run is always"
+            " written regardless. Defaults to 30, i.e. monthly."
+        ),
+    ),
     Setting(name="dump_checkpoint_frequency", dtype=int, default=False, group="io"),
     Setting(
         name="dump_data_pre_lateral_movement", dtype=bool, default=False, group="io"
