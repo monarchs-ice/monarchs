@@ -1,9 +1,8 @@
 """
-Shared helpers for rendering catalogue-derived Markdown reference tables.
+Functions for rendering catalogue-derived Markdown reference tables.
 
-Pure formatting with no ``monarchs`` imports, so every catalogue docs module
-(``config.docs``, ``variables.docs``, ``met_data.docs``) can build its reference
-from the same base without coupling those packages to one another.
+This just handles the formatting. The actual content is defined via the
+relevant `docs.py` in the `variables`, `config` and `met_data` submodules.
 """
 
 

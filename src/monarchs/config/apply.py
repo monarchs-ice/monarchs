@@ -16,6 +16,7 @@ from monarchs.config.catalogue import SETTINGS
 from monarchs.config.rules import RULES
 from monarchs.config.definitions import REQUIRED, UNSET, dtype_name, type_matches
 
+
 # Create a dataclass based on the parameters in the catalogue.
 # frozen=True makes it immutable, i.e. the configuration at
 # the start of a run cant be changed later on
@@ -26,10 +27,27 @@ Config = dataclasses.make_dataclass(
 )
 
 
-def check_rules(model_setup, rules=RULES):
+def check_required(model_setup):
+    """
+    Check that every REQUIRED setting is present, reporting all missing fields
+    """
+    func_name = "monarchs.config.apply.check_required"
+    missing = [
+        setting.name
+        for setting in SETTINGS
+        if setting.default is REQUIRED and not hasattr(model_setup, setting.name)
+    ]
+    if missing:
+        raise AttributeError(
+            f"{func_name}: model_setup is missing required setting(s) {missing} -"
+            " these have no defaults and must be specified in your runscript."
+        )
+
+
+def check_rules(model_setup):
     """Run the cross-setting rules, raise (or warn) on the first violation."""
     func_name = "monarchs.config.apply.check_rules"
-    for rule in rules:
+    for rule in RULES:
         # failed_when is the condition we are testing
         # against, defined by the lambda function
         # at the start of the Rule
@@ -42,11 +60,11 @@ def check_rules(model_setup, rules=RULES):
                 raise rule.error(f"{func_name}: {rule.message}")
 
 
-def check_settings(model_setup, settings=SETTINGS):
+def check_settings(model_setup):
     """Validate the settings the user provided against choices/validators."""
     func_name = "monarchs.config.apply.check_settings"
 
-    for setting in settings:
+    for setting in SETTINGS:
         # ignore unpresent settings
         if not hasattr(model_setup, setting.name):
             continue
@@ -73,7 +91,7 @@ def check_settings(model_setup, settings=SETTINGS):
             )
 
 
-def fill_defaults(model_setup, settings=SETTINGS):
+def fill_defaults(model_setup):
     """
     Set catalogue defaults for any missing settings, resolving computed
     defaults in catalogue order. Raises if a REQUIRED setting is missing.
@@ -81,7 +99,7 @@ def fill_defaults(model_setup, settings=SETTINGS):
     func_name = "monarchs.config.apply.fill_defaults"
     missing_required = []
     filled = []  # (name, reported default) collected for a single summary below
-    for setting in settings:
+    for setting in SETTINGS:
         # if it is present in the setup then just move on
         if hasattr(model_setup, setting.name):
             continue
@@ -130,13 +148,16 @@ def fill_defaults(model_setup, settings=SETTINGS):
 
 def configure(model_setup):
     """
-    Run the setup pipeline. Check for issues with conflicting settings,
-    check they are valid, fill in default values into the settings list
-    if missing, and then build the dataclass from the result.
+    Run the setup pipeline and return the frozen Config.
+
+    check_settings runs twice - once over the values the user supplied, and
+    again once the defaults (including the computed ones) are in place.
     """
-    check_rules(model_setup)
+    check_required(model_setup)
     check_settings(model_setup)
+    check_rules(model_setup)
     fill_defaults(model_setup)
+    check_settings(model_setup)
     # TODO - describe syntax here
     config = Config(
         **{

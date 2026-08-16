@@ -3,6 +3,7 @@
 # TODO - docstrings, module-level docstring
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 import numpy as np
+from monarchs.met_data.catalogue import MET_CATALOGUE
 from monarchs.met_data.import_ERA5 import (
     ERA5_to_variables,
     grid_subset,
@@ -161,7 +162,7 @@ def process_year(model_setup, year, index, lat_array, lon_array):
         # - fine_lat has length col_amount
         # - fine_lon has length row_amount
         coarse_lat = np.asarray(era5_vars["lat"])
-        coarse_lon = np.asarray(era5_vars["long"])
+        coarse_lon = np.asarray(era5_vars["lon"])
 
         if coarse_lat.ndim != 1 or coarse_lon.ndim != 1:
             raise ValueError(
@@ -205,14 +206,13 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     Write ERA5 data to the met netCDF. This data is either index-mapped or
     interpolated to obtain values on the MONARCHS model grid.
 
-    On the first call (``start_index == 0``) the index maps and fine-grid
-    lat / lon are written as static variables so that
-    ``update_met_conditions`` can reconstruct the full model-grid arrays
-    without storing one value per fine cell.
+    On the first call (``start_index == 0``) the index maps and the per-cell
+    lat / lon are written as static variables, so that ``update_met_conditions``
+    can reconstruct the full model-grid arrays without the file having to store
+    one met value per fine cell.
 
-    Supports both 1-D index maps (separable regular grid) and 2-D index maps
-    (e.g. from get_met_bounds_from_DEM). When 2-D, also writes
-    cell_latitude and cell_longitude from fine_lat/fine_lon for the reader.
+    Index maps are 1-D for a separable regular grid, or 2-D from
+    get_met_bounds_from_DEM.
     """
     routine_name = "write_to_netcdf"
     start_index = int(start_index)
@@ -231,7 +231,7 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
     # Keys that require special handling or are stored separately.
     SKIP_KEYS = {
         "lat",
-        "long",
+        "lon",
         "time",
         "lat_idx",
         "lon_idx",
@@ -250,7 +250,7 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
                 coarse_lon_1d = era5_grid["coarse_lon"]
             else:
                 coarse_lat_1d = np.asarray(era5_grid["lat"])
-                coarse_lon_1d = np.asarray(era5_grid["long"])
+                coarse_lon_1d = np.asarray(era5_grid["lon"])
                 if coarse_lat_1d.ndim > 1 or coarse_lon_1d.ndim > 1:
                     raise ValueError(
                         f"{MODULE_NAME}.{routine_name}: expected 1-D coarse lat/lon. "
@@ -290,22 +290,14 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
                 "ERA5 coarse longitude",
             )
 
-            # fine-grid coords + index maps: 2-D (fine_row, fine_col) for DEM
-            # maps, else 1-D (fine_col for latitude, fine_row for longitude)
+            # index maps: 2-D (fine_row, fine_col) from a DEM, else 1-D and
+            # separable (one coarse-lat index per column, one lon per row)
             spatial = ("fine_row", "fine_col")
-            lat_dims = spatial if is_2d else ("fine_col",)
-            lon_dims = spatial if is_2d else ("fine_row",)
-            _write_var(
-                f, "fine_lat", "f8", lat_dims, fine_lat, "Model grid latitude (fine)"
-            )
-            _write_var(
-                f, "fine_lon", "f8", lon_dims, fine_lon, "Model grid longitude (fine)"
-            )
             _write_var(
                 f,
                 "lat_idx",
                 "i4",
-                lat_dims,
+                spatial if is_2d else ("fine_col",),
                 lat_idx,
                 "Nearest coarse-lat index per fine column/cell",
             )
@@ -313,23 +305,21 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
                 f,
                 "lon_idx",
                 "i4",
-                lon_dims,
+                spatial if is_2d else ("fine_row",),
                 lon_idx,
                 "Nearest coarse-lon index per fine row/cell",
             )
-            if is_2d:
-                # 2-D maps also store the full per-cell coordinates for the reader
-                _write_var(
-                    f, "cell_latitude", "f8", spatial, fine_lat, "Latitude of grid cell"
-                )
-                _write_var(
-                    f,
-                    "cell_longitude",
-                    "f8",
-                    spatial,
-                    fine_lon,
-                    "Longitude of grid cell",
-                )
+            # per-cell coordinates, always 2-D so the reader has one shape to
+            # handle. 1-D axes broadcast: latitude varies along the columns,
+            # longitude along the rows.
+            if not is_2d:
+                fine_lat, fine_lon = np.meshgrid(fine_lat, fine_lon)
+            _write_var(
+                f, "cell_latitude", "f8", spatial, fine_lat, "Latitude of grid cell"
+            )
+            _write_var(
+                f, "cell_longitude", "f8", spatial, fine_lon, "Longitude of grid cell"
+            )
 
         # Time-varying met variables at coarse resolution
         for key, value in era5_grid.items():
@@ -347,7 +337,7 @@ def write_to_netcdf(era5_grid_path, era5_grid, model_setup, start_index=0):
                 f.variables[key][start_index:end_index] = value
 
 
-def prescribed_met_data(model_setup):
+def prescribed_met_data(model_setup, lat_array=None, lon_array=None):
     """
     Create a netCDF file using the prescribed met data defined in ``model_setup``
     rather than ERA5.
@@ -355,6 +345,10 @@ def prescribed_met_data(model_setup):
     Full-grid prescribed data are written directly on the MONARCHS model grid:
     - time-varying variables use dimensions (time, row, column)
     - optional cell_latitude / cell_longitude use dimensions (row, column)
+
+    Coordinates come from the ``lat``/``lon`` keys of ``met_data``, so the
+    lat_array / lon_array arguments (part of the source interface, see
+    monarchs.met_data.sources) are unused here.
 
     If prescribing a snow amount, make sure this is defined in metres and not
     MWE.
@@ -374,11 +368,17 @@ def prescribed_met_data(model_setup):
         else:
             met_data[key] = np.full(default_shape, fill_value)
 
-    # if we have coords great, else ignore
-    if "lat" not in met_data and "latitude" in met_data:
-        met_data["lat"] = met_data["latitude"]
-    if "long" not in met_data and "longitude" in met_data:
-        met_data["long"] = met_data["longitude"]
+    # reject unrecognised met data keys from the model setup (just accept
+    # what is defined in the catalogue)
+    known = {var.name for var in MET_CATALOGUE}
+    unknown = sorted(set(met_data) - known - {"time"})
+    if unknown:
+        raise KeyError(
+            f"{MODULE_NAME}.{func_name}: unrecognised key(s) {unknown} in"
+            " model_setup.met_data. Prescribed met data must use the met"
+            f" catalogue field names: {sorted(known)} (see"
+            " monarchs.met_data.catalogue)."
+        )
 
     # check snow density exists
     ensure_key(
@@ -401,7 +401,7 @@ def prescribed_met_data(model_setup):
             if key == "time":
                 continue
 
-            if key == "long":
+            if key == "lon":
                 var = f.createVariable("cell_longitude", "f8", ("row", "column"))
                 var.long_name = "Longitude of grid cell"
                 var[:] = value

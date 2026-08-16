@@ -12,7 +12,7 @@ import numpy as np
 from monarchs.core import initial_conditions
 from monarchs.io import read_checkpoint
 from monarchs.variables import build_dtype
-from monarchs.met_data import setup_met_data
+from monarchs.met_data import sources
 
 
 def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
@@ -32,10 +32,7 @@ def check_for_reload_from_dump(model_setup, grid, met_start_idx, met_end_idx):
     """
     # TODO - add support for reloading from pickle
 
-    if getattr(model_setup, "dump_filepath", None) is not None:
-        reload_name = model_setup.dump_filepath
-    else:
-        reload_name = ""
+    reload_name = model_setup.dump_filepath if model_setup.dump_filepath else ""
 
     if model_setup.reload_from_dump:
         print("Reloading state from dump...")
@@ -86,7 +83,6 @@ def initialise_model_data(model_setup):
     Wrapper function that calls various initialisation functions to set up
     MONARCHS.
     """
-    func_name = "monarchs.core.driver.initialise_model_data"
     # Load in the initial firn profile (from a DEM or a user-defined firn depth).
     (
         firn_temperature,
@@ -101,37 +97,15 @@ def initialise_model_data(model_setup):
         model_setup, diagnostic_plots=model_setup.dem_diagnostic_plots
     )
     # DEM-derived coordinates are only used when lat_bounds == "dem". Otherwise
-    # fall back to NaN for the met interpolation, and leave the grid lat/lon at
-    # their catalogue default (see create_model_grid below).
-    use_dem_coords = (
-        isinstance(model_setup.lat_bounds, str)
-        and model_setup.lat_bounds.lower() == "dem"
-    )
+    # fall back to NaN and leave the grid lat/lon as default values from the catalogue
+    use_dem_coords = model_setup.lat_bounds == "dem"
     if not use_dem_coords:
         lat_array = np.full((model_setup.row_amount, model_setup.col_amount), np.nan)
         lon_array = np.full((model_setup.row_amount, model_setup.col_amount), np.nan)
 
-    # Set up meteorological data, from either ERA5-format input ("ERA5") or
-    # user-defined values from their model configuration ("user_defined")
-    if model_setup.met_data_source == "ERA5":
-        setup_met_data_flag = True
-        if model_setup.load_precalculated_met_data:
-            print(f"{func_name}: Loading in pre-calculated MONARCHS format met data")
-            # check the file actually exists first
-            if not os.path.exists(model_setup.met_output_filepath):
-                print(
-                    f"{func_name}: Pre-calculated met data file"
-                    f" {model_setup.met_output_filepath} does not exist."
-                    " Calculating from raw ERA5 data instead."
-                )
-                setup_met_data_flag = True
-            else:
-                setup_met_data_flag = False
-
-        if setup_met_data_flag:
-            setup_met_data.met_data_from_era5(model_setup, lat_array, lon_array)
-    elif model_setup.met_data_source == "user_defined":
-        setup_met_data.prescribed_met_data(model_setup)
+    # Write the met netCDF the run reads from, using whichever forcing source
+    # the setup specifies (see monarchs.met_data.sources)
+    sources.prepare_met_data(model_setup, lat_array, lon_array)
 
     # Write all of the initial ice shelf values into the model grid. Only pass
     # DEM-derived coordinates; without a DEM lat/lon fall back to the catalogue

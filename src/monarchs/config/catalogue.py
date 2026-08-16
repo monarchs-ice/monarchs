@@ -2,11 +2,11 @@
 The MONARCHS settings catalogue.
 
 Similarly to the variable catalogue (`monarchs.variables.catalogue`), this
-defines all of the settings that the user can define in a setup script to
+defines all the settings that the user can define in a setup script to
 be passed into the model. The aim is to have one centralised place where
 we define all settings, and then all application of these settings (putting
 them into a format the model understands) and documentation is generated
-purely from this one place.
+from this one place.
 
 Each setting is a `Setting` object - which defines the allowed type(s) of the
 setting (e.g. True/False, a number or a string), a default value,
@@ -18,15 +18,12 @@ need to be included, the appropriate validator should be set here to ensure
 that it is included. We also include a message to raise if this is the case.
 
 The cross-setting consistency checks (`RULES`) live in `rules.py`.
-
-Both `Setting` and `Rule` are keyword-only, so every row reads as
-``Setting(name=..., dtype=..., ...)`` - clearer than a run of positional
-arguments.
 """
 
 import numpy as np
 
 from monarchs.config.definitions import REQUIRED, UNSET, Setting
+from monarchs.config.rules import MET_SOURCE_INPUTS
 from monarchs.config.computed_defaults import (
     lat_grid_size,
     lateral_timestep,
@@ -34,8 +31,7 @@ from monarchs.config.computed_defaults import (
     output_grid_size,
 )
 
-# default set of grid fields written to the output netCDF (kept out of the
-# Setting row below so that row stays readable)
+# default set of grid fields written to the output netCDF
 _DEFAULT_VARS_TO_SAVE = (
     "firn_temperature",
     "Sfrac",
@@ -101,6 +97,7 @@ SETTINGS = [
         dtype=str,
         default=UNSET,
         group="dem",
+        choices=("dem",),
         description="Set to 'dem' to take the lat/long bounds from the DEM.",
     ),
     # Initial conditions
@@ -131,8 +128,8 @@ SETTINGS = [
         group="initial conditions",
         description="Optional {grid variable: value} overrides applied when building"
         " the initial grid, e.g. {'lake_depth': 0.5}. Keys must be names from the"
-        " variable catalogue (monarchs.variables); scalars broadcast over the grid,"
-        " arrays set per-cell or per-layer profiles.",
+        " variable catalogue (monarchs.variables), with appropriate values (scalar"
+        " or array depending on the field).",
     ),
     # Met data
     Setting(
@@ -140,7 +137,11 @@ SETTINGS = [
         dtype=str,
         default=met_data_source,
         group="met",
-        default_doc="'ERA5' or 'user_defined', inferred from the inputs",
+        choices=tuple(MET_SOURCE_INPUTS),
+        default_doc="inferred from the input given - 'ERA5' for met_input_filepath,"
+        " 'user_defined' for met_data",
+        description="Format of the meteorological forcing. Each source reads its own"
+        " input setting and is built by monarchs.met_data.sources.",
     ),
     Setting(name="met_timestep", dtype=str, default="hourly", group="met"),
     Setting(
@@ -172,7 +173,7 @@ SETTINGS = [
         group="met",
         description="Multiplier applied to downwelling SW/LW (testing only; 1 = no forcing).",
     ),
-    # Physics toggles (debug switches - True for normal operation)
+    # Physics toggles (debug switches)
     Setting(
         name="snowfall_toggle",
         dtype=bool,
@@ -281,9 +282,14 @@ SETTINGS = [
         group="io",
         description="Where checkpoints are written (required if dump_data/reload_from_dump).",
     ),
-    Setting(name="dump_format", dtype=str, default="NETCDF4", group="io"),
     Setting(name="dump_timestep", dtype=int, default=1, group="io"),
-    Setting(name="dump_checkpoint_frequency", dtype=int, default=False, group="io"),
+    Setting(
+        name="dump_checkpoint_frequency",
+        dtype=int,
+        default=0,
+        group="io",
+        description="Write an extra numbered checkpoint every N days. 0 = off.",
+    ),
     Setting(
         name="dump_data_pre_lateral_movement", dtype=bool, default=False, group="io"
     ),

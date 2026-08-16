@@ -50,14 +50,13 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             " specify this in your model configuration file."
         )
     valid_cells = np.ones((model_setup.row_amount, model_setup.col_amount), dtype=bool)
-    # firn_max_height / firn_min_height always carry catalogue defaults, so the
-    # selected handler always runs (it is the handler that decides whether the
-    # firn depth or the valid-cell mask actually changes).
+    # handle DEM heights above the user-defined maximum
     if model_setup.max_height_handler == "clip":
         firn_depth = np.clip(firn_depth, 0, model_setup.firn_max_height)
     elif model_setup.max_height_handler == "filter":
         valid_cells[np.where(firn_depth > model_setup.firn_max_height)] = False
 
+    # likewise for heights below the user-defined minimum
     firn_depth_under_35_flag = False
     if model_setup.min_height_handler == "clip":
         firn_depth = np.clip(firn_depth, a_min=model_setup.firn_min_height, a_max=None)
@@ -233,7 +232,6 @@ def create_model_grid(model_setup, firn_depth, rho, firn_temperature, **override
         np.arange(0, model_setup.col_amount, 1),
         indexing="ij",
     )
-    # core inputs
     inputs = {
         "column": x,
         "row": y,
@@ -241,25 +239,12 @@ def create_model_grid(model_setup, firn_depth, rho, firn_temperature, **override
         "rho": rho,
         "firn_temperature": firn_temperature,
     }
-    # internal overrides passed by the caller (valid_cell, lat/lon, size_dx/dy)
+    # fields worked out during setup - valid_cell, size_dx/dy, and lat/lon
+    # when there is a DEM
     inputs.update(overrides)
-    # user-specified initial-condition overrides from the runscript. make_grid
-    # validates the keys against the variable catalogue; guard the fields we have
-    # already populated from the firn profile / DEM so a stray key can't silently
-    # clobber them.
-    user_overrides = getattr(model_setup, "initial_conditions", None)
-    if user_overrides:
-        protected = set(inputs) & set(user_overrides)
-        if protected:
-            raise ValueError(
-                "monarchs.core.initial_conditions.create_model_grid:"
-                f" initial_conditions may not override {sorted(protected)} - these"
-                " are set from the firn profile / DEM (use firn_depth, rho_init,"
-                " T_init or a DEM instead)."
-            )
-        inputs.update(user_overrides)
-    # invoke make_grid from the variables subpackage - this is what actually
-    # reads the schema and populates the model grid
+    if model_setup.initial_conditions:
+        inputs.update(model_setup.initial_conditions)
+    # make_grid reads the variable catalogue and populates the model grid
     return make_grid(
         model_setup.row_amount,
         model_setup.col_amount,

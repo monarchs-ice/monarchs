@@ -16,8 +16,8 @@ class ModelSetup:
     """
     MONARCHS configuration class.
     This handles the input of the configuration from the input Python file,
-    and validates some of the inputs. This is mutable by design, so we can
-    assign some default values for missing flags, etc.
+    and validates some of the inputs. This is mutable, so we can assign
+    default values.
 
     This is then fed into `monarchs.config` - which runs some validation on the
     config to make sure that it is valid, and turns it into an immutable
@@ -88,8 +88,7 @@ class ModelSetup:
             "monarchs.core.load_model_setup.ModelSetup.check_for_key_variables"
         )
         # Variables that must be present for MONARCHS to accept the model setup
-        # script. Taken straight from the settings catalogue (the REQUIRED rows)
-        # so this list never drifts from the schema.
+        # script as valid.
         required_vars = [s.name for s in SETTINGS if s.default is REQUIRED]
 
         with open(self.script_path, "r", encoding="utf-8") as f:

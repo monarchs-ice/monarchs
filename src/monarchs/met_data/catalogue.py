@@ -1,27 +1,11 @@
 """
-The MONARCHS met-forcing catalogue.
+Meteorological forcing variable definitions.
 
-The fields of the met data grid (one record per timestep per cell), defined as
-``MetVariable`` rows - a grid ``Variable`` (see
-``monarchs.variables.definitions``) plus how the field is obtained from an ERA5
-input file. It lives in ``monarchs.met_data`` because it is a met concern; the
-importer (``import_ERA5``) and the grid builder (``met_data_grid``) both read
-from it, and ``variables.docs`` renders it into the reference.
-
-How a field is obtained from ERA5:
-
-* ``era5_name``     - the ERA5 short name to read (e.g. ``t2m``).
-* ``era5_fallback`` - an alternative read if the primary is absent (e.g.
-                      clear-sky ``ssrdc`` when ``ssrd`` is missing).
-* ``derived_from``  - ``f(read) -> array`` for fields that are computed rather
-                      than read straight (``wind`` = |u10, v10|). ``read(name)``
-                      returns the time-sliced ERA5 variable.
-* ``convert``       - ``f(value, seconds_per_step) -> value``, a unit conversion
-                      applied after reading (Pa -> hPa; J m^-2 -> W m^-2, which
-                      uses ``seconds_per_step`` to de-accumulate).
-
-A couple of fields (snow density's fallback value, the mwe -> depth snowfall
-conversion) depend on *other* fields and stay explicit in ``import_ERA5``.
+This currently handles ERA5 or user-defined inputs. We define several needed
+inputs - the name as defined in the ERA5 catalogue (or a fallback if there are
+two related variables one could use), functions to derivve variables from other
+variables (e.g. wind from u and v components), and conversion factors (e.g.
+pressure from Pa to hPa).
 """
 
 from dataclasses import dataclass
@@ -33,13 +17,10 @@ import numpy as np
 @dataclass(frozen=True, kw_only=True)
 class MetVariable:
     """
-    A met-forcing field: its name/units/metadata plus how to obtain it from an
-    ERA5 input file. Standalone (not a grid ``Variable``) so ``met_data`` does
-    not depend on ``monarchs.variables``; met fields are always per-cell floats.
-
-    Extend ``derived_from``/``convert`` to add fields that are computed or need a unit
-    conversion; extend ``era5_name``/``era5_fallback`` for straight reads. This
-    could grow to support other sources (AWS, RACMO) via more read strategies.
+    Meteorological forcing data variable definition.
+    This currently just handles ERA5 or user-defined inputs. An extension
+    to use e.g. RACMO would need to change the definition here to add the
+    relevant fields needed.
     """
 
     name: str
@@ -49,9 +30,11 @@ class MetVariable:
     dtype: type = np.float64
     era5_name: str = ""
     era5_fallback: str = ""
-    # f(read) -> array: compute the field from other ERA5 vars
+    # function to compute the field from other ERA5 vars
+    # e.g. wind speed = sqrt(u^2 + v^2)
     derived_from: Callable = None
-    # f(value, seconds_per_step) -> value: unit conversion applied after reading
+    # function to apply a unit conversion after reading it in
+    # (e.g. snowfall from MWE -> m)
     convert: Callable = None
 
 
@@ -112,6 +95,6 @@ MET_CATALOGUE = [
 ]
 
 
-def met_dtype(catalogue=MET_CATALOGUE):
+def met_dtype():
     """Structured-array dtype for the met data grid."""
-    return np.dtype([(var.name, var.dtype) for var in catalogue])
+    return np.dtype([(var.name, var.dtype) for var in MET_CATALOGUE])

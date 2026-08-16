@@ -1,9 +1,8 @@
 """
-Read-side of the MONARCHS met cache.
-
 Loads one day of meteorological data at a time from the netCDF file written by
 ``monarchs.met_data.setup_met_data``. For large grids the file stores coarse
-ERA5 data plus an index map, which is expanded to the model grid on read.
+ERA5 data plus an index map, which is expanded to the (much larger)
+model grid on read, which saves us writing an enormous netCDF file.
 """
 
 import numpy as np
@@ -42,56 +41,53 @@ def met_window(day, t_steps_per_day, met_data_len):
     return start, end
 
 
-def _met_reader(met_data, start, end):
-    """
-    Return ``read(name) -> (time, row, col)`` for one met window.
+# define coordinates that we skip over in read_fields
+_COORDS = ("lat", "lon")
 
-    When the file stores coarse ERA5 data plus index maps, ``read`` expands the
-    coarse field onto the model grid; otherwise it reads the full-grid variable
-    directly.
+
+def _read_fields(met_data, start, end):
+    """
+    Read every met field for one window as a (time, row, col) array.
     """
     variables = met_data.variables
-    if "lat_idx" in variables and "lon_idx" in variables:
+    missing = [
+        var.name
+        for var in MET_CATALOGUE
+        if var.name not in _COORDS and var.name not in variables
+    ]
+    if missing:
+        raise KeyError(
+            f"monarchs.met_data.load: met field(s) {missing} not found in"
+            f" {met_data.filepath()}, which holds {sorted(variables)}. Met"
+            " fields use the names in monarchs.met_data.catalogue."
+        )
+
+    lat_idx = lon_idx = None
+    if "lat_idx" in variables:
         lat_idx = np.asarray(variables["lat_idx"][:], dtype=np.int32)
         lon_idx = np.asarray(variables["lon_idx"][:], dtype=np.int32)
 
-        def read(name):
-            # apply_index_map_expand returns (time, row, col) for both 1-D and
-            # 2-D index maps
-            return apply_index_map_expand(
-                variables[name][start:end].data, lat_idx, lon_idx
-            )
-
-        return read
-
-    def read(name):
-        return variables[name][start:end].data
-
-    return read
+    fields = {}
+    for var in MET_CATALOGUE:
+        if var.name in _COORDS:
+            continue
+        value = variables[var.name][start:end].data
+        if lat_idx is not None:
+            value = apply_index_map_expand(value, lat_idx, lon_idx)
+        fields[var.name] = value
+    return fields
 
 
 def _cell_coords(met_data, model_setup):
     """
-    Per-cell (lat, lon) arrays of shape (row, col) for the model grid.
-
-    Uses cell_latitude/cell_longitude when the file stores them (2-D index maps
-    or prescribed data); otherwise reconstructs them from the 1-D fine_lat/
-    fine_lon axes, or falls back to NaN when no coordinates were provided.
+    Per-cell (lat, lon) arrays of shape (row, col), or NaN when the met data
+    has no coordinates (e.g. user-defined forcing)
     """
     variables = met_data.variables
-    rows, cols = model_setup.row_amount, model_setup.col_amount
-    if "cell_latitude" in variables and "cell_longitude" in variables:
+    if "cell_latitude" in variables:
         return variables["cell_latitude"][:].data, variables["cell_longitude"][:].data
-    if "fine_lat" in variables and "fine_lon" in variables:
-        fine_lat = variables["fine_lat"][:].data
-        fine_lon = variables["fine_lon"][:].data
-        if fine_lat.ndim == 2:
-            return fine_lat, fine_lon
-        # 1-D: fine_lat (col,), fine_lon (row,) -> (row, col)
-        cell_lat = np.broadcast_to(fine_lat[np.newaxis, :], (rows, cols)).copy()
-        cell_lon = np.broadcast_to(fine_lon[:, np.newaxis], (rows, cols)).copy()
-        return cell_lat, cell_lon
-    return np.full((rows, cols), np.nan), np.full((rows, cols), np.nan)
+    shape = (model_setup.row_amount, model_setup.col_amount)
+    return np.full(shape, np.nan), np.full(shape, np.nan)
 
 
 def update_met_conditions(
@@ -129,20 +125,10 @@ def update_met_conditions(
                 " timesteps you wish to run."
             )
 
-        read = _met_reader(met_data, met_start_idx, met_end_idx)
-        cell_lat, cell_lon = _cell_coords(met_data, model_setup)
-
-        # read every catalogue field from the file (their names match the file
-        # variables); lat/lon come from the per-cell coordinates resolved above
-        inputs = {
-            var.name: read(var.name)
-            for var in MET_CATALOGUE
-            if var.name not in ("lat", "lon")
-        }
-        inputs["lat"] = cell_lat
-        inputs["lon"] = cell_lon
+        fields = _read_fields(met_data, met_start_idx, met_end_idx)
+        fields["lat"], fields["lon"] = _cell_coords(met_data, model_setup)
         met_data_grid = initialise_met_data(
-            inputs,
+            fields,
             model_setup.row_amount,
             model_setup.col_amount,
             model_setup.t_steps_per_day,

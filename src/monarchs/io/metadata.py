@@ -102,9 +102,6 @@ def _summarise_config(model_setup):
     return config
 
 
-# netCDF attributes for model grid fields, keyed by field name. Sourced from
-# the single variable catalogue in monarchs.variables (output-eligible
-# variables only).
 VARIABLE_METADATA = variable_metadata()
 
 

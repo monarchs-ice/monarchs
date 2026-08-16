@@ -10,14 +10,7 @@ def parse_args():
     Parse input. Most things are controlled by `model_setup.py`; the only input
     here is (optionally) the location (as a filepath, so including the
     filename) of that setup file.
-
-    The ``MONARCHS_INPUT_PATH`` environment variable, if set, takes precedence
-    over the command line - handy for tests and batch runs that need to point at
-    a specific runscript without passing argv.
     """
-    env_path = os.environ.get("MONARCHS_INPUT_PATH")
-    if env_path:
-        return env_path
     parser = argparse.ArgumentParser(
         prog="MONARCHS",
         description=(
@@ -50,8 +43,7 @@ def create_output_folders(model_setup):
         model_setup.dump_filepath,
         model_setup.met_output_filepath,
     ):
-        # optional paths (e.g. output/dump filepaths when not saving) are None -
-        # skip them rather than choking on os.path.dirname(None)
+        # skip if undefined to avoid later errors
         if not filepath:
             continue
         # os.path.dirname is "" by default so writes to cwd

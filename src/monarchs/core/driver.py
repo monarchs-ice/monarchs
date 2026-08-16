@@ -40,24 +40,12 @@ logger = logging.getLogger(__name__)
 # global
 CLIENT = None
 
-# switches the single-column timestepping kernel reads, gathered into the numba
-# toggle_dict. Declared in the settings catalogue (kernel_toggle=True), so this
-# stays in sync with what the kernel actually reads.
-_KERNEL_TOGGLES = [s.name for s in SETTINGS if s.kernel_toggle]
-
 
 def setup_toggle_dict(model_setup):
     """
     Set up a dictionary of switches to determine the running of the model.
     These are accessed by each thread, so we need to set up a new object to
     hold these else we will run into errors.
-    Additionally, the ModelSetup class is not a jitclass
-    (and cannot be dynamically set to be one), so will not work with Numba.
-    We therefore need a numba.typed.Dict object in this instance.
-
-    The switches are those the kernel reads (``_KERNEL_TOGGLES``), declared in
-    the settings catalogue (kernel_toggle=True), so this dict stays in sync
-    with the kernel automatically.
 
     Parameters
     ----------
@@ -67,8 +55,11 @@ def setup_toggle_dict(model_setup):
     -------
 
     """
+    # define toggle switches read into the physics kernels via the settings
+    # config.
+    toggles = [s.name for s in SETTINGS if s.kernel_toggle]
 
-    toggle_dict = {name: getattr(model_setup, name) for name in _KERNEL_TOGGLES}
+    toggle_dict = {name: getattr(model_setup, name) for name in toggles}
 
     if model_setup.use_numba:
         # in this case we need to convert to a Numba typed dict
@@ -412,7 +403,7 @@ def monarchs():
 
     # Validate the setup and freeze it into an immutable config for the run.
     model_setup = configure(model_setup)
-    # Create output folders now that filepaths (and their defaults) are resolved.
+    # Create output folders now that filepaths are defined.
     configuration.create_output_folders(model_setup)
 
     # Set up the data, then run the model physics.

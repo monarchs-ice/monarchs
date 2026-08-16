@@ -2,11 +2,7 @@
 Render the variable catalogue as a Markdown reference.
 
 Reads the columns (name, dimension, units, default, description) from the
-``Variable`` rows in ``catalogue.py``, organised by ``group``, using the shared
-`monarchs.docs_tables` helpers. The met-forcing catalogue has its own reference
-(`monarchs.met_data.docs`).
-
-Run ``scripts/gen_docs.py`` to write the reference out.
+``Variable`` rows in ``catalogue.py``, organised by ``group``.
 """
 
 from monarchs.docs_tables import group_order, render_reference
@@ -45,10 +41,10 @@ def _row(var):
     ]
 
 
-def to_markdown(catalogue=CATALOGUE):
+def to_markdown():
     """Return the variable catalogue as a Markdown reference."""
     sections = [
-        (group.capitalize(), [_row(v) for v in catalogue if v.group == group])
-        for group in group_order(catalogue, lambda v: v.group)
+        (group.capitalize(), [_row(v) for v in CATALOGUE if v.group == group])
+        for group in group_order(CATALOGUE, lambda v: v.group)
     ]
     return render_reference("MONARCHS grid variables", _INTRO, _COLUMNS, sections)
