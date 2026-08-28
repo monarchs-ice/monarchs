@@ -18,13 +18,7 @@ class filled in by reading the config file before performing any validation.
 """
 
 from monarchs.config.definitions import Rule
-
-# the model_setup setting each met source reads its input from. e.g. ERA5
-# reads an input filepath.
-MET_SOURCE_INPUTS = {
-    "ERA5": "met_input_filepath",
-    "user_defined": "met_data",
-}
+from monarchs.met_data.sources import SOURCES
 
 # toggles that make the model read or write a checkpoint, so all need a
 # dump_filepath to point at - this lets us apply the Rule to all of these
@@ -39,13 +33,13 @@ _NEEDS_DUMP_FILEPATH = (
 def _no_met_source(ms):
     """True when the setup provides no input for any met data source.
     acceptable values are "era5" and "user_defined"."""
-    return not any(hasattr(ms, setting) for setting in MET_SOURCE_INPUTS.values())
+    return not any(hasattr(ms, source.input_setting) for source in SOURCES.values())
 
 
 def _met_source_input_missing(ms):
     """True when met_data_source names a source whose input was not given."""
-    setting = MET_SOURCE_INPUTS.get(getattr(ms, "met_data_source", None))
-    return setting is not None and not hasattr(ms, setting)
+    source = SOURCES.get(getattr(ms, "met_data_source", None))
+    return source is not None and not hasattr(ms, source.input_setting)
 
 
 def _no_dump_filepath(ms):

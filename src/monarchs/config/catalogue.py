@@ -21,7 +21,7 @@ The cross-setting consistency checks (`RULES`) live in `rules.py`.
 import numpy as np
 
 from monarchs.config.definitions import REQUIRED, UNSET, Setting
-from monarchs.config.rules import MET_SOURCE_INPUTS
+from monarchs.met_data.sources import SOURCES
 from monarchs.config.computed_defaults import (
     lat_grid_size,
     lateral_timestep,
@@ -325,7 +325,7 @@ SETTINGS = [
         dtype=str,
         default=met_data_source,
         group="forcing",
-        choices=tuple(MET_SOURCE_INPUTS),
+        choices=tuple(SOURCES),
         default_doc="inferred from the input given",
         description="Format of the meteorological forcing. Depending on the source, the met data will be set up from "
         "the corresponding data input - e.g. an ERA5 forcing file if 'era5' is specified - see "

@@ -3,7 +3,7 @@ Defaults that are computed from other settings rather than fixed values.
 """
 
 from monarchs.config.definitions import UNSET
-from monarchs.config.rules import MET_SOURCE_INPUTS
+from monarchs.met_data.sources import SOURCES
 
 
 def output_grid_size(model_setup):
@@ -32,7 +32,7 @@ def met_data_source(model_setup):
     user has specified. If this returns UNSET (i.e. no source is specified),
     a later Rule will raise an error since the model requires forcing data!
     """
-    for name, setting in MET_SOURCE_INPUTS.items():
-        if hasattr(model_setup, setting):
+    for name, source in SOURCES.items():
+        if hasattr(model_setup, source.input_setting):
             return name
     return UNSET
