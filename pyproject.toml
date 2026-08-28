@@ -49,7 +49,9 @@ docs = [
     'sphinx',
     'sphinx-rtd-theme',
     'myst-parser',
-    'sphinx-autoapi'
+    'sphinx-autoapi',
+    'numpy >= 1.26.3, < 2.0',
+    'netCDF4',
     ]
 
 [project.scripts]
