@@ -59,10 +59,10 @@ Met data parameters
 met_data = {}
 timesteps_warm = 24 * 10
 timesteps_cold = 0
-met_data["LW_surf"] = np.append(
+met_data["LW_down"] = np.append(
     800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold)
 )  # Incoming longwave radiation. [W m^-2].
-met_data["SW_surf"] = np.append(
+met_data["SW_down"] = np.append(
     800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold)
 )  # Incoming shortwave (solar) radiation. [W m^-2].
 met_data["dew_point_temperature"] = np.append(
@@ -72,7 +72,7 @@ met_data["temperature"] = np.append(
     267 * np.ones(timesteps_warm), 250 * np.ones(timesteps_cold)
 )  # Surface-layer air temperature. [K].
 
-met_data["pressure"] = 1000 * np.ones(
+met_data["surf_pressure"] = 1000 * np.ones(
     num_days * t_steps_per_day
 )  # Surface-layer air pressure. [hPa].
 met_data["wind"] = 5 * np.ones(num_days * t_steps_per_day)  # Wind speed. [m s^-1].
@@ -128,7 +128,6 @@ parallel = True  # run in parallel or serial. Parallel is of course much faster 
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 cores = 10  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.
-solver = "hybr"
 
 """
 Toggles to turn on or off various parts of the model. These should only be changed for testing purposes. 

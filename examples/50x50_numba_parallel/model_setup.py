@@ -17,7 +17,7 @@ a large number of cores.
 """
 
 import numpy as np
-from monarchs.data import era5_example_path
+from monarchs.example_data import era5_example_path
 
 """
 Spatial parameters

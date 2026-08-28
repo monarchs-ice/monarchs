@@ -69,14 +69,15 @@ large lake in the centre and two smaller lakes in the top-left and bottom-right 
 Change directory to ``examples/10x10_gaussian_threelake`` (or open up ``model_setup.py`` from this directory in your IDE
 if not using the command line), and run it in the same way as before. You will notice that this takes significantly longer to run
 than the 1D case. Wait for it to complete, and make a note of the time taken displayed at the end of the model run.
-We can make it faster by delving into ``model_setup.py``.
+We can see what is making it fast by delving into ``model_setup.py``.
 
-In the ``model_setup.py`` file, you will see a variable called ``parallel``. This is set to ``False`` by default.
-Set this to ``True``, and re-run the model. You can specify how many cores you want to use by changing the ``cores``
+In the ``model_setup.py`` file, you will see a variable called ``parallel``. This is set to ``True`` by default, so the
+single-column physics runs over many gridpoints at once. To see the difference this makes, set it to ``False`` and
+re-run the model, then set it back to ``True``. You can specify how many cores you want to use by changing the ``cores``
 variable. By default, it is set to ``'all'``, so if you are doing other things on your machine it may be best to set this
 to e.g. ``4`` for now.
 
-Since we are now running in parallel, the model should run significantly faster. Let's take advantage of this and run
+Since we are running in parallel, the model should run significantly faster. Let's take advantage of this and run
 the model at higher resolution. You can control this  by changing ``row_amount`` and ``col_amount`` from 10 to 20. Note that this increase in resolution
 will make the model take at least ~4x longer to run!
 
@@ -100,7 +101,7 @@ or extend the data in some other way (e.g. appending another array with a differ
     to use as input for this example. You could put anything you like here, using this example as a guideline - by e.g. changing the values of the LW/SW that correspond to
     the "warm" and "cold" timesteps, or changing the arrays from being constant to ramping up over time, etc.
 
-    For a full list of variables that *are* used by MONARCHS, see :doc:`model_setup_reference`. Many of these you do not need to worry about
+    For a full list of variables that *are* used by MONARCHS, see :doc:`settings`. Many of these you do not need to worry about
     until running more advanced cases, to have more control over exactly how the model runs.
 
 Since our model is quite large, and we are running for a longer time, our output files can become quite large also. We can reduce the temporal frequency of the output
@@ -133,7 +134,7 @@ This can be useful for testing, but also for generating realistic initial condit
 meshes that aren't supported by default (see the :doc:`dem` section of the documentation for more on this).
 
 A more detailed introduction to ``model_setup.py`` can be found in :doc:`MONARCHS_model_setup`.
-You can see all of the possible ``model_setup`` variables in the :doc:`model_setup_reference` section of the documentation.
+You can see all of the possible ``model_setup`` variables in the :doc:`settings` section of the documentation.
 This tutorial will not cover all of these, as many of them are for testing and debugging purposes. Many of these
 are related to the use of a digital elevation model (DEM) to set the initial firn profile, and synchronising this
 to the input meterorological data. This is covered more in the :doc:`dem` section of the documentation.
@@ -149,7 +150,7 @@ use the initial conditions of a previous run as a starting point for a subsequen
 If your model run was not successful, then re-running will run it until your initially-intended
 finishing point.
 
-If it `was` successful, then attempting to re-run with no changes to the setup script will result in
+If it *was* successful, then attempting to re-run with no changes to the setup script will result in
 nothing happening (as the model will try and start from the same day that it is supposed to finish at!).
 However, you can extend the run further by increasing ``num_days``.
 

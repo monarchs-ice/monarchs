@@ -36,28 +36,12 @@ from monarchs.core.diagnostics import (
 
 logger = logging.getLogger(__name__)
 
-# dummy init value for Dask client which may be used later - this needs to be
-# global
-CLIENT = None
-
-# switches the single-column timestepping kernel reads, gathered into the numba
-# toggle_dict. Declared in the settings catalogue (kernel_toggle=True), so this
-# stays in sync with what the kernel actually reads.
-_KERNEL_TOGGLES = [s.name for s in SETTINGS if s.kernel_toggle]
-
 
 def setup_toggle_dict(model_setup):
     """
     Set up a dictionary of switches to determine the running of the model.
     These are accessed by each thread, so we need to set up a new object to
     hold these else we will run into errors.
-    Additionally, the ModelSetup class is not a jitclass
-    (and cannot be dynamically set to be one), so will not work with Numba.
-    We therefore need a numba.typed.Dict object in this instance.
-
-    The switches are those the kernel reads (``_KERNEL_TOGGLES``), declared in
-    the settings catalogue (kernel_toggle=True), so this dict stays in sync
-    with the kernel automatically.
 
     Parameters
     ----------
@@ -67,8 +51,11 @@ def setup_toggle_dict(model_setup):
     -------
 
     """
+    # define toggle switches read into the physics kernels via the settings
+    # config.
+    toggles = [s.name for s in SETTINGS if s.kernel_toggle]
 
-    toggle_dict = {name: getattr(model_setup, name) for name in _KERNEL_TOGGLES}
+    toggle_dict = {name: getattr(model_setup, name) for name in toggles}
 
     if model_setup.use_numba:
         # in this case we need to convert to a Numba typed dict
@@ -92,25 +79,11 @@ def setup_parallelism(model_setup):
     """
     Select and prepare the grid-loop implementation for this run.
 
-    Numba mode compiles the prange-based loop with the user's parallel flag;
-    otherwise the Dask-based loop is used, with a distributed Client created
-    if requested (stored in the module-global CLIENT, which process_chunk
-    workers read).
+    Numba mode compiles the prange-based loop, parallel over the flattened
+    grid when <parallel> is set. Without Numba the pure-Python loop is used,
+    which is always serial.
     """
     # pylint: disable=import-outside-toplevel
-    # dask path
-    if (
-        model_setup.parallel
-        and model_setup.dask_scheduler == "distributed"
-        and not model_setup.use_numba
-    ):
-        print("Setting up Dask Client object...")
-        # only import dask.distributed if we need it - this avoids requiring
-        # dask.distributed to be installed for the model to run
-        from dask.distributed import Client  # pylint: disable=no-name-in-module
-
-        global CLIENT  # pylint: disable=global-statement
-        CLIENT = Client()
     # numba path
     if model_setup.use_numba:
         from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
@@ -128,6 +101,26 @@ def setup_parallelism(model_setup):
     return loop_over_grid
 
 
+def as_flat_cells(grid):
+    """
+    A 1-D *view* of the grid, or an error.
+
+    Both single-column loops step ``grid.reshape(nrows * ncols)`` and rely on
+    that being a view, so their in-place updates land in ``grid`` itself.
+    ``reshape`` only returns a view for a contiguous array - given a
+    non-contiguous one (a sub-block such as ``grid[r0:r1, c0:c1]``, as a tiling
+    or halo scheme would produce) it silently returns a *copy*, and a whole
+    model day of physics would be discarded with no error at all.
+
+    Setting ``.shape`` in place cannot do that: it either gives a view or
+    raises. Calling it here makes the invariant hold at the one point it is
+    established, rather than leaving the loops to get lucky.
+    """
+    flat = grid.view()
+    flat.shape = (grid.shape[0] * grid.shape[1],)
+    return flat
+
+
 def single_column_step(
     grid, loop_over_grid, met_data_grid, dt, model_setup, toggle_dict, cores
 ):
@@ -139,6 +132,9 @@ def single_column_step(
     # (t_steps_per_day, rows, cols) to (rows*cols, t_steps_per_day)
     met_data_grid = met_data_grid.reshape(model_setup.t_steps_per_day, -1)
     met_data_grid = np.moveaxis(met_data_grid, 0, -1)
+
+    # raises if the loops' reshape would copy rather than view - see as_flat_cells
+    as_flat_cells(grid)
 
     visit_grid = np.copy(grid["visit_count"])
     # timestep_loop bumps visit_count before it checks valid_cell, so cells the
@@ -152,10 +148,7 @@ def single_column_step(
         met_data_grid,
         model_setup.t_steps_per_day,
         toggle_dict,
-        parallel=model_setup.parallel,
         ncores=cores,
-        dask_scheduler=model_setup.dask_scheduler,
-        client=CLIENT,
     )
 
     if check_for_single_column_errors(grid):
@@ -447,14 +440,13 @@ def monarchs():
     model_setup_path = configuration.parse_args()
     model_setup = get_model_setup(model_setup_path)
 
-    # Compile the registered @kernel functions before the model run (a no-op
-    # when use_numba is False). getattr, as defaults have not yet been applied
-    # so use_numba may or may not be a model_setup attribute at this point.
-    kernels.compile_all(getattr(model_setup, "use_numba", False))
-
     # Validate the setup and freeze it into an immutable config for the run.
     model_setup = configure(model_setup)
-    # Create output folders now that filepaths (and their defaults) are resolved.
+
+    # Compile the registered @kernel functions before the model run (a no-op
+    # when use_numba is False).
+    kernels.compile_all(model_setup.use_numba)
+    # Create output folders now that filepaths are defined.
     configuration.create_output_folders(model_setup)
 
     # Set up the data, then run the model physics.

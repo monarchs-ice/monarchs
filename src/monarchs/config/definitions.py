@@ -25,13 +25,13 @@ class Setting:
     """
     Defines a MONARCHS model_setup setting.
 
-    ``default`` is a constant, the REQUIRED sentinel, or a callable
-    ``f(model_setup) -> value`` for defaults computed from other settings
+    ``default`` is a constant, REQUIRED, or a callable
+    i.e. a function for defaults computed from other settings
     (which may return UNSET to leave the attribute missing).
     """
 
     name: str
-    # dtype: bool, int, float, str, tuple, etc. mostly as a documentation aid.
+    # dtype: bool, int, float, str, tuple, etc.
     # May be a tuple of types for settings that accept more than one, e.g.
     # cores=(str, int) or rho_init=(str, float).
     dtype: type | tuple
@@ -45,7 +45,6 @@ class Setting:
     validator: Callable = None
     # message describing what the validator requires, for the error/docs
     validator_doc: str = ""
-
     # switches read inside Numba kernels should set this to True so they are
     # added to the dict passed into the physics kernels
     kernel_toggle: bool = False
@@ -63,12 +62,12 @@ class Rule:
     firn column height - these two settings conflict, and we don't want the
     model to silently make choices about *which* of those to use.
 
-    ``failed_when`` is a callable ``f(model_setup) -> bool`` that returns True
-    when the rule is violated. It is written as a ``lambda`` so the check lives
-    inline with the rule, and - crucially - because it is a function it is only
-    evaluated *when the rules are run* (in ``apply.check_rules``), not when the
-    catalogue is imported. That late binding is what lets a rule refer to other
-    settings by name without any import-order or circular-reference problems.
+    ``failed_when`` is a callable that returns True when the rule is violated.
+    It is written as a ``lambda`` so the check lives with the rule,
+    and because it is a function it is only evaluated *when the rules are run*
+    (in ``apply.check_rules``), not when the catalogue is imported.
+    This lets a rule refer to other settings without worrying about the order
+    in which they are loaded (e.g. a rule can set a value based on another value).
 
     To add a rule, append one to ``rules.RULES``::
 
@@ -78,6 +77,9 @@ class Rule:
             error=NameError,   # omit for a plain ValueError
         )
 
+    ``failed_when`` is a lambda function - equivalent to doing
+    def failed_when_func(ms):
+        return ms.dump_data and not hasattr(ms, "dump_filepath")
     Use ``getattr(ms, "x", default)`` / ``hasattr`` for settings that may not
     be present yet (rules run before defaults are filled).
     """
@@ -112,6 +114,10 @@ def type_matches(value, dtype):
         return isinstance(
             value, (int, float, np.integer, np.floating, np.ndarray)
         ) and not isinstance(value, bool)
+
+    # strings are strings - no numpy equivalent we want to accept here
+    if dtype is str:
+        return isinstance(value, str)
 
     # lists/tuples can also be arrays
     if dtype in (list, tuple):

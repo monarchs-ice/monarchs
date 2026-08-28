@@ -6,7 +6,7 @@ model run. The fields are defined in the met catalogue
 
 import numpy as np
 
-from monarchs.met_data.catalogue import MET_CATALOGUE, met_dtype
+from monarchs.met_data.catalogue import met_dtype
 
 
 def initialise_met_data(inputs, num_rows, num_cols, t_steps_per_day):
@@ -34,10 +34,6 @@ def initialise_met_data(inputs, num_rows, num_cols, t_steps_per_day):
     met_data : numpy structured array
         Grid containing meteorological data for the model run.
     """
-    known = {var.name for var in MET_CATALOGUE}
-    unknown = set(inputs) - known
-    if unknown:
-        raise ValueError(f"unknown met variable(s) in inputs: {sorted(unknown)}")
     met_data = np.zeros((t_steps_per_day, num_rows, num_cols), dtype=met_dtype())
     for key, value in inputs.items():
         met_data[key] = value

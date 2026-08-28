@@ -9,24 +9,44 @@ Each `Rule` says when a combination of settings is invalid and what to raise.
 The `fail_condition` parameter is what determines whether a rule is violated.
 This should be in the form of a function, so that it can be evaluated only
 when checking rules, rather than when loading in the catalogue. Most of these
-functions are implemented here using lambdas, so that they are inlined with
-the rules themselves.
+functions are implemented here using lambdas, which lets us define the functions
+with the rules together. These typically work on "ms" - which is shorthand for
+ModelSetup.
 
 `ms` in the rule descriptions refers to a ModelSetup object, i.e. the
 class filled in by reading the config file before performing any validation.
 """
 
 from monarchs.config.definitions import Rule
+from monarchs.met_data.sources import SOURCES
+
+# toggles that make the model read or write a checkpoint, so all need a
+# dump_filepath to point at - this lets us apply the Rule to all of these
+# flags
+_NEEDS_DUMP_FILEPATH = (
+    "dump_data",
+    "reload_from_dump",
+    "dump_data_pre_lateral_movement",
+)
 
 
-def _wants_dem_bounds(ms):
-    """True when DEM lat/long bounds are requested but no DEM was provided."""
-    lat_bounds = getattr(ms, "lat_bounds", None)
-    return (
-        isinstance(lat_bounds, str)
-        and lat_bounds.lower() == "dem"
-        and not hasattr(ms, "DEM_path")
-    )
+def _no_met_source(ms):
+    """True when the setup provides no input for any met data source.
+    acceptable values are "era5" and "user_defined"."""
+    return not any(hasattr(ms, source.input_setting) for source in SOURCES.values())
+
+
+def _met_source_input_missing(ms):
+    """True when met_data_source names a source whose input was not given."""
+    source = SOURCES.get(getattr(ms, "met_data_source", None))
+    return source is not None and not hasattr(ms, source.input_setting)
+
+
+def _no_dump_filepath(ms):
+    """True when something wants to write a checkpoint but no path was given."""
+    return any(
+        getattr(ms, flag, False) for flag in _NEEDS_DUMP_FILEPATH
+    ) and not hasattr(ms, "dump_filepath")
 
 
 RULES = [
@@ -36,39 +56,34 @@ RULES = [
         message="row_amount != col_amount. Non-square grids are not yet tested.",
         error=NotImplementedError,
     ),
+    # parallelism comes from Numba's prange, so <parallel> does nothing on the
+    # pure-Python path. Only warn when the user asked for both explicitly -
+    # rules run before defaults are filled, so an absent use_numba here means
+    # "not specified", which resolves to the catalogue default (Numba on).
+    Rule(
+        failed_when=lambda ms: (
+            getattr(ms, "parallel", False)
+            and hasattr(ms, "use_numba")
+            and not ms.use_numba
+        ),
+        message="<parallel> has no effect when <use_numba> is False - the"
+        " pure-Python grid loop is always serial. Set use_numba=True to run"
+        " in parallel.",
+        error=UserWarning,
+    ),
     # check for MPI flag being enabled
     Rule(
         failed_when=lambda ms: getattr(ms, "use_mpi", False),
         message="MPI support is not yet implemented.",
         error=UserWarning,
     ),
-    # check to ensure that a valid DEM is specified if using `lat_bounds = "dem"`
+    # ensure we have a filepath for the checkpoints, whichever toggle asked
+    # for them to be read or written
     Rule(
-        failed_when=_wants_dem_bounds,
-        message='You must provide a DEM file using the "DEM_path" argument to use'
-        " DEM lat/long bounds.",
-    ),
-    # ensure that we have a valid filepath for a checkpoint file if we are
-    # writing them out
-    Rule(
-        failed_when=lambda ms: (
-            getattr(ms, "dump_data", False) is True and not hasattr(ms, "dump_filepath")
-        ),
-        message="<dump_data> is specified but <dump_filepath> is empty - please"
-        " specify in model_setup a filepath to write the dump into via the"
-        " <dump_filepath> attribute.",
-        error=NameError,
-    ),
-    # check that we have a valid checkpoint file to load from if restarting
-    # from one
-    Rule(
-        failed_when=lambda ms: (
-            getattr(ms, "reload_from_dump", False) is True
-            and not hasattr(ms, "dump_filepath")
-        ),
-        message="<reload_from_dump> is specified but <dump_filepath> is empty -"
-        " please specify in model_setup a filepath to write the dump into"
-        " via the <dump_filepath> attribute.",
+        failed_when=_no_dump_filepath,
+        message=f"one of {list(_NEEDS_DUMP_FILEPATH)} is specified but"
+        " <dump_filepath> is empty - please specify in model_setup a filepath"
+        " to read/write the dump via the <dump_filepath> attribute.",
         error=NameError,
     ),
     # check that we have a valid scientific output file to write into
@@ -83,12 +98,6 @@ RULES = [
         " <output_filepath> attribute.",
         error=NameError,
     ),
-    # make sure that we use netCDF4 dump formatting only
-    # TODO - can deprecate this rule and the setup parameter
-    Rule(
-        failed_when=lambda ms: getattr(ms, "dump_format", "NETCDF4") != "NETCDF4",
-        message="dump_format must be 'NETCDF4'. Pickle dumps are no longer supported.",
-    ),
     # check we have at least one of a firn depth profile or a DEM to read one in from
     Rule(
         failed_when=lambda ms: (
@@ -98,14 +107,17 @@ RULES = [
         " read firn depth from) or <firn_depth> (a number or (row, col) array)"
         " in model_setup.",
     ),
-    # check we have a meteorological forcing data source - either specified as
-    # arrays or read in from an ERA5-format file
+    # check we have the input for one of the meteorological forcing sources
     Rule(
-        failed_when=lambda ms: (
-            not hasattr(ms, "met_input_filepath") and not hasattr(ms, "met_data")
-        ),
+        failed_when=_no_met_source,
         message="no meteorological data source provided - set either"
         " <met_input_filepath> (an ERA5-format netCDF) or <met_data> (a dict"
         " of user-defined data) in model_setup.",
+    ),
+    # and that an explicitly chosen source is the one that was given an input
+    Rule(
+        failed_when=_met_source_input_missing,
+        message="<met_data_source> names a source whose input is missing -"
+        " 'ERA5' reads <met_input_filepath>, 'user_defined' reads <met_data>.",
     ),
 ]

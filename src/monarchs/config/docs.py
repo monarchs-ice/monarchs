@@ -2,18 +2,17 @@
 Render the settings catalogue as a Markdown reference.
 
 Reads the columns (name, type, default, choices, description) from the settings
-catalogue (`monarchs.config.catalogue`) and organises them by ``group``, using
-the shared `monarchs.docs_tables` helpers.
-
-Regenerated during the docs build (see docs/source/conf.py).
+catalogue (`monarchs.config.catalogue`) and organises them by ``group``.
 """
 
 from monarchs.config.catalogue import SETTINGS
 from monarchs.config.definitions import REQUIRED, UNSET, dtype_name
-from monarchs.docs_tables import group_order, render_reference
+from monarchs.docs_tables import group_order, heading, render_reference
 
+# define table columns
 _COLUMNS = ["Setting", "Type", "Default", "Allowed", "Description"]
 
+# define an intro paragraph that is displayed above the schema table
 _INTRO = [
     "This provides a reference for all of the possible settings",
     "available in the model.",
@@ -47,6 +46,7 @@ def _constraint_cell(setting):
 
 
 def _row(setting):
+    """values for each row extracted from the Setting object"""
     return [
         f"`{setting.name}`",
         dtype_name(setting.dtype),
@@ -56,10 +56,12 @@ def _row(setting):
     ]
 
 
-def to_markdown(settings=SETTINGS):
+def to_markdown():
     """Return the settings catalogue as Markdown."""
+    # for each group, get the settings that belong to that group, with the group
+    # name capitalised at the top
     sections = [
-        (group.capitalize(), [_row(s) for s in settings if s.group == group])
-        for group in group_order(settings, lambda s: s.group)
+        (heading(group), [_row(s) for s in SETTINGS if s.group == group])
+        for group in group_order(SETTINGS, lambda s: s.group)
     ]
     return render_reference("MONARCHS run settings", _INTRO, _COLUMNS, sections)

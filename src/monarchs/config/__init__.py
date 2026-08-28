@@ -1,26 +1,20 @@
 """
-MONARCHS run-settings schema - a single source of truth for every
-``model_setup`` setting.
+MONARCHS run-settings schema.
 
-The package mirrors ``monarchs.variables``, one file per job:
+Files:
 
-* ``catalogue.py``   - **the data**: one ``Setting`` row per model_setup
-                       setting. This is the file you edit to add/change one.
-* ``rules.py``       - the cross-setting consistency checks (``RULES``).
-* ``definitions.py`` - what a ``Setting``/``Rule`` is (+ ``type_matches``).
-* ``computed_defaults.py`` - defaults computed from other settings.
-* ``apply.py``       - fills defaults and validates a loaded model_setup.
-* ``docs.py``        - renders the catalogue as a Markdown reference.
-
-The single entry point is ``configure`` - it validates a loaded model_setup
-and returns the frozen ``Config``::
-
-    from monarchs.config import configure
-    config = configure(model_setup)
+``catalogue.py`` - contains all ``model_setup`` variable definitions.
+``rules.py`` - rules that apply to settings or combinations of settings
+``definitions.py`` -
+``computed_defaults.py`` - calculate default values for settings that are
+                           dependent on other settings
+``apply.py`` - apply the config at runtime, run validation, fill default values
+``docs.py`` - converts the catalogue to documentation
 """
 
 from monarchs.config.apply import (
     Config,
+    check_required,
     check_rules,
     check_settings,
     configure,
@@ -33,6 +27,7 @@ from monarchs.config.docs import to_markdown
 
 __all__ = [
     "Config",
+    "check_required",
     "check_rules",
     "check_settings",
     "configure",

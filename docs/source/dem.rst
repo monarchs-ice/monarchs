@@ -48,7 +48,7 @@ In order to run the single-column physics effectively, we need to ensure that th
 The ``extend`` option in the ``min_height_handler`` parameter tells MONARCHS to increase the lowest point in the DEM
 up to 35m (if it is below this value), and increasing every other cell by the same amount.
 
-Other options to this can be found in the :doc:`model_setup_reference`.
+Other options to this can be found in the :doc:`settings`.
 
 Selecting a subset of the DEM
 ------------------------------

@@ -1,6 +1,6 @@
 """
 Computed initial values for the few variables whose default is derived from the
-grid sizes or the firn profile, rather than a plain constant.
+grid sizes or the firn profile, rather than a constant.
 
 `ctx` here refers to an instance of the ``InitContext`` class,
 from ``definitions.py``. This defines the information that these

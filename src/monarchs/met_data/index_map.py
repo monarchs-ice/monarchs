@@ -47,11 +47,6 @@ def apply_index_map_1d(
     """
     Expand a coarse ERA5 array to a separable (regular) fine grid using
     1-D index maps and broadcasting.
-
-    Regular-grid convention: latitude varies along the model columns and
-    longitude along the model rows, so ``lat_idx`` has one entry per column and
-    ``lon_idx`` one per row. Returns ``(time, num_rows, num_cols)`` directly, so
-    cell ``(r, c)`` samples ``coarse_array[:, lat_idx[c], lon_idx[r]]``.
     """
     return coarse_array[:, lat_idx[np.newaxis, :], lon_idx[:, np.newaxis]]
 

@@ -59,10 +59,10 @@ Met data parameters
 met_data = {}
 timesteps_warm = 800
 timesteps_cold = 1720
-met_data["LW_surf"] = np.append(
+met_data["LW_down"] = np.append(
     800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold)
 )  # Incoming longwave radiation. [W m^-2].
-met_data["SW_surf"] = np.append(
+met_data["SW_down"] = np.append(
     800 * np.ones(timesteps_warm), 100 * np.ones(timesteps_cold)
 )  # Incoming shortwave (solar) radiation. [W m^-2].
 met_data["dew_point_temperature"] = np.append(
@@ -72,7 +72,7 @@ met_data["temperature"] = np.append(
     267 * np.ones(timesteps_warm), 250 * np.ones(timesteps_cold)
 )  # Surface-layer air temperature. [K].
 
-met_data["pressure"] = 1000 * np.ones(
+met_data["surf_pressure"] = 1000 * np.ones(
     num_days * t_steps_per_day
 )  # Surface-layer air pressure. [hPa].
 met_data["wind"] = 5 * np.ones(num_days * t_steps_per_day)  # Wind speed. [m s^-1].
@@ -122,15 +122,7 @@ reload_from_dump = False  # Flag to determine whether to reload the state or not
 Computing and numerical parameters
 """
 use_numba = False  # Use Numba-optimised version (faster, but harder to debug)
-parallel = True  # run in parallel or serial. Parallel is of course much faster for large model grids, but you may
-# wish to run serial if doing single-column calculations.
-dask_scheduler = (  # dask scheduler to use. 'processes', 'distributed' or 'threads'.
-    "processes"
-)
-# 'processes' is recommended for most cases.
-# If running on HPC across multiple nodes, you'll need to use "distributed".
-# Threads is fine for running small workloads in parallel, but scaling will be very
-# poor as this does not release the GIL.
+parallel = False  # parallelism requires use_numba, so this run is serial.
 
 spinup = False  # Try and force the firn column heat equation to converge at the start of the run?
 cores = 8  # number of processing cores to use. 'all' or False will tell MONARCHS to use all available cores.

@@ -68,7 +68,7 @@ If adding new variables to the code, you will need to do the following:
         - Dimension (a scalar per cell, or a per-layer profile)
         - Initial/default value
         - Output metadata (units, long name)
-        - Optionally, a ``description`` (a full sentence, on its own continuation line) that feeds the variable reference page, which is regenerated from the catalogue whenever the docs are built
+        - Optionally, a ``description`` that tells users what your variable does.
     - Add the variable into the model code itself. This likely involves making the relevant changes to the various files/functions in ``monarchs.physics``.
     - If your variable depends on other variables, you can define a function for this and put it in ``variables.initial_value_functions.py``. See the examples there for details.
     - If your new variable is a diagnostic, add the variable to ``vars_to_save`` in your runscript, so that the code knows to track it over time and save it to the output netCDF file.
@@ -90,7 +90,7 @@ defined in ``model_setup.py``, added to ``toggle_dict`` in ``monarchs.core.drive
 a switch to turn it on or off using the value of ``toggle_dict``.
 
 Any changes that require amendments to ``model_setup.py``
-should have suitable documentation added to ``docs/source/model_setup_reference.rst``.
+should have a ``description`` written for it in the settings catalogue, which is what generates the settings reference page.
 
 Advanced users
 ------------------------------------

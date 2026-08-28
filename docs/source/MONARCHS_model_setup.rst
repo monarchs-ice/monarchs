@@ -22,12 +22,12 @@ The MONARCHS runscript (default name ``model_setup.py``) is the core input to MO
 possible input parameters, many of which are optional. MONARCHS will flag when there are incompatible parameters
 or where a parameter needs a second parameter to be specified to work properly.
 
-For more details on the runscript, see :doc:`model_setup_reference`.
+For more details on the runscript, see :doc:`settings`.
 
 Inputting meteorological data
 =============================
 This input data should be specified hourly, if possible. If using data at a lower temporal resolution, specify
-``met_timestep`` in your runscript. See the detailed ``model_setup.py`` documentation for details. :doc:`model_setup_reference`
+``met_timestep`` in your runscript. See the detailed ``model_setup.py`` documentation for details. :doc:`settings`
 Alternatively, a python Dictionary object can be passed in, with the dict values being a set of Numpy arrays and the
 keys in the same format as ERA5. The Numpy arrays should be of dimension(time) or
 dimension(<time, row_amount>, <col_amount>). In the former case, at each timestep, the value will be used over the
@@ -45,11 +45,11 @@ runscript to adjust SW downwelling radiation by a multiplicative factor.
 
 Outputting data
 ===============
-MONARCHS has two ways of outputting data. The main way which is scientifically useful is using the `save_output`
-flag in `model_setup`. This reads in a variable `vars_to_save`, which determines which model variables
+MONARCHS has two ways of outputting data. The main way which is scientifically useful is using the ``save_output``
+flag in ``model_setup`. This reads in a variable ``vars_to_save``, which determines which model variables
 the user wants to output after each model day (iteration). This is used to generate time series of the model evolution.
 By default it will save firn variables at the model vertical resolution, but if output filesizes are an issue you can
-interpolate these to a resolution set using the `output_grid_size` parameter.
+interpolate these to a resolution set using the ``output_grid_size`` parameter.
 
 The other way MONARCHS saves data is in the form of a "dump". This is effectively MONARCHS' way of saving the model
 state after every model day (iteration). This allows the user to restart a run that has failed for whatever reason

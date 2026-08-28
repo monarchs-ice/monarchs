@@ -3,6 +3,7 @@ Defaults that are computed from other settings rather than fixed values.
 """
 
 from monarchs.config.definitions import UNSET
+from monarchs.met_data.sources import SOURCES
 
 
 def output_grid_size(model_setup):
@@ -27,9 +28,11 @@ def lat_grid_size(model_setup):
 
 def met_data_source(model_setup):
     """
-    Infer the met data source from the inputs. That one is present is enforced
-    by a rule (see rules.RULES), so this only has to pick which.
+    Choose the source of the meteorological forcing data based on what the
+    user has specified. If this returns UNSET (i.e. no source is specified),
+    a later Rule will raise an error since the model requires forcing data!
     """
-    if hasattr(model_setup, "met_input_filepath"):
-        return "ERA5"
-    return "user_defined"
+    for name, source in SOURCES.items():
+        if hasattr(model_setup, source.input_setting):
+            return name
+    return UNSET
