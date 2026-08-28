@@ -19,6 +19,103 @@ from monarchs.physics.lateral.neighbours import find_biggest_neighbour
 from monarchs.physics.lateral.transfer import move_to_neighbours
 
 
+@kernel(parallel=True)
+def water_level_pass(grid, temp_grid, max_grid_row, max_grid_col):
+    """
+    First pass - work out water level differences between the grid cells.
+    """
+    total_water = 0.0
+    for row in prange(max_grid_row):
+        for col in range(max_grid_col):
+            cell = grid[row][col]
+            update_water_level(cell)
+            total_water += np.sum(cell["water"]) + cell["lake_depth"]
+            cell["water_direction"][:] = 0
+
+            # snapshots of fields we need to move water into and out of simultaneously
+            temp_grid[row, col]["lake_depth"] = cell["lake_depth"]
+            temp_grid[row, col]["lake"] = cell["lake"]
+            temp_grid[row, col]["valid_cell"] = cell["valid_cell"]
+            # explicit loop since Numba prefers these over Numpy operations
+            for level in range(len(grid[row, col]["water"])):
+                temp_grid[row, col]["water"][level] = cell["water"][level]
+                temp_grid[row, col]["saturation"][level] = cell["saturation"][level]
+                temp_grid[row, col]["meltflag"][level] = cell["meltflag"][level]
+    return total_water
+
+
+@kernel()
+def apply_cell(cell, temporary_cell, lateral_movement_percolation_toggle):
+    """
+    Apply the movement calculated for one cell. Kept separate from
+    `apply_pass` so that its `raise` does not give the `prange` there more
+    than one exit, which would stop Numba parallelising it.
+    """
+    # Round water and lake depth to 10 decimal places, which gives a
+    # bit of robustness to floating-point errors. This is only an issue
+    # in a case where we expect some symmetry, e.g. the idealised
+    # 10x10 Gaussian lakes test case.
+    cell["water"] = np.around(temporary_cell["water"], 10)
+    cell["lake_depth"] = np.around(temporary_cell["lake_depth"], 10)
+    cell["saturation"] = temporary_cell["saturation"]
+    cell["meltflag"] = temporary_cell["meltflag"]
+    new_water = np.sum(cell["water"]) + cell["lake_depth"]
+    # Sometimes numerical noise can result in water being negative.
+    # In this case, if it is within some tolerance, we can accept it
+    # as noise, else an error is raised.
+    tol = -1e-8
+    if (cell["water"] < tol).any():
+        print(cell["water"])
+        print(cell["row"], cell["column"])
+        print(cell["valid_cell"])
+        print(cell["lake"])
+        if cell["valid_cell"]:
+            print(cell["water"])
+            print(np.where(cell["water"] < 0))
+            raise ValueError("cell.water is negative")
+        else:  # if in an invalid cell, we don't care, just zero it
+            cell["water"][:] = 0
+    if (cell["water"] < 0).any():
+        set_to_zeros = np.where(cell["water"] < 0)
+        cell["water"][set_to_zeros] = 0
+
+    if cell["valid_cell"]:
+        # Once all water has moved, update the Lfrac of each cell based
+        # on where the water now is.
+        # The water level is calculated at the beginning of the next
+        # call to move_water, and is not used elsewhere in the code.
+        cell["Lfrac"] = cell["water"] / (cell["firn_depth"] / cell["vert_grid"])
+        # We have put all the water at one level in the firn -
+        # we need to percolate it to make sure that
+        # the water fills out the available pore space.
+        if lateral_movement_percolation_toggle:
+            # assume the percolation happens within 1 hour.
+            percolate(cell, 3600, lateral_refreeze_flag=True)
+            # Perform an extra saturation calculation so we don't
+            # end up with unphysical liquid fraction
+            for k in np.arange(cell["vert_grid"])[::-1]:
+                calc_saturation(cell, k, end=True)
+    return new_water
+
+
+@kernel(parallel=True)
+def apply_pass(
+    grid, temp_grid, max_grid_row, max_grid_col, lateral_movement_percolation_toggle
+):
+    """
+    Third pass - apply the movements to the grid.
+    """
+    new_water = 0.0
+    for row in prange(max_grid_row):
+        for col in range(0, max_grid_col):
+            new_water += apply_cell(
+                grid[row][col],
+                temp_grid[row][col],
+                lateral_movement_percolation_toggle,
+            )
+    return new_water
+
+
 @kernel()
 def move_water(
     grid,
@@ -78,9 +175,7 @@ def move_water(
     """
 
     # Set up some values used later
-    total_water = 0
     catchment_out_water = 0
-    new_water = 0
 
     # Sanitise inputs as we expect floats - primarily so Numba doesn't complain
     # about types if a user specifies e.g. 1.
@@ -94,25 +189,7 @@ def move_water(
     dtype = grid.dtype
     temp_grid = np.zeros((len(grid), len(grid[0])), dtype=dtype)
 
-    # First pass - work out water level differences between the grid cells
-    for row in prange(max_grid_row):
-        for col in range(max_grid_col):
-            cell = grid[row][col]
-            update_water_level(cell)
-            total_water += np.sum(cell["water"]) + cell["lake_depth"]
-            cell["water_direction"][:] = 0
-
-            # Snapshot relevant fields into temp_grid so Phase 2 can read the
-            # pre-movement state while writing proposed movements.
-            temp_grid[row, col]["lake_depth"] = cell["lake_depth"]
-            temp_grid[row, col]["lake"] = cell["lake"]
-            temp_grid[row, col]["valid_cell"] = cell["valid_cell"]
-            # Explicit level loops: avoids a shallow copy and is preferred by
-            # Numba's auto-paralleliser.
-            for level in range(len(grid[row, col]["water"])):
-                temp_grid[row, col]["water"][level] = cell["water"][level]
-                temp_grid[row, col]["saturation"][level] = cell["saturation"][level]
-                temp_grid[row, col]["meltflag"][level] = cell["meltflag"][level]
+    total_water = water_level_pass(grid, temp_grid, max_grid_row, max_grid_col)
 
     # Second pass - determine where water is moving to and from, and how much
     # to move. This and the prior loop can't be merged, as the water level will change
@@ -153,59 +230,13 @@ def move_water(
                         outflow_proportion=outflow_proportion,
                     )
 
-    # Now we have the values calculated in our temporary grid,
-    # update the values of <grid>, i.e. performing our movement in one step.
-    # TODO - Not parallelsed at the moment since race conditions are possible
-    # in this step. Need to rework to a different scheme to make parallel.
-    for row in range(max_grid_row):
-        for col in range(0, max_grid_col):
-            cell = grid[row][col]
-            temporary_cell = temp_grid[row][col]
-
-            # Round water and lake depth to 10 decimal places, which gives a
-            # bit of robustness to floating-point errors. This is only an issue
-            # in a case where we expect some symmetry, e.g. the idealised
-            # 10x10 Gaussian lakes test case.
-            cell["water"] = np.around(temporary_cell["water"], 10)
-            cell["lake_depth"] = np.around(temporary_cell["lake_depth"], 10)
-            cell["saturation"] = temporary_cell["saturation"]
-            cell["meltflag"] = temporary_cell["meltflag"]
-            new_water += np.sum(cell["water"]) + cell["lake_depth"]
-            # Sometimes numerical noise can result in water being negative.
-            # In this case, if it is within some tolerance, we can accept it
-            # as noise, else an error is raised.
-            tol = -1e-8
-            if (cell["water"] < tol).any():
-                print(cell["water"])
-                print(cell["row"], cell["column"])
-                print(cell["valid_cell"])
-                print(cell["lake"])
-                if cell["valid_cell"]:
-                    print(cell["water"])
-                    print(np.where(cell["water"] < 0))
-                    raise ValueError("cell.water is negative")
-                else:  # if in an invalid cell, we don't care, just zero it
-                    cell["water"][:] = 0
-            if (cell["water"] < 0).any():
-                set_to_zeros = np.where(cell["water"] < 0)
-                cell["water"][set_to_zeros] = 0
-
-            if cell["valid_cell"]:
-                # Once all water has moved, update the Lfrac of each cell based
-                # on where the water now is.
-                # The water level is calculated at the beginning of the next
-                # call to move_water, and is not used elsewhere in the code.
-                cell["Lfrac"] = cell["water"] / (cell["firn_depth"] / cell["vert_grid"])
-                # We have put all the water at one level in the firn -
-                # we need to percolate it to make sure that
-                # the water fills out the available pore space.
-                if lateral_movement_percolation_toggle:
-                    # assume the percolation happens within 1 hour.
-                    percolate(cell, 3600, lateral_refreeze_flag=True)
-                    # Perform an extra saturation calculation so we don't
-                    # end up with unphysical liquid fraction
-                    for k in np.arange(cell["vert_grid"])[::-1]:
-                        calc_saturation(cell, k, end=True)
+    new_water = apply_pass(
+        grid,
+        temp_grid,
+        max_grid_row,
+        max_grid_col,
+        lateral_movement_percolation_toggle,
+    )
 
     print("\nLateral water movement diagnostics:")
     print("Starting water total = ", total_water)
