@@ -67,6 +67,8 @@ Variable(name="firn_depth", dtype=FLOAT, dim=SCALAR, default_value=INPUT, units=
         description="Total depth of the firn column as represented in the model."),
 """
 
+import numpy as np
+
 from monarchs.variables.definitions import (
     BOOL,
     DIRECTIONS,
@@ -135,7 +137,7 @@ CATALOGUE = [
         name="lat",
         dtype=FLOAT,
         dim=SCALAR,
-        default_value=INPUT,
+        default_value=np.nan,
         units="degrees_north",
         long_name="Latitude",
         group="fixed values",
@@ -144,7 +146,7 @@ CATALOGUE = [
         name="lon",
         dtype=FLOAT,
         dim=SCALAR,
-        default_value=INPUT,
+        default_value=np.nan,
         units="degrees_east",
         long_name="Longitude",
         group="fixed values",

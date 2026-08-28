@@ -90,7 +90,7 @@ defined in ``model_setup.py``, added to ``toggle_dict`` in ``monarchs.core.drive
 a switch to turn it on or off using the value of ``toggle_dict``.
 
 Any changes that require amendments to ``model_setup.py``
-should have suitable documentation added to ``docs/source/model_setup_reference.rst``.
+should have a ``description`` written for it in the settings catalogue, which is what generates the settings reference page.
 
 Advanced users
 ------------------------------------

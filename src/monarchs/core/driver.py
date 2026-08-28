@@ -36,10 +36,6 @@ from monarchs.core.diagnostics import (
 
 logger = logging.getLogger(__name__)
 
-# dummy init value for Dask client which may be used later - this needs to be
-# global
-CLIENT = None
-
 
 def setup_toggle_dict(model_setup):
     """
@@ -83,25 +79,11 @@ def setup_parallelism(model_setup):
     """
     Select and prepare the grid-loop implementation for this run.
 
-    Numba mode compiles the prange-based loop with the user's parallel flag;
-    otherwise the Dask-based loop is used, with a distributed Client created
-    if requested (stored in the module-global CLIENT, which process_chunk
-    workers read).
+    Numba mode compiles the prange-based loop, parallel over the flattened
+    grid when <parallel> is set. Without Numba the pure-Python loop is used,
+    which is always serial.
     """
     # pylint: disable=import-outside-toplevel
-    # dask path
-    if (
-        model_setup.parallel
-        and model_setup.dask_scheduler == "distributed"
-        and not model_setup.use_numba
-    ):
-        print("Setting up Dask Client object...")
-        # only import dask.distributed if we need it - this avoids requiring
-        # dask.distributed to be installed for the model to run
-        from dask.distributed import Client  # pylint: disable=no-name-in-module
-
-        global CLIENT  # pylint: disable=global-statement
-        CLIENT = Client()
     # numba path
     if model_setup.use_numba:
         from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
@@ -140,10 +122,7 @@ def single_column_step(
         met_data_grid,
         model_setup.t_steps_per_day,
         toggle_dict,
-        parallel=model_setup.parallel,
         ncores=cores,
-        dask_scheduler=model_setup.dask_scheduler,
-        client=CLIENT,
     )
 
     if check_for_single_column_errors(grid):
@@ -396,13 +375,12 @@ def monarchs():
     model_setup_path = configuration.parse_args()
     model_setup = get_model_setup(model_setup_path)
 
-    # Compile the registered @kernel functions before the model run (a no-op
-    # when use_numba is False). getattr, as defaults have not yet been applied
-    # so use_numba may or may not be a model_setup attribute at this point.
-    kernels.compile_all(getattr(model_setup, "use_numba", False))
-
     # Validate the setup and freeze it into an immutable config for the run.
     model_setup = configure(model_setup)
+
+    # Compile the registered @kernel functions before the model run (a no-op
+    # when use_numba is False).
+    kernels.compile_all(model_setup.use_numba)
     # Create output folders now that filepaths are defined.
     configuration.create_output_folders(model_setup)
 

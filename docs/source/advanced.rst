@@ -38,7 +38,7 @@ of MONARCHS that are inelegant or un-Pythonic, to accommodate the use of Numba.
 In this vein, feedback or suggestions on how to improve the readability of the MONARCHS source code are appreciated.
 
 Additionally, Numba code is significantly harder to debug, since it doesn't use the normal Python stack trace.
-A compromise here is to initially run your code with Numba, ensuring that the model :doc:``dumping flags <model_setup_reference>``
+A compromise here is to initially run your code with Numba, ensuring that the model :doc:`dumping flags <settings>`
 are enabled, and then after the code crashes, run the model from this dump with ``parallel = False`` and
 ``use_numba = False`` in your runscript to debug.
 

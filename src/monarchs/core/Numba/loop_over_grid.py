@@ -20,9 +20,6 @@ def loop_over_grid_numba(
     t_steps_per_day,
     toggle_dict,
     ncores="all",
-    client=False,
-    dask_scheduler=False,
-    parallel=True,
 ):
     # pylint: enable=unused-argument
     """
@@ -50,14 +47,10 @@ def loop_over_grid_numba(
         Dictionary of toggle switches to be fed into MONARCHS, that determine
         certain things about the model (such as whether to run certain
         physical processes).
-    parallel:
-        Dummy argument so that we can overload the regular loop_over_grid
-        with this Numba implementation, since it is needed there.
     ncores:
         Number of cores to use. Default "all", in which case it will use
         numba.config.NUMBA_DEFAULT_NUM_THREADS threads (i.e. all of them that
         Numba can detect on the system).
-    dask_scheduler, client: Dummy arguments for compatibility
 
     Returns
     -------

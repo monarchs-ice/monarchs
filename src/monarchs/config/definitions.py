@@ -115,6 +115,10 @@ def type_matches(value, dtype):
             value, (int, float, np.integer, np.floating, np.ndarray)
         ) and not isinstance(value, bool)
 
+    # strings are strings - no numpy equivalent we want to accept here
+    if dtype is str:
+        return isinstance(value, str)
+
     # lists/tuples can also be arrays
     if dtype in (list, tuple):
         return isinstance(value, (list, tuple, np.ndarray))

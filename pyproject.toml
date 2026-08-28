@@ -25,7 +25,6 @@ dependencies = [
     'rioxarray',
     'rasterio',
     'pyproj',
-    'dask',
 ]
 
 classifiers = [

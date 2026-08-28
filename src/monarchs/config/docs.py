@@ -7,7 +7,7 @@ catalogue (`monarchs.config.catalogue`) and organises them by ``group``.
 
 from monarchs.config.catalogue import SETTINGS
 from monarchs.config.definitions import REQUIRED, UNSET, dtype_name
-from monarchs.docs_tables import group_order, render_reference
+from monarchs.docs_tables import group_order, heading, render_reference
 
 # define table columns
 _COLUMNS = ["Setting", "Type", "Default", "Allowed", "Description"]
@@ -61,7 +61,7 @@ def to_markdown():
     # for each group, get the settings that belong to that group, with the group
     # name capitalised at the top
     sections = [
-        (group.capitalize(), [_row(s) for s in SETTINGS if s.group == group])
+        (heading(group), [_row(s) for s in SETTINGS if s.group == group])
         for group in group_order(SETTINGS, lambda s: s.group)
     ]
     return render_reference("MONARCHS run settings", _INTRO, _COLUMNS, sections)

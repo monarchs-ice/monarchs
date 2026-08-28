@@ -62,6 +62,21 @@ RULES = [
         message="row_amount != col_amount. Non-square grids are not yet tested.",
         error=NotImplementedError,
     ),
+    # parallelism comes from Numba's prange, so <parallel> does nothing on the
+    # pure-Python path. Only warn when the user asked for both explicitly -
+    # rules run before defaults are filled, so an absent use_numba here means
+    # "not specified", which resolves to the catalogue default (Numba on).
+    Rule(
+        failed_when=lambda ms: (
+            getattr(ms, "parallel", False)
+            and hasattr(ms, "use_numba")
+            and not ms.use_numba
+        ),
+        message="<parallel> has no effect when <use_numba> is False - the"
+        " pure-Python grid loop is always serial. Set use_numba=True to run"
+        " in parallel.",
+        error=UserWarning,
+    ),
     # check for MPI flag being enabled
     Rule(
         failed_when=lambda ms: getattr(ms, "use_mpi", False),

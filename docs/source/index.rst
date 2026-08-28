@@ -27,7 +27,6 @@ Contents
    MONARCHS_model_setup
    dem
    met_data
-   model_setup_reference
    settings
    variables
    met
