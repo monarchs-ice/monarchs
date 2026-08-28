@@ -25,6 +25,8 @@ from monarchs.physics.constants import (
 )
 
 MODULE_NAME = "monarchs.physics.lid.lid"
+ROUTINE_LID_DEVELOPMENT = MODULE_NAME + ".lid_development"
+ROUTINE_SURFACE_MELT = MODULE_NAME + ".surface_melt"
 
 
 @kernel()
@@ -62,7 +64,7 @@ def lid_development(cell, dt, met_data, Fu):
     -------
     None (amends cell inplace)
     """
-    routine_name = f"{MODULE_NAME}.lid_development"
+    routine_name = ROUTINE_LID_DEVELOPMENT
 
     if np.isnan(cell["lid_depth"]):
         print("Error - start of timestep, lid depth is NaN")
@@ -193,7 +195,7 @@ def surface_melt(cell, dt, Q):
     -------
     k_lid - float - thermal conductivity of the lid [W m^-1 K^-1]
     """
-    routine_name = f"{MODULE_NAME}.surface_melt"
+    routine_name = ROUTINE_SURFACE_MELT
     original_mass = utils.calc_mass_sum(cell)
     k_lid, _ = calc_k_and_cp(cell)
     kdTdz = (

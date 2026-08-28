@@ -26,6 +26,8 @@ from monarchs.physics.constants import (
 )
 
 MODULE_NAME = "monarchs.physics.firn.firn_column"
+ROUTINE_FIRN_COLUMN = MODULE_NAME + ".firn_column"
+ROUTINE_CALC_HEIGHT_CHANGE = MODULE_NAME + ".calc_height_change"
 
 
 @kernel()
@@ -85,7 +87,7 @@ def firn_column(
     -------
     None (amends cell inplace)
     """
-    routine_name = f"{MODULE_NAME}.firn_column"
+    routine_name = ROUTINE_FIRN_COLUMN
     # calculate mass before any melting occurs to use for a diagnostic later
     original_mass = utils.calc_mass_sum(cell)
     percolation_toggle = toggle_dict["percolation_toggle"]
@@ -178,7 +180,7 @@ def calc_height_change(
     dHdt : float
         Change in firn height as a result of melting. [m]
     """
-    routine_name = f"{MODULE_NAME}.calc_height_change"
+    routine_name = ROUTINE_CALC_HEIGHT_CHANGE
     epsilon = emissivity
     sigma = stefan_boltzmann
 

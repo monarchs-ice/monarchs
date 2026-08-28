@@ -13,6 +13,7 @@ from monarchs.core.error_handling import generic_error
 from monarchs.physics.constants import rho_ice, rho_water
 
 MODULE_NAME = "monarchs.physics.firn.snow_accumulation"
+ROUTINE_SNOWFALL = MODULE_NAME + ".snowfall"
 
 
 @kernel()
@@ -41,7 +42,7 @@ def snowfall(cell, snow_depth, snow_rho, snow_T):
     -------
     None (amends cell inplace)
     """
-    routine_name = f"{MODULE_NAME}.snowfall"
+    routine_name = ROUTINE_SNOWFALL
 
     if snow_depth <= 0:
         return

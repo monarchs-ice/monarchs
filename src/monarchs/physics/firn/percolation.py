@@ -17,6 +17,8 @@ from monarchs.physics.constants import (
 )
 
 MODULE_NAME = "monarchs.physics.firn.percolation"
+ROUTINE_CALC_REFREEZING = MODULE_NAME + ".calc_refreezing"
+ROUTINE_CALC_SATURATION = MODULE_NAME + ".calc_saturation"
 
 
 @kernel()
@@ -163,7 +165,7 @@ def calc_refreezing(cell, v_lev):
         unphysical state.
 
     """
-    routine_name = f"{MODULE_NAME}.calc_refreezing"
+    routine_name = ROUTINE_CALC_REFREEZING
     # TODO - allow water to freeze if in a under-firn lake, but not expand.
     # TODO - check that this doesnt violate mass conservation
     # Maximum allowable temperature change
@@ -279,7 +281,7 @@ def calc_saturation(cell, v_lev_in, end=False):
         If lake depth goes negative, model is in an unphysical state so we
         throw an error.
     """
-    routine_name = f"{MODULE_NAME}.calc_saturation"
+    routine_name = ROUTINE_CALC_SATURATION
     v_lev = int(v_lev_in)
     Lfrac_max = 1 - cell["Sfrac"][v_lev]
 

@@ -23,6 +23,7 @@ from monarchs.physics.constants import (
 )
 
 MODULE_NAME = "monarchs.physics.lake.formation"
+ROUTINE_LAKE_FORMATION = MODULE_NAME + ".lake_formation"
 
 
 @kernel()
@@ -45,7 +46,7 @@ def lake_formation(cell, dt, met_data):
     -------
     None (amends cell inplace).
     """
-    routine_name = f"{MODULE_NAME}.lake_formation"
+    routine_name = ROUTINE_LAKE_FORMATION
     if cell["lake_depth"] > 0.1:
         cell["lake"] = True
     if np.isnan(cell["lake_depth"]):

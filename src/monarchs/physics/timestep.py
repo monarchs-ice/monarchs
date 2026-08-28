@@ -16,6 +16,7 @@ from monarchs.physics.constants import rho_ice, rho_water
 from monarchs.core.error_handling import generic_error, check_correct
 
 MODULE_NAME = "monarchs.physics.timestep"
+ROUTINE_TIMESTEP_LOOP = MODULE_NAME + ".timestep_loop"
 
 
 @kernel()
@@ -78,7 +79,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
     """
     cell["visit_count"] += 1
-    routine_name = f"{MODULE_NAME}.timestep_loop"
+    routine_name = ROUTINE_TIMESTEP_LOOP
     snowfall_toggle = toggle_dict["snowfall_toggle"]
     firn_column_toggle = toggle_dict["firn_column_toggle"]
     firn_heat_toggle = toggle_dict["firn_heat_toggle"]

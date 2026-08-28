@@ -19,6 +19,7 @@ from monarchs.physics.constants import (
 )
 
 MODULE_NAME = "monarchs.physics.lid.virtual_lid"
+ROUTINE_VIRTUAL_LID_DEVELOPMENT = MODULE_NAME + ".virtual_lid_development"
 
 
 @kernel()
@@ -65,7 +66,7 @@ def virtual_lid_development(cell, dt, met_data, turbulent_flux_upper):
     -------
     None (amends cell inplace)
     """
-    routine_name = f"{MODULE_NAME}.virtual_lid_development"
+    routine_name = ROUTINE_VIRTUAL_LID_DEVELOPMENT
     original_mass = utils.calc_mass_sum(cell)
 
     # JE - As with the lake, we need to calculate the surface energy based

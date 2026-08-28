@@ -30,6 +30,8 @@ from monarchs.physics.constants import (
 )
 
 MODULE_NAME = "monarchs.physics.lake.development"
+ROUTINE_LAKE_DEVELOPMENT = MODULE_NAME + ".lake_development"
+ROUTINE_CALC_HEIGHT_ADJUSTMENT = MODULE_NAME + ".calc_height_adjustment"
 
 
 @kernel()
@@ -248,7 +250,7 @@ def lake_development(cell, dt, met_data):
     -------
 
     """
-    routine_name = f"{MODULE_NAME}.lake_development"
+    routine_name = ROUTINE_LAKE_DEVELOPMENT
     original_mass = utils.calc_mass_sum(cell)
     if not cell["v_lid"] and not cell["lid"]:
         # Solve lake surface temperature
@@ -312,7 +314,7 @@ def lake_development(cell, dt, met_data):
 
 @kernel()
 def calc_height_adjustment(cell, k, Fl):
-    routine_name = f"{MODULE_NAME}.calc_height_adjustment"
+    routine_name = ROUTINE_CALC_HEIGHT_ADJUSTMENT
     # If lake is above freezing it will begin to melt the firn below it
     boundary_change = 0
     cap_reached = False
@@ -324,11 +326,10 @@ def calc_height_adjustment(cell, k, Fl):
             # firn is colder than the lake, the gradient is positive, so heat
             # flows in the positive direction (downwards).
             # get avg_k from average of k from 0:2
-            kdTdz = (
-                (cell["firn_temperature"][0] - cell["firn_temperature"][1])
-                * abs(k[0])
-                / (cell["firn_depth"] / cell["vert_grid"])
+            dT = min(cell["firn_temperature"][0], 273.15) - min(
+                cell["firn_temperature"][1], 273.15
             )
+            kdTdz = dT * abs(k[0]) / (cell["firn_depth"] / cell["vert_grid"])
             # First work out the maximum available amount of melt based
             # on the solid fraction of the top cell
             # Limit sfrac_top to a minimum of 1e-2 to avoid zero division error
@@ -358,7 +359,7 @@ def calc_height_adjustment(cell, k, Fl):
             # Raise an error if we have unphysical kdTdz (i.e. firn temperature
             # below the boundary is warmer than at the boundary), within rounding
             # tolerance
-            if kdTdz < -1e-4:
+            if dT < -1e-3:
                 # a float interpolated into an f-string renders as its type in
                 # nopython mode, so print the value alongside instead
                 print("Error in lake development - kdTdz =", kdTdz)
