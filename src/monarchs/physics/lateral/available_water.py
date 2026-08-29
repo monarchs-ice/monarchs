@@ -234,7 +234,7 @@ def calc_catchment_outflow(
     if cell["lake"] and not cell["lid"]:
         current_lake_depth = temporary_cell["lake_depth"]
 
-        if cell["lake_depth"] < water_to_move:
+        if temporary_cell["lake_depth"] < water_to_move:
             water_out = current_lake_depth
             temporary_cell["lake_depth"] = 0
         else:
