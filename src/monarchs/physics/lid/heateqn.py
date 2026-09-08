@@ -137,7 +137,7 @@ def _lid_jacobian(x, args):
 
 
 @kernel()
-def lid_heateqn_solver(cell, met_data, dt, dz):
+def lid_heateqn_solver(cell, met_data, dt):
     """
     Call the heat equation solver to calculate the updated temperature
     at time t1 = t0 + dt.
@@ -150,8 +150,6 @@ def lid_heateqn_solver(cell, met_data, dt, dz):
         Meteorological data for the current timestep.
     dt : float
         Timestep [s].
-    dz : float
-        Lid layer thickness [m].
 
     Returns
     -------
@@ -162,6 +160,7 @@ def lid_heateqn_solver(cell, met_data, dt, dz):
     n_iter : int
         Number of Newton iterations used.
     """
+    dz = cell["lid_depth"] / cell["vert_grid_lid"]
     T_old = cell["lid_temperature"]
 
     k_lid = material_properties.k_ice(T_old)

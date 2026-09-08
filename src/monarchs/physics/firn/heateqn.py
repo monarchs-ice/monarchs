@@ -185,7 +185,7 @@ def _firn_jacobian(x, args):
 
 
 @kernel()
-def firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=False):
+def firn_heateqn_solver(cell, met_data, dt, fixed_sfc=False):
     """
     Solve the full-column firn heat equation.
 
@@ -198,8 +198,6 @@ def firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=False):
         temperature, surf_pressure, dew_point_temperature, wind).
     dt : float
         Timestep [s].
-    dz : float
-        Layer thickness [m].
     fixed_sfc : bool, optional
         If True, force the surface to 273.15 K. Default False.
 
@@ -213,6 +211,7 @@ def firn_heateqn_solver(cell, met_data, dt, dz, fixed_sfc=False):
         Number of Newton-Raphson iterations used (a single step for the fixed-surface
         path, since that system is linear).
     """
+    dz = cell["firn_depth"] / cell["vert_grid"]
     T_old = cell["firn_temperature"]
     k, kappa = material_properties.k_and_kappa(T_old, cell["Sfrac"], cell["Lfrac"])
     args = (cell, met_data, dz, dt, kappa, k[0], fixed_sfc)

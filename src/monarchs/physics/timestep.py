@@ -113,7 +113,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             cell["v_lid"] = False
             cell["v_lid_depth"] = 0
 
-        dz = cell["firn_depth"] / cell["vert_grid"]
         if snowfall_toggle:
             cell["rho"] = cell["Sfrac"] * rho_ice + cell["Lfrac"] * rho_water
             if met_data[t_step]["temperature"] > 273.15:
@@ -139,7 +138,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 firn_column.firn_column(
                     cell,
                     dt,
-                    dz,
                     met_data[t_step],
                     toggle_dict,
                 )
@@ -149,7 +147,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
 
             if firn_heat_toggle:
                 sol, success, _ = firn_heateqn_solver(
-                    cell, met_data[t_step], dt, dz, fixed_sfc=True
+                    cell, met_data[t_step], dt, fixed_sfc=True
                 )
                 if success:
                     cell["firn_temperature"] = sol

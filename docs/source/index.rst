@@ -27,7 +27,9 @@ Contents
    MONARCHS_model_setup
    dem
    met_data
-   model_setup_reference
+   settings
+   variables
+   met
    common_errors
    making_changes
    structure

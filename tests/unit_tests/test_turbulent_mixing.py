@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 from monarchs.physics.lake import turbulent_mixing
-from monarchs.core.model_grid import get_spec, initialise_iceshelf
+from monarchs.variables import make_grid
 
 
 @pytest.fixture
@@ -23,8 +23,6 @@ def make_cell():
         firn_depth=5.0,
         firn_temp=263.0,
     ):
-        dtype = get_spec(vert_grid, vert_grid_lake, vert_grid_lid)
-
         rho = np.full(vert_grid, 917.0, dtype=float)
         firn_T = np.full(vert_grid, float(firn_temp), dtype=float)
 
@@ -32,27 +30,23 @@ def make_cell():
         lake_T[0] = float(surface_temp)  # upper boundary in your scheme
         lake_T[-1] = 273.15  # explicit lower boundary
 
-        grid = initialise_iceshelf(
-            None,
-            num_rows=1,
-            num_cols=1,
-            vert_grid=vert_grid,
-            vert_grid_lake=vert_grid_lake,
-            vert_grid_lid=vert_grid_lid,
-            dtype=dtype,
-            x=0,
-            y=0,
-            firn_depth=firn_depth,
-            rho=rho,
-            firn_temperature=firn_T,
-            lake_depth=lake_depth_m,
-            lake_temperature=lake_T,
-            # Flags: open lake, no lid (albedo path is irrelevant as sw_in=0)
-            melt=True,
-            exposed_water=True,
-            lake=True,
-            lid=False,
-            v_lid=False,
+        grid = make_grid(
+            1,
+            1,
+            vert_grid,
+            vert_grid_lake,
+            vert_grid_lid,
+            inputs={
+                "firn_depth": firn_depth,
+                "rho": rho,
+                "firn_temperature": firn_T,
+                "lake_depth": lake_depth_m,
+                "lake_temperature": lake_T,
+                # Flags: open lake, no lid (albedo path irrelevant as sw_in=0)
+                "melt": True,
+                "exposed_water": True,
+                "lake": True,
+            },
         )
         return grid[0, 0]
 

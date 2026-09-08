@@ -14,6 +14,19 @@ import sys
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath("../../src"))
 
+
+from pathlib import Path
+
+from monarchs.config import to_markdown as _settings_markdown
+from monarchs.variables import to_markdown as _variables_markdown
+from monarchs.met_data import to_markdown as _met_markdown
+
+# write text from the config files
+pwd = Path(__file__).parent
+(pwd / "variables.md").write_text(_variables_markdown())
+(pwd / "settings.md").write_text(_settings_markdown())
+(pwd / "met.md").write_text(_met_markdown())
+
 project = "MONARCHS"
 copyright = "2024, Sammie Buzzard, Jon Elsey and Alex Robel"
 author = "Sammie Buzzard, Jon Elsey and Alex Robel"
@@ -30,6 +43,7 @@ extensions = [
 ]
 
 extensions.append("autoapi.extension")
+extensions.append("myst_parser")  # lets us use Markdown rather than reST
 
 autoapi_dirs = ["../../src/monarchs"]
 autoapi_ignore = ["*venv*", "*.run*", "*data*", "*conf.py*", "tests"]

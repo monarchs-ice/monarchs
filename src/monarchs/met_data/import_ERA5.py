@@ -5,8 +5,36 @@ import netCDF4
 import numpy as np
 from monarchs.met_data.index_map import apply_index_map, build_coarse_index_map
 from monarchs.physics.constants import rho_water
+from monarchs.met_data.catalogue import MET_CATALOGUE
 
 MODULE_NAME = "monarchs.met_data.import_ERA5"
+
+
+def _read_era5(era5_data, var, start, end):
+    """
+    Read a met field's ERA5 source variable, named by the catalogue's
+    ``era5_name`` Fall back to the ``era5_fallback`` if the primary variable
+    is not present in the input netCDF.
+
+    Returns the ERA5 data for the given time range `[start,end]`.
+
+    Raises ``KeyError`` if neither variable is present.
+    """
+    candidates = [name for name in (var.era5_name, var.era5_fallback) if name]
+    for i, name in enumerate(candidates):
+        if name in era5_data.variables:
+            if i > 0:
+                print(
+                    f"{MODULE_NAME}: '{var.era5_name}' not found for met field"
+                    f" '{var.name}' - falling back to '{name}'"
+                )
+            return era5_data.variables[name][start:end]
+    tried = " or ".join(f"'{name}'" for name in candidates)
+    raise KeyError(
+        f"{MODULE_NAME}.ERA5_to_variables: ERA5 variable {tried} (for met field"
+        f" '{var.name}') not found in the input netCDF. Check your input data,"
+        f" or amend the era5_name for '{var.name}' in monarchs.met_data.catalogue."
+    )
 
 
 def ERA5_to_variables(
@@ -75,8 +103,6 @@ def ERA5_to_variables(
                 " compensate."
             )
 
-    var_dict["long"] = era5_data.variables["longitude"][:]
-    var_dict["lat"] = era5_data.variables["latitude"][:]
     try:
         var_dict["time"] = era5_data.variables["time"][start_index:end_index]
     except KeyError:
@@ -89,94 +115,39 @@ def ERA5_to_variables(
                 " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
                 " key that is in your data."
             )
-    var_dict["wind"] = np.sqrt(
-        era5_data.variables["u10"][start_index:end_index] ** 2
-        + era5_data.variables["v10"][start_index:end_index] ** 2
-    )
-    var_dict["temperature"] = era5_data.variables["t2m"][start_index:end_index]
-    try:
-        var_dict["dew_point_temperature"] = era5_data.variables["d2m"][
-            start_index:end_index
-        ]
-    except KeyError:
-        # deprecated fallback based on 95% of true temperature - now raise an error
-        # if no dewpoint temperature provided. may relax this in future
-        raise KeyError(
-            f"{MODULE_NAME}.{routine_name}: Dewpoint temperature 'd2m' not"
-            " found in the input ERA5 netCDF. Check your input data, or amend"
-            " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
-            " key that is in your data."
-        )
-    try:
-        var_dict["pressure"] = era5_data.variables["sp"][start_index:end_index] / 100
-    except KeyError:
-        try:
-            var_dict["pressure"] = (
-                era5_data.variables["msl"][start_index:end_index] / 100
-            )
-        except KeyError:
-            raise KeyError(
-                f"{MODULE_NAME}.{routine_name}: Pressure variable 'sp' or 'msl' not found in the input ERA5"
-                " netCDF. Check your input data,or amend"
-                " <monarchs.met_data.import_ERA5.ERA5_to_variables> to use the"
-                " key that is in your data."
-            )
-    var_dict["snowfall"] = era5_data.variables["sf"][start_index:end_index]
 
+    def read(name):
+        return era5_data.variables[name][start_index:end_index]
+
+    # Read each met field using the era5_name / derived_from / convert given
+    # for it in the catalogue. lat/lon are coordinate axes, so read whole
+    # rather than time-sliced; snow_dens needs a fallback and is done below.
+    for var in MET_CATALOGUE:
+        if var.name in ("lat", "lon"):
+            var_dict[var.name] = era5_data.variables[var.era5_name][:]
+            continue
+        if var.name == "snow_dens":
+            continue
+        if var.derived_from is not None:
+            value = var.derived_from(read)
+        else:
+            value = _read_era5(era5_data, var, start_index, end_index)
+        if var.convert is not None:
+            value = var.convert(value, seconds_per_step)
+        var_dict[var.name] = value
+
+    # snow albedo is read from ERA5 but is included in the model grid not the
+    # met data grid, so done separately. likewise density
     try:
-        var_dict["SW_surf"] = (
-            era5_data.variables["ssrd"][start_index:end_index] / seconds_per_step
-        )
+        var_dict["snow_albedo"] = read("asn")
     except KeyError:
-        try:
-            var_dict["SW_surf"] = (
-                era5_data.variables["ssrdc"][start_index:end_index] / seconds_per_step
-            )
-            print(
-                "Reading in clear-sky rather than all-sky radiation data since"
-                " ssrd was not in the input netCDF"
-            )
-        except KeyError:
-            raise KeyError(
-                f"{MODULE_NAME}.{routine_name}: Downwelling shortwave radiation variable `ssrd` or `ssrdc`"
-                " not found in the input ERA5 netCDF. Check your input data,"
-                " or amend <monarchs.met_data.import_ERA5.ERA5_to_variables>"
-                " to use the key that is in your data."
-            )
+        var_dict["snow_albedo"] = 0.85
+    # snow density falls back to a constant (Kuipers Munneke 2015) if absent
+    snow_dens = next(var for var in MET_CATALOGUE if var.name == "snow_dens")
     try:
-        var_dict["LW_surf"] = (
-            era5_data.variables["strd"][start_index:end_index] / seconds_per_step
-        )
+        var_dict["snow_dens"] = _read_era5(era5_data, snow_dens, start_index, end_index)
     except KeyError:
-        try:
-            print(
-                f"{MODULE_NAME}.{routine_name}: "
-                "Reading in clear-sky rather than all-sky radiation data since"
-                " strd was not in the input netCDF"
-            )
-            var_dict["LW_surf"] = (
-                era5_data.variables["strdc"][start_index:end_index] / seconds_per_step
-            )
-        except KeyError:
-            raise KeyError(
-                f"{MODULE_NAME}.{routine_name}: "
-                "Downwelling longwave radiation variable `strd` or `strdc` not"
-                " found in the input ERA5 netCDF. Check your input data, or"
-                " amend <monarchs.met_data.import_ERA5.ERA5_to_variables> to"
-                " use the key that is in your data."
-            )
-    try:
-        var_dict["snow_albedo"] = era5_data.variables["asn"][start_index:end_index]
-    except KeyError:
-        var_dict["snow_albedo"] = 0.85 * np.ones(
-            np.shape(era5_data.variables["t2m"][start_index:end_index])
-        )
-    try:
-        var_dict["snow_dens"] = era5_data.variables["rsn"][start_index:end_index]
-    except KeyError:
-        var_dict["snow_dens"] = 350 * np.ones(
-            np.shape(era5_data.variables["t2m"][start_index:end_index])
-        )  # Kuipers Munekke 2015
+        var_dict["snow_dens"] = 350 * np.ones(np.shape(var_dict["temperature"]))
 
     # convert snowfall from mwe to a height analogous to the firn height
     var_dict["snowfall"] = var_dict["snowfall"] * rho_water / var_dict["snow_dens"]
@@ -224,14 +195,14 @@ def grid_subset(
         (var_dict["lat"] <= lat_upper_bound) & (var_dict["lat"] > lat_lower_bound)
     )[0]
     long_indices = np.where(
-        (var_dict["long"] <= long_upper_bound) & (var_dict["long"] >= long_lower_bound)
+        (var_dict["lon"] <= long_upper_bound) & (var_dict["lon"] >= long_lower_bound)
     )[0]
     for key in var_dict.keys():
         if key in ["time"]:
             continue
         elif key == "lat":
             var_dict[key] = var_dict[key][lat_indices]
-        elif key == "long":
+        elif key == "lon":
             var_dict[key] = var_dict[key][long_indices]
         else:
             var_dict[key] = var_dict[key][:, lat_indices, :]
@@ -245,47 +216,35 @@ def get_met_bounds_from_DEM(
     from monarchs.dem_utils.load_dem import export_DEM
 
     routine_name = "get_met_bounds_from_DEM"
-    bounds = [
-        "bbox_top_right",
-        "bbox_bottom_left",
-        "bbox_top_left",
-        "bbox_bottom_right",
-    ]
-    bdict = {}
-    for bound in bounds:
-        if not hasattr(model_setup, bound):
-            bdict[bound] = np.nan
-        else:
-            bdict[bound] = getattr(model_setup, bound)
+    # get data out of DEM
     iheights, ilats, ilons, dx, dy = export_DEM(
         model_setup.DEM_path,
-        top_right=bdict["bbox_top_right"],
-        bottom_left=bdict["bbox_bottom_left"],
-        top_left=bdict["bbox_top_left"],
-        bottom_right=bdict["bbox_bottom_right"],
+        top_right=model_setup.bbox_top_right,
+        bottom_left=model_setup.bbox_bottom_left,
+        top_left=model_setup.bbox_top_left,
+        bottom_right=model_setup.bbox_bottom_right,
         num_points=model_setup.row_amount,
         input_crs=model_setup.input_crs,
     )
     print(f"{MODULE_NAME}.{routine_name}: Loading in lat/long bounds from DEM")
 
-    # Build 2-D index maps using vectorised nearest-neighbour (same result as
-    # the previous find_nearest loop, but in one place with index_map module)
+    # Build 2-D index maps
     lat_indices, lon_indices = build_coarse_index_map(
         era5_grid["lat"],
-        era5_grid["long"],
+        era5_grid["lon"],
         lat_array,
         lon_array,
     )
 
     # Preserve original coarse axes for netCDF writing (lat/long are overwritten)
     coarse_lat = np.asarray(era5_grid["lat"])
-    coarse_lon = np.asarray(era5_grid["long"])
+    coarse_lon = np.asarray(era5_grid["lon"])
 
-    # ── Update lat/long in the grid to the DEM geographic coords,
-    #    but leave all met variables at coarse resolution ─────────────────
+    # Update lat/long in the grid to the DEM geographic coords,
+    # but leave all meteorological variables at coarse resolution
     era5_grid = dict(era5_grid)
     era5_grid["lat"] = lat_array
-    era5_grid["long"] = lon_array
+    era5_grid["lon"] = lon_array
     era5_grid["coarse_lat"] = coarse_lat
     era5_grid["coarse_lon"] = coarse_lon
 
@@ -296,7 +255,7 @@ def get_met_bounds_from_DEM(
         # only if actually needed — avoids the cost in normal runs
         expanded = dict(era5_grid)
         for var in era5_grid.keys():
-            if var in ["lat", "long", "time"]:
+            if var in ["lat", "lon", "time"]:
                 continue
             expanded[var] = apply_index_map(era5_grid[var], lat_indices, lon_indices)
         generate_met_dem_diagnostic_plots(era5_grid, expanded, ilats, ilons, iheights)

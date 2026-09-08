@@ -7,10 +7,9 @@ in/interpolating the digital elevation model (DEM) if applicable.
 
 """
 
-# TODO - further refactor initialise_firn_profile, docstrings
 import numpy as np
 from monarchs.dem_utils.load_dem import export_DEM
-from monarchs.core.model_grid import initialise_iceshelf, get_spec
+from monarchs.variables import make_grid
 
 
 def initialise_firn_profile(model_setup, diagnostic_plots=False):
@@ -27,7 +26,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
     lon_array = 0
 
     print(f"{func_name}: Setting up firn profile")
-    if hasattr(model_setup, "DEM_path"):
+    if model_setup.DEM_path is not None:
         print(f"{func_name}: Reading in firn depth from DEM")
 
         firn_depth, lat_array, lon_array, dx, dy = export_DEM(
@@ -40,7 +39,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             bottom_left=model_setup.bbox_bottom_left,
             input_crs=model_setup.input_crs,
         )
-    elif hasattr(model_setup, "firn_depth"):
+    elif model_setup.firn_depth is not None:
         firn_depth = model_setup.firn_depth
         dx = model_setup.lat_grid_size
         dy = model_setup.lat_grid_size
@@ -51,40 +50,31 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             " specify this in your model configuration file."
         )
     valid_cells = np.ones((model_setup.row_amount, model_setup.col_amount), dtype=bool)
-    if hasattr(model_setup, "firn_max_height"):
-        if model_setup.max_height_handler == "clip":
-            firn_depth = np.clip(firn_depth, 0, model_setup.firn_max_height)
-        elif model_setup.max_height_handler == "filter":
-            valid_cells[np.where(firn_depth > model_setup.firn_max_height)] = False
-            # with np.printoptions(threshold=np.inf):
-            # print(
-            #    f"{func_name}:"
-            #    " Filtering out cells according to the following mask"
-            #    " (False = filtered out), since they exceed the firn"
-            #    " height threshold:"
-            # )
-            # print("Valid cells = ", valid_cells)
+    # handle DEM heights above the user-defined maximum
+    if model_setup.max_height_handler == "clip":
+        firn_depth = np.clip(firn_depth, 0, model_setup.firn_max_height)
+    elif model_setup.max_height_handler == "filter":
+        valid_cells[np.where(firn_depth > model_setup.firn_max_height)] = False
+
+    # likewise for heights below the user-defined minimum
     firn_depth_under_35_flag = False
-    if hasattr(model_setup, "firn_min_height"):
-        if model_setup.min_height_handler == "clip":
-            firn_depth = np.clip(
-                firn_depth, a_min=model_setup.firn_min_height, a_max=None
+    if model_setup.min_height_handler == "clip":
+        firn_depth = np.clip(firn_depth, a_min=model_setup.firn_min_height, a_max=None)
+    elif model_setup.min_height_handler == "filter":
+        valid_cells[np.where(firn_depth < model_setup.firn_min_height)] = False
+        with np.printoptions(threshold=np.inf):
+            print(
+                f"{func_name}:"
+                " Filtering out cells according to the following mask"
+                " (False = filtered out), since they are below the firn"
+                " height threshold:"
             )
-        elif model_setup.min_height_handler == "filter":
-            valid_cells[np.where(firn_depth < model_setup.firn_min_height)] = False
-            with np.printoptions(threshold=np.inf):
-                print(
-                    f"{func_name}:"
-                    " Filtering out cells according to the following mask"
-                    " (False = filtered out), since they are below the firn"
-                    " height threshold:"
-                )
-                print("Valid cells = ", valid_cells)
-        elif model_setup.min_height_handler == "extend":
-            if firn_depth.min() < model_setup.firn_min_height:
-                firn_depth += model_setup.firn_min_height - firn_depth.min()
-        elif model_setup.min_height_handler == "normalise":
-            firn_depth_under_35_flag = True
+            print("Valid cells = ", valid_cells)
+    elif model_setup.min_height_handler == "extend":
+        if firn_depth.min() < model_setup.firn_min_height:
+            firn_depth += model_setup.firn_min_height - firn_depth.min()
+    elif model_setup.min_height_handler == "normalise":
+        firn_depth_under_35_flag = True
 
     valid_cells_old = valid_cells
     valid_cells = check_for_isolated_cells(valid_cells)
@@ -98,22 +88,13 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
         -1,
     )
 
-    # initialise density from model setup script or default values
-    rho_init = getattr(model_setup, "rho_init", "default")
+    # initialise density from the model setup script (an array), or from the
+    # empirical profile for the "default" keyword
+    rho_init = model_setup.rho_init
     if not isinstance(rho_init, str):
         rho = rho_init
     else:
-        if hasattr(model_setup, "rho_sfc"):
-            rho_sfc = model_setup.rho_sfc
-        else:
-            rho_sfc = 500
-        if not hasattr(model_setup, "rho_init"):
-            print(
-                f"{func_name}:"
-                " rho_init not specified in run configuration file - using"
-                " default profile (empirical formula with z_t = 37 and rho_sfc"
-                f" = {rho_sfc})"
-            )
+        rho_sfc = model_setup.rho_sfc
         rho = rho_init_emp(firn_columns, rho_sfc, 37)
         if firn_depth_under_35_flag:
             print("Correcting firn profile\n\n\n")
@@ -132,7 +113,7 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
                             rho_temp,
                         )[::-1]
 
-    T_init = getattr(model_setup, "T_init", "default")
+    T_init = model_setup.T_init
     if not isinstance(T_init, str):
         temperature = T_init
     else:
@@ -145,13 +126,6 @@ def initialise_firn_profile(model_setup, diagnostic_plots=False):
             )
         )
         temperature[:][:] = t_init
-        if not hasattr(model_setup, "T_init"):
-            print(f"{func_name}: ")
-            print(
-                "T_init not specified in run configuration file - using"
-                " default profile (linear 263.15 K at surface -> 253.15 K"
-                " at bottom)"
-            )
 
     # else return null values for the lat/long arrays which aren't used
     # pylint: disable=duplicate-code
@@ -232,110 +206,50 @@ def rho_init_emp(z, rho_sfc, z_t):
     rho_sfc : float
         Density that you desire for the surface firn layer. [kg m^-3]
     z_t : float
-
-
+        Depth scale for the density profile. [m]
     Returns
     -------
-
+    rho : float
+        Density profile of the firn column. [kg m^-3]
     """
     rho = 917 - (917 - rho_sfc) * np.exp(-(1.9 / z_t) * z)
     return rho
 
 
-# This function sets up the entire model grid, and splitting it up reduces
-# readability significantly, so we disable the pylint warnings here.
-# pylint: disable=too-many-arguments, too-many-locals, too-many-statements
-def create_model_grid(
-    model_setup,
-    firn_depth,
-    rho,
-    firn_temperature,
-    # default values
-    sfrac=np.array([np.nan]),
-    lfrac=np.array([np.nan]),
-    meltflag=np.array([np.nan]),
-    saturation=np.array([np.nan]),
-    lake_depth=0.0,
-    lake_temperature=np.array([np.nan]),
-    lid_depth=0.0,
-    lid_temperature=np.array([np.nan]),
-    melt=False,
-    exposed_water=False,
-    lake=False,
-    v_lid=False,
-    lid=False,
-    water_level=0,
-    water=np.array([np.nan]),
-    ice_lens=False,
-    has_had_lid=False,
-    lid_sfc_melt=0.0,
-    lid_melt_count=0,
-    melt_hours=0,
-    exposed_water_refreeze_counter=0,
-    virtual_lid_temperature=273.15,
-    total_melt=0.0,
-    valid_cells=np.array([np.nan]),
-    lats=np.array([np.nan]),
-    lons=np.array([np.nan]),
-    size_dx=1000.0,
-    size_dy=1000.0,
-):
+def create_model_grid(model_setup, firn_depth, rho, firn_temperature, **overrides):
     """
-    Creates the model grid by initializing the ice shelf with the provided
-    parameters.
+    Build the initial model grid.
+
+    ``firn_depth``, ``rho`` and ``firn_temperature`` are the required physics
+    inputs. Any other grid field may be set by keyword using its catalogue name
+    (e.g. ``valid_cell=mask``, ``lat=lats``), or from a runscript via the
+    ``initial_conditions`` setting (e.g. ``initial_conditions={'lake_depth':
+    0.5}``). See ``monarchs.variables`` for the full list of grid fields.
     """
+    # setup the actual grid points
     y, x = np.meshgrid(
         np.arange(0, model_setup.row_amount, 1),
         np.arange(0, model_setup.col_amount, 1),
         indexing="ij",
     )
-    dtype = get_spec(
-        model_setup.vertical_points_firn,
-        model_setup.vertical_points_lake,
-        model_setup.vertical_points_lid,
-    )
-    grid = initialise_iceshelf(
-        model_setup,
+    inputs = {
+        "column": x,
+        "row": y,
+        "firn_depth": firn_depth,
+        "rho": rho,
+        "firn_temperature": firn_temperature,
+    }
+    # fields worked out during setup - valid_cell, size_dx/dy, and lat/lon
+    # when there is a DEM
+    inputs.update(overrides)
+    if model_setup.initial_conditions:
+        inputs.update(model_setup.initial_conditions)
+    # make_grid reads the variable catalogue and populates the model grid
+    return make_grid(
         model_setup.row_amount,
         model_setup.col_amount,
         model_setup.vertical_points_firn,
         model_setup.vertical_points_lake,
         model_setup.vertical_points_lid,
-        dtype,
-        x,
-        y,
-        firn_depth,
-        rho,
-        firn_temperature,
-        sfrac=sfrac,
-        lfrac=lfrac,
-        meltflag=meltflag,
-        saturation=saturation,
-        lake_depth=lake_depth,
-        lake_temperature=lake_temperature,
-        lid_depth=lid_depth,
-        lid_temperature=lid_temperature,
-        melt=melt,
-        exposed_water=exposed_water,
-        lake=lake,
-        v_lid=v_lid,
-        lid=lid,
-        water_level=water_level,
-        water=water,
-        ice_lens=ice_lens,
-        ice_lens_depth=model_setup.vertical_points_firn + 1,
-        has_had_lid=has_had_lid,
-        lid_sfc_melt=lid_sfc_melt,
-        lid_melt_count=lid_melt_count,
-        melt_hours=melt_hours,
-        exposed_water_refreeze_counter=exposed_water_refreeze_counter,
-        virtual_lid_temperature=virtual_lid_temperature,
-        total_melt=total_melt,
-        valid_cells=valid_cells,
-        numba=model_setup.use_numba,
-        lat=lats,
-        lon=lons,
-        size_dx=size_dx,
-        size_dy=size_dy,
+        inputs=inputs,
     )
-    return grid

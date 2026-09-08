@@ -1,101 +1,40 @@
 """
-Sets up the Numpy structured array used to hold meteorological data for the
-model run.
+Sets up the NumPy structured array used to hold meteorological data for the
+model run. The fields are defined in the met catalogue
+(``monarchs.met_data.catalogue``).
 """
 
 import numpy as np
 
+from monarchs.met_data.catalogue import met_dtype
 
-def initialise_met_data(
-    snowfall,
-    snow_dens,
-    temperature,
-    wind,
-    surf_pressure,
-    dew_point_temperature,
-    lw_down,
-    sw_down,
-    latitude,
-    longitude,
-    num_rows,
-    num_cols,
-    dtype,
-    t_steps_per_day,
-):
+
+def initialise_met_data(inputs, num_rows, num_cols, t_steps_per_day):
     """
-    Create a structured array containing our met data, with each element
-    associated with an element of the model grid.
-    The data is loaded in as NumPy arrays, obtained from the input netCDF
-    file of meterological data.
-    This is done at each iteration, so we only store one day's worth of met
-    data in memory at any given time.
-    Called in <main>.
+    From the meteorological data variable catalogue, create a structured array
+    containing our met data, with each element associated with an element of the
+    model grid.
+
+    This is done at each iteration, so we only store one day's worth of
+    met data in memory at any given time.
 
     Parameters
     ----------
-    row_amount : int
-        Number of rows in the grid
-    col_amount : int
-        Number of columns in the grid
-    snowfall : array_like, float, dimension(time)
-        Array of snowfall, as a function of row index, column index
-        and time [m]
-    snow_dens :  array_like, float, dimension(time)
-        Array of snow density as a function of row index, column index and
-        time [kg m^-3]
-    temperature :  array_like, float, dimension(time)
-        Array of surface air temperature as a function of row index, column
-        index and time [K]
-    wind : array_like, float, dimension(time)
-        Array of wind speed as a function of row index, column index and
-        time [m s^-1]
-    surf_pressure :  array_like, float, dimension(time)
-        Array of surface pressure as a function of row index, column index
-        and time [Pa]
-    dewpoint_temperature :  array_like, float, dimension(time)
-        Array of dewpoint temperature as a function of row index, column
-        index and time [K]
-    lw_down : array_like, float, dimension(time)
-        Array of downwelling longwave radiation as a function of row index,
-        column index and time [W m^-2]
-    sw_down : array_like, float, dimension(time)
-        Array of downwelling shortwave radiation as a function of row index,
-        column index and time [W m^-2]
+    inputs : dict
+        {field name: array} for the met fields, keyed by the names in the
+        met catalogue. Each array is dimension(time, num_rows, num_cols),
+        except lat/lon which are time-invariant (num_rows, num_cols).
+    num_rows, num_cols : int
+        Model grid dimensions.
+    t_steps_per_day : int
+        Number of timesteps in a model day.
 
     Returns
     -------
-    met_data - numpy structured array
+    met_data : numpy structured array
         Grid containing meteorological data for the model run.
     """
-
-    met_data = np.zeros((t_steps_per_day, num_rows, num_cols), dtype=dtype)
-    met_data["snowfall"] = snowfall
-    met_data["temperature"] = temperature
-    met_data["wind"] = wind
-    met_data["surf_pressure"] = surf_pressure
-    met_data["dew_point_temperature"] = dew_point_temperature
-    met_data["LW_down"] = lw_down
-    met_data["SW_down"] = sw_down
-    met_data["snow_dens"] = snow_dens
-    met_data["lat"] = latitude
-    met_data["lon"] = longitude
+    met_data = np.zeros((t_steps_per_day, num_rows, num_cols), dtype=met_dtype())
+    for key, value in inputs.items():
+        met_data[key] = value
     return met_data
-
-
-def get_spec():
-    """Possible variables and dtypes for the met data structured array."""
-    dtype = np.dtype(
-        [
-            ("snowfall", np.float64),
-            ("snow_dens", np.float64),
-            ("temperature", np.float64),
-            ("wind", np.float64),
-            ("surf_pressure", np.float64),
-            ("dew_point_temperature", np.float64),
-            ("LW_down", np.float64),
-            ("SW_down", np.float64),
-            ("lat", np.float64),
-            ("lon", np.float64),
-        ]
-    )
-    return dtype

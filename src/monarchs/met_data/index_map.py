@@ -11,8 +11,7 @@ def build_coarse_index_map(
     Expand a coarse ERA5 array to the model grid using a pre-built index map.
 
     Every cell (i, j) in the model grid has its own (lat, lon), so the index
-    maps must also be 2-D.  The broadcasting trick used in the 1-D version is
-    replaced by direct 2-D advanced indexing in apply_index_map_2d.
+    maps must also be 2-D.
 
     Parameters
     ----------
@@ -42,25 +41,14 @@ def build_coarse_index_map(
 
 def apply_index_map_1d(
     coarse_array: np.ndarray,  # shape (time, n_clat, n_clon)
-    lat_idx: np.ndarray,  # shape (num_cols,) - index per fine lat
-    lon_idx: np.ndarray,  # shape (num_rows,) - index per fine lon
+    lat_idx: np.ndarray,  # shape (num_cols,) - coarse-lat index per model column
+    lon_idx: np.ndarray,  # shape (num_rows,) - coarse-lon index per model row
 ) -> np.ndarray:
     """
     Expand a coarse ERA5 array to a separable (regular) fine grid using
     1-D index maps and broadcasting.
-
-    For regular lat/lon grids where fine lat varies only along one axis
-    and fine lon along the other. Returns shape (time, num_cols, num_rows)
-    to match the (time, lat, lon) convention with lat_idx indexing the
-    lat dimension and lon_idx the lon dimension.
-
-    Returns
-    -------
-    ndarray, shape (time, num_cols, num_rows)
-        With lat_idx shape (num_cols,), lon_idx shape (num_rows,),
-        broadcasting gives coarse_array[:, lat_idx[:, None], lon_idx[None, :]].
     """
-    return coarse_array[:, lat_idx[:, np.newaxis], lon_idx[np.newaxis, :]]
+    return coarse_array[:, lat_idx[np.newaxis, :], lon_idx[:, np.newaxis]]
 
 
 def apply_index_map(
@@ -94,12 +82,7 @@ def apply_index_map_expand(
     lat_idx.ndim. Use this when reading from netCDF where index map
     dimensionality may be 1-D (separable) or 2-D (e.g. DEM).
 
-    Returns
-    -------
-    ndarray, shape (time, num_rows, num_cols)
-        For 2-D index maps this is direct. For 1-D, output is
-        (time, len(lat_idx), len(lon_idx)); caller should ensure
-        (lat_idx, lon_idx) align with (row, col) if needed.
+    Both paths return shape ``(time, num_rows, num_cols)``.
     """
     if lat_idx.ndim == 1:
         return apply_index_map_1d(coarse_array, lat_idx, lon_idx)

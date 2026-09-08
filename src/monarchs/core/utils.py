@@ -2,10 +2,26 @@
 Utilities module containing various helper functions or wrappers.
 """
 
+import time
 import numpy as np
 import pathos
 from monarchs.physics.constants import rho_ice, rho_water
 from monarchs.core.kernels import kernel
+
+
+class Timer:
+    """Context manager that prints '<label> time: X.XXs' on exit."""
+
+    def __init__(self, label):
+        self.label = label
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
+
+    def __exit__(self, *exc):
+        print(f"{self.label} time: {time.perf_counter() - self.start:.2f}s")
+        return False
 
 
 @kernel()
@@ -47,8 +63,8 @@ def get_2d_grid(grid, attr, index=False, mask_invalid=False):
 
     Parameters
     ----------
-    grid : List, or nb.typed.List
-        the model grid
+    grid : np.ndarray
+        the model grid (structured array)
     attr : str
         the attribute you want to print out, e.g:
         get_2d_grid(grid, "firn_depth") will print out the firn depth
@@ -69,42 +85,25 @@ def get_2d_grid(grid, attr, index=False, mask_invalid=False):
     if index is False:
         index = 0
 
+    valid_mask = None
+    dtype_names = getattr(grid.dtype, "names", None)
+    if mask_invalid and dtype_names is not None and "valid_cell" in dtype_names:
+        valid_mask = grid["valid_cell"]
+
     out = []
+    for row_idx, row in enumerate(grid):
+        out_row = []
+        for col_idx, _ in enumerate(row):
+            value = grid[attr][row_idx][col_idx]
 
-    if not isinstance(grid, np.ndarray):
-        for row in grid:
-            out_row = []
-            for cell in row:
-                value = getattr(cell, attr)
+            if valid_mask is not None and (not valid_mask[row_idx][col_idx]):
+                if isinstance(value, np.ndarray):
+                    value = np.full(value.shape, np.nan, dtype=float)
+                else:
+                    value = np.nan
 
-                if mask_invalid and (not getattr(cell, "valid_cell")):
-                    if isinstance(value, np.ndarray):
-                        value = np.full(value.shape, np.nan, dtype=float)
-                    else:
-                        value = np.nan
-
-                out_row.append(value)
-            out.append(out_row)
-
-    else:
-        valid_mask = None
-        dtype_names = getattr(grid.dtype, "names", None)
-        if mask_invalid and dtype_names is not None and "valid_cell" in dtype_names:
-            valid_mask = grid["valid_cell"]
-
-        for row_idx, row in enumerate(grid):
-            out_row = []
-            for col_idx, _ in enumerate(row):
-                value = grid[attr][row_idx][col_idx]
-
-                if valid_mask is not None and (not valid_mask[row_idx][col_idx]):
-                    if isinstance(value, np.ndarray):
-                        value = np.full(value.shape, np.nan, dtype=float)
-                    else:
-                        value = np.nan
-
-                out_row.append(value)
-            out.append(out_row)
+            out_row.append(value)
+        out.append(out_row)
 
     arr = np.array(out)
 

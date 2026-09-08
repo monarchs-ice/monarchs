@@ -54,19 +54,19 @@ met_output_filepath = "output/met_data_1d_testcase.nc"
 # in Numpy arrays.
 # If we wanted to extend this to a 2x2 case, we could make use of
 # np.broadcast_to to broadcast our data to the correct shape.
-# e.g. np.broadcast_to(met_data["LW_surf"],
-# (row_amount, col_amount, len(met_data["LW_surf"])))
+# e.g. np.broadcast_to(met_data["LW_down"],
+# (row_amount, col_amount, len(met_data["LW_down"])))
 met_data = {}
 spinup_timesteps = 0 * 24
 hot_timesteps = 60 * 24
 cold_timesteps = 80 * 24  # 1720
-met_data["LW_surf"] = np.concatenate(
+met_data["LW_down"] = np.concatenate(
     [
         500 * np.ones(hot_timesteps),
         100 * np.ones(cold_timesteps),
     ]
 )  # Incoming longwave radiation. [W m^-2].
-met_data["SW_surf"] = np.concatenate(
+met_data["SW_down"] = np.concatenate(
     [
         800 * np.ones(hot_timesteps),
         100 * np.ones(cold_timesteps),
@@ -78,7 +78,7 @@ met_data["temperature"] = np.concatenate(
         250 * np.ones(cold_timesteps),
     ]
 )  # Surface-layer air temperature. [K].
-met_data["pressure"] = 1000 * np.ones(
+met_data["surf_pressure"] = 1000 * np.ones(
     num_days * t_steps_per_day
 )  # Surface-layer air pressure. [hPa].
 met_data["dew_point_temperature"] = np.concatenate(

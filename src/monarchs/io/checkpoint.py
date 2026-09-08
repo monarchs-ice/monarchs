@@ -17,7 +17,7 @@ def write_checkpoint(fname, grid, met_start_idx, met_end_idx, model_setup=None):
     """
     MONARCHS can sometimes crash, or throw an error. This function allows for
     the model state to be saved into a file (name determined by
-    <model_setup.reload_file>).
+    <model_setup.dump_filepath>).
     This allows for restarting of the code from this saved state, which can be
     useful either to keep progress in the event of an error outside of
     MONARCHS' control, or to debug the cause of an error
@@ -104,6 +104,9 @@ def read_checkpoint(fname, dtype, keys="all"):
             desired_keys = [key for key in data.variables.keys() if key not in scalars]
         else:
             desired_keys = keys
+        # skip any file variables the current catalogue no longer defines, so a
+        # checkpoint written by a different catalogue version still restarts
+        desired_keys = [key for key in desired_keys if key in dtype.names]
 
         # Create the structured array
         grid_shape = (len(data.dimensions["x"]), len(data.dimensions["y"]))

@@ -8,8 +8,8 @@ initial data, then calls run_model(), the model time loop. Each model day
 ("iteration"), run_model calls core.loop_over_grid for the single-column
 physics (which loops over each timestep, by default 1 hour), then the
 lateral movement functions, and handles saving the data - both the model
-state (also known as a "dump"), and the variables that the user wants to
-track over time.
+state (also known as a "dump" or checkpoint), and the variables that the
+user wants to track over time.
 """
 
 import time
@@ -18,10 +18,9 @@ import numpy as np
 import pathos
 from monarchs.core import configuration, kernels
 from monarchs.core.load_model_setup import get_model_setup
+from monarchs.config import SETTINGS, configure
 from monarchs.io import write_checkpoint, initialise_output, append_output
-from monarchs.core.utils import (
-    get_num_cores,
-)
+from monarchs.core.utils import get_num_cores, Timer
 from monarchs.core.error_handling import (
     calc_grid_mass,
     check_grid_correctness,
@@ -30,31 +29,12 @@ from monarchs.core.error_handling import (
 
 from monarchs.physics import lateral
 from monarchs.met_data.load import update_met_conditions, met_window
-from monarchs.core.initialise import check_for_reload_from_dump, initialise_model_data
+from monarchs.core.setup_run import check_for_reload_from_dump, initialise_model_data
 from monarchs.core.diagnostics import (
     print_model_end_of_timestep_messages,
 )
 
 logger = logging.getLogger(__name__)
-
-# dummy init value for Dask client which may be used later - this needs to be
-# global
-CLIENT = None
-
-
-class Timer:
-    """Context manager that prints '<label> time: X.XXs' on exit."""
-
-    def __init__(self, label):
-        self.label = label
-
-    def __enter__(self):
-        self.start = time.perf_counter()
-        return self
-
-    def __exit__(self, *exc):
-        print(f"{self.label} time: {time.perf_counter() - self.start:.2f}s")
-        return False
 
 
 def setup_toggle_dict(model_setup):
@@ -62,9 +42,6 @@ def setup_toggle_dict(model_setup):
     Set up a dictionary of switches to determine the running of the model.
     These are accessed by each thread, so we need to set up a new object to
     hold these else we will run into errors.
-    Additionally, the ModelSetup class is not a jitclass
-    (and cannot be dynamically set to be one), so will not work with Numba.
-    We therefore need a numba.typed.Dict object in this instance.
 
     Parameters
     ----------
@@ -74,20 +51,11 @@ def setup_toggle_dict(model_setup):
     -------
 
     """
+    # define toggle switches read into the physics kernels via the settings
+    # config.
+    toggles = [s.name for s in SETTINGS if s.kernel_toggle]
 
-    toggle_dict = {
-        "parallel": model_setup.parallel,
-        "use_numba": model_setup.use_numba,
-        "snowfall_toggle": model_setup.snowfall_toggle,
-        "firn_column_toggle": model_setup.firn_column_toggle,
-        "firn_heat_toggle": model_setup.firn_heat_toggle,
-        "lake_development_toggle": model_setup.lake_development_toggle,
-        "lid_development_toggle": model_setup.lid_development_toggle,
-        "percolation_toggle": model_setup.percolation_toggle,
-        "perc_time_toggle": model_setup.perc_time_toggle,
-        "densification_toggle": model_setup.densification_toggle,
-        "ignore_errors": model_setup.ignore_errors,
-    }
+    toggle_dict = {name: getattr(model_setup, name) for name in toggles}
 
     if model_setup.use_numba:
         # in this case we need to convert to a Numba typed dict
@@ -111,25 +79,11 @@ def setup_parallelism(model_setup):
     """
     Select and prepare the grid-loop implementation for this run.
 
-    Numba mode compiles the prange-based loop with the user's parallel flag;
-    otherwise the Dask-based loop is used, with a distributed Client created
-    if requested (stored in the module-global CLIENT, which process_chunk
-    workers read).
+    Numba mode compiles the prange-based loop, parallel over the flattened
+    grid when <parallel> is set. Without Numba the pure-Python loop is used,
+    which is always serial.
     """
     # pylint: disable=import-outside-toplevel
-    # dask path
-    if (
-        model_setup.parallel
-        and model_setup.dask_scheduler == "distributed"
-        and not model_setup.use_numba
-    ):
-        print("Setting up Dask Client object...")
-        # only import dask.distributed if we need it - this avoids requiring
-        # dask.distributed to be installed for the model to run
-        from dask.distributed import Client  # pylint: disable=no-name-in-module
-
-        global CLIENT  # pylint: disable=global-statement
-        CLIENT = Client()
     # numba path
     if model_setup.use_numba:
         from monarchs.core.Numba.loop_over_grid import loop_over_grid_numba
@@ -168,10 +122,7 @@ def single_column_step(
         met_data_grid,
         model_setup.t_steps_per_day,
         toggle_dict,
-        parallel=model_setup.parallel,
         ncores=cores,
-        dask_scheduler=model_setup.dask_scheduler,
-        client=CLIENT,
     )
 
     if check_for_single_column_errors(grid):
@@ -287,8 +238,8 @@ def run_model(model_setup, grid):
     model_setup : ModelSetup
         The loaded model configuration (see monarchs.core.load_model_setup).
     grid : numpy structured array
-        Model grid, containing the data specified in get_spec() of
-        monarchs.core.model_grid.
+        Model grid, containing the data specified by the variable catalogue
+        in monarchs.variables (see build_dtype).
 
     Returns
     -------
@@ -424,16 +375,14 @@ def monarchs():
     model_setup_path = configuration.parse_args()
     model_setup = get_model_setup(model_setup_path)
 
-    # Compile the registered @kernel functions before the model run (a no-op
-    # when use_numba is False). getattr, as defaults have not yet been applied
-    # so use_numba may or may not be a model_setup attribute at this point.
-    kernels.compile_all(getattr(model_setup, "use_numba", False))
+    # Validate the setup and freeze it into an immutable config for the run.
+    model_setup = configure(model_setup)
 
-    # Model configuration steps
+    # Compile the registered @kernel functions before the model run (a no-op
+    # when use_numba is False).
+    kernels.compile_all(model_setup.use_numba)
+    # Create output folders now that filepaths are defined.
     configuration.create_output_folders(model_setup)
-    configuration.handle_incompatible_flags(model_setup)
-    configuration.handle_invalid_values(model_setup)
-    configuration.create_defaults_for_missing_flags(model_setup)
 
     # Set up the data, then run the model physics.
     grid = initialise_model_data(model_setup)

@@ -14,21 +14,14 @@ from monarchs.core.kernels import kernel
 from monarchs.io import metadata
 from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from monarchs.io import netcdf_utils as nu
+from monarchs.config import SETTINGS
 
-# pylint: disable=duplicate-code
-DEFAULT_VARS = (
-    "firn_temperature",
-    "Sfrac",
-    "Lfrac",
-    "firn_depth",
-    "lake_depth",
-    "lid_depth",
-)
-# pylint: enable=duplicate-code
+# default set of grid fields to write, taken from the settings catalogue
+_DEFAULT_VARS = next(s.default for s in SETTINGS if s.name == "vars_to_save")
 
 
 def initialise_output(
-    fname, grid, vars_to_save=DEFAULT_VARS, vert_grid_size=False, model_setup=None
+    fname, grid, vars_to_save=_DEFAULT_VARS, vert_grid_size=False, model_setup=None
 ):
     """
     Set up the NetCDF file for model output.
@@ -170,14 +163,7 @@ def append_output(
     fname,
     grid,
     iteration,
-    vars_to_save=(
-        "firn_temperature",
-        "Sfrac",
-        "Lfrac",
-        "firn_depth",
-        "lake_depth",
-        "lid_depth",
-    ),
+    vars_to_save=_DEFAULT_VARS,
     hourly=False,
     t_step=0,
     vert_grid_size=False,

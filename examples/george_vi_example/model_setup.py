@@ -5,7 +5,7 @@ The template includes all MONARCHS parameters explicitly.
 Since this is a Python script, you can specify parameters e.g. as numpy arrays.
 """
 
-from monarchs.data import era5_example_path
+from monarchs.example_data import era5_example_path
 
 """
 Spatial parameters

@@ -44,7 +44,7 @@ def generate_met_dem_diagnostic_plots(old_era5_grid, era5_grid, ilats, ilons, ih
     ax1.set_extent([lonmin, lonmax, latmin, latmax], crs=ccrs.PlateCarree())
     ax1.coastlines()
     ax1.gridlines(draw_labels=True)
-    lons = old_era5_grid["long"][:]
+    lons = old_era5_grid["lon"][:]
     lats = old_era5_grid["lat"][:]
     temperature = old_era5_grid["temperature"][:]
     vmin = np.min(temperature[0])
