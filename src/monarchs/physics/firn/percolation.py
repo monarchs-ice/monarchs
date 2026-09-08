@@ -348,11 +348,7 @@ def calc_saturation(cell, v_lev_in, end=False):
                 # since it has come from layers below it and so we trigger lake
                 # formation. If the latter, then we just set the meltflag so
                 # that it can percolate at the next timestep.
-                if (
-                    cell["Lfrac"][0] > Lfrac_max
-                    and cell["Lfrac"][0] > 0
-                    and (cell["saturation"][1] or not end)
-                ):
+                if cell["Lfrac"][0] > Lfrac_max and cell["Lfrac"][0] > 0:
                     cell["exposed_water"] = 1
                     cell["saturation"][0] = 1
                     cell["meltflag"][0] = 0
@@ -364,15 +360,6 @@ def calc_saturation(cell, v_lev_in, end=False):
                     if cell["lake"] and cell["lake_depth"] < 0:
                         message = "Lake depth is negative - problem..."
                         generic_error(cell, routine_name, message)
-                elif cell["Lfrac"][0] > Lfrac_max and cell["Lfrac"][0] > 0 and end:
-                    # In this case, this has happened likely because the
-                    # regridding algorithm has resulted in the surface cell
-                    # having too much water.
-                    # We don't want to trigger lake formation here, so instead
-                    # we just set the meltflag so that it can percolate at the
-                    # next timestep.
-                    cell["meltflag"][0] = 1
-                    cell["saturation"][0] = 0
 
     elif cell["Lfrac"][v_lev] < Lfrac_max:
         cell["saturation"][v_lev] = 0

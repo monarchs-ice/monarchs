@@ -162,7 +162,6 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
                 and cell["v_lid_depth"] <= 0
             ):
                 cell["lake"] = False
-                cell["lake_depth"] = 0
 
             if cell["lake_depth"] == 0:
                 cell["exposed_water"] = False
@@ -260,7 +259,7 @@ def timestep_loop(cell, dt, met_data, t_steps_per_day, toggle_dict):
             # Instead of hacking it into an adjacent cell, we just let it
             # percolate in the next timestep.
             if (
-                np.any(cell["Lfrac"][1:] + cell["Sfrac"][1:] > 1.00000000001)
+                np.any(cell["Lfrac"] + cell["Sfrac"] > 1.00000000001)
                 and cell["Sfrac"][0] <= 1
             ):
                 message = (
