@@ -1,0 +1,9 @@
+monarchs.physics.firn.heateqn._firn_jacobian
+============================================
+
+.. py:function:: monarchs.physics.firn.heateqn._firn_jacobian(x, args)
+
+   Argument packer for the Jacobian calculation. As with ``_firn_residual``,
+   constructing it like this with a wrapper function lets the solver take
+   arbitrary number of arguments packed into a single tuple ``args``.
+

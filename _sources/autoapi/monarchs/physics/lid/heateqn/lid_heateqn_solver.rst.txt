@@ -1,0 +1,16 @@
+monarchs.physics.lid.heateqn.lid_heateqn_solver
+===============================================
+
+.. py:function:: monarchs.physics.lid.heateqn.lid_heateqn_solver(cell, met_data, dt)
+
+   Call the heat equation solver to calculate the updated temperature
+   at time t1 = t0 + dt.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*numpy structured array*) -- Meteorological data for the current timestep.
+                * **dt** (*float*) -- Timestep [s].
+
+   :returns: * **T** (*array_like, float, dimension(vert_grid_lid)*) -- Lid temperature profile, rounded to 8 decimal places [K].
+             * **success** (*bool*) -- True if the iteration converged.
+             * **n_iter** (*int*) -- Number of Newton iterations used.
+

@@ -1,0 +1,49 @@
+monarchs.physics.lake.development
+=================================
+
+.. py:module:: monarchs.physics.lake.development
+
+.. autoapi-nested-parse::
+
+   Lake development physics.
+
+   Contains functions for the thermodynamic evolution of a fully-formed lake
+   (depth >= 10 cm), including turbulent mixing, radiative transfer through
+   the water column, and adjustment of the lake-firn boundary.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.lake.development.MODULE_NAME
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lake/development/calc_height_adjustment
+   /autoapi/monarchs/physics/lake/development/lake_development
+   /autoapi/monarchs/physics/lake/development/radiative_transfer
+   /autoapi/monarchs/physics/lake/development/turbulent_mixing
+
+.. autoapisummary::
+
+   monarchs.physics.lake.development.calc_height_adjustment
+   monarchs.physics.lake.development.lake_development
+   monarchs.physics.lake.development.radiative_transfer
+   monarchs.physics.lake.development.turbulent_mixing
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.physics.lake.development'
+
+

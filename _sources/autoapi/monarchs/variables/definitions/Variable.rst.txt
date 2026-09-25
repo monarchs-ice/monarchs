@@ -1,0 +1,58 @@
+monarchs.variables.definitions.Variable
+=======================================
+
+.. py:class:: monarchs.variables.definitions.Variable
+
+   Defines a MONARCHS model variable.
+
+   A variable needs to have these fields in order to work with every part of
+   the model. Some of these have default values.
+
+
+   .. py:attribute:: default_value
+      :type:  Any
+      :value: 0
+
+
+
+   .. py:attribute:: description
+      :type:  str
+      :value: ''
+
+
+
+   .. py:attribute:: dim
+      :type:  Dim
+
+
+   .. py:attribute:: dtype
+      :type:  type
+
+
+   .. py:attribute:: group
+      :type:  str
+      :value: 'state'
+
+
+
+   .. py:attribute:: long_name
+      :type:  str
+      :value: ''
+
+
+
+   .. py:attribute:: name
+      :type:  str
+
+
+   .. py:attribute:: output
+      :type:  bool
+      :value: True
+
+
+
+   .. py:attribute:: units
+      :type:  str
+      :value: '1'
+
+

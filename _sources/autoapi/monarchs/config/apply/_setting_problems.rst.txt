@@ -1,0 +1,7 @@
+monarchs.config.apply._setting_problems
+=======================================
+
+.. py:function:: monarchs.config.apply._setting_problems(model_setup)
+
+   Type, choice and validator problems, across every setting that is set.
+

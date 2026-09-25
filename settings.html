@@ -1,0 +1,587 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MONARCHS run settings &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MONARCHS grid variables" href="variables.html" />
+    <link rel="prev" title="Formatting input meteorological data" href="met_data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MONARCHS run settings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#grid">Grid</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#row-amount"><code class="docutils literal notranslate"><span class="pre">row_amount</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#col-amount"><code class="docutils literal notranslate"><span class="pre">col_amount</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vertical-points-firn"><code class="docutils literal notranslate"><span class="pre">vertical_points_firn</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vertical-points-lake"><code class="docutils literal notranslate"><span class="pre">vertical_points_lake</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vertical-points-lid"><code class="docutils literal notranslate"><span class="pre">vertical_points_lid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lat-grid-size"><code class="docutils literal notranslate"><span class="pre">lat_grid_size</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#timestepping">Timestepping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#num-days"><code class="docutils literal notranslate"><span class="pre">num_days</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#t-steps-per-day"><code class="docutils literal notranslate"><span class="pre">t_steps_per_day</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lateral-timestep"><code class="docutils literal notranslate"><span class="pre">lateral_timestep</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dem">DEM</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#latmax"><code class="docutils literal notranslate"><span class="pre">latmax</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#latmin"><code class="docutils literal notranslate"><span class="pre">latmin</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#longmax"><code class="docutils literal notranslate"><span class="pre">longmax</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#longmin"><code class="docutils literal notranslate"><span class="pre">longmin</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bbox-top-right"><code class="docutils literal notranslate"><span class="pre">bbox_top_right</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bbox-bottom-left"><code class="docutils literal notranslate"><span class="pre">bbox_bottom_left</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bbox-top-left"><code class="docutils literal notranslate"><span class="pre">bbox_top_left</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bbox-bottom-right"><code class="docutils literal notranslate"><span class="pre">bbox_bottom_right</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#input-crs"><code class="docutils literal notranslate"><span class="pre">input_crs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#firn-max-height"><code class="docutils literal notranslate"><span class="pre">firn_max_height</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#firn-min-height"><code class="docutils literal notranslate"><span class="pre">firn_min_height</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#max-height-handler"><code class="docutils literal notranslate"><span class="pre">max_height_handler</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#min-height-handler"><code class="docutils literal notranslate"><span class="pre">min_height_handler</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dem-diagnostic-plots"><code class="docutils literal notranslate"><span class="pre">dem_diagnostic_plots</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dem-path"><code class="docutils literal notranslate"><span class="pre">DEM_path</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lat-bounds"><code class="docutils literal notranslate"><span class="pre">lat_bounds</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#initial-conditions">Initial conditions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#rho-init"><code class="docutils literal notranslate"><span class="pre">rho_init</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#t-init"><code class="docutils literal notranslate"><span class="pre">T_init</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rho-sfc"><code class="docutils literal notranslate"><span class="pre">rho_sfc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#firn-depth"><code class="docutils literal notranslate"><span class="pre">firn_depth</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">initial_conditions</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#forcing">Forcing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#met-data-source"><code class="docutils literal notranslate"><span class="pre">met_data_source</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#met-timestep"><code class="docutils literal notranslate"><span class="pre">met_timestep</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#met-output-filepath"><code class="docutils literal notranslate"><span class="pre">met_output_filepath</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#met-dem-diagnostic-plots"><code class="docutils literal notranslate"><span class="pre">met_dem_diagnostic_plots</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#load-precalculated-met-data"><code class="docutils literal notranslate"><span class="pre">load_precalculated_met_data</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#met-input-filepath"><code class="docutils literal notranslate"><span class="pre">met_input_filepath</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#met-data"><code class="docutils literal notranslate"><span class="pre">met_data</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#radiation-forcing-factor"><code class="docutils literal notranslate"><span class="pre">radiation_forcing_factor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#toggles">Toggles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#snowfall-toggle"><code class="docutils literal notranslate"><span class="pre">snowfall_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#firn-column-toggle"><code class="docutils literal notranslate"><span class="pre">firn_column_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#firn-heat-toggle"><code class="docutils literal notranslate"><span class="pre">firn_heat_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#percolation-toggle"><code class="docutils literal notranslate"><span class="pre">percolation_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#perc-time-toggle"><code class="docutils literal notranslate"><span class="pre">perc_time_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lake-development-toggle"><code class="docutils literal notranslate"><span class="pre">lake_development_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lid-development-toggle"><code class="docutils literal notranslate"><span class="pre">lid_development_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lateral-movement-toggle"><code class="docutils literal notranslate"><span class="pre">lateral_movement_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lateral-movement-percolation-toggle"><code class="docutils literal notranslate"><span class="pre">lateral_movement_percolation_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#single-column-toggle"><code class="docutils literal notranslate"><span class="pre">single_column_toggle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#densification-toggle"><code class="docutils literal notranslate"><span class="pre">densification_toggle</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#lateral">Lateral</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#flow-into-land"><code class="docutils literal notranslate"><span class="pre">flow_into_land</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#catchment-outflow"><code class="docutils literal notranslate"><span class="pre">catchment_outflow</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flow-speed-scaling"><code class="docutils literal notranslate"><span class="pre">flow_speed_scaling</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#outflow-proportion"><code class="docutils literal notranslate"><span class="pre">outflow_proportion</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#io">IO</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#output-grid-size"><code class="docutils literal notranslate"><span class="pre">output_grid_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-timestep"><code class="docutils literal notranslate"><span class="pre">output_timestep</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vars-to-save"><code class="docutils literal notranslate"><span class="pre">vars_to_save</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#save-output"><code class="docutils literal notranslate"><span class="pre">save_output</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-filepath"><code class="docutils literal notranslate"><span class="pre">output_filepath</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dump-data"><code class="docutils literal notranslate"><span class="pre">dump_data</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dump-filepath"><code class="docutils literal notranslate"><span class="pre">dump_filepath</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dump-timestep"><code class="docutils literal notranslate"><span class="pre">dump_timestep</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dump-checkpoint-frequency"><code class="docutils literal notranslate"><span class="pre">dump_checkpoint_frequency</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dump-data-pre-lateral-movement"><code class="docutils literal notranslate"><span class="pre">dump_data_pre_lateral_movement</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reload-from-dump"><code class="docutils literal notranslate"><span class="pre">reload_from_dump</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#runtime">Runtime</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#use-numba"><code class="docutils literal notranslate"><span class="pre">use_numba</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallel"><code class="docutils literal notranslate"><span class="pre">parallel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-mpi"><code class="docutils literal notranslate"><span class="pre">use_mpi</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cores"><code class="docutils literal notranslate"><span class="pre">cores</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ignore-errors"><code class="docutils literal notranslate"><span class="pre">ignore_errors</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="variables.html">MONARCHS grid variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met.html">MONARCHS met forcing variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">MONARCHS run settings</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/settings.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="monarchs-run-settings">
+<h1>MONARCHS run settings<a class="headerlink" href="#monarchs-run-settings" title="Link to this heading"></a></h1>
+<p>This provides a reference for all of the possible settings
+available in the model.</p>
+<p>It is automatically generated from the variables in the settings catalogue (<code class="docutils literal notranslate"><span class="pre">monarchs.config.catalogue</span></code>).</p>
+<p>If you add more settings, these will be automatically added here provided you have added them to the catalogue itself.</p>
+<section id="grid">
+<h2>Grid<a class="headerlink" href="#grid" title="Link to this heading"></a></h2>
+<section id="row-amount">
+<h3><code class="docutils literal notranslate"><span class="pre">row_amount</span></code><a class="headerlink" href="#row-amount" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <strong>required</strong></p>
+<p>Number of rows (i.e. <code class="docutils literal notranslate"><span class="pre">y</span></code>-points) in your model grid, looking from top-down. MONARCHS indexes the model grid via <code class="docutils literal notranslate"><span class="pre">grid[col][row]</span></code>, i.e. the <code class="docutils literal notranslate"><span class="pre">y</span></code>-coordinate is the second index. This has only been tested with the same # of points as <code class="docutils literal notranslate"><span class="pre">col_amount</span></code>, so use caution if using different values for each of these.</p>
+</section>
+<section id="col-amount">
+<h3><code class="docutils literal notranslate"><span class="pre">col_amount</span></code><a class="headerlink" href="#col-amount" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <strong>required</strong></p>
+<p>Number of columns (i.e. <code class="docutils literal notranslate"><span class="pre">x</span></code>-points) in your model grid, looking from top-down. MONARCHS indexes the model grid via <code class="docutils literal notranslate"><span class="pre">grid[col][row]</span></code>, i.e. the <code class="docutils literal notranslate"><span class="pre">x</span></code>-coordinate is the first index. This has only been tested with the same # of points as <code class="docutils literal notranslate"><span class="pre">row_amount</span></code>, so use caution if using different values for each of these.</p>
+</section>
+<section id="vertical-points-firn">
+<h3><code class="docutils literal notranslate"><span class="pre">vertical_points_firn</span></code><a class="headerlink" href="#vertical-points-firn" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <strong>required</strong></p>
+<p>Number of vertical grid cells in the firn profile. Default is 400. This determines the resolution of the model vertically. For best results ensure that your vertical resolution is on the order of ~10 cm (i.e. your maximum firn height divided by <code class="docutils literal notranslate"><span class="pre">vertical_points_firn</span></code> is approximately 0.1)</p>
+</section>
+<section id="vertical-points-lake">
+<h3><code class="docutils literal notranslate"><span class="pre">vertical_points_lake</span></code><a class="headerlink" href="#vertical-points-lake" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <strong>required</strong></p>
+<p>Number of vertical grid cells in the lake profile. Default 20, as lakes are both much smaller than the firn column and less sensitive to vertical resolution since they are turbulently mixed.</p>
+</section>
+<section id="vertical-points-lid">
+<h3><code class="docutils literal notranslate"><span class="pre">vertical_points_lid</span></code><a class="headerlink" href="#vertical-points-lid" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <strong>required</strong></p>
+<p>Number of vertical grid cells in the lid profile. Default 20.</p>
+</section>
+<section id="lat-grid-size">
+<h3><code class="docutils literal notranslate"><span class="pre">lat_grid_size</span></code><a class="headerlink" href="#lat-grid-size" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str or float  ·  <strong>Default:</strong> ‘dem’ when a DEM is provided</p>
+<p>Size of each grid cell in m, if a DEM is provided.</p>
+</section>
+</section>
+<section id="timestepping">
+<h2>Timestepping<a class="headerlink" href="#timestepping" title="Link to this heading"></a></h2>
+<section id="num-days">
+<h3><code class="docutils literal notranslate"><span class="pre">num_days</span></code><a class="headerlink" href="#num-days" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <strong>required</strong></p>
+<p>Number of days (i.e. full model iterations) to run for. A day is <code class="docutils literal notranslate"><span class="pre">t_steps_per_day</span></code> steps of the single-column physics, followed by one pass of the lateral flow algorithm.</p>
+</section>
+<section id="t-steps-per-day">
+<h3><code class="docutils literal notranslate"><span class="pre">t_steps_per_day</span></code><a class="headerlink" href="#t-steps-per-day" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">24</span></code></p>
+<p>Number of timesteps to run for each day. 24 = 1h resolution, 8 = 3h resolution, etc.</p>
+</section>
+<section id="lateral-timestep">
+<h3><code class="docutils literal notranslate"><span class="pre">lateral_timestep</span></code><a class="headerlink" href="#lateral-timestep" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> model_setup.t_steps_per_day * 3600</p>
+<p>Timestep for each iteration of lateral water flow calculation (in s). It is highly unlikely this should be anything other than 3600 * 24.</p>
+</section>
+</section>
+<section id="dem">
+<h2>DEM<a class="headerlink" href="#dem" title="Link to this heading"></a></h2>
+<section id="latmax">
+<h3><code class="docutils literal notranslate"><span class="pre">latmax</span></code><a class="headerlink" href="#latmax" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">nan</span></code></p>
+</section>
+<section id="latmin">
+<h3><code class="docutils literal notranslate"><span class="pre">latmin</span></code><a class="headerlink" href="#latmin" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">nan</span></code></p>
+</section>
+<section id="longmax">
+<h3><code class="docutils literal notranslate"><span class="pre">longmax</span></code><a class="headerlink" href="#longmax" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">nan</span></code></p>
+</section>
+<section id="longmin">
+<h3><code class="docutils literal notranslate"><span class="pre">longmin</span></code><a class="headerlink" href="#longmin" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">nan</span></code></p>
+</section>
+<section id="bbox-top-right">
+<h3><code class="docutils literal notranslate"><span class="pre">bbox_top_right</span></code><a class="headerlink" href="#bbox-top-right" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> list  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Corner of a bounding box constraining the model domain, given as <code class="docutils literal notranslate"><span class="pre">[lat,</span> <span class="pre">long]</span></code>. Set all four corners to run on a subset of a large DEM. With <code class="docutils literal notranslate"><span class="pre">lat_bounds</span> <span class="pre">==</span> <span class="pre">'dem'</span></code> the input met data is regridded to these bounds. (i.e. the met data shifts with the choices made here).</p>
+</section>
+<section id="bbox-bottom-left">
+<h3><code class="docutils literal notranslate"><span class="pre">bbox_bottom_left</span></code><a class="headerlink" href="#bbox-bottom-left" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> list  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Corner of the model bounding box - see <code class="docutils literal notranslate"><span class="pre">bbox_top_right</span></code>.</p>
+</section>
+<section id="bbox-top-left">
+<h3><code class="docutils literal notranslate"><span class="pre">bbox_top_left</span></code><a class="headerlink" href="#bbox-top-left" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> list  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Corner of the model bounding box - see <code class="docutils literal notranslate"><span class="pre">bbox_top_right</span></code>.</p>
+</section>
+<section id="bbox-bottom-right">
+<h3><code class="docutils literal notranslate"><span class="pre">bbox_bottom_right</span></code><a class="headerlink" href="#bbox-bottom-right" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> list  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Corner of the model bounding box - see <code class="docutils literal notranslate"><span class="pre">bbox_top_right</span></code>.</p>
+</section>
+<section id="input-crs">
+<h3><code class="docutils literal notranslate"><span class="pre">input_crs</span></code><a class="headerlink" href="#input-crs" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">3031</span></code></p>
+</section>
+<section id="firn-max-height">
+<h3><code class="docutils literal notranslate"><span class="pre">firn_max_height</span></code><a class="headerlink" href="#firn-max-height" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">150</span></code></p>
+<p>Maximum height that your firn column can be at. Use this if you’re loading in a DEM which has large height ranges.</p>
+</section>
+<section id="firn-min-height">
+<h3><code class="docutils literal notranslate"><span class="pre">firn_min_height</span></code><a class="headerlink" href="#firn-min-height" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">20</span></code></p>
+<p>Minimum height that we consider to be “firn”. Anything below this we consider to be solid ice, which affects some of the physics.</p>
+</section>
+<section id="max-height-handler">
+<h3><code class="docutils literal notranslate"><span class="pre">max_height_handler</span></code><a class="headerlink" href="#max-height-handler" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">'filter'</span></code></p>
+<p>How to handle cells that exceed <code class="docutils literal notranslate"><span class="pre">firn_max_height</span></code>, designed to help us filter out land cells. <code class="docutils literal notranslate"><span class="pre">'filter'</span></code> sets <code class="docutils literal notranslate"><span class="pre">cell.valid_cell</span> <span class="pre">=</span> <span class="pre">False</span></code>, so no physics is run on the cell and it stays the same throughout the model. <code class="docutils literal notranslate"><span class="pre">'clip'</span></code> caps those cells at <code class="docutils literal notranslate"><span class="pre">firn_max_height</span></code> and keeps running physics on them.</p>
+</section>
+<section id="min-height-handler">
+<h3><code class="docutils literal notranslate"><span class="pre">min_height_handler</span></code><a class="headerlink" href="#min-height-handler" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">'filter'</span></code></p>
+<p>Handle regions on a DEM below the specified minimum height. Possible options are <code class="docutils literal notranslate"><span class="pre">'extend'</span></code> (add height to all cells to bring the lowest area up to the minimum), <code class="docutils literal notranslate"><span class="pre">'normalise'</span></code> (keep heights as-is, adjust density to account for the lower height), <code class="docutils literal notranslate"><span class="pre">'filter'</span></code> (set the cells invalid so physics doesn’t run), and <code class="docutils literal notranslate"><span class="pre">'clip'</span></code> (bring everything up to the minimum without keeping the relative values).</p>
+</section>
+<section id="dem-diagnostic-plots">
+<h3><code class="docutils literal notranslate"><span class="pre">dem_diagnostic_plots</span></code><a class="headerlink" href="#dem-diagnostic-plots" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, generate some plots to check that we have read in the DEM correctly. This is useful if using a bounding box to select a subset of the original DEM, so you can check visually that it is working as intended.</p>
+</section>
+<section id="dem-path">
+<h3><code class="docutils literal notranslate"><span class="pre">DEM_path</span></code><a class="headerlink" href="#dem-path" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> optional (unset)</p>
+<p>Path to a digital elevation model (DEM) to be read in by MONARCHS, according to its filetype and interpolated to shape <code class="docutils literal notranslate"><span class="pre">(row_amount,</span> <span class="pre">col_amount)</span></code>. Provide this or <code class="docutils literal notranslate"><span class="pre">firn_depth</span></code>. If using a relative path, it is relative to the folder you are running MONARCHS from, not the folder that the code repository is included in - e.g. if your DEM is in <code class="docutils literal notranslate"><span class="pre">/home/data/DEM/test_dem.tif</span></code> and you run MONARCHS from <code class="docutils literal notranslate"><span class="pre">/home/model_runs/test_run</span></code>, the DEM path would be <code class="docutils literal notranslate"><span class="pre">'../../data/DEM/test_dem.tif'</span></code>.</p>
+</section>
+<section id="lat-bounds">
+<h3><code class="docutils literal notranslate"><span class="pre">lat_bounds</span></code><a class="headerlink" href="#lat-bounds" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> optional (unset)  ·  <strong>Allowed:</strong> <code class="docutils literal notranslate"><span class="pre">dem</span></code></p>
+<p>Toggle whether to constrain the input met data file to lat/long bounds specified by a digital elevation model (DEM) or not. If set to <code class="docutils literal notranslate"><span class="pre">'dem'</span></code>, then the model grid and input meteorological data are constrained to the lat/long of the DEM, i.e. the data from the met data netCDF is matched/regridded to the DEM, accounting for changes in e.g. the coordinate reference systems between the two. See <code class="docutils literal notranslate"><span class="pre">examples/50x50_numba_parallel</span></code> for an example, which has <code class="docutils literal notranslate"><span class="pre">met_dem_diagnostic_plots</span> <span class="pre">==</span> <span class="pre">True</span></code> so a plot is generated showing what this does visually.</p>
+</section>
+</section>
+<section id="initial-conditions">
+<h2>Initial conditions<a class="headerlink" href="#initial-conditions" title="Link to this heading"></a></h2>
+<section id="rho-init">
+<h3><code class="docutils literal notranslate"><span class="pre">rho_init</span></code><a class="headerlink" href="#rho-init" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str or float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">'default'</span></code></p>
+<p>Initial density profile. This follows Paterson, W. (2000). The Physics of Glaciers. Butterworth-Heinemann, using the formula of <em>Schytt, V. (1958). Glaciology. Norwegian-British-Swedish Antarctic Expedition, 1949-5, IV</em>. With ‘default’, MONARCHS calculates an empirical density profile with <code class="docutils literal notranslate"><span class="pre">rho_sfc</span></code> = <code class="docutils literal notranslate"><span class="pre">500</span></code> and <code class="docutils literal notranslate"><span class="pre">z_t</span></code> = <code class="docutils literal notranslate"><span class="pre">37</span></code>. Alternatively, specify either a) a pair of points in the form <code class="docutils literal notranslate"><span class="pre">[rho_sfc,</span> <span class="pre">zt]</span></code> to use this equation and specify <code class="docutils literal notranslate"><span class="pre">rho_sfc</span></code> and <code class="docutils literal notranslate"><span class="pre">z_t</span></code> yourself, b) a 1D array of length <code class="docutils literal notranslate"><span class="pre">vertical_points_firn</span></code> to specify a uniform density profile across the whole grid, or c) an array of dimension(<code class="docutils literal notranslate"><span class="pre">row_amount</span></code>, <code class="docutils literal notranslate"><span class="pre">col_amount</span></code>, <code class="docutils literal notranslate"><span class="pre">vertical_points_firn</span></code>) to specify different density profiles across your model grid.</p>
+</section>
+<section id="t-init">
+<h3><code class="docutils literal notranslate"><span class="pre">T_init</span></code><a class="headerlink" href="#t-init" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str or float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">'default'</span></code></p>
+<p>Initial temperature profile. With ‘default’, MONARCHS uses an assumed firn top temperature of 260 K and bottom temperature of 240 K, linearly interpolated between these points. Alternatively, specify either a) a pair of points in the form [top, bottom] to assume a linear temperature profile across the whole grid, b) a 1D array of length <code class="docutils literal notranslate"><span class="pre">vertical_points_firn</span></code> to specify a uniform temperature profile across the whole grid, or c) an array of dimension(<code class="docutils literal notranslate"><span class="pre">row_amount</span></code>, <code class="docutils literal notranslate"><span class="pre">col_amount</span></code>, <code class="docutils literal notranslate"><span class="pre">vertical_points_firn</span></code>) to specify different temperature profiles across your model grid.</p>
+</section>
+<section id="rho-sfc">
+<h3><code class="docutils literal notranslate"><span class="pre">rho_sfc</span></code><a class="headerlink" href="#rho-sfc" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">500</span></code></p>
+<p>Initial surface density used to calculate the profile if using <code class="docutils literal notranslate"><span class="pre">rho_init</span></code> = ‘default’. Defaults to 500.</p>
+</section>
+<section id="firn-depth">
+<h3><code class="docutils literal notranslate"><span class="pre">firn_depth</span></code><a class="headerlink" href="#firn-depth" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> optional (unset)</p>
+<p>Initial depth of the firn columns making up the MONARCHS model grid. Provide this or <code class="docutils literal notranslate"><span class="pre">DEM_path</span></code> - <strong>if a valid DEM path is specified, then this is overridden by the DEM</strong>. Specify as either a number, assumed as the firn depth across the whole grid, or an array of dimension(<code class="docutils literal notranslate"><span class="pre">row_amount</span></code>, <code class="docutils literal notranslate"><span class="pre">col_amount</span></code>) giving the firn depth across the whole grid.e.g. <code class="docutils literal notranslate"><span class="pre">gaussian_testcase.export_gaussian_dem</span></code> in the <code class="docutils literal notranslate"><span class="pre">10x10_gaussian_threelake</span></code> example generates a usable Gaussian three-lake profile.</p>
+</section>
+<section id="id1">
+<h3><code class="docutils literal notranslate"><span class="pre">initial_conditions</span></code><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> dict  ·  <strong>Default:</strong> optional (unset)</p>
+<p>Optional {grid variable: value} overrides applied when building the initial grid, e.g. {‘lake_depth’: 0.5}. Keys must be names from the variable catalogue (monarchs.variables), with appropriate values (scalar or array depending on the field).</p>
+</section>
+</section>
+<section id="forcing">
+<h2>Forcing<a class="headerlink" href="#forcing" title="Link to this heading"></a></h2>
+<section id="met-data-source">
+<h3><code class="docutils literal notranslate"><span class="pre">met_data_source</span></code><a class="headerlink" href="#met-data-source" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> inferred from the input given  ·  <strong>Allowed:</strong> <code class="docutils literal notranslate"><span class="pre">ERA5</span></code>, <code class="docutils literal notranslate"><span class="pre">user_defined</span></code></p>
+<p>Format of the meteorological forcing. Depending on the source, the met data will be set up from the corresponding data input - e.g. an ERA5 forcing file if ‘era5’ is specified - see <code class="docutils literal notranslate"><span class="pre">monarchs.met_data.sources</span></code>. If you do not set this, it is inferred from whichever input you provide - <code class="docutils literal notranslate"><span class="pre">met_input_filepath</span></code> gives ‘ERA5’, <code class="docutils literal notranslate"><span class="pre">met_data</span></code> gives ‘user_defined’.</p>
+</section>
+<section id="met-timestep">
+<h3><code class="docutils literal notranslate"><span class="pre">met_timestep</span></code><a class="headerlink" href="#met-timestep" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">'hourly'</span></code></p>
+<p>Temporal resolution of your input meteorological data. Ideally, MONARCHS would read in hourly gridded data. However, it is possible that the user may want to run long climate simulation runs, which may necessitate lower temporal resolution. If str, the value should be ‘hourly’, ‘three-hourly’ or ‘daily’. For other resolutions, please specify an integer, corresponding to how many hours each point in your data corresponds to - ‘hourly’ is 1, ‘three_hourly’ is 3, and ‘daily’ is 24.</p>
+</section>
+<section id="met-output-filepath">
+<h3><code class="docutils literal notranslate"><span class="pre">met_output_filepath</span></code><a class="headerlink" href="#met-output-filepath" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">'interpolated_met_data.nc'</span></code></p>
+<p>Filepath for the interpolated grid used by MONARCHS to be saved. This is used to save memory, and prevent us from having to repeatedly interpolate our input data. This file can be large if running for large domains and timescales. Therefore,this setting is useful for those who e.g. want to save this file into scratch space rather than locally.</p>
+</section>
+<section id="met-dem-diagnostic-plots">
+<h3><code class="docutils literal notranslate"><span class="pre">met_dem_diagnostic_plots</span></code><a class="headerlink" href="#met-dem-diagnostic-plots" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, generate some plots to show the regridding of the meteorological data onto the DEM lat/long grid. Useful as a sanity check to make sure that this has worked as intended. Typically you might run a test (in serial, on a local machine) where you cancel the run during the first model day to check these plots, then re-run (in parallel, possibly on HPC) with this set to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</section>
+<section id="load-precalculated-met-data">
+<h3><code class="docutils literal notranslate"><span class="pre">load_precalculated_met_data</span></code><a class="headerlink" href="#load-precalculated-met-data" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+<section id="met-input-filepath">
+<h3><code class="docutils literal notranslate"><span class="pre">met_input_filepath</span></code><a class="headerlink" href="#met-input-filepath" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> optional (unset)</p>
+<p>Path to a file of meteorological data to be used as a driver to MONARCHS. Provide this or <code class="docutils literal notranslate"><span class="pre">met_data</span></code>. At the moment, only ERA5 format (in netCDF) is supported. If this is a relative filepath, then you should ensure that is relative to the folder in which you are running MONARCHS from, not the source code directory.</p>
+</section>
+<section id="met-data">
+<h3><code class="docutils literal notranslate"><span class="pre">met_data</span></code><a class="headerlink" href="#met-data" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> dict  ·  <strong>Default:</strong> optional (unset)</p>
+<p>User-defined met data as a dict. Provide this or met_input_filepath.</p>
+</section>
+<section id="radiation-forcing-factor">
+<h3><code class="docutils literal notranslate"><span class="pre">radiation_forcing_factor</span></code><a class="headerlink" href="#radiation-forcing-factor" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">1</span></code></p>
+<p>Multiply the shortwave/longwave radiation variables by this factor for testing purposes, e.g. if running a 1D case and you want to ensure that lake formation occurs. This is left in mostly as an example; see <code class="docutils literal notranslate"><span class="pre">monarchs.met_data.setup_met_data.scale_by_factor</span></code> for more details.</p>
+</section>
+</section>
+<section id="toggles">
+<h2>Toggles<a class="headerlink" href="#toggles" title="Link to this heading"></a></h2>
+<section id="snowfall-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">snowfall_toggle</span></code><a class="headerlink" href="#snowfall-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines whether to add height to the firn column via snowfall over time, or not. e.g. can be turned off if you don’t have a source of snowfall data.</p>
+</section>
+<section id="firn-column-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">firn_column_toggle</span></code><a class="headerlink" href="#firn-column-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines whether the firn column is allowed to evolve or not, i.e. if <code class="docutils literal notranslate"><span class="pre">physics.firn_column</span></code> is ever invoked.</p>
+</section>
+<section id="firn-heat-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">firn_heat_toggle</span></code><a class="headerlink" href="#firn-heat-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines whether the temperature of the firn is allowed to evolve, i.e. if <code class="docutils literal notranslate"><span class="pre">physics.heateqn</span></code> is ever invoked.</p>
+</section>
+<section id="percolation-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">percolation_toggle</span></code><a class="headerlink" href="#percolation-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines whether water can percolate during the firn column evolution step.</p>
+</section>
+<section id="perc-time-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">perc_time_toggle</span></code><a class="headerlink" href="#perc-time-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines if percolation occurs over timescales (if <code class="docutils literal notranslate"><span class="pre">True</span></code>), or all water can percolate forever until it saturates a cell (as in the old MATLAB model).</p>
+</section>
+<section id="lake-development-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">lake_development_toggle</span></code><a class="headerlink" href="#lake-development-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines whether lakes are allowed to form, i.e. if <code class="docutils literal notranslate"><span class="pre">physics.lake_development</span></code> is ever invoked.</p>
+</section>
+<section id="lid-development-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">lid_development_toggle</span></code><a class="headerlink" href="#lid-development-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines whether frozen lids are allowed to form, i.e. if <code class="docutils literal notranslate"><span class="pre">physics.lid_development</span></code> is ever invoked.</p>
+</section>
+<section id="lateral-movement-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">lateral_movement_toggle</span></code><a class="headerlink" href="#lateral-movement-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines whether water can move between grid points laterally, or if we treat each column as entirely independent.</p>
+</section>
+<section id="lateral-movement-percolation-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">lateral_movement_percolation_toggle</span></code><a class="headerlink" href="#lateral-movement-percolation-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines whether water can percolate during the lateral movement step, assuming that <code class="docutils literal notranslate"><span class="pre">lateral_movement_toggle</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</section>
+<section id="single-column-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">single_column_toggle</span></code><a class="headerlink" href="#single-column-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+</section>
+<section id="densification-toggle">
+<h3><code class="docutils literal notranslate"><span class="pre">densification_toggle</span></code><a class="headerlink" href="#densification-toggle" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Determines whether snow densification is enabled. This is currently always False since our implementation of snow densification is WIP.</p>
+</section>
+</section>
+<section id="lateral">
+<h2>Lateral<a class="headerlink" href="#lateral" title="Link to this heading"></a></h2>
+<section id="flow-into-land">
+<h3><code class="docutils literal notranslate"><span class="pre">flow_into_land</span></code><a class="headerlink" href="#flow-into-land" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, then similarly to <code class="docutils literal notranslate"><span class="pre">catchment_outflow</span></code>, water that reaches the edge of the grid and is at a local minimum will flow out of the model if it is adjacent to a land cell. This is motivated by the presence of large lakes at the edge of the ice shelf in the validation runs, which are not seen in observational datasets. This occurs since the water has nowhere else to go, and thus a positive feedback loop occurs where the lake grows, melts the firn underneath, and more water flows in.</p>
+</section>
+<section id="catchment-outflow">
+<h3><code class="docutils literal notranslate"><span class="pre">catchment_outflow</span></code><a class="headerlink" href="#catchment-outflow" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, then water that a) reaches the edge of the grid and b) is at a local minimum in terms of the cell’s water level will disappear from the model, i.e. it moves outside of the model domain. This may or may not be a good assumption depending on location.</p>
+</section>
+<section id="flow-speed-scaling">
+<h3><code class="docutils literal notranslate"><span class="pre">flow_speed_scaling</span></code><a class="headerlink" href="#flow-speed-scaling" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">1.0</span></code></p>
+<p>Determines how much water can flow from a cell in the firn to its neighbours during the lateral flow step. The amount of water that can flow is determined by the density of the cell, and the available water in the cell. This flag scales the amount of water that <em>can</em> flow by the value given - it will not move more water than there is in the cell. It has no effect on the amount of water that can flow from lakes - since it is assumed that all water is available to move from lakes.</p>
+</section>
+<section id="outflow-proportion">
+<h3><code class="docutils literal notranslate"><span class="pre">outflow_proportion</span></code><a class="headerlink" href="#outflow-proportion" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> float  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">1.0</span></code>  ·  <strong>Allowed:</strong> between 0.0 and 1.0</p>
+<p>Determines how much water will flow out of the catchment as a proportion of the total water available to flow out. If <code class="docutils literal notranslate"><span class="pre">1</span></code>, then all water that is at a local minimum and adjacent to the edge of the grid will flow out. Setting it to <code class="docutils literal notranslate"><span class="pre">0</span></code> will effectively set <code class="docutils literal notranslate"><span class="pre">catchment_outflow</span></code> to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</section>
+</section>
+<section id="io">
+<h2>IO<a class="headerlink" href="#io" title="Link to this heading"></a></h2>
+<section id="output-grid-size">
+<h3><code class="docutils literal notranslate"><span class="pre">output_grid_size</span></code><a class="headerlink" href="#output-grid-size" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> vertical_points_firn</p>
+<p>Size of the vertical grid that you want to write to. This can be different from the size of the grid used in the actual model calculations, in which case the results are interpolated to this grid size. Useful to reduce the size of output files, which can be large.</p>
+</section>
+<section id="output-timestep">
+<h3><code class="docutils literal notranslate"><span class="pre">output_timestep</span></code><a class="headerlink" href="#output-timestep" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">1</span></code></p>
+<p>Write model output every <code class="docutils literal notranslate"><span class="pre">output_timestep</span></code> model days. Useful if you want to save data less regularly than every timestep, e.g. if filesizes are getting too large and you don’t need daily resolution.</p>
+</section>
+<section id="vars-to-save">
+<h3><code class="docutils literal notranslate"><span class="pre">vars_to_save</span></code><a class="headerlink" href="#vars-to-save" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> tuple  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">('firn_temperature',</span> <span class="pre">'Sfrac',</span> <span class="pre">'Lfrac',</span> <span class="pre">'firn_depth',</span> <span class="pre">'lake_depth',</span> <span class="pre">'lid_depth',</span> <span class="pre">'lake',</span> <span class="pre">'lid',</span> <span class="pre">'v_lid',</span> <span class="pre">'ice_lens_depth')</span></code></p>
+<p>Tuple containing the names of the variables that we wish to save during the evolution of MONARCHS over time. If you want to save a particular diagnostic, then you should add it here. See the variable catalogue in <code class="docutils literal notranslate"><span class="pre">monarchs.variables</span></code> for the full list of variables that <code class="docutils literal notranslate"><span class="pre">vars_to_save</span></code> accepts.</p>
+</section>
+<section id="save-output">
+<h3><code class="docutils literal notranslate"><span class="pre">save_output</span></code><a class="headerlink" href="#save-output" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Flag to determine whether you want to save the output of MONARCHS to netCDF. If True, save the variables defined in <code class="docutils literal notranslate"><span class="pre">vars_to_save</span></code> into a netCDF file at <code class="docutils literal notranslate"><span class="pre">output_filepath</span></code> every timestep, i.e. save spatial and temporal data for the selected variables. File sizes can get rather large for large model grids and long runs. Note that this is separate from dumping, where only a snapshot of the current iteration is saved - it is not possible to restart MONARCHS from the output defined here.</p>
+</section>
+<section id="output-filepath">
+<h3><code class="docutils literal notranslate"><span class="pre">output_filepath</span></code><a class="headerlink" href="#output-filepath" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> optional (unset)</p>
+<p>Path to the file that you want to save output into, including file extension. Required if <code class="docutils literal notranslate"><span class="pre">save_output</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>. MONARCHS uses netCDF for saving output data, so this may be e.g. <code class="docutils literal notranslate"><span class="pre">/work/monarchs/monarchs_run1.nc</span></code>.</p>
+</section>
+<section id="dump-data">
+<h3><code class="docutils literal notranslate"><span class="pre">dump_data</span></code><a class="headerlink" href="#dump-data" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Flag that determines whether to dump the current model state at the end of each iteration (day). Doing so will allow the user to restart MONARCHS in the event of a crash. If this is <code class="docutils literal notranslate"><span class="pre">True</span></code>, then you also need to specify <code class="docutils literal notranslate"><span class="pre">dump_filepath</span></code>. Note that dumping the model state is separate to setting model output - this only dumps a snapshot of the model in its current state, needed to restart the model.</p>
+</section>
+<section id="dump-filepath">
+<h3><code class="docutils literal notranslate"><span class="pre">dump_filepath</span></code><a class="headerlink" href="#dump-filepath" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str  ·  <strong>Default:</strong> optional (unset)</p>
+<p>File path to dump the current model state into at the end of each timestep. Required if <code class="docutils literal notranslate"><span class="pre">dump_data</span></code> or <code class="docutils literal notranslate"><span class="pre">reload_from_dump</span></code> are True.</p>
+</section>
+<section id="dump-timestep">
+<h3><code class="docutils literal notranslate"><span class="pre">dump_timestep</span></code><a class="headerlink" href="#dump-timestep" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">1</span></code></p>
+<p>How often to write model checkpoint states. Default is every timestep. Set to a value greater than 1 to write checkpoints less frequently.</p>
+</section>
+<section id="dump-checkpoint-frequency">
+<h3><code class="docutils literal notranslate"><span class="pre">dump_checkpoint_frequency</span></code><a class="headerlink" href="#dump-checkpoint-frequency" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> int  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+<p>Write an extra numbered checkpoint every N days. 0 = off. Used for debugging mainly.</p>
+</section>
+<section id="dump-data-pre-lateral-movement">
+<h3><code class="docutils literal notranslate"><span class="pre">dump_data_pre_lateral_movement</span></code><a class="headerlink" href="#dump-data-pre-lateral-movement" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+<section id="reload-from-dump">
+<h3><code class="docutils literal notranslate"><span class="pre">reload_from_dump</span></code><a class="headerlink" href="#reload-from-dump" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Flag to determine whether we want to reload from a dump (see <code class="docutils literal notranslate"><span class="pre">dump_data</span></code> for details). If <code class="docutils literal notranslate"><span class="pre">True</span></code>, reload model state from file at the path determined by <code class="docutils literal notranslate"><span class="pre">dump_filepath</span></code>.</p>
+</section>
+</section>
+<section id="runtime">
+<h2>Runtime<a class="headerlink" href="#runtime" title="Link to this heading"></a></h2>
+<section id="use-numba">
+<h3><code class="docutils literal notranslate"><span class="pre">use_numba</span></code><a class="headerlink" href="#use-numba" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Toggle whether to jit-compile the code using Numba or not. Gives a performance boost, but may not always work and adds a few complications. See the Numba page of the documentation for more details.</p>
+</section>
+<section id="parallel">
+<h3><code class="docutils literal notranslate"><span class="pre">parallel</span></code><a class="headerlink" href="#parallel" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Determines whether or not to run in parallel, or serially. If running in parallel, then performance is improved since the model will run many of the single-column gridpoints at the same time. Parallelism comes via Numba’s <code class="docutils literal notranslate"><span class="pre">prange</span></code> function, which works similarly to an OpenMP <code class="docutils literal notranslate"><span class="pre">parallel</span> <span class="pre">do</span></code> loop, so this requires <code class="docutils literal notranslate"><span class="pre">use_numba</span></code>.</p>
+</section>
+<section id="use-mpi">
+<h3><code class="docutils literal notranslate"><span class="pre">use_mpi</span></code><a class="headerlink" href="#use-mpi" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>MPI support is not yet implemented.</p>
+</section>
+<section id="cores">
+<h3><code class="docutils literal notranslate"><span class="pre">cores</span></code><a class="headerlink" href="#cores" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> str or int  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">'all'</span></code></p>
+<p>Number of processing cores to use. ‘all’ or <code class="docutils literal notranslate"><span class="pre">False</span></code> will instruct MONARCHS to use all available CPU cores, else it will use however many you specify. You may want to manually specify this to something lower than the number of cores on your system if e.g. running on a laptop which you are using for other purposes, or if running on HPC and you are experiencing memory bottleneck issues.</p>
+</section>
+<section id="ignore-errors">
+<h3><code class="docutils literal notranslate"><span class="pre">ignore_errors</span></code><a class="headerlink" href="#ignore-errors" title="Link to this heading"></a></h3>
+<p><strong>Type:</strong> bool  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, then <code class="docutils literal notranslate"><span class="pre">monarchs.core.utils.check_correct</span></code> will never be invoked, i.e. the model may be free to evolve into an unphysical state. Errors may still occur, but these will be Python errors rather than MONARCHS errors if so. May be useful for debugging.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="met_data.html" class="btn btn-neutral float-left" title="Formatting input meteorological data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="variables.html" class="btn btn-neutral float-right" title="MONARCHS grid variables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

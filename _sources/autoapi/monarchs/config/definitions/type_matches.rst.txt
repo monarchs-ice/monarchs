@@ -1,0 +1,10 @@
+monarchs.config.definitions.type_matches
+========================================
+
+.. py:function:: monarchs.config.definitions.type_matches(value, dtype)
+
+   Ensure that a given config flag `value` has the expected `dtype`.
+
+   `dtype` may be a single type or a tuple of types (a union), in which case
+   the value need only match one of them.
+

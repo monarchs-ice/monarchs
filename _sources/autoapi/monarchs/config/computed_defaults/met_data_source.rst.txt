@@ -1,0 +1,9 @@
+monarchs.config.computed_defaults.met_data_source
+=================================================
+
+.. py:function:: monarchs.config.computed_defaults.met_data_source(model_setup)
+
+   Choose the source of the meteorological forcing data based on what the
+   user has specified. If this returns UNSET (i.e. no source is specified),
+   a later Rule will raise an error since the model requires forcing data!
+

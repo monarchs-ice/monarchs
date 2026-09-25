@@ -1,0 +1,17 @@
+monarchs.physics.lid.heateqn.heateqn_lid
+========================================
+
+.. py:function:: monarchs.physics.lid.heateqn.heateqn_lid(x, cell, met_data, dt, dz, Sfrac_lid)
+
+   Residual of the frozen-lid heat equation, F(T) = 0.
+
+   :Parameters: * **x** (*array_like, float, dimension(cell.vert_grid_lid)*) -- Current estimate of the lid column temperature [K].
+                * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*numpy structured array*) -- Meteorological data for the current timestep.
+                * **dt** (*int*) -- timestep duration [s]
+                * **dz** (*float*) -- height of a single vertical layer of the frozen lid [m]
+                * **Sfrac_lid** (*array_like, float, dimension(cell.vert_grid_lid)*) -- Solid fraction of the frozen lid.
+
+   :returns: **output** -- Residual of the lid heat equation at ``x``.
+   :rtype: array_like, float, dimension(cell.vert_grid_lid)
+

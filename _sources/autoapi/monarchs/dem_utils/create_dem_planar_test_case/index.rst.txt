@@ -1,0 +1,38 @@
+monarchs.dem_utils.create_dem_planar_test_case
+==============================================
+
+.. py:module:: monarchs.dem_utils.create_dem_planar_test_case
+
+.. autoapi-nested-parse::
+
+   Sets up a test case using a planar DEM that slopes from a maximum to a minimum
+   from left to right.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.dem_utils.create_dem_planar_test_case.h
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/dem_utils/create_dem_planar_test_case/export_planar_dem
+
+.. autoapisummary::
+
+   monarchs.dem_utils.create_dem_planar_test_case.export_planar_dem
+
+
+Module Contents
+---------------
+
+.. py:data:: h
+

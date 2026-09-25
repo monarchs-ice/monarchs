@@ -1,0 +1,7 @@
+monarchs.physics.lid.heateqn._lid_residual
+==========================================
+
+.. py:function:: monarchs.physics.lid.heateqn._lid_residual(x, args)
+
+   Helper to pack the arguments to pass into the heat equation in the solver
+

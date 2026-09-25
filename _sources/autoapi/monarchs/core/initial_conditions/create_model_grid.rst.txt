@@ -1,0 +1,13 @@
+monarchs.core.initial_conditions.create_model_grid
+==================================================
+
+.. py:function:: monarchs.core.initial_conditions.create_model_grid(model_setup, firn_depth, rho, firn_temperature, **overrides)
+
+   Build the initial model grid.
+
+   ``firn_depth``, ``rho`` and ``firn_temperature`` are the required physics
+   inputs. Any other grid field may be set by keyword using its catalogue name
+   (e.g. ``valid_cell=mask``, ``lat=lats``), or from a runscript via the
+   ``initial_conditions`` setting (e.g. ``initial_conditions={'lake_depth':
+   0.5}``). See ``monarchs.variables`` for the full list of grid fields.
+

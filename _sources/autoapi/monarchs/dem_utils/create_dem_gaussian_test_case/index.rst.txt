@@ -1,0 +1,40 @@
+monarchs.dem_utils.create_dem_gaussian_test_case
+================================================
+
+.. py:module:: monarchs.dem_utils.create_dem_gaussian_test_case
+
+.. autoapi-nested-parse::
+
+   Sets up a test case using a Gaussian elevation map with two lakes in the
+   upper left and bottom right corners.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.dem_utils.create_dem_gaussian_test_case.h
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/dem_utils/create_dem_gaussian_test_case/export_gaussian_dem
+   /autoapi/monarchs/dem_utils/create_dem_gaussian_test_case/interpolate_func_to_dem
+
+.. autoapisummary::
+
+   monarchs.dem_utils.create_dem_gaussian_test_case.export_gaussian_dem
+   monarchs.dem_utils.create_dem_gaussian_test_case.interpolate_func_to_dem
+
+
+Module Contents
+---------------
+
+.. py:data:: h
+

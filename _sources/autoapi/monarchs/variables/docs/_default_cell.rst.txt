@@ -1,0 +1,7 @@
+monarchs.variables.docs._default_cell
+=====================================
+
+.. py:function:: monarchs.variables.docs._default_cell(value)
+
+   Map default value descriptors to human-readable descriptions.
+

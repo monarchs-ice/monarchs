@@ -1,0 +1,7 @@
+monarchs.config.check_rules
+===========================
+
+.. py:function:: monarchs.config.check_rules(model_setup)
+
+   Run the cross-setting rules, raising (or warning) on every violation.
+

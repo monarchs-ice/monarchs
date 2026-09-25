@@ -1,0 +1,14 @@
+monarchs.physics.lake.lake_development
+======================================
+
+.. py:function:: monarchs.physics.lake.lake_development(cell, dt, met_data)
+
+   Once a lake of at least 10 cm deep is present this function calculates
+   its evolution through a Stefan problem calculation of the lake-ice
+   boundary.
+   Called by timestep_loop.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **dt** (*int*) -- Number of seconds in the timestep, most likely 3600 (i.e. 1 hour) [s]
+                * **met_data** (*numpy structured array*) -- Structured array containing meteorological data used in the model.
+

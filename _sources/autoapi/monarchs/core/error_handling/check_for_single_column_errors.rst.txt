@@ -1,0 +1,13 @@
+monarchs.core.error_handling.check_for_single_column_errors
+===========================================================
+
+.. py:function:: monarchs.core.error_handling.check_for_single_column_errors(grid)
+
+   Check the grid for any cells that have error_status set to 1,
+   indicating an error has occurred in that cell.
+
+   :Parameters: **grid** (*List, or numba.typed.List*) -- the model grid
+
+   :returns: True if any cell has error_flag == 1, False otherwise.
+   :rtype: bool
+

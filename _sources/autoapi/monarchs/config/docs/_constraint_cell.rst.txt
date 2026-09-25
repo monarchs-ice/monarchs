@@ -1,0 +1,7 @@
+monarchs.config.docs._constraint_cell
+=====================================
+
+.. py:function:: monarchs.config.docs._constraint_cell(setting)
+
+   formatting for values that have rules/constraints about their use
+

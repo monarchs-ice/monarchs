@@ -1,0 +1,21 @@
+monarchs.physics.surface_fluxes.bulk_fluxes
+===========================================
+
+.. py:function:: monarchs.physics.surface_fluxes.bulk_fluxes(cell, met_data, xsurf)
+
+   Calculate the latent and sensible heat fluxes given the wind speed and
+   surface meteorology.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid.
+                * **met_data** (*numpy structured array*) -- Meteorological data for the current timestep (``temperature``,
+                  ``surf_pressure``, ``dew_point_temperature``, ``wind``).
+                * **xsurf** (*float*) -- Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
+
+   :returns: * **Flat** (*float*) -- Latent heat flux. [W m^-2].
+             * **Fsens** (*float*) -- Sensible heat flux.   [W m^-2].
+             * *Documentation on how the saturation vapour pressure is calculated can be*
+             * *found in Section 12 of*
+             * **https** (*//www.ecmwf.int/sites/default/files/elibrary/2021/20198-ifs-*)
+             * *documentation-cy47r3-part-vi-physical-processes.pdf*
+             * *=======*
+

@@ -1,0 +1,26 @@
+monarchs.core.kernels.kernel
+============================
+
+.. py:function:: monarchs.core.kernels.kernel(**njit_opts)
+
+   Mark a function as a Numba kernel.
+
+   This is a "decorator factory" - i.e. it creates a decorator with the
+   desired options (e.g. fastmath, parallelisation) and returns it.
+   This pattern is needed so that we can pass options to the decorator,
+   e.g. ``@kernel(parallel=True)`` - this ensures the options are passed
+   through to the appropriate ``@njit`` call.
+
+   This means we need to invoke with brackets rather than just @kernel.
+
+   e.g.
+       @kernel()
+       def lake_function(...): ...
+
+       @kernel(parallel=True, fastmath=False)
+       def parallel_lake_function(...): ...
+
+   In pure-Python mode the function is returned unchanged. When Numba is enabled,
+   ``compile_all`` compiles it
+   and rebinds every reference to it to the compiled version.
+

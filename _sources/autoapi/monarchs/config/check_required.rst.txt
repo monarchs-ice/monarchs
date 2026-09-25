@@ -1,0 +1,7 @@
+monarchs.config.check_required
+==============================
+
+.. py:function:: monarchs.config.check_required(model_setup)
+
+   Check that every REQUIRED setting is present, reporting all missing fields
+

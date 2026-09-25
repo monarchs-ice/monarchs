@@ -1,0 +1,9 @@
+monarchs.core.driver.validate_visits
+====================================
+
+.. py:function:: monarchs.core.driver.validate_visits(grid, visit_grid)
+
+   Check that each valid cell was visited exactly once this day.
+   This ensures that the model does not silently give incorrect results if
+   a gridcell exits early due to e.g. a numerical error
+

@@ -1,0 +1,89 @@
+monarchs.variables.catalogue
+============================
+
+.. py:module:: monarchs.variables.catalogue
+
+.. autoapi-nested-parse::
+
+   The MONARCHS variable catalogue.
+
+   This is where all MONARCHS model variables (i.e. everything that you can
+   use as an argument to cell['<argument>']) are defined. So if you need
+   to add any new model variables, just define them here, and then you can
+   use it in the code freely.
+
+   Everything is defined here as a ``Variable``, which is a class defined
+   in ``definitions.py`` describing the main fields that a model variable needs
+   or wants in order to both a) run the code and b) be useful as an output.
+
+   To add a variable, add a row (see the other Variables for how to do this!)
+   and to remove it just delete it from here (and wherever it is used in the code).
+
+   i.e. use the Variable class and populate the fields below (keyword-only)
+       Variable(name=..., dtype=..., dim=..., default_value=..., units=..., long_name=..., group=..., output=...)
+
+   The fields are:
+       name        str    field name used in the code, e.g. "lake_depth"
+
+       dtype       type   FLOAT, INT or BOOL, defines the datatype, needed for Numba as
+                          this requires static typing
+
+       dim         Dim    SCALAR | FIRN | LAKE | LID | DIRECTIONS
+                          (SCALAR = one value per cell; FIRN/LAKE/LID = a profile
+                           over that region's layers; DIRECTIONS = 8 cardinal dirs)
+
+       default_value        the initial value. One of:
+                            * a constant            e.g. 0.0, False, 273.15
+                            * INPUT                 determined from the initial values
+                                                    e.g. firn properties from a DEM
+                            * a function            for values computed from grid
+                                                    sizes or inputs - defined in
+                                                    initial_value_functions.py and
+                                                    referenced here by name
+
+       units       str    Units in CF format, e.g. "m", "K", "kg m-3",
+                           "1" (for dimensionless quantities)
+
+       long_name   str    human-readable name, some variables already have this
+                          implicitly (e.g. "lake_depth"), but can format more
+                          nicely for say plotting e.g. "Lake depth"
+
+       group       str    broad variable type, for organising the documentation
+                          e.g. ("firn", "lake", ...)
+
+       output      bool   whether the variable is designed for output or not,
+                          e.g. if it is a diagnostic probably true, if an internal
+                          counter probably not
+
+       description str    Detailed description of the variable - i.e. what you would
+                          want to read if you were reading a manual describing what
+                          the thing does! This should describe intent if it is not
+                          obvious why a variable is needed, and ideally where it is
+                          actually used.
+
+       Only ``name``, ``dtype`` and ``dim`` are required as these are what is needed
+       by the actual code. The other variables are entirely for documentation and
+       provenance/metadata purposes.
+
+   An example of this is:
+
+   Variable(name="firn_depth", dtype=FLOAT, dim=SCALAR, default_value=INPUT, units="m",
+           long_name="Firn column depth",
+           group="firn",
+           description="Total depth of the firn column as represented in the model."),
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.variables.catalogue.CATALOGUE
+
+
+Module Contents
+---------------
+
+.. py:data:: CATALOGUE
+

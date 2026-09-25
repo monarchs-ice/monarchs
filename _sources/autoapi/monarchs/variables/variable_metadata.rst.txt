@@ -1,0 +1,10 @@
+monarchs.variables.variable_metadata
+====================================
+
+.. py:function:: monarchs.variables.variable_metadata()
+
+   netCDF metadata for output-eligible variables.
+
+   These all come from the catalogue, but if they are not present for
+   a given variable then they are removed.
+

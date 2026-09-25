@@ -1,0 +1,42 @@
+monarchs.physics.material_properties
+====================================
+
+.. py:module:: monarchs.physics.material_properties
+
+.. autoapi-nested-parse::
+
+   Bulk properties of ice, and of ice/water/air mixtures (firn).
+
+   Previously, these were scattered and redefined throughout the model.
+   Now, all physics kernels refer to these functions to define these
+   parameters.
+
+   See monarchs.physics.constants for definitions of e.g. densities.
+
+   Ice thermal conductivity and heat capacity formulae are defined in
+    Alexiades & Solomon (1993),
+     "Mathematical Modelling of Melting and Freezing Processes", pg. 8.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/material_properties/cp_ice
+   /autoapi/monarchs/physics/material_properties/cv_mixture
+   /autoapi/monarchs/physics/material_properties/k_and_kappa
+   /autoapi/monarchs/physics/material_properties/k_ice
+   /autoapi/monarchs/physics/material_properties/k_mixture
+
+.. autoapisummary::
+
+   monarchs.physics.material_properties.cp_ice
+   monarchs.physics.material_properties.cv_mixture
+   monarchs.physics.material_properties.k_and_kappa
+   monarchs.physics.material_properties.k_ice
+   monarchs.physics.material_properties.k_mixture
+
+

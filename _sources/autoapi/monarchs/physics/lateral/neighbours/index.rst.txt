@@ -1,0 +1,26 @@
+monarchs.physics.lateral.neighbours
+===================================
+
+.. py:module:: monarchs.physics.lateral.neighbours
+
+.. autoapi-nested-parse::
+
+   Functions for determining which neighbours we need to move water into.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lateral/neighbours/find_biggest_neighbour
+   /autoapi/monarchs/physics/lateral/neighbours/get_neighbour_water_levels
+
+.. autoapisummary::
+
+   monarchs.physics.lateral.neighbours.find_biggest_neighbour
+   monarchs.physics.lateral.neighbours.get_neighbour_water_levels
+
+

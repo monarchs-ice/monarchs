@@ -1,0 +1,4 @@
+monarchs.physics.reset_column.combine_lid_firn
+==============================================
+
+.. py:function:: monarchs.physics.reset_column.combine_lid_firn(cell, freeze_lake=False, surface_slush=False)

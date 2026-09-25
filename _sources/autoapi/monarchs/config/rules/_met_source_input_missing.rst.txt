@@ -1,0 +1,7 @@
+monarchs.config.rules._met_source_input_missing
+===============================================
+
+.. py:function:: monarchs.config.rules._met_source_input_missing(ms)
+
+   True when met_data_source names a source whose input was not given.
+

@@ -1,0 +1,38 @@
+monarchs.physics.lid.heateqn
+============================
+
+.. py:module:: monarchs.physics.lid.heateqn
+
+.. autoapi-nested-parse::
+
+   Frozen-lid heat equation: residual, Jacobian, and Newton driver.
+
+   The system is very similar to the firn heat equation from
+    ``physics.firn.heateqn``, although we have an additional
+   internal forcing term due to SW radiation penetrating inside the lid,
+   and an additional fixed boundary at 273.15 at the bottom of the lid,
+   rather than the ghost-point boundary from the firn case.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lid/heateqn/_lid_jacobian
+   /autoapi/monarchs/physics/lid/heateqn/_lid_residual
+   /autoapi/monarchs/physics/lid/heateqn/heateqn_lid
+   /autoapi/monarchs/physics/lid/heateqn/lid_heateqn_solver
+   /autoapi/monarchs/physics/lid/heateqn/newton_jacobian_lid
+
+.. autoapisummary::
+
+   monarchs.physics.lid.heateqn._lid_jacobian
+   monarchs.physics.lid.heateqn._lid_residual
+   monarchs.physics.lid.heateqn.heateqn_lid
+   monarchs.physics.lid.heateqn.lid_heateqn_solver
+   monarchs.physics.lid.heateqn.newton_jacobian_lid
+
+

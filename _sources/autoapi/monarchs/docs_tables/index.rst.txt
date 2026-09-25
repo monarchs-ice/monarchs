@@ -1,0 +1,44 @@
+monarchs.docs_tables
+====================
+
+.. py:module:: monarchs.docs_tables
+
+.. autoapi-nested-parse::
+
+   Functions for rendering catalogue-derived Markdown reference pages.
+
+   This just handles the formatting. The actual content is defined via the
+   relevant `docs.py` in the `variables`, `config` and `met_data` submodules.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.docs_tables._ACRONYMS
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/docs_tables/group_order
+   /autoapi/monarchs/docs_tables/heading
+   /autoapi/monarchs/docs_tables/render_reference
+
+.. autoapisummary::
+
+   monarchs.docs_tables.group_order
+   monarchs.docs_tables.heading
+   monarchs.docs_tables.render_reference
+
+
+Module Contents
+---------------
+
+.. py:data:: _ACRONYMS
+

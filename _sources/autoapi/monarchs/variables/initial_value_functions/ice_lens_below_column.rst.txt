@@ -1,0 +1,7 @@
+monarchs.variables.initial_value_functions.ice_lens_below_column
+================================================================
+
+.. py:function:: monarchs.variables.initial_value_functions.ice_lens_below_column(ctx)
+
+   Default ice-lens layer index: one past the bottom (i.e. no lens).
+

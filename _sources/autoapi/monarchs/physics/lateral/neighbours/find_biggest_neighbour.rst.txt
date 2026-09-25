@@ -1,0 +1,17 @@
+monarchs.physics.lateral.neighbours.find_biggest_neighbour
+==========================================================
+
+.. py:function:: monarchs.physics.lateral.neighbours.find_biggest_neighbour(cell, grid, col, row, max_grid_col, max_grid_row, catchment_outflow, flow_into_land=False)
+
+   Return the largest water-level height difference between *cell* and its
+   neighbours, together with the direction indices (0-7) that achieve it.
+
+   :Parameters: * **catchment_outflow** (*bool*) -- If True, out-of-bounds neighbours are treated as valid outflow
+                  destinations when the cell is a local water-level minimum.
+                * **flow_into_land** (*bool*) -- If True, invalid (land) neighbours may receive water when the cell
+                  is a local minimum, but are blocked when other valid neighbours exist.
+
+   :returns: * **biggest_height_difference** (*float*)
+             * **max_dirs** (*np.ndarray[int32]*) -- Array of direction indices (subset of 0-7) that are within floating-
+               point rounding tolerance of the maximum height difference.
+

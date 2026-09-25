@@ -1,0 +1,7 @@
+monarchs.config.apply._rule_problems
+====================================
+
+.. py:function:: monarchs.config.apply._rule_problems(model_setup)
+
+   Cross-setting rule violations. Rules that only warn are warned about here.
+

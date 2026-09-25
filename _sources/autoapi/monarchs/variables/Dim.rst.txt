@@ -1,0 +1,35 @@
+monarchs.variables.Dim
+======================
+
+.. py:class:: monarchs.variables.Dim(*args, **kwds)
+
+   Bases: :py:obj:`enum.Enum`
+
+
+   Dimensions of a variable on the model grid.
+
+
+   .. py:attribute:: DIRECTIONS
+      :value: 'directions'
+
+
+
+   .. py:attribute:: FIRN
+      :value: 'firn'
+
+
+
+   .. py:attribute:: LAKE
+      :value: 'lake'
+
+
+
+   .. py:attribute:: LID
+      :value: 'lid'
+
+
+
+   .. py:attribute:: SCALAR
+      :value: 'scalar'
+
+

@@ -1,0 +1,225 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>monarchs.variables &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="monarchs.variables.build" href="build/index.html" />
+    <link rel="prev" title="monarchs.run_monarchs.run_from_cli" href="../run_monarchs/run_from_cli.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">MONARCHS run settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../variables.html">MONARCHS grid variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../met.html">MONARCHS met forcing variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../structure.html">Code structure</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">monarchs</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../config/index.html">monarchs.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../core/index.html">monarchs.core</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dem_utils/index.html">monarchs.dem_utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../docs_tables/index.html">monarchs.docs_tables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../io/index.html">monarchs.io</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../physics/index.html">monarchs.physics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../run_monarchs/index.html">monarchs.run_monarchs</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">monarchs.variables</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../loop_over_grid/index.html">loop_over_grid</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">monarchs</a></li>
+      <li class="breadcrumb-item active">monarchs.variables</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/autoapi/monarchs/variables/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-monarchs.variables">
+<span id="monarchs-variables"></span><h1>monarchs.variables<a class="headerlink" href="#module-monarchs.variables" title="Link to this heading"></a></h1>
+<p>MONARCHS grid variable schema.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">catalogue.py</span></code>    - Catalogue of variables in the model.</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">definitions.py</span></code>  - Definitions of a Variable, Dimension, and other stuff needed</dt><dd><p>to properly initialise variables.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">initial_value_functions.py</span></code> - Functions describing initial values of variables</dt><dd><p>that depend on other variables.</p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build.py</span></code>        - Take the catalogue, and turn it into the stuff the model needs</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs.py</span></code>         - renders the catalogue as a Markdown reference.</p></li>
+</ul>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="build/index.html">monarchs.variables.build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="catalogue/index.html">monarchs.variables.catalogue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="definitions/index.html">monarchs.variables.definitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs/index.html">monarchs.variables.docs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="initial_value_functions/index.html">monarchs.variables.initial_value_functions</a></li>
+</ul>
+</div>
+</section>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#monarchs.variables.CATALOGUE" title="monarchs.variables.CATALOGUE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CATALOGUE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+</div>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="Dim.html#monarchs.variables.Dim" title="monarchs.variables.Dim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Dim</span></code></a></p></td>
+<td><p>Dimensions of a variable on the model grid.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="Variable.html#monarchs.variables.Variable" title="monarchs.variables.Variable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Variable</span></code></a></p></td>
+<td><p>Defines a MONARCHS model variable.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+</div>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="build_dtype.html#monarchs.variables.build_dtype" title="monarchs.variables.build_dtype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_dtype</span></code></a>(vert_grid, vert_grid_lake, vert_grid_lid)</p></td>
+<td><p>Structured-array dtype for the model grid.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="make_grid.html#monarchs.variables.make_grid" title="monarchs.variables.make_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_grid</span></code></a>(num_rows, num_cols, vert_grid, ...[, inputs])</p></td>
+<td><p>Build the model grid from the catalogue.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="to_markdown.html#monarchs.variables.to_markdown" title="monarchs.variables.to_markdown"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_markdown</span></code></a>()</p></td>
+<td><p>Return the variable catalogue as a Markdown reference.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="validate_catalogue.html#monarchs.variables.validate_catalogue" title="monarchs.variables.validate_catalogue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_catalogue</span></code></a>()</p></td>
+<td><p>Validate the catalogue in case of duplicates or badly characterised</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="variable_metadata.html#monarchs.variables.variable_metadata" title="monarchs.variables.variable_metadata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">variable_metadata</span></code></a>()</p></td>
+<td><p>netCDF metadata for output-eligible variables.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="monarchs.variables.CATALOGUE">
+<span class="sig-prename descclassname"><span class="pre">monarchs.variables.</span></span><span class="sig-name descname"><span class="pre">CATALOGUE</span></span><a class="headerlink" href="#monarchs.variables.CATALOGUE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../run_monarchs/run_from_cli.html" class="btn btn-neutral float-left" title="monarchs.run_monarchs.run_from_cli" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="build/index.html" class="btn btn-neutral float-right" title="monarchs.variables.build" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

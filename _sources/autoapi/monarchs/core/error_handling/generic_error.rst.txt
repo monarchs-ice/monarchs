@@ -1,0 +1,14 @@
+monarchs.core.error_handling.generic_error
+==========================================
+
+.. py:function:: monarchs.core.error_handling.generic_error(cell, routine_name, message)
+
+   Generic error handling function to set error flag and print message,
+   based on a specific error the user is encountering.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid where the error occurred.
+                * **routine_name** (*str*) -- Name of the routine where the error occurred.
+                * **message** (*str*) -- Error message to be printed.
+
+   :rtype: None
+

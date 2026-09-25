@@ -1,0 +1,7 @@
+monarchs.config.docs.to_markdown
+================================
+
+.. py:function:: monarchs.config.docs.to_markdown()
+
+   Return the settings catalogue as Markdown.
+

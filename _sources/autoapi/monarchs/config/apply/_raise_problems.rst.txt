@@ -1,0 +1,7 @@
+monarchs.config.apply._raise_problems
+=====================================
+
+.. py:function:: monarchs.config.apply._raise_problems(problems, func_name)
+
+   Report all the problems found by ``_rule_problems``.
+

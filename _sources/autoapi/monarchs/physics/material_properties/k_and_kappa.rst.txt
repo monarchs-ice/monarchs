@@ -1,0 +1,8 @@
+monarchs.physics.material_properties.k_and_kappa
+================================================
+
+.. py:function:: monarchs.physics.material_properties.k_and_kappa(T, sfrac, lfrac)
+
+   Effective conductivity k [W m^-1 K^-1] and thermal diffusivity
+   kappa = k / C_vol [m^2 s^-1] of the firn mixture.
+

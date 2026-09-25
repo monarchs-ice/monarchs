@@ -1,0 +1,81 @@
+monarchs.variables
+==================
+
+.. py:module:: monarchs.variables
+
+.. autoapi-nested-parse::
+
+   MONARCHS grid variable schema.
+
+   * ``catalogue.py``    - Catalogue of variables in the model.
+   * ``definitions.py``  - Definitions of a Variable, Dimension, and other stuff needed
+                           to properly initialise variables.
+   * ``initial_value_functions.py`` - Functions describing initial values of variables
+                                   that depend on other variables.
+   * ``build.py``        - Take the catalogue, and turn it into the stuff the model needs
+   * ``docs.py``         - renders the catalogue as a Markdown reference.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/monarchs/variables/build/index
+   /autoapi/monarchs/variables/catalogue/index
+   /autoapi/monarchs/variables/definitions/index
+   /autoapi/monarchs/variables/docs/index
+   /autoapi/monarchs/variables/initial_value_functions/index
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.variables.CATALOGUE
+
+
+Classes
+-------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/variables/Dim
+   /autoapi/monarchs/variables/Variable
+
+.. autoapisummary::
+
+   monarchs.variables.Dim
+   monarchs.variables.Variable
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/variables/build_dtype
+   /autoapi/monarchs/variables/make_grid
+   /autoapi/monarchs/variables/to_markdown
+   /autoapi/monarchs/variables/validate_catalogue
+   /autoapi/monarchs/variables/variable_metadata
+
+.. autoapisummary::
+
+   monarchs.variables.build_dtype
+   monarchs.variables.make_grid
+   monarchs.variables.to_markdown
+   monarchs.variables.validate_catalogue
+   monarchs.variables.variable_metadata
+
+
+Package Contents
+----------------
+
+.. py:data:: CATALOGUE
+

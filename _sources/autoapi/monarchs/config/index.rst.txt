@@ -1,0 +1,98 @@
+monarchs.config
+===============
+
+.. py:module:: monarchs.config
+
+.. autoapi-nested-parse::
+
+   MONARCHS run-settings schema.
+
+   Files:
+
+   ``catalogue.py`` - contains all ``model_setup`` variable definitions.
+   ``rules.py`` - rules that apply to settings or combinations of settings
+   ``definitions.py`` -
+   ``computed_defaults.py`` - calculate default values for settings that are
+                              dependent on other settings
+   ``apply.py`` - apply the config at runtime, run validation, fill default values
+   ``docs.py`` - converts the catalogue to documentation
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/monarchs/config/apply/index
+   /autoapi/monarchs/config/catalogue/index
+   /autoapi/monarchs/config/computed_defaults/index
+   /autoapi/monarchs/config/definitions/index
+   /autoapi/monarchs/config/docs/index
+   /autoapi/monarchs/config/rules/index
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.config.Config
+   monarchs.config.REQUIRED
+   monarchs.config.RULES
+   monarchs.config.SETTINGS
+   monarchs.config.UNSET
+
+
+Classes
+-------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/config/Rule
+   /autoapi/monarchs/config/Setting
+
+.. autoapisummary::
+
+   monarchs.config.Rule
+   monarchs.config.Setting
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/config/check_required
+   /autoapi/monarchs/config/check_rules
+   /autoapi/monarchs/config/check_settings
+   /autoapi/monarchs/config/configure
+   /autoapi/monarchs/config/fill_defaults
+   /autoapi/monarchs/config/to_markdown
+
+.. autoapisummary::
+
+   monarchs.config.check_required
+   monarchs.config.check_rules
+   monarchs.config.check_settings
+   monarchs.config.configure
+   monarchs.config.fill_defaults
+   monarchs.config.to_markdown
+
+
+Package Contents
+----------------
+
+.. py:data:: Config
+
+.. py:data:: REQUIRED
+
+.. py:data:: RULES
+
+.. py:data:: SETTINGS
+
+.. py:data:: UNSET
+

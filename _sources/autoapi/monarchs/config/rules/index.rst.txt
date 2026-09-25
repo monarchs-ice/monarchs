@@ -1,0 +1,61 @@
+monarchs.config.rules
+=====================
+
+.. py:module:: monarchs.config.rules
+
+.. autoapi-nested-parse::
+
+   Cross-setting consistency checks for the settings catalogue.
+
+   Kept separate from `catalogue.py` so that file stays a clean settings table.
+   Each `Rule` says when a combination of settings is invalid and what to raise.
+    Rules are run by `apply.check_rules` *before* defaults are filled, so use
+   `getattr``/``hasattr` for settings that may not be present yet.
+
+   The `fail_condition` parameter is what determines whether a rule is violated.
+   This should be in the form of a function, so that it can be evaluated only
+   when checking rules, rather than when loading in the catalogue. Most of these
+   functions are implemented here using lambdas, which lets us define the functions
+   with the rules together. These typically work on "ms" - which is shorthand for
+   ModelSetup.
+
+   `ms` in the rule descriptions refers to a ModelSetup object, i.e. the
+   class filled in by reading the config file before performing any validation.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.config.rules.RULES
+   monarchs.config.rules._NEEDS_DUMP_FILEPATH
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/config/rules/_met_source_input_missing
+   /autoapi/monarchs/config/rules/_no_dump_filepath
+   /autoapi/monarchs/config/rules/_no_met_source
+
+.. autoapisummary::
+
+   monarchs.config.rules._met_source_input_missing
+   monarchs.config.rules._no_dump_filepath
+   monarchs.config.rules._no_met_source
+
+
+Module Contents
+---------------
+
+.. py:data:: RULES
+
+.. py:data:: _NEEDS_DUMP_FILEPATH
+   :value: ('dump_data', 'reload_from_dump', 'dump_data_pre_lateral_movement')
+
+

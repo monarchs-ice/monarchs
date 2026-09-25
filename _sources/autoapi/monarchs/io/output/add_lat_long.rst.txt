@@ -1,0 +1,7 @@
+monarchs.io.output.add_lat_long
+===============================
+
+.. py:function:: monarchs.io.output.add_lat_long(vars_to_save)
+
+   Ensure that latitude and longitude are included in the list of variables to save.
+

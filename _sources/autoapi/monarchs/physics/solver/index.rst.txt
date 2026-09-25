@@ -1,0 +1,77 @@
+monarchs.physics.solver
+=======================
+
+.. py:module:: monarchs.physics.solver
+
+.. autoapi-nested-parse::
+
+   Solver architecture. This is basically a pure-Python
+   replacement for scipy.optimize.root, which is not available in
+   Numba mode, and for NumbaMinpack, which requires a very bespoke
+   architecture to make work. For MONARCHS, we can get away with
+   a tridiagonal solve for the vast majority of the column, with
+   Newton-Raphson at the surface.
+
+   The actual equations and the scaffolding needed to solve these live
+   in the relevant sections in physics.firn.heateqn, physics.lid.heateqn,
+   physics.lake.seb and physics.lid.seb.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.solver.DQ_DT_STEP
+   monarchs.physics.solver.FD_STEP
+   monarchs.physics.solver.FTOL
+   monarchs.physics.solver.SOLVER_MAXITER
+   monarchs.physics.solver.SOLVER_TOL
+   monarchs.physics.solver.XTOL
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/solver/newton_scalar
+   /autoapi/monarchs/physics/solver/newton_tridiagonal
+   /autoapi/monarchs/physics/solver/solve_tridiagonal
+
+.. autoapisummary::
+
+   monarchs.physics.solver.newton_scalar
+   monarchs.physics.solver.newton_tridiagonal
+   monarchs.physics.solver.solve_tridiagonal
+
+
+Module Contents
+---------------
+
+.. py:data:: DQ_DT_STEP
+   :value: 0.001
+
+
+.. py:data:: FD_STEP
+   :value: 1e-06
+
+
+.. py:data:: FTOL
+   :value: 1e-11
+
+
+.. py:data:: SOLVER_MAXITER
+   :value: 60
+
+
+.. py:data:: SOLVER_TOL
+   :value: 1e-10
+
+
+.. py:data:: XTOL
+   :value: 1e-13
+
+

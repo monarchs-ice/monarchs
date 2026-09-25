@@ -1,0 +1,10 @@
+monarchs.physics.material_properties.cp_ice
+===========================================
+
+.. py:function:: monarchs.physics.material_properties.cp_ice(T)
+
+   Specific heat capacity of solid ice [J kg^-1 K^-1].
+
+   cp = 7.16 * T + 138 (Alexiades & Solomon, pg. 8), clamped at the melting
+   point (cp = 2093.6 for T >= 273.15 K).
+

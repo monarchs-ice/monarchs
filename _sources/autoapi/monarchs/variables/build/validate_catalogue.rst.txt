@@ -1,0 +1,8 @@
+monarchs.variables.build.validate_catalogue
+===========================================
+
+.. py:function:: monarchs.variables.build.validate_catalogue()
+
+   Validate the catalogue in case of duplicates or badly characterised
+   input parameters
+

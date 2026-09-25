@@ -1,0 +1,20 @@
+monarchs.io.netcdf_utils.variable_dimensions
+============================================
+
+.. py:function:: monarchs.io.netcdf_utils.variable_dimensions(key, is_vector, include_time=False)
+
+   Determine the dimensions for a variable based on its key.
+   Lake variables use the lake vertical grid, lid variables use the lid vertical
+   grid, etc. Water direction uses a separate direction dimension, to represent
+   one of the 8 cardinal directions in which water can flow. Scalar (per-cell)
+   variables use only the horizontal ``(x, y)`` dimensions.
+
+   :Parameters: * **key** (*str*) -- Variable name.
+                * **is_vector** (*bool*) -- Whether the variable has a vertical/direction axis (i.e. is 3D on the
+                  grid) as opposed to being a single value per cell.
+                * **include_time** (*bool, optional*) -- Whether to prepend the ``time`` dimension (True for the time-series
+                  output, False for a single-snapshot checkpoint).
+
+   :returns: Dimensions for the variable.
+   :rtype: tuple
+

@@ -1,0 +1,4 @@
+monarchs.variables.initial_value_functions.n_lid
+================================================
+
+.. py:function:: monarchs.variables.initial_value_functions.n_lid(ctx)

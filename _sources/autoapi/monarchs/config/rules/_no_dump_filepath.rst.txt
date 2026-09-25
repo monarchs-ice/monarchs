@@ -1,0 +1,7 @@
+monarchs.config.rules._no_dump_filepath
+=======================================
+
+.. py:function:: monarchs.config.rules._no_dump_filepath(ms)
+
+   True when something wants to write a checkpoint but no path was given.
+

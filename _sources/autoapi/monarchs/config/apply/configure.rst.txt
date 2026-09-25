@@ -1,0 +1,13 @@
+monarchs.config.apply.configure
+===============================
+
+.. py:function:: monarchs.config.apply.configure(model_setup)
+
+   Run the setup pipeline and return the frozen Config.
+
+   check_settings runs twice - once over the values the user supplied, and
+   again once the defaults (including the computed ones) are in place.
+
+   All issues are collected and raised together, to avoid having to run several
+   times to check every single error.
+

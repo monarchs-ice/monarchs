@@ -1,0 +1,11 @@
+monarchs.physics.lid.seb.sfc_energy_virtual_lid
+===============================================
+
+.. py:function:: monarchs.physics.lid.seb.sfc_energy_virtual_lid(x, args)
+
+   Residual of the virtual-lid surface energy balance [W m^-2]
+
+   :Parameters: * **x** (*float*) -- Current estimate of the virtual-lid surface temperature [K].
+                * **args** (*tuple*) -- ``(cell, met_data, k_v_lid, total_thickness)``, where
+                  total_thickness = v_lid_depth + lake_depth / (vert_grid_lake / 2).
+

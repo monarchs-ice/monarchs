@@ -1,0 +1,60 @@
+monarchs.config.apply
+=====================
+
+.. py:module:: monarchs.config.apply
+
+.. autoapi-nested-parse::
+
+   Apply the settings catalogue to a loaded ModelSetup object
+   (see monarchs.core.load_model_setup).
+
+   The defined functions here operate on a ModelSetup instance,
+   which is mutable and allows for its parameters to be changed
+   based on the rules we have defined. This is then at the end
+   converted into an immutable Config object, which cannot be
+   changed during runtime.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.config.apply.Config
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/config/apply/_raise_problems
+   /autoapi/monarchs/config/apply/_required_problems
+   /autoapi/monarchs/config/apply/_rule_problems
+   /autoapi/monarchs/config/apply/_setting_problems
+   /autoapi/monarchs/config/apply/check_required
+   /autoapi/monarchs/config/apply/check_rules
+   /autoapi/monarchs/config/apply/check_settings
+   /autoapi/monarchs/config/apply/configure
+   /autoapi/monarchs/config/apply/fill_defaults
+
+.. autoapisummary::
+
+   monarchs.config.apply._raise_problems
+   monarchs.config.apply._required_problems
+   monarchs.config.apply._rule_problems
+   monarchs.config.apply._setting_problems
+   monarchs.config.apply.check_required
+   monarchs.config.apply.check_rules
+   monarchs.config.apply.check_settings
+   monarchs.config.apply.configure
+   monarchs.config.apply.fill_defaults
+
+
+Module Contents
+---------------
+
+.. py:data:: Config
+

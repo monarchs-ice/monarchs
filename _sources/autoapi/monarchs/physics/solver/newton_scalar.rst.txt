@@ -1,0 +1,31 @@
+monarchs.physics.solver.newton_scalar
+=====================================
+
+.. py:function:: monarchs.physics.solver.newton_scalar(f, x0, args)
+
+   Scalar Newton-Raphson iteration for the surface energy balances.
+
+
+   We need to calculate the temperature of lakes and lids based on the
+   surface energy balance. However, the surface energy balance is dependent
+   on that surface temperature, meaning we have an optimisation problem.
+
+   Instead of using `scipy.optimise.root`, which is designed for large multivariate
+   problems, we instead implement a simple Newton-Raphson solver here.
+
+   This lets us jit-compile, and ensure that we get the same results for both Numba
+   and pure-Python backends.
+
+   TODO - could instead overload this and call scipy.optimize.newton
+   directly when use_numba = False?
+
+   :Parameters: * **f** (*function*) -- Residual function - e.g. physics.lake.seb.lake_development_eqn
+                * **x0** (*float*) -- Initial guess, almost certainly in [K]
+                * **args** (*tuple*) -- Arguments to pass to the residual function.
+
+   :returns: * **x** (*float*) -- Solution to the system of equations, probably in [K].
+               If ``success`` != ``True``, then returns the last
+               result before the iteration stopped.
+             * **success** (*bool*) -- True if the iteration converged, as in ``MINPACK``.
+             * **n_iter** (*int*) -- Number of iterations used.
+

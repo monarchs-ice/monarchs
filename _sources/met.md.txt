@@ -1,0 +1,43 @@
+# MONARCHS met forcing variables
+
+Fields of the met data grid (one record per timestep per cell), from the met catalogue (`monarchs.met_data.catalogue`). The ERA5 name is the short name(s) the field is read from when using ERA5 input data.
+
+## `snowfall`
+
+**Long name:** Snowfall &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **ERA5 name:** `sf`
+
+## `snow_dens`
+
+**Long name:** Snow density &nbsp;·&nbsp; **Units:** kg m-3 &nbsp;·&nbsp; **ERA5 name:** `rsn`
+
+## `temperature`
+
+**Long name:** Surface air temperature &nbsp;·&nbsp; **Units:** K &nbsp;·&nbsp; **ERA5 name:** `t2m`
+
+## `wind`
+
+**Long name:** Wind speed &nbsp;·&nbsp; **Units:** m s-1 &nbsp;·&nbsp; **ERA5 name:** `u10, v10`
+
+## `surf_pressure`
+
+**Long name:** Surface air pressure &nbsp;·&nbsp; **Units:** hPa &nbsp;·&nbsp; **ERA5 name:** `sp`
+
+## `dew_point_temperature`
+
+**Long name:** Dew-point temperature &nbsp;·&nbsp; **Units:** K &nbsp;·&nbsp; **ERA5 name:** `d2m`
+
+## `LW_down`
+
+**Long name:** Downwelling longwave radiation &nbsp;·&nbsp; **Units:** W m-2 &nbsp;·&nbsp; **ERA5 name:** `strd`
+
+## `SW_down`
+
+**Long name:** Downwelling shortwave radiation &nbsp;·&nbsp; **Units:** W m-2 &nbsp;·&nbsp; **ERA5 name:** `ssrd`
+
+## `lat`
+
+**Long name:** Latitude &nbsp;·&nbsp; **Units:** degrees_north &nbsp;·&nbsp; **ERA5 name:** `latitude`
+
+## `lon`
+
+**Long name:** Longitude &nbsp;·&nbsp; **Units:** degrees_east &nbsp;·&nbsp; **ERA5 name:** `longitude`

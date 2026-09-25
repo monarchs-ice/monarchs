@@ -1,0 +1,7 @@
+monarchs.run_monarchs.run_from_cli
+==================================
+
+.. py:function:: monarchs.run_monarchs.run_from_cli(return_grid=False)
+
+   Command line entry point for running the MONARCHS model.
+

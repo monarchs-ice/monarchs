@@ -1,0 +1,4 @@
+monarchs.variables.docs._row
+============================
+
+.. py:function:: monarchs.variables.docs._row(var)

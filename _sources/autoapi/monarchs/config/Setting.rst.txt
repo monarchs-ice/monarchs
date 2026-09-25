@@ -1,0 +1,65 @@
+monarchs.config.Setting
+=======================
+
+.. py:class:: monarchs.config.Setting
+
+   Defines a MONARCHS model_setup setting.
+
+   ``default`` is a constant, REQUIRED, or a callable
+   i.e. a function for defaults computed from other settings
+   (which may return UNSET to leave the attribute missing).
+
+
+   .. py:attribute:: choices
+      :type:  tuple
+      :value: ()
+
+
+
+   .. py:attribute:: default
+      :type:  Any
+
+
+   .. py:attribute:: default_doc
+      :type:  str
+      :value: ''
+
+
+
+   .. py:attribute:: description
+      :type:  str
+      :value: ''
+
+
+
+   .. py:attribute:: dtype
+      :type:  type | tuple
+
+
+   .. py:attribute:: group
+      :type:  str
+      :value: 'run'
+
+
+
+   .. py:attribute:: kernel_toggle
+      :type:  bool
+      :value: False
+
+
+
+   .. py:attribute:: name
+      :type:  str
+
+
+   .. py:attribute:: validator
+      :type:  Callable
+      :value: None
+
+
+
+   .. py:attribute:: validator_doc
+      :type:  str
+      :value: ''
+
+

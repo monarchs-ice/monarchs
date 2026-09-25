@@ -1,0 +1,7 @@
+monarchs.config.computed_defaults.lat_grid_size
+===============================================
+
+.. py:function:: monarchs.config.computed_defaults.lat_grid_size(model_setup)
+
+   'dem' when a DEM is provided; otherwise left unset.
+

@@ -1,0 +1,8 @@
+monarchs.core.driver.single_column_step
+=======================================
+
+.. py:function:: monarchs.core.driver.single_column_step(grid, loop_over_grid, met_data_grid, dt, model_setup, toggle_dict, cores)
+
+   Run one day of single-column physics over the whole grid, then check for
+   per-cell errors and verify that every valid cell was visited exactly once.
+

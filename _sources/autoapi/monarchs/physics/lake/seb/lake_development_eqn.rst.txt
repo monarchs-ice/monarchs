@@ -1,0 +1,14 @@
+monarchs.physics.lake.seb.lake_development_eqn
+==============================================
+
+.. py:function:: monarchs.physics.lake.seb.lake_development_eqn(x, args)
+
+   Residual function used to solve the surface energy balance when
+   we have a lake on top of the firn.
+
+   Solved by lake_seb_solver with formation=True.
+
+   :Parameters: * **x** (*float*) -- Current estimate of the lake surface temperature [K].
+                * **args** (*tuple*) -- ``(cell, met_data, T_core)``, where T_core is the mid-column lake
+                  temperature [K].
+

@@ -1,0 +1,16 @@
+monarchs.physics.surface_fluxes.sfc_flux
+========================================
+
+.. py:function:: monarchs.physics.surface_fluxes.sfc_flux(cell, met_data, xsurf)
+
+   Calculate the surface heat flux from the input shortwave and longwave
+   fluxes and latent/sensible heat fluxes.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid.
+                * **met_data** (*numpy structured array*) -- Meteorological data for the current timestep (``LW_down``, ``SW_down``,
+                  ``temperature``, ``surf_pressure``, ``dew_point_temperature``, ``wind``).
+                * **xsurf** (*float*) -- Surface temperature. Taken from our initial guess x (i.e. x[0]) [K].
+
+   :returns: **Q** -- Surface energy flux. [W m^-2].
+   :rtype: float64
+

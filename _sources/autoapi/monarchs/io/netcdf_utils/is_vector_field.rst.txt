@@ -1,0 +1,7 @@
+monarchs.io.netcdf_utils.is_vector_field
+========================================
+
+.. py:function:: monarchs.io.netcdf_utils.is_vector_field(var)
+
+   Whether an extracted field has a vertical/direction axis (3D on grid).
+

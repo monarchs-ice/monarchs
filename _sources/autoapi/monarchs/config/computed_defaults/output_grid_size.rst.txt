@@ -1,0 +1,4 @@
+monarchs.config.computed_defaults.output_grid_size
+==================================================
+
+.. py:function:: monarchs.config.computed_defaults.output_grid_size(model_setup)
