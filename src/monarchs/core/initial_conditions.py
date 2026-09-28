@@ -244,11 +244,8 @@ def create_model_grid(model_setup, firn_depth, rho, firn_temperature, **override
     inputs.update(overrides)
     if model_setup.initial_conditions:
         inputs.update(model_setup.initial_conditions)
-    # Model-level scalars the kernels read off the cell (as vert_grid is).
-    # Applied last so the config setting is authoritative - it must not
-    # disagree with what ends up on the grid. Skipped when the setup has not
-    # been through configure() yet, so the variable catalogue's own default
-    # applies rather than a second copy of it living here.
+    # overrides for settings that need to be passed into physics kernels
+    # set here so that any default values get overwritten
     substep = getattr(model_setup, "turbulent_mixing_substep", None)
     if substep is not None:
         inputs["turbulent_mixing_substep"] = substep
