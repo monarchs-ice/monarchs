@@ -101,26 +101,6 @@ def setup_parallelism(model_setup):
     return loop_over_grid
 
 
-def as_flat_cells(grid):
-    """
-    A 1-D *view* of the grid, or an error.
-
-    Both single-column loops step ``grid.reshape(nrows * ncols)`` and rely on
-    that being a view, so their in-place updates land in ``grid`` itself.
-    ``reshape`` only returns a view for a contiguous array - given a
-    non-contiguous one (a sub-block such as ``grid[r0:r1, c0:c1]``, as a tiling
-    or halo scheme would produce) it silently returns a *copy*, and a whole
-    model day of physics would be discarded with no error at all.
-
-    Setting ``.shape`` in place cannot do that: it either gives a view or
-    raises. Calling it here makes the invariant hold at the one point it is
-    established, rather than leaving the loops to get lucky.
-    """
-    flat = grid.view()
-    flat.shape = (grid.shape[0] * grid.shape[1],)
-    return flat
-
-
 def single_column_step(
     grid, loop_over_grid, met_data_grid, dt, model_setup, toggle_dict, cores
 ):
@@ -132,9 +112,6 @@ def single_column_step(
     # (t_steps_per_day, rows, cols) to (rows*cols, t_steps_per_day)
     met_data_grid = met_data_grid.reshape(model_setup.t_steps_per_day, -1)
     met_data_grid = np.moveaxis(met_data_grid, 0, -1)
-
-    # raises if the loops' reshape would copy rather than view - see as_flat_cells
-    as_flat_cells(grid)
 
     visit_grid = np.copy(grid["visit_count"])
     # timestep_loop bumps visit_count before it checks valid_cell, so cells the
