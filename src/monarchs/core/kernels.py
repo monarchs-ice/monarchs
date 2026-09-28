@@ -92,8 +92,8 @@ def compile_all(use_numba):
 
     # Step 2
     # Add the @njit decorator to each kernel.
-    # error_model="numpy" reduces runtime by about 30%, at the expense of having
-    # slightly looser error handling. If you're getting unexplained errors that look
+    # error_model="numpy" reduces runtime by about 30% on large (100x100) grids, at the expense
+    # of having slightly looser error handling. If you're getting unexplained errors that look
     # like infinities or NaNs, then try setting this to "python" instead.
     jitted = {}
     for func, opts in _KERNELS:

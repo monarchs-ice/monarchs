@@ -630,7 +630,7 @@ SETTINGS = [
         group="io",
         description="How often to write model checkpoint states, in model days. "
         "Set to a value greater than 1 to write checkpoints less frequently - a "
-        "checkpoint rewrites the whole file, so daily dumps are a measurable cost "
+        "checkpoint rewrites the whole file, so daily dumps are expensive "
         "on large grids. The final day of a run is always written regardless. "
         "Defaults to 30, i.e. monthly.",
     ),
