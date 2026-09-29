@@ -18,15 +18,8 @@ def get_snow_sum(met_data_grid, grid, snow_added):
     Work out how much snow has been added to the model over the last day, and
     add it to the total amount of snow already added.
     """
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            if grid["valid_cell"][i, j]:
-                snow_array = (
-                    met_data_grid["snow_dens"][:, i, j]
-                    * met_data_grid["snowfall"][:, i, j]
-                )
-                snow_added += np.sum(snow_array)
-    return snow_added
+    snow = np.sum(met_data_grid["snow_dens"] * met_data_grid["snowfall"], axis=0)
+    return snow_added + np.sum(snow[grid["valid_cell"]])
 
 
 def met_window(day, t_steps_per_day, met_data_len):
