@@ -35,15 +35,15 @@ MODULE_NAME = "monarchs.physics.lake.development"
 @kernel()
 def radiative_transfer(cell, sw_in):
     """
-    In lakes, radiation is split between radiation that penetrates (UV/visible light), 
-    and radiation that is absorbed by the skin (NIR/SWIR). This routine handles the 
-    penetrating radiation. Radiation absorbed by the skin is handled in the surface 
+    In lakes, radiation is split between radiation that penetrates (UV/visible light),
+    and radiation that is absorbed by the skin (NIR/SWIR). This routine handles the
+    penetrating radiation. Radiation absorbed by the skin is handled in the surface
     fluxes routines, as it is for firn.
-    
+
     In order to budget energy correctly, we need data on the absorption spectrum of water.
-    We know that heuristically the incoming radiation is ~50% in the UV/Vis, 
+    We know that heuristically the incoming radiation is ~50% in the UV/Vis,
     ~20% in the NIR and ~30% in the SWIR.
-    
+
     The datasets used for this heuristic are:
     https://omlc.org/spectra/water/abs/buiteveld94.html
     L.Kou, D.Labrie, P.Chylek, "Refractive indices of water and ice in
@@ -55,7 +55,7 @@ def radiative_transfer(cell, sw_in):
     Integrating cavity measurements," Appl. Opt.,36, 8710-8723, (1997).
     https://omlc.org/spectra/water/data/pope97.txt
     for the vis.
-    
+
     Some conservative suggested values are:
     UV/Vis (380-700 nm): k ~ 0.025 - 0.1 m^-1
     NIR (700-1000 nm): k ~ 5-10 m^-1
@@ -78,9 +78,9 @@ def radiative_transfer(cell, sw_in):
 
     Section 4.1.2 of Leppäranta (2015): Freezing of Lakes and the Evolution of
     their Ice Cover explicitly mentions a factor of ~0.45-0.5 for the
-    surface absorption fraction. 
-    
-    The absorbed fraction is a parameter defined in 
+    surface absorption fraction.
+
+    The absorbed fraction is a parameter defined in
     monarchs.physics.constants.
     """
 
