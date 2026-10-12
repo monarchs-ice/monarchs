@@ -1,0 +1,44 @@
+monarchs.core.load_model_setup.ModelSetup
+=========================================
+
+.. py:class:: monarchs.core.load_model_setup.ModelSetup(script_path)
+
+   MONARCHS configuration class.
+   This handles the input of the configuration from the input Python file,
+   and validates some of the inputs. This is mutable, so we can assign
+   default values.
+
+   This is then fed into `monarchs.config` - which runs some validation on the
+   config to make sure that it is valid, and turns it into an immutable
+   dataclass so that it cannot change during runtime.
+
+
+   .. py:method:: check_file_exists()
+
+      Check to see whether the user-provided runscript works.
+
+
+
+   .. py:method:: check_for_key_variables()
+
+      Ensure that certain variables are defined within the model setup
+      script before we import it. The intent is to prevent the model from
+      progressing if variables that are required to run are not present,
+      and goes some way to preventing unexpected code from running.
+
+
+
+   .. py:method:: validate_model_setup()
+
+      Run the validation checks. If any of them fail, print out all the
+      errors found for each.
+
+
+
+   .. py:attribute:: errors
+      :value: []
+
+
+
+   .. py:attribute:: script_path
+

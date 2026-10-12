@@ -1,0 +1,18 @@
+monarchs.physics.firn.heateqn.firn_heateqn_solver
+=================================================
+
+.. py:function:: monarchs.physics.firn.heateqn.firn_heateqn_solver(cell, met_data, dt, fixed_sfc=False)
+
+   Solve the full-column firn heat equation.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*numpy structured array*) -- Meteorological data for the current timestep (LW_down, SW_down,
+                  temperature, surf_pressure, dew_point_temperature, wind).
+                * **dt** (*float*) -- Timestep [s].
+                * **fixed_sfc** (*bool, optional*) -- If True, force the surface to 273.15 K. Default False.
+
+   :returns: * **T** (*array_like, float, dimension(vert_grid)*) -- Temperature profile, rounded to 8 decimal places [K].
+             * **success** (*bool*) -- True if the iteration converged.
+             * **n_iter** (*int*) -- Number of Newton-Raphson iterations used (a single step for the fixed-surface
+               path, since that system is linear).
+

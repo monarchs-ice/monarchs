@@ -1,0 +1,62 @@
+monarchs.config.definitions
+===========================
+
+.. py:module:: monarchs.config.definitions
+
+.. autoapi-nested-parse::
+
+   Definitions for MONARCHS model setup settings.
+
+   We define here two dataclasses - a Setting (which has some attributes that
+   tell the model how it should be used later, and whether it is required or
+   optional), and a Rule (which determines how Settings interact, e.g. not letting
+   you specify conflicting settings).
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.config.definitions.REQUIRED
+   monarchs.config.definitions.UNSET
+
+
+Classes
+-------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/config/definitions/Rule
+   /autoapi/monarchs/config/definitions/Setting
+
+.. autoapisummary::
+
+   monarchs.config.definitions.Rule
+   monarchs.config.definitions.Setting
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/config/definitions/dtype_name
+   /autoapi/monarchs/config/definitions/type_matches
+
+.. autoapisummary::
+
+   monarchs.config.definitions.dtype_name
+   monarchs.config.definitions.type_matches
+
+
+Module Contents
+---------------
+
+.. py:data:: REQUIRED
+
+.. py:data:: UNSET
+

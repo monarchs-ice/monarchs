@@ -1,0 +1,31 @@
+monarchs.variables.definitions.InitContext
+==========================================
+
+.. py:class:: monarchs.variables.definitions.InitContext
+
+   Information a computed default (see ``initialisers.py``) may need.
+
+
+   .. py:attribute:: inputs
+      :type:  dict
+
+
+   .. py:attribute:: num_cols
+      :type:  int
+
+
+   .. py:attribute:: num_rows
+      :type:  int
+
+
+   .. py:attribute:: vert_grid
+      :type:  int
+
+
+   .. py:attribute:: vert_grid_lake
+      :type:  int
+
+
+   .. py:attribute:: vert_grid_lid
+      :type:  int
+

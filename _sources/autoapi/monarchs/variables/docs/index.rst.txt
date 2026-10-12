@@ -1,0 +1,51 @@
+monarchs.variables.docs
+=======================
+
+.. py:module:: monarchs.variables.docs
+
+.. autoapi-nested-parse::
+
+   Render the variable catalogue as a Markdown reference.
+
+   Reads the columns (name, dimension, units, default, description) from the
+   ``Variable`` rows in ``catalogue.py``, organised by ``group``.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.variables.docs._COLUMNS
+   monarchs.variables.docs._INTRO
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/variables/docs/_default_cell
+   /autoapi/monarchs/variables/docs/_row
+   /autoapi/monarchs/variables/docs/to_markdown
+
+.. autoapisummary::
+
+   monarchs.variables.docs._default_cell
+   monarchs.variables.docs._row
+   monarchs.variables.docs.to_markdown
+
+
+Module Contents
+---------------
+
+.. py:data:: _COLUMNS
+   :value: ['Variable', 'Long name', 'Dim', 'Units', 'Default', 'Description']
+
+
+.. py:data:: _INTRO
+   :value: ['List of MONARCHS model grid variables. Generated automatically from the variable catalogue...
+
+

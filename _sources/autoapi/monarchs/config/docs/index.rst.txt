@@ -1,0 +1,53 @@
+monarchs.config.docs
+====================
+
+.. py:module:: monarchs.config.docs
+
+.. autoapi-nested-parse::
+
+   Render the settings catalogue as a Markdown reference.
+
+   Reads the columns (name, type, default, choices, description) from the settings
+   catalogue (`monarchs.config.catalogue`) and organises them by ``group``.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.config.docs._COLUMNS
+   monarchs.config.docs._INTRO
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/config/docs/_constraint_cell
+   /autoapi/monarchs/config/docs/_default_cell
+   /autoapi/monarchs/config/docs/_row
+   /autoapi/monarchs/config/docs/to_markdown
+
+.. autoapisummary::
+
+   monarchs.config.docs._constraint_cell
+   monarchs.config.docs._default_cell
+   monarchs.config.docs._row
+   monarchs.config.docs.to_markdown
+
+
+Module Contents
+---------------
+
+.. py:data:: _COLUMNS
+   :value: ['Setting', 'Type', 'Default', 'Allowed', 'Description']
+
+
+.. py:data:: _INTRO
+   :value: ['This provides a reference for all of the possible settings', 'available in the model.', '',...
+
+

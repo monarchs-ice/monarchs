@@ -1,0 +1,7 @@
+monarchs.variables.initial_value_functions.sfrac_from_rho
+=========================================================
+
+.. py:function:: monarchs.variables.initial_value_functions.sfrac_from_rho(ctx)
+
+   Solid (ice) fraction from density: rho / rho_ice.
+

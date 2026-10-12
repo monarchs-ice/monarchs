@@ -1,0 +1,8 @@
+monarchs.config.rules._no_met_source
+====================================
+
+.. py:function:: monarchs.config.rules._no_met_source(ms)
+
+   True when the setup provides no input for any met data source.
+   acceptable values are "era5" and "user_defined".
+

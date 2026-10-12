@@ -1,0 +1,11 @@
+monarchs.core.driver.setup_parallelism
+======================================
+
+.. py:function:: monarchs.core.driver.setup_parallelism(model_setup)
+
+   Select and prepare the grid-loop implementation for this run.
+
+   Numba mode compiles the prange-based loop, parallel over the flattened
+   grid when <parallel> is set. Without Numba the pure-Python loop is used,
+   which is always serial.
+

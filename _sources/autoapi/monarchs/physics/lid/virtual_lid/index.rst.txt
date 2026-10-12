@@ -1,0 +1,48 @@
+monarchs.physics.lid.virtual_lid
+================================
+
+.. py:module:: monarchs.physics.lid.virtual_lid
+
+.. autoapi-nested-parse::
+
+   Routines to handle virtual lids. These are thin layers of ice that are
+   too thin to justify running full physics (e.g. heat equation) on, but
+   can grow and shrink. Virtual lids that go above 10cm in size are switched
+   to true lids, and their physics is handled in ``lid.py``.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.lid.virtual_lid.MODULE_NAME
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lid/virtual_lid/freeze_virtual_lid
+   /autoapi/monarchs/physics/lid/virtual_lid/melt_virtual_lid
+   /autoapi/monarchs/physics/lid/virtual_lid/update_virtual_lid_temperature
+   /autoapi/monarchs/physics/lid/virtual_lid/virtual_lid_development
+
+.. autoapisummary::
+
+   monarchs.physics.lid.virtual_lid.freeze_virtual_lid
+   monarchs.physics.lid.virtual_lid.melt_virtual_lid
+   monarchs.physics.lid.virtual_lid.update_virtual_lid_temperature
+   monarchs.physics.lid.virtual_lid.virtual_lid_development
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.physics.lid.virtual_lid'
+
+

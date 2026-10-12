@@ -1,0 +1,41 @@
+monarchs.physics.surface_fluxes
+===============================
+
+.. py:module:: monarchs.physics.surface_fluxes
+
+.. autoapi-nested-parse::
+
+   Surface energy fluxes and albedo at the top of the ice shelf.
+   These functions determine the surface energy balance and therefore
+   melt/freezing on the ice shelf/lake/lid.
+
+   The main functions used in the model are surface_fluxes
+   and sfc_albedo. surface_fluxes calculates the surface energy
+   balance given meteorological input and the state of the firn column.
+
+   sfc_albedo is called before we run sfc_flux,
+   but is not included in the sfc_flux call since otherwise it
+   would run during every iteration of the heat equation solver.
+   So if you are adding a call to sfc_flux, make sure that
+   sfc_albedo is called first in case something has modified
+   the cell state since the last call!
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/surface_fluxes/bulk_fluxes
+   /autoapi/monarchs/physics/surface_fluxes/sfc_albedo
+   /autoapi/monarchs/physics/surface_fluxes/sfc_flux
+
+.. autoapisummary::
+
+   monarchs.physics.surface_fluxes.bulk_fluxes
+   monarchs.physics.surface_fluxes.sfc_albedo
+   monarchs.physics.surface_fluxes.sfc_flux
+
+

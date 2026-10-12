@@ -1,0 +1,8 @@
+monarchs.config.fill_defaults
+=============================
+
+.. py:function:: monarchs.config.fill_defaults(model_setup)
+
+   Set catalogue defaults for any missing settings, resolving computed
+   defaults in catalogue order. Raises if a REQUIRED setting is missing.
+

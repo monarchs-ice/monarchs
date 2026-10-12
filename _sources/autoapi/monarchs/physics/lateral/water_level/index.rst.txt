@@ -1,0 +1,24 @@
+monarchs.physics.lateral.water_level
+====================================
+
+.. py:module:: monarchs.physics.lateral.water_level
+
+.. autoapi-nested-parse::
+
+   Function for determining the water level of a gridcell based on the state.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lateral/water_level/update_water_level
+
+.. autoapisummary::
+
+   monarchs.physics.lateral.water_level.update_water_level
+
+

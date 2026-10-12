@@ -1,0 +1,16 @@
+monarchs.variables.build_dtype
+==============================
+
+.. py:function:: monarchs.variables.build_dtype(vert_grid, vert_grid_lake, vert_grid_lid, n_directions=8)
+
+   Structured-array dtype for the model grid.
+
+   We get this by checking each variable in the catalogue, find its datatype,
+   and add it to the list of fields.
+
+   :Parameters: * **vert_grid** (*int*) -- Number of vertical grid points in the firn column. This, along with
+                  vert_grid_lake and vert_grid_lid are needed since their size determines
+                  the size of the vector variables dependent on the grid sizes.
+                * **vert_grid_lake** (*int*) -- Number of vertical grid points in the lake.
+                * **vert_grid_lid** (*int*) -- Number of vertical grid points in the lid.
+

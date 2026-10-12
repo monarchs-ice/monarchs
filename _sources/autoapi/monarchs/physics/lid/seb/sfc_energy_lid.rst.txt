@@ -1,0 +1,11 @@
+monarchs.physics.lid.seb.sfc_energy_lid
+=======================================
+
+.. py:function:: monarchs.physics.lid.seb.sfc_energy_lid(x, args)
+
+   Residual of the full-lid surface energy balance [W m^-2]
+
+   :Parameters: * **x** (*float*) -- Current estimate of the lid surface temperature [K].
+                * **args** (*tuple*) -- ``(cell, met_data, k_lid, sub_T, dz_lid)``, where sub_T is the first
+                  lid layer temperature [K] and dz_lid the lid layer thickness [m].
+

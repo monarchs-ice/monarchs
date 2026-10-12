@@ -1,0 +1,11 @@
+monarchs.core.error_handling.check_grid_correctness
+===================================================
+
+.. py:function:: monarchs.core.error_handling.check_grid_correctness(grid)
+
+   Wraps check_correct for each cell in the grid.
+   We do not run in parallel, as there are issues with error
+   handling inside numba prange loops.
+
+   :Parameters: **grid**
+

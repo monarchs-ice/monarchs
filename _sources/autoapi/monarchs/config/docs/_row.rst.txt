@@ -1,0 +1,7 @@
+monarchs.config.docs._row
+=========================
+
+.. py:function:: monarchs.config.docs._row(setting)
+
+   values for each row extracted from the Setting object
+

@@ -1,0 +1,29 @@
+monarchs.core.diagnostics
+=========================
+
+.. py:module:: monarchs.core.diagnostics
+
+.. autoapi-nested-parse::
+
+   Diagnostic and progress-reporting functions for the MONARCHS driver.
+
+   Contains functions that print end-of-timestep summaries and provide
+   visual consistency checks between the DEM and met-data grids.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/core/diagnostics/check_firn_met_consistency
+   /autoapi/monarchs/core/diagnostics/print_model_end_of_timestep_messages
+
+.. autoapisummary::
+
+   monarchs.core.diagnostics.check_firn_met_consistency
+   monarchs.core.diagnostics.print_model_end_of_timestep_messages
+
+

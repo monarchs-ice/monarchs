@@ -1,0 +1,19 @@
+monarchs.core.error_handling.check_for_mass_conservation
+========================================================
+
+.. py:function:: monarchs.core.error_handling.check_for_mass_conservation(cell, original_mass, new_mass, routine_name, tol=1e-06)
+
+   Check for mass conservation in the grid. We use this instead of
+   using standard asserts or if cond: raise ValueError, since
+   these can often fail silently if using Numba + parallel processing.
+
+   :Parameters: * **grid** (*List, or numba.typed.List*) -- the model grid
+                * **original_mass** (*float*) -- The original mass of the grid to compare against.
+                * **new_mass** (*float*) -- The new mass of the grid to compare against.
+                * **routine_name** (*str*) -- Name of the routine calling this function, for error reporting.
+                * **tol** (*float, optional*) -- Tolerance for mass conservation check. Default is 1e-6.
+
+   :rtype: None
+
+   :raises ValueError: If mass conservation is violated beyond the specified tolerance.
+

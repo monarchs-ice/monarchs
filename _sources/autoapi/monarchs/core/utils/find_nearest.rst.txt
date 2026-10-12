@@ -1,0 +1,7 @@
+monarchs.core.utils.find_nearest
+================================
+
+.. py:function:: monarchs.core.utils.find_nearest(a, a0)
+
+   Obtain index of element in array `a` closest to the scalar value `a0`
+

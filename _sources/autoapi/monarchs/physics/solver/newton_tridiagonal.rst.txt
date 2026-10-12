@@ -1,0 +1,33 @@
+monarchs.physics.solver.newton_tridiagonal
+==========================================
+
+.. py:function:: monarchs.physics.solver.newton_tridiagonal(residual, jacobian, x0, args)
+
+   Newton-Raphson driver for a column heat equation whose Jacobian is
+   tridiagonal (the firn and lid heat equations).
+
+   Newton-Raphson as defined above finds the root(s) of a function f via
+   x1 = x0 - f(x0)/f'(x0). This is the multivariate form of that - so instead
+   of solving for one x, we have a matrix of equations, where we can solve
+   X1 = X0 - J(X0)^-1 * F(X0), where J is the Jacobian of F.
+
+   In our case, the Jacobian is tridiagonal, since each point only depends on
+   its nearest-neighbours; we can solve this efficiently with the Thomas algorithm.
+
+   This is faster than using an optimised but more generic solver like those available
+   in ``MINPACK``, since we know the Jacobian is tridiagonal and can be calculated
+   analytically for all but the surface layer.
+
+   :Parameters: * **``residual`` and ``jacobian`` are functions that are specific to the**
+                * **system being solved - in MONARCHS' case either the firn or lid heat equations**
+                * **and their surface-driven forcing.**
+                * **x0** (*array_like, float*) -- Initial guess - the previous timestep's profile.
+                  This is firn/lid temperature in [K] for MONARCHS' heat equation routines.
+                * **args** (*tuple*) -- Input arguments to the Jacobian/residual functions being called. The exact
+                  arguments are defined in the definitions of those specific functions, e.g.
+                  args will be different for ``lid.heateqn`` vs ``firn.heateqn``.
+
+   :returns: * **T** (*array_like, float*) -- Solution rounded to 8 decimal places [K].
+             * **success** (*bool*) -- True if the iteration converged, as in ``MINPACK``.
+             * **n_iter** (*int*) -- Number of Newton-Raphson iterations used.
+

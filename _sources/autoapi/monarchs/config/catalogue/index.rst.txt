@@ -1,0 +1,45 @@
+monarchs.config.catalogue
+=========================
+
+.. py:module:: monarchs.config.catalogue
+
+.. autoapi-nested-parse::
+
+   The MONARCHS settings catalogue.
+
+   Similarly to the variable catalogue (`monarchs.variables.catalogue`), this
+   defines all the settings that the user can define in a setup script to
+   be passed into the model. The aim is to have one centralised place where
+   we define all settings, and then all application of these settings (putting
+   them into a format the model understands) and documentation is generated
+   from this one place.
+
+   Each setting is a `Setting` object - which defines the allowed type(s) of the
+   setting (e.g. True/False, a number or a string), a default value,
+   and some validation rules or constraints on the allowed values.
+
+   This catalogue defines default values - so if you are adding a new
+   setting ensure that the default behaviour is defined too.
+
+   The cross-setting consistency checks (`RULES`) live in `rules.py`.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.config.catalogue.SETTINGS
+   monarchs.config.catalogue._DEFAULT_VARS_TO_SAVE
+
+
+Module Contents
+---------------
+
+.. py:data:: SETTINGS
+
+.. py:data:: _DEFAULT_VARS_TO_SAVE
+   :value: ('firn_temperature', 'Sfrac', 'Lfrac', 'firn_depth', 'lake_depth', 'lid_depth', 'lake', 'lid',...
+
+

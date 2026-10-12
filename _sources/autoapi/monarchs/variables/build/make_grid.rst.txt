@@ -1,0 +1,13 @@
+monarchs.variables.build.make_grid
+==================================
+
+.. py:function:: monarchs.variables.build.make_grid(num_rows, num_cols, vert_grid, vert_grid_lake, vert_grid_lid, inputs=None)
+
+   Build the model grid from the catalogue.
+
+   ``inputs`` is a dict of {name: value}, which is defined either
+   by the firn profile specified in the model setup script, or from
+   the input DEM (at least one of these is required for the model to run).
+   This means that it contains variables relating to the initial firn column,
+   i.e. Sfrac, firn_depth, etc.
+

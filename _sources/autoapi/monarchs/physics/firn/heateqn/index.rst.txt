@@ -1,0 +1,44 @@
+monarchs.physics.firn.heateqn
+=============================
+
+.. py:module:: monarchs.physics.firn.heateqn
+
+.. autoapi-nested-parse::
+
+   Firn column heat equation functions. This contains the residual function,
+   a function to calculate the Jacobian, and the scaffolding needed to
+   actually solve the system.
+
+   The firn column is basically a 1D diffusion problem with a fixed bottom
+   boundary and a nonlinear surface boundary condition, driven by the atmosphere.
+
+   We use the previous timestep state as the initial guess and for the
+   material properties in the column. This means that our system is entirely
+   linear except at the surface, which means we can get away with a tridiagonal
+   solver since we only have a single nonlinear row and therefore a tridiagonal
+   Jacobian. We can determine this analytically for all terms except dQ/dT,
+   which we obtain by finite difference.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/firn/heateqn/_firn_jacobian
+   /autoapi/monarchs/physics/firn/heateqn/_firn_residual
+   /autoapi/monarchs/physics/firn/heateqn/firn_heateqn_solver
+   /autoapi/monarchs/physics/firn/heateqn/heateqn_firn
+   /autoapi/monarchs/physics/firn/heateqn/newton_jacobian_firn
+
+.. autoapisummary::
+
+   monarchs.physics.firn.heateqn._firn_jacobian
+   monarchs.physics.firn.heateqn._firn_residual
+   monarchs.physics.firn.heateqn.firn_heateqn_solver
+   monarchs.physics.firn.heateqn.heateqn_firn
+   monarchs.physics.firn.heateqn.newton_jacobian_firn
+
+

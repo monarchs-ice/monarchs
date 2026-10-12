@@ -1,0 +1,4 @@
+monarchs.variables.initial_value_functions.n_lake
+=================================================
+
+.. py:function:: monarchs.variables.initial_value_functions.n_lake(ctx)

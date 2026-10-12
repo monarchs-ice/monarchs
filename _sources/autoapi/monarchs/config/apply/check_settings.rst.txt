@@ -1,0 +1,7 @@
+monarchs.config.apply.check_settings
+====================================
+
+.. py:function:: monarchs.config.apply.check_settings(model_setup)
+
+   Validate the settings the user provided against choices/validators.
+

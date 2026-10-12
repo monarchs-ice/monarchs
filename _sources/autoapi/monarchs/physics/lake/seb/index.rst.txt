@@ -1,0 +1,29 @@
+monarchs.physics.lake.seb
+=========================
+
+.. py:module:: monarchs.physics.lake.seb
+
+.. autoapi-nested-parse::
+
+   Lake surface energy balance equations, and scaffolding around
+   the solver so that we can call it in lake.formation and lake.development.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lake/seb/lake_development_eqn
+   /autoapi/monarchs/physics/lake/seb/lake_formation_eqn
+   /autoapi/monarchs/physics/lake/seb/lake_seb_solver
+
+.. autoapisummary::
+
+   monarchs.physics.lake.seb.lake_development_eqn
+   monarchs.physics.lake.seb.lake_formation_eqn
+   monarchs.physics.lake.seb.lake_seb_solver
+
+

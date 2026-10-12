@@ -1,0 +1,7 @@
+monarchs.io.netcdf_utils.extract_field
+======================================
+
+.. py:function:: monarchs.io.netcdf_utils.extract_field(grid, key)
+
+   Extract a field from the model grid as a dense array over all cells.
+

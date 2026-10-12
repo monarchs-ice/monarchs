@@ -1,0 +1,7 @@
+monarchs.docs_tables.group_order
+================================
+
+.. py:function:: monarchs.docs_tables.group_order(items, key)
+
+   Distinct values of ``key(item)``, in first-seen order.
+

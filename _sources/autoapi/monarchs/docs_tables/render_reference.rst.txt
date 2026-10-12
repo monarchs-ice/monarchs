@@ -1,0 +1,13 @@
+monarchs.docs_tables.render_reference
+=====================================
+
+.. py:function:: monarchs.docs_tables.render_reference(title, intro, columns, sections)
+
+   Render a Markdown reference page.
+
+   :Parameters: * **title** (*str*) -- Page title, rendered as the top-level ``#`` heading.
+                * **intro** (*list of str*) -- Introduction lines placed directly under the title.
+                * **columns** (*list of str*) -- Labels for each field - e.g. heading/default value etc.
+                * **sections** (*list of (str or None, list of list of str)*) -- ``(section_title, rows)`` pairs. ``section_title`` is rendered as a
+                  ``##`` heading (omitted when ``None``), one value per column.
+

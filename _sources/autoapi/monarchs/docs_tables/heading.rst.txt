@@ -1,0 +1,7 @@
+monarchs.docs_tables.heading
+============================
+
+.. py:function:: monarchs.docs_tables.heading(group)
+
+   Section heading for a group name, keeping acronyms uppercase.
+

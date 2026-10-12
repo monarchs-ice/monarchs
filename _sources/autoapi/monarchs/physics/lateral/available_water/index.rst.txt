@@ -1,0 +1,31 @@
+monarchs.physics.lateral.available_water
+========================================
+
+.. py:module:: monarchs.physics.lateral.available_water
+
+.. autoapi-nested-parse::
+
+   Functions for determining much water is available to move from a grid cell,
+   and how much water can move out of the model.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lateral/available_water/calc_available_water_ice_lens
+   /autoapi/monarchs/physics/lateral/available_water/calc_available_water_lake
+   /autoapi/monarchs/physics/lateral/available_water/calc_catchment_outflow
+   /autoapi/monarchs/physics/lateral/available_water/water_fraction
+
+.. autoapisummary::
+
+   monarchs.physics.lateral.available_water.calc_available_water_ice_lens
+   monarchs.physics.lateral.available_water.calc_available_water_lake
+   monarchs.physics.lateral.available_water.calc_catchment_outflow
+   monarchs.physics.lateral.available_water.water_fraction
+
+

@@ -1,0 +1,7 @@
+monarchs.variables.docs.to_markdown
+===================================
+
+.. py:function:: monarchs.variables.docs.to_markdown()
+
+   Return the variable catalogue as a Markdown reference.
+

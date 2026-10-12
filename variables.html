@@ -1,0 +1,440 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MONARCHS grid variables &mdash; MONARCHS  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MONARCHS met forcing variables" href="met.html" />
+    <link rel="prev" title="MONARCHS run settings" href="settings.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            MONARCHS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Running MONARCHS (a quickstart guide)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tips and tricks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MONARCHS_model_setup.html">Setting up your own model run</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dem.html">Running MONARCHS with a Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="met_data.html">Formatting input meteorological data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings.html">MONARCHS run settings</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MONARCHS grid variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#fixed-values">Fixed values</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#column"><code class="docutils literal notranslate"><span class="pre">column</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#row"><code class="docutils literal notranslate"><span class="pre">row</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vert-grid"><code class="docutils literal notranslate"><span class="pre">vert_grid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vert-grid-lake"><code class="docutils literal notranslate"><span class="pre">vert_grid_lake</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vert-grid-lid"><code class="docutils literal notranslate"><span class="pre">vert_grid_lid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lat"><code class="docutils literal notranslate"><span class="pre">lat</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lon"><code class="docutils literal notranslate"><span class="pre">lon</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#size-dx"><code class="docutils literal notranslate"><span class="pre">size_dx</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#size-dy"><code class="docutils literal notranslate"><span class="pre">size_dy</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#valid-cell"><code class="docutils literal notranslate"><span class="pre">valid_cell</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#firn">Firn</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#firn-depth"><code class="docutils literal notranslate"><span class="pre">firn_depth</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vertical-profile"><code class="docutils literal notranslate"><span class="pre">vertical_profile</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#firn-temperature"><code class="docutils literal notranslate"><span class="pre">firn_temperature</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rho"><code class="docutils literal notranslate"><span class="pre">rho</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sfrac"><code class="docutils literal notranslate"><span class="pre">Sfrac</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lfrac"><code class="docutils literal notranslate"><span class="pre">Lfrac</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#meltflag"><code class="docutils literal notranslate"><span class="pre">meltflag</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saturation"><code class="docutils literal notranslate"><span class="pre">saturation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ice-lens"><code class="docutils literal notranslate"><span class="pre">ice_lens</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ice-lens-depth"><code class="docutils literal notranslate"><span class="pre">ice_lens_depth</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#surface">Surface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#albedo"><code class="docutils literal notranslate"><span class="pre">albedo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#melt"><code class="docutils literal notranslate"><span class="pre">melt</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exposed-water"><code class="docutils literal notranslate"><span class="pre">exposed_water</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#total-melt"><code class="docutils literal notranslate"><span class="pre">total_melt</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#lake">Lake</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">lake</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lake-depth"><code class="docutils literal notranslate"><span class="pre">lake_depth</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lake-temperature"><code class="docutils literal notranslate"><span class="pre">lake_temperature</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#lid">Lid</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">lid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lid-depth"><code class="docutils literal notranslate"><span class="pre">lid_depth</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lid-temperature"><code class="docutils literal notranslate"><span class="pre">lid_temperature</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#v-lid"><code class="docutils literal notranslate"><span class="pre">v_lid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#v-lid-depth"><code class="docutils literal notranslate"><span class="pre">v_lid_depth</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#virtual-lid-temperature"><code class="docutils literal notranslate"><span class="pre">virtual_lid_temperature</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#has-had-lid"><code class="docutils literal notranslate"><span class="pre">has_had_lid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lid-sfc-melt"><code class="docutils literal notranslate"><span class="pre">lid_sfc_melt</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lid-snow-depth"><code class="docutils literal notranslate"><span class="pre">lid_snow_depth</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#snow-on-lid"><code class="docutils literal notranslate"><span class="pre">snow_on_lid</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#lateral">Lateral</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#water"><code class="docutils literal notranslate"><span class="pre">water</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#water-level"><code class="docutils literal notranslate"><span class="pre">water_level</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#water-direction"><code class="docutils literal notranslate"><span class="pre">water_direction</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#diagnostic">Diagnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#firn-boundary-change"><code class="docutils literal notranslate"><span class="pre">firn_boundary_change</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lake-boundary-change"><code class="docutils literal notranslate"><span class="pre">lake_boundary_change</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lid-boundary-change"><code class="docutils literal notranslate"><span class="pre">lid_boundary_change</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#counter">Counter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#melt-hours"><code class="docutils literal notranslate"><span class="pre">melt_hours</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lid-melt-count"><code class="docutils literal notranslate"><span class="pre">lid_melt_count</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lake-refreeze-counter"><code class="docutils literal notranslate"><span class="pre">lake_refreeze_counter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exposed-water-refreeze-counter"><code class="docutils literal notranslate"><span class="pre">exposed_water_refreeze_counter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#t-step"><code class="docutils literal notranslate"><span class="pre">t_step</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#day"><code class="docutils literal notranslate"><span class="pre">day</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#visit-count"><code class="docutils literal notranslate"><span class="pre">visit_count</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#internal">Internal</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reset-combine"><code class="docutils literal notranslate"><span class="pre">reset_combine</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#error-flag"><code class="docutils literal notranslate"><span class="pre">error_flag</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="met.html">MONARCHS met forcing variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_errors.html">Common errors and debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="making_changes.html">Making changes to MONARCHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MONARCHS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">MONARCHS grid variables</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/variables.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="monarchs-grid-variables">
+<h1>MONARCHS grid variables<a class="headerlink" href="#monarchs-grid-variables" title="Link to this heading"></a></h1>
+<p>List of MONARCHS model grid variables. Generated automatically from the variable catalogue (<code class="docutils literal notranslate"><span class="pre">monarchs.variables</span></code>).  run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">scripts/gen_docs.py</span></code> to regenerate!</p>
+<p>Units broadly follow the CF conventions - see https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/ch03.html for details.</p>
+<section id="fixed-values">
+<h2>Fixed values<a class="headerlink" href="#fixed-values" title="Link to this heading"></a></h2>
+<section id="column">
+<h3><code class="docutils literal notranslate"><span class="pre">column</span></code><a class="headerlink" href="#column" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Grid column index  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> from input</p>
+</section>
+<section id="row">
+<h3><code class="docutils literal notranslate"><span class="pre">row</span></code><a class="headerlink" href="#row" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Grid row index  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> from input</p>
+</section>
+<section id="vert-grid">
+<h3><code class="docutils literal notranslate"><span class="pre">vert_grid</span></code><a class="headerlink" href="#vert-grid" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Firn layer count  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> computed (<code class="docutils literal notranslate"><span class="pre">n_firn</span></code>)</p>
+</section>
+<section id="vert-grid-lake">
+<h3><code class="docutils literal notranslate"><span class="pre">vert_grid_lake</span></code><a class="headerlink" href="#vert-grid-lake" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lake layer count  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> computed (<code class="docutils literal notranslate"><span class="pre">n_lake</span></code>)</p>
+</section>
+<section id="vert-grid-lid">
+<h3><code class="docutils literal notranslate"><span class="pre">vert_grid_lid</span></code><a class="headerlink" href="#vert-grid-lid" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lid layer count  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> computed (<code class="docutils literal notranslate"><span class="pre">n_lid</span></code>)</p>
+</section>
+<section id="lat">
+<h3><code class="docutils literal notranslate"><span class="pre">lat</span></code><a class="headerlink" href="#lat" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Latitude  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> degrees_north  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">nan</span></code></p>
+</section>
+<section id="lon">
+<h3><code class="docutils literal notranslate"><span class="pre">lon</span></code><a class="headerlink" href="#lon" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Longitude  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> degrees_east  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">nan</span></code></p>
+</section>
+<section id="size-dx">
+<h3><code class="docutils literal notranslate"><span class="pre">size_dx</span></code><a class="headerlink" href="#size-dx" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Cell size, east-west  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">1000.0</span></code></p>
+</section>
+<section id="size-dy">
+<h3><code class="docutils literal notranslate"><span class="pre">size_dy</span></code><a class="headerlink" href="#size-dy" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Cell size, north-south  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">1000.0</span></code></p>
+</section>
+<section id="valid-cell">
+<h3><code class="docutils literal notranslate"><span class="pre">valid_cell</span></code><a class="headerlink" href="#valid-cell" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Cell runs model physics (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+</section>
+</section>
+<section id="firn">
+<h2>Firn<a class="headerlink" href="#firn" title="Link to this heading"></a></h2>
+<section id="firn-depth">
+<h3><code class="docutils literal notranslate"><span class="pre">firn_depth</span></code><a class="headerlink" href="#firn-depth" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Firn column total depth  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> from input</p>
+</section>
+<section id="vertical-profile">
+<h3><code class="docutils literal notranslate"><span class="pre">vertical_profile</span></code><a class="headerlink" href="#vertical-profile" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Depth of each firn layer  ·  <strong>Dim:</strong> firn  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> computed (<code class="docutils literal notranslate"><span class="pre">vertical_profile</span></code>)</p>
+</section>
+<section id="firn-temperature">
+<h3><code class="docutils literal notranslate"><span class="pre">firn_temperature</span></code><a class="headerlink" href="#firn-temperature" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Firn column temperature  ·  <strong>Dim:</strong> firn  ·  <strong>Units:</strong> K  ·  <strong>Default:</strong> from input</p>
+</section>
+<section id="rho">
+<h3><code class="docutils literal notranslate"><span class="pre">rho</span></code><a class="headerlink" href="#rho" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Firn density  ·  <strong>Dim:</strong> firn  ·  <strong>Units:</strong> kg m-3  ·  <strong>Default:</strong> from input</p>
+</section>
+<section id="sfrac">
+<h3><code class="docutils literal notranslate"><span class="pre">Sfrac</span></code><a class="headerlink" href="#sfrac" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Solid (ice) volume fraction  ·  <strong>Dim:</strong> firn  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> computed (<code class="docutils literal notranslate"><span class="pre">sfrac_from_rho</span></code>)</p>
+</section>
+<section id="lfrac">
+<h3><code class="docutils literal notranslate"><span class="pre">Lfrac</span></code><a class="headerlink" href="#lfrac" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Liquid (water) volume fraction  ·  <strong>Dim:</strong> firn  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="meltflag">
+<h3><code class="docutils literal notranslate"><span class="pre">meltflag</span></code><a class="headerlink" href="#meltflag" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Meltwater present at layer (flag)  ·  <strong>Dim:</strong> firn  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="saturation">
+<h3><code class="docutils literal notranslate"><span class="pre">saturation</span></code><a class="headerlink" href="#saturation" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Layer saturated (flag)  ·  <strong>Dim:</strong> firn  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="ice-lens">
+<h3><code class="docutils literal notranslate"><span class="pre">ice_lens</span></code><a class="headerlink" href="#ice-lens" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Ice lens present (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+<section id="ice-lens-depth">
+<h3><code class="docutils literal notranslate"><span class="pre">ice_lens_depth</span></code><a class="headerlink" href="#ice-lens-depth" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Layer index of highest ice lens  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> computed (<code class="docutils literal notranslate"><span class="pre">ice_lens_below_column</span></code>)</p>
+</section>
+</section>
+<section id="surface">
+<h2>Surface<a class="headerlink" href="#surface" title="Link to this heading"></a></h2>
+<section id="albedo">
+<h3><code class="docutils literal notranslate"><span class="pre">albedo</span></code><a class="headerlink" href="#albedo" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Surface albedo  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="melt">
+<h3><code class="docutils literal notranslate"><span class="pre">melt</span></code><a class="headerlink" href="#melt" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Surface melt this step (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+<section id="exposed-water">
+<h3><code class="docutils literal notranslate"><span class="pre">exposed_water</span></code><a class="headerlink" href="#exposed-water" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Exposed surface water (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+<section id="total-melt">
+<h3><code class="docutils literal notranslate"><span class="pre">total_melt</span></code><a class="headerlink" href="#total-melt" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Cumulative melt depth  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+</section>
+<section id="lake">
+<h2>Lake<a class="headerlink" href="#lake" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3><code class="docutils literal notranslate"><span class="pre">lake</span></code><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lake present (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+<section id="lake-depth">
+<h3><code class="docutils literal notranslate"><span class="pre">lake_depth</span></code><a class="headerlink" href="#lake-depth" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Melt lake depth  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="lake-temperature">
+<h3><code class="docutils literal notranslate"><span class="pre">lake_temperature</span></code><a class="headerlink" href="#lake-temperature" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lake temperature profile  ·  <strong>Dim:</strong> lake  ·  <strong>Units:</strong> K  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">273.15</span></code></p>
+</section>
+</section>
+<section id="lid">
+<h2>Lid<a class="headerlink" href="#lid" title="Link to this heading"></a></h2>
+<section id="id2">
+<h3><code class="docutils literal notranslate"><span class="pre">lid</span></code><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Frozen lid present (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+<section id="lid-depth">
+<h3><code class="docutils literal notranslate"><span class="pre">lid_depth</span></code><a class="headerlink" href="#lid-depth" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Frozen lid depth  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="lid-temperature">
+<h3><code class="docutils literal notranslate"><span class="pre">lid_temperature</span></code><a class="headerlink" href="#lid-temperature" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Frozen lid temperature profile  ·  <strong>Dim:</strong> lid  ·  <strong>Units:</strong> K  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">273.15</span></code></p>
+</section>
+<section id="v-lid">
+<h3><code class="docutils literal notranslate"><span class="pre">v_lid</span></code><a class="headerlink" href="#v-lid" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Virtual lid present (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+<section id="v-lid-depth">
+<h3><code class="docutils literal notranslate"><span class="pre">v_lid_depth</span></code><a class="headerlink" href="#v-lid-depth" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Virtual lid depth  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="virtual-lid-temperature">
+<h3><code class="docutils literal notranslate"><span class="pre">virtual_lid_temperature</span></code><a class="headerlink" href="#virtual-lid-temperature" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Virtual lid temperature  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> K  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">273.15</span></code></p>
+</section>
+<section id="has-had-lid">
+<h3><code class="docutils literal notranslate"><span class="pre">has_had_lid</span></code><a class="headerlink" href="#has-had-lid" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lid present this cycle (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+<section id="lid-sfc-melt">
+<h3><code class="docutils literal notranslate"><span class="pre">lid_sfc_melt</span></code><a class="headerlink" href="#lid-sfc-melt" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Tracked lid surface melt  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="lid-snow-depth">
+<h3><code class="docutils literal notranslate"><span class="pre">lid_snow_depth</span></code><a class="headerlink" href="#lid-snow-depth" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Snow depth on the lid  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="snow-on-lid">
+<h3><code class="docutils literal notranslate"><span class="pre">snow_on_lid</span></code><a class="headerlink" href="#snow-on-lid" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Snow-on-lid state (0/1/2)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</section>
+</section>
+<section id="lateral">
+<h2>Lateral<a class="headerlink" href="#lateral" title="Link to this heading"></a></h2>
+<section id="water">
+<h3><code class="docutils literal notranslate"><span class="pre">water</span></code><a class="headerlink" href="#water" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Liquid water depth per layer (lateral flow)  ·  <strong>Dim:</strong> firn  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="water-level">
+<h3><code class="docutils literal notranslate"><span class="pre">water_level</span></code><a class="headerlink" href="#water-level" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Water-table height for lateral flow  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="water-direction">
+<h3><code class="docutils literal notranslate"><span class="pre">water_direction</span></code><a class="headerlink" href="#water-direction" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lateral outflow direction (0=NW..7=W)  ·  <strong>Dim:</strong> directions  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</section>
+</section>
+<section id="diagnostic">
+<h2>Diagnostic<a class="headerlink" href="#diagnostic" title="Link to this heading"></a></h2>
+<section id="firn-boundary-change">
+<h3><code class="docutils literal notranslate"><span class="pre">firn_boundary_change</span></code><a class="headerlink" href="#firn-boundary-change" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Firn boundary change this day  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="lake-boundary-change">
+<h3><code class="docutils literal notranslate"><span class="pre">lake_boundary_change</span></code><a class="headerlink" href="#lake-boundary-change" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lake boundary change this day  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+<section id="lid-boundary-change">
+<h3><code class="docutils literal notranslate"><span class="pre">lid_boundary_change</span></code><a class="headerlink" href="#lid-boundary-change" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lid boundary change this day  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> m  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0.0</span></code></p>
+</section>
+</section>
+<section id="counter">
+<h2>Counter<a class="headerlink" href="#counter" title="Link to this heading"></a></h2>
+<section id="melt-hours">
+<h3><code class="docutils literal notranslate"><span class="pre">melt_hours</span></code><a class="headerlink" href="#melt-hours" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Cumulative surface-melt hours  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> h  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</section>
+<section id="lid-melt-count">
+<h3><code class="docutils literal notranslate"><span class="pre">lid_melt_count</span></code><a class="headerlink" href="#lid-melt-count" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lid melt-step counter  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</section>
+<section id="lake-refreeze-counter">
+<h3><code class="docutils literal notranslate"><span class="pre">lake_refreeze_counter</span></code><a class="headerlink" href="#lake-refreeze-counter" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lake refreeze counter  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</section>
+<section id="exposed-water-refreeze-counter">
+<h3><code class="docutils literal notranslate"><span class="pre">exposed_water_refreeze_counter</span></code><a class="headerlink" href="#exposed-water-refreeze-counter" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Exposed-water refreeze counter  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</section>
+<section id="t-step">
+<h3><code class="docutils literal notranslate"><span class="pre">t_step</span></code><a class="headerlink" href="#t-step" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Timestep within the current day  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</section>
+<section id="day">
+<h3><code class="docutils literal notranslate"><span class="pre">day</span></code><a class="headerlink" href="#day" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Model day  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</section>
+<section id="visit-count">
+<h3><code class="docutils literal notranslate"><span class="pre">visit_count</span></code><a class="headerlink" href="#visit-count" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Times this cell has been visited  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</section>
+</section>
+<section id="internal">
+<h2>Internal<a class="headerlink" href="#internal" title="Link to this heading"></a></h2>
+<section id="reset-combine">
+<h3><code class="docutils literal notranslate"><span class="pre">reset_combine</span></code><a class="headerlink" href="#reset-combine" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Lid/firn just combined (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Flag indicating whether a lid/lake/firn system has reached a trigger that combines everything back into a single firn column.</p>
+</section>
+<section id="error-flag">
+<h3><code class="docutils literal notranslate"><span class="pre">error_flag</span></code><a class="headerlink" href="#error-flag" title="Link to this heading"></a></h3>
+<p><strong>Long name:</strong> Cell hit an error state (flag)  ·  <strong>Dim:</strong> scalar  ·  <strong>Units:</strong> 1  ·  <strong>Default:</strong> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="settings.html" class="btn btn-neutral float-left" title="MONARCHS run settings" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="met.html" class="btn btn-neutral float-right" title="MONARCHS met forcing variables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Sammie Buzzard, Jon Elsey and Alex Robel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

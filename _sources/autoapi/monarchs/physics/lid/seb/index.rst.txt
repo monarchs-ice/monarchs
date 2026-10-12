@@ -1,0 +1,30 @@
+monarchs.physics.lid.seb
+========================
+
+.. py:module:: monarchs.physics.lid.seb
+
+.. autoapi-nested-parse::
+
+   Lid surface energy balance equations, and scaffolding around
+   the solver so that we can call it in the virtual lid and lid
+   development stages.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lid/seb/lid_seb_solver
+   /autoapi/monarchs/physics/lid/seb/sfc_energy_lid
+   /autoapi/monarchs/physics/lid/seb/sfc_energy_virtual_lid
+
+.. autoapisummary::
+
+   monarchs.physics.lid.seb.lid_seb_solver
+   monarchs.physics.lid.seb.sfc_energy_lid
+   monarchs.physics.lid.seb.sfc_energy_virtual_lid
+
+

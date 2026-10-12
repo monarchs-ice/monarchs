@@ -1,0 +1,40 @@
+monarchs.variables.initial_value_functions
+==========================================
+
+.. py:module:: monarchs.variables.initial_value_functions
+
+.. autoapi-nested-parse::
+
+   Computed initial values for the few variables whose default is derived from the
+   grid sizes or the firn profile, rather than a constant.
+
+   `ctx` here refers to an instance of the ``InitContext`` class,
+   from ``definitions.py``. This defines the information that these
+   variables might need - e.g. the size of the vertical grid for the
+   ice lens position initialisation.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/variables/initial_value_functions/ice_lens_below_column
+   /autoapi/monarchs/variables/initial_value_functions/n_firn
+   /autoapi/monarchs/variables/initial_value_functions/n_lake
+   /autoapi/monarchs/variables/initial_value_functions/n_lid
+   /autoapi/monarchs/variables/initial_value_functions/sfrac_from_rho
+   /autoapi/monarchs/variables/initial_value_functions/vertical_profile
+
+.. autoapisummary::
+
+   monarchs.variables.initial_value_functions.ice_lens_below_column
+   monarchs.variables.initial_value_functions.n_firn
+   monarchs.variables.initial_value_functions.n_lake
+   monarchs.variables.initial_value_functions.n_lid
+   monarchs.variables.initial_value_functions.sfrac_from_rho
+   monarchs.variables.initial_value_functions.vertical_profile
+
+

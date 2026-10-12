@@ -1,0 +1,16 @@
+monarchs.physics.lake.lake_formation
+====================================
+
+.. py:function:: monarchs.physics.lake.lake_formation(cell, dt, met_data)
+
+   Generate a lake, and track its evolution until we reach the point where
+   it can evolve freely according to lake_development, when it goes about
+   10 cm deep.
+   Called in timestep_loop.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **dt** (*int*) -- Number of seconds in the timestep, most likely 3600 (i.e. 1 hour) [s]
+                * **met_data** (*numpy structured array*) -- Structured array containing meteorological data used in the model.
+
+   :rtype: None (amends cell inplace).
+

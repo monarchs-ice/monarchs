@@ -1,0 +1,53 @@
+monarchs.physics.lake.radiative_transfer
+========================================
+
+.. py:function:: monarchs.physics.lake.radiative_transfer(cell, sw_in)
+
+   In lakes, radiation is split between radiation that penetrates (UV/visible light),
+   and radiation that is absorbed by the skin (NIR/SWIR). This routine handles the
+   penetrating radiation. Radiation absorbed by the skin is handled in the surface
+   fluxes routines, as it is for firn.
+
+   In order to budget energy correctly, we need data on the absorption spectrum of water.
+   We know that heuristically the incoming radiation is ~50% in the UV/Vis,
+   ~20% in the NIR and ~30% in the SWIR.
+
+   The datasets used for this heuristic are:
+   https://omlc.org/spectra/water/abs/buiteveld94.html
+   L.Kou, D.Labrie, P.Chylek, "Refractive indices of water and ice in
+   the 0.65-2.5 µm spectral range,"
+   Appl.Opt., 32, 3531 - 3540(1993).  #
+   https://omlc.org/spectra/water/data/kou93b.txt
+   for the SWIR/NIR, and
+   R. M. Pope, E. S. Fry, "Absorption spectrum (380-700 nm) of pure water. II.
+   Integrating cavity measurements," Appl. Opt.,36, 8710-8723, (1997).
+   https://omlc.org/spectra/water/data/pope97.txt
+   for the vis.
+
+   Some conservative suggested values are:
+   UV/Vis (380-700 nm): k ~ 0.025 - 0.1 m^-1
+   NIR (700-1000 nm): k ~ 5-10 m^-1
+   SWIR (1000-2500 nm): k ~ 500 m^-1
+   this accounts for the median values weighted by incoming radiation.
+   Using these values, we can estimate the depth penetration of the
+   different bands. Assuming a surface layer of a couple cm:
+   SWIR - almost everything is absorbed extremely quickly
+   NIR - Optical depth of 1 at ~10-20 cm^-1. So most absorbed in top few
+   cm.
+   Vis - Optical depth of 1 at ~10s of m. So basically all of it penetrates
+   into the lake.
+   So this routine weights surface_fluxes by the amount we absorb specifically
+   at the surface. We heuristically use ~0.5 as a fractional
+   absorption at the surface (i.e. 50% penetrates).
+   Then, get an estimated combined NIR+Vis absorption coefficient to use
+   to model the penetration of the rest of the radiation into the lake.
+   The rest of the radiation will penetrate all the way to the
+   firn-lake boundary. Some of that radiation will be reflected.
+
+   Section 4.1.2 of Leppäranta (2015): Freezing of Lakes and the Evolution of
+   their Ice Cover explicitly mentions a factor of ~0.45-0.5 for the
+   surface absorption fraction.
+
+   The absorbed fraction is a parameter defined in
+   monarchs.physics.constants.
+

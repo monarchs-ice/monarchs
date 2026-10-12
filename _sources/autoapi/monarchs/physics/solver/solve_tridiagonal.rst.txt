@@ -1,0 +1,16 @@
+monarchs.physics.solver.solve_tridiagonal
+=========================================
+
+.. py:function:: monarchs.physics.solver.solve_tridiagonal(a, b, c, d)
+
+   Solve the tridiagonal system Ax = d with the Thomas algorithm.
+
+   a: sub-diagonal (len n-1), A[i, i-1]
+   b: main diagonal (len n), A[i, i]
+   c: super-diagonal (len n-1), A[i, i+1]
+   d: RHS (len n)
+
+   Used both for the fixed-surface propagation and for
+   each Newton-Raphson step in the surface-driven
+   firn/lid heat equation.
+

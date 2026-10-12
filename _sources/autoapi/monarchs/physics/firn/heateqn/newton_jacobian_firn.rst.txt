@@ -1,0 +1,27 @@
+monarchs.physics.firn.heateqn.newton_jacobian_firn
+==================================================
+
+.. py:function:: monarchs.physics.firn.heateqn.newton_jacobian_firn(x, kappa, k0, dz, dt, dq_val, fixed_sfc=False)
+
+   Assemble the Jacobian J = dF/dT of the firn heat equation. Since
+   the temperature of a given point x only depends on x-1 and x+1,
+   (with the exception of the surface) we can use a tridiagonal matrix and solver.
+
+   For the surface, the x-1 dependency is removed, but we have forcing
+   due to the surface energy balance. This is determined by
+   d(Q - epsilon * sigma * T^4)/dT. The dQ/dT part of this is determined
+   via finite-difference, similarly to how the *entire* Jacobian is calculated
+   when using MINPACK.
+
+   :Parameters: * **x** (*array_like, float*) -- Current Newton iterate (length n) [K]; only x[0] is used.
+                * **kappa** (*array_like, float*) -- Thermal diffusivity at T_old (length n) [m^2 s^-1].
+                * **k0** (*float*) -- Surface thermal conductivity at T_old [W m^-1 K^-1].
+                * **dz** (*float*) -- Layer thickness [m].
+                * **dt** (*float*) -- Timestep [s].
+                * **dq_val** (*float*) -- dQ/dT at x[0] [W m^-2 K^-1].
+                * **fixed_sfc** (*bool, optional*) -- If True, match ``heateqn_firn``'s Dirichlet surface row (x[0] pinned):
+                  the surface diagonal is 1 with no coupling to x[1]. Default False.
+
+   :returns: **a, b, c** -- Sub/main/super diagonals of the Jacobian.
+   :rtype: array_like, float
+

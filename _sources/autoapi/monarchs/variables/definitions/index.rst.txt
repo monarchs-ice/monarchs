@@ -1,0 +1,56 @@
+monarchs.variables.definitions
+==============================
+
+.. py:module:: monarchs.variables.definitions
+
+.. autoapi-nested-parse::
+
+   Definitions of what a variable is in terms of what the model needs.
+   Each variable needs to have some specific fields in order for the model
+   to use them, e.g. their dtype, shape and name.
+
+   We also define a class used to handle some edge cases - e.g. variables
+   that are defined based on *other* model variables, e.g. Sfrac which is
+   defined by the density.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.variables.definitions.BOOL
+   monarchs.variables.definitions.FLOAT
+   monarchs.variables.definitions.INPUT
+   monarchs.variables.definitions.INT
+
+
+Classes
+-------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/variables/definitions/Dim
+   /autoapi/monarchs/variables/definitions/InitContext
+   /autoapi/monarchs/variables/definitions/Variable
+
+.. autoapisummary::
+
+   monarchs.variables.definitions.Dim
+   monarchs.variables.definitions.InitContext
+   monarchs.variables.definitions.Variable
+
+
+Module Contents
+---------------
+
+.. py:data:: BOOL
+
+.. py:data:: FLOAT
+
+.. py:data:: INPUT
+
+.. py:data:: INT
+

@@ -1,0 +1,58 @@
+monarchs.physics.lid.lid
+========================
+
+.. py:module:: monarchs.physics.lid.lid
+
+.. autoapi-nested-parse::
+
+   True lid development functions. Lid *formation* is handled in
+   ``lake.development`` and ``lid.virtual_lid``.
+   These routines handle the *evolution* of the true lid after it has formed.
+
+   At the moment this is limited to further freezing of the lake underneath and
+   subsequent lid growth. When the conditions change to melting, if the lid has
+   not fully frozen the lake underneath, we combine the lid with the firn column
+   and treat the unfrozen water as a subglacial lake.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.lid.lid.MODULE_NAME
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lid/lid/adjust_lid_height
+   /autoapi/monarchs/physics/lid/lid/calc_k_and_cp
+   /autoapi/monarchs/physics/lid/lid/initialise_lid
+   /autoapi/monarchs/physics/lid/lid/interpolate_profiles
+   /autoapi/monarchs/physics/lid/lid/lid_development
+   /autoapi/monarchs/physics/lid/lid/surface_freezing
+   /autoapi/monarchs/physics/lid/lid/surface_melt
+
+.. autoapisummary::
+
+   monarchs.physics.lid.lid.adjust_lid_height
+   monarchs.physics.lid.lid.calc_k_and_cp
+   monarchs.physics.lid.lid.initialise_lid
+   monarchs.physics.lid.lid.interpolate_profiles
+   monarchs.physics.lid.lid.lid_development
+   monarchs.physics.lid.lid.surface_freezing
+   monarchs.physics.lid.lid.surface_melt
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.physics.lid.lid'
+
+

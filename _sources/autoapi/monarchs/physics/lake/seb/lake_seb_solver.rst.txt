@@ -1,0 +1,20 @@
+monarchs.physics.lake.seb.lake_seb_solver
+=========================================
+
+.. py:function:: monarchs.physics.lake.seb.lake_seb_solver(cell, met_data, formation=False)
+
+   Solve the surface energy balance for conditions where we have
+   either exposed water at the surface, or a full lake.
+
+   Called in lake.formation (formation=True) and lake.development.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*numpy structured array*) -- Meteorological data for the current timestep.
+                * **formation** (*bool, optional*) -- If True, solve the lake *formation* equation (conduction into the
+                  firn), else the lake *development* equation (turbulent mixing
+                  with the lake core). Default False.
+
+   :returns: * **sol** (*float*) -- Calculated lake surface temperature, rounded to 8 decimal places [K].
+             * **success** (*bool*) -- True if the iteration converged.
+             * **n_iter** (*int*) -- Number of Newton-Raphson iterations.
+

@@ -1,0 +1,31 @@
+monarchs.physics.reset_column
+=============================
+
+.. py:module:: monarchs.physics.reset_column
+
+.. autoapi-nested-parse::
+
+   Functions to handle resetting the model state back to a single column of firn.
+
+   If a lid either fully freezes the lake below, or begins to melt from the top
+   due to the atmospheric conditions changing, we need to combine everything
+   back into one firn profile so the model can continue. This allows us to
+   run over multiple melt/freezing cycles without breaking the model.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/reset_column/combine_lid_firn
+   /autoapi/monarchs/physics/reset_column/mass_conserving_profile
+
+.. autoapisummary::
+
+   monarchs.physics.reset_column.combine_lid_firn
+   monarchs.physics.reset_column.mass_conserving_profile
+
+

@@ -1,0 +1,7 @@
+monarchs.physics.lid.heateqn._lid_jacobian
+==========================================
+
+.. py:function:: monarchs.physics.lid.heateqn._lid_jacobian(x, args)
+
+   Helper to pack the arguments needed to compute the Jacobian
+

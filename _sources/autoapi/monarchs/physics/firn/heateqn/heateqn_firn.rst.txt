@@ -1,0 +1,21 @@
+monarchs.physics.firn.heateqn.heateqn_firn
+==========================================
+
+.. py:function:: monarchs.physics.firn.heateqn.heateqn_firn(x, cell, met_data, dz, dt, fixed_sfc=False)
+
+   Function called by the Newtwon-Raphson solver.
+
+   This evolves the firn column temperature for a given timestep dt,
+   typically 3600 seconds (1 hour).
+
+   :Parameters: * **x** (*array_like, float*) -- Initial estimate from the previous timestep of the firn temperature
+                * **cell** (*array_like, float*) -- NumPy structured array containing this grid cell's properties.
+                * **met_data** (*array_like, float*) -- NumPy structured array containing met data for this grid cell.
+                * **dz** (*float*) -- Layer thickness [m].
+                * **dt** (*int*) -- Timestep [s].
+                * **fixed_sfc** (*bool, optional*) -- If True, force the surface to 273.15 K. Default False.
+
+   :returns: **residual** -- Residual of the firn heat equation at ``x``. From this we can
+             determine the temperature column.
+   :rtype: array_like, float
+

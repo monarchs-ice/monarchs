@@ -1,0 +1,233 @@
+# MONARCHS grid variables
+
+List of MONARCHS model grid variables. Generated automatically from the variable catalogue (`monarchs.variables`).  run `python scripts/gen_docs.py` to regenerate!
+
+Units broadly follow the CF conventions - see https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/ch03.html for details.
+
+## Fixed values
+
+### `column`
+
+**Long name:** Grid column index &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** from input
+
+### `row`
+
+**Long name:** Grid row index &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** from input
+
+### `vert_grid`
+
+**Long name:** Firn layer count &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** computed (`n_firn`)
+
+### `vert_grid_lake`
+
+**Long name:** Lake layer count &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** computed (`n_lake`)
+
+### `vert_grid_lid`
+
+**Long name:** Lid layer count &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** computed (`n_lid`)
+
+### `lat`
+
+**Long name:** Latitude &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** degrees_north &nbsp;·&nbsp; **Default:** `nan`
+
+### `lon`
+
+**Long name:** Longitude &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** degrees_east &nbsp;·&nbsp; **Default:** `nan`
+
+### `size_dx`
+
+**Long name:** Cell size, east-west &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `1000.0`
+
+### `size_dy`
+
+**Long name:** Cell size, north-south &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `1000.0`
+
+### `valid_cell`
+
+**Long name:** Cell runs model physics (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `True`
+
+## Firn
+
+### `firn_depth`
+
+**Long name:** Firn column total depth &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** from input
+
+### `vertical_profile`
+
+**Long name:** Depth of each firn layer &nbsp;·&nbsp; **Dim:** firn &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** computed (`vertical_profile`)
+
+### `firn_temperature`
+
+**Long name:** Firn column temperature &nbsp;·&nbsp; **Dim:** firn &nbsp;·&nbsp; **Units:** K &nbsp;·&nbsp; **Default:** from input
+
+### `rho`
+
+**Long name:** Firn density &nbsp;·&nbsp; **Dim:** firn &nbsp;·&nbsp; **Units:** kg m-3 &nbsp;·&nbsp; **Default:** from input
+
+### `Sfrac`
+
+**Long name:** Solid (ice) volume fraction &nbsp;·&nbsp; **Dim:** firn &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** computed (`sfrac_from_rho`)
+
+### `Lfrac`
+
+**Long name:** Liquid (water) volume fraction &nbsp;·&nbsp; **Dim:** firn &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0.0`
+
+### `meltflag`
+
+**Long name:** Meltwater present at layer (flag) &nbsp;·&nbsp; **Dim:** firn &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0.0`
+
+### `saturation`
+
+**Long name:** Layer saturated (flag) &nbsp;·&nbsp; **Dim:** firn &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0.0`
+
+### `ice_lens`
+
+**Long name:** Ice lens present (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `False`
+
+### `ice_lens_depth`
+
+**Long name:** Layer index of highest ice lens &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** computed (`ice_lens_below_column`)
+
+## Surface
+
+### `albedo`
+
+**Long name:** Surface albedo &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0.0`
+
+### `melt`
+
+**Long name:** Surface melt this step (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `False`
+
+### `exposed_water`
+
+**Long name:** Exposed surface water (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `False`
+
+### `total_melt`
+
+**Long name:** Cumulative melt depth &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+## Lake
+
+### `lake`
+
+**Long name:** Lake present (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `False`
+
+### `lake_depth`
+
+**Long name:** Melt lake depth &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+### `lake_temperature`
+
+**Long name:** Lake temperature profile &nbsp;·&nbsp; **Dim:** lake &nbsp;·&nbsp; **Units:** K &nbsp;·&nbsp; **Default:** `273.15`
+
+## Lid
+
+### `lid`
+
+**Long name:** Frozen lid present (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `False`
+
+### `lid_depth`
+
+**Long name:** Frozen lid depth &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+### `lid_temperature`
+
+**Long name:** Frozen lid temperature profile &nbsp;·&nbsp; **Dim:** lid &nbsp;·&nbsp; **Units:** K &nbsp;·&nbsp; **Default:** `273.15`
+
+### `v_lid`
+
+**Long name:** Virtual lid present (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `False`
+
+### `v_lid_depth`
+
+**Long name:** Virtual lid depth &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+### `virtual_lid_temperature`
+
+**Long name:** Virtual lid temperature &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** K &nbsp;·&nbsp; **Default:** `273.15`
+
+### `has_had_lid`
+
+**Long name:** Lid present this cycle (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `False`
+
+### `lid_sfc_melt`
+
+**Long name:** Tracked lid surface melt &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+### `lid_snow_depth`
+
+**Long name:** Snow depth on the lid &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+### `snow_on_lid`
+
+**Long name:** Snow-on-lid state (0/1/2) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0`
+
+## Lateral
+
+### `water`
+
+**Long name:** Liquid water depth per layer (lateral flow) &nbsp;·&nbsp; **Dim:** firn &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+### `water_level`
+
+**Long name:** Water-table height for lateral flow &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+### `water_direction`
+
+**Long name:** Lateral outflow direction (0=NW..7=W) &nbsp;·&nbsp; **Dim:** directions &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0`
+
+## Diagnostic
+
+### `firn_boundary_change`
+
+**Long name:** Firn boundary change this day &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+### `lake_boundary_change`
+
+**Long name:** Lake boundary change this day &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+### `lid_boundary_change`
+
+**Long name:** Lid boundary change this day &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** m &nbsp;·&nbsp; **Default:** `0.0`
+
+## Counter
+
+### `melt_hours`
+
+**Long name:** Cumulative surface-melt hours &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** h &nbsp;·&nbsp; **Default:** `0`
+
+### `lid_melt_count`
+
+**Long name:** Lid melt-step counter &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0`
+
+### `lake_refreeze_counter`
+
+**Long name:** Lake refreeze counter &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0`
+
+### `exposed_water_refreeze_counter`
+
+**Long name:** Exposed-water refreeze counter &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0`
+
+### `t_step`
+
+**Long name:** Timestep within the current day &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0`
+
+### `day`
+
+**Long name:** Model day &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0`
+
+### `visit_count`
+
+**Long name:** Times this cell has been visited &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `0`
+
+## Internal
+
+### `reset_combine`
+
+**Long name:** Lid/firn just combined (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `False`
+
+Flag indicating whether a lid/lake/firn system has reached a trigger that combines everything back into a single firn column.
+
+### `error_flag`
+
+**Long name:** Cell hit an error state (flag) &nbsp;·&nbsp; **Dim:** scalar &nbsp;·&nbsp; **Units:** 1 &nbsp;·&nbsp; **Default:** `False`

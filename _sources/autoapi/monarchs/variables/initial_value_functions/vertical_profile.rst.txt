@@ -1,0 +1,7 @@
+monarchs.variables.initial_value_functions.vertical_profile
+===========================================================
+
+.. py:function:: monarchs.variables.initial_value_functions.vertical_profile(ctx)
+
+   Depth of each firn layer below the surface, 0 -> firn_depth.
+

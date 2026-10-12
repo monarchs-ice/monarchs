@@ -1,0 +1,20 @@
+monarchs.physics.firn.snow_accumulation.snowfall
+================================================
+
+.. py:function:: monarchs.physics.firn.snow_accumulation.snowfall(cell, snow_depth, snow_rho, snow_T)
+
+   Add fresh snowfall to the top of the column.
+
+   If a lid is present, the snow is added to the lid depth (as an
+   ice-equivalent thickness). If a lake is present (and no lid), it is added
+   to the lake depth (as a water-equivalent depth). Otherwise a new snow
+   layer is added on top of the firn and the whole column is conservatively
+   regridded back onto ``vert_grid`` layers.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **snow_depth** (*float*) -- Depth of fresh snow to add. [m of snow, *not* water equivalent]
+                * **snow_rho** (*float*) -- Density of the fresh snow. [kg m^-3]
+                * **snow_T** (*float*) -- Temperature of the fresh snow. [K] Clamped to <= 273.15.
+
+   :rtype: None (amends cell inplace)
+

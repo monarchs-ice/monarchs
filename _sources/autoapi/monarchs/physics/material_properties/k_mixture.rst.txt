@@ -1,0 +1,8 @@
+monarchs.physics.material_properties.k_mixture
+==============================================
+
+.. py:function:: monarchs.physics.material_properties.k_mixture(T, sfrac, lfrac)
+
+   Effective thermal conductivity of an ice/water/air mixture
+   [W m^-1 K^-1], volume-fraction weighted.
+

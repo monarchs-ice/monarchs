@@ -1,0 +1,7 @@
+monarchs.config.docs._default_cell
+==================================
+
+.. py:function:: monarchs.config.docs._default_cell(setting)
+
+   formatting for default values
+

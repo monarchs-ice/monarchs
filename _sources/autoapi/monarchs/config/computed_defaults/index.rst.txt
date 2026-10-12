@@ -1,0 +1,30 @@
+monarchs.config.computed_defaults
+=================================
+
+.. py:module:: monarchs.config.computed_defaults
+
+.. autoapi-nested-parse::
+
+   Defaults that are computed from other settings rather than fixed values.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/config/computed_defaults/lat_grid_size
+   /autoapi/monarchs/config/computed_defaults/lateral_timestep
+   /autoapi/monarchs/config/computed_defaults/met_data_source
+   /autoapi/monarchs/config/computed_defaults/output_grid_size
+
+.. autoapisummary::
+
+   monarchs.config.computed_defaults.lat_grid_size
+   monarchs.config.computed_defaults.lateral_timestep
+   monarchs.config.computed_defaults.met_data_source
+   monarchs.config.computed_defaults.output_grid_size
+
+

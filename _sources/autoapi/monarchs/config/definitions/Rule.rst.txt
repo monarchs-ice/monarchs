@@ -1,0 +1,44 @@
+monarchs.config.definitions.Rule
+================================
+
+.. py:class:: monarchs.config.definitions.Rule
+
+   A cross-setting consistency check.
+
+   For example, we don't want to let a user specify both a DEM path and a
+   firn column height - these two settings conflict, and we don't want the
+   model to silently make choices about *which* of those to use.
+
+   ``failed_when`` is a callable that returns True when the rule is violated.
+   It is written as a ``lambda`` so the check lives with the rule,
+   and because it is a function it is only evaluated *when the rules are run*
+   (in ``apply.check_rules``), not when the catalogue is imported.
+   This lets a rule refer to other settings without worrying about the order
+   in which they are loaded (e.g. a rule can set a value based on another value).
+
+   To add a rule, append one to ``rules.RULES``::
+
+       Rule(
+           failed_when=lambda ms: ms.dump_data and not hasattr(ms, "dump_filepath"),
+           message="dump_data needs a dump_filepath to write to.",
+           error=NameError,   # omit for a plain ValueError
+       )
+
+   ``failed_when`` is a lambda function - equivalent to doing
+   def failed_when_func(ms):
+       return ms.dump_data and not hasattr(ms, "dump_filepath")
+   Use ``getattr(ms, "x", default)`` / ``hasattr`` for settings that may not
+   be present yet (rules run before defaults are filled).
+
+
+   .. py:attribute:: error
+      :type:  type
+
+
+   .. py:attribute:: failed_when
+      :type:  Callable
+
+
+   .. py:attribute:: message
+      :type:  str
+

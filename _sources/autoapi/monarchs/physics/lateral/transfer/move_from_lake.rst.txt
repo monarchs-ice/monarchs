@@ -1,0 +1,21 @@
+monarchs.physics.lateral.transfer.move_from_lake
+================================================
+
+.. py:function:: monarchs.physics.lateral.transfer.move_from_lake(cell, grid, temporary_cell, temporary_neighbour, row, col, n_s_index, w_e_index, water_frac, split)
+
+   Move water from a lake source cell into the neighbour in direction
+   (n_s_index, w_e_index). The amount is set by the available lake water; the
+   destination layer depends on the neighbour's state. Returns the updated
+   (temporary_cell, temporary_neighbour).
+
+   :Parameters: * **cell**
+                * **grid**
+                * **temporary_cell**
+                * **temporary_neighbour**
+                * **row**
+                * **col**
+                * **n_s_index**
+                * **w_e_index**
+                * **water_frac**
+                * **split**
+

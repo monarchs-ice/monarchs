@@ -1,0 +1,8 @@
+monarchs.core.driver.lateral_movement_step
+==========================================
+
+.. py:function:: monarchs.core.driver.lateral_movement_step(grid, model_setup)
+
+   Run the daily lateral water movement. Returns the updated grid and the
+   water lost from the catchment this day (0 unless catchment_outflow).
+

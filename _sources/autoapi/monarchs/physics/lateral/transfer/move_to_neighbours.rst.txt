@@ -1,0 +1,28 @@
+monarchs.physics.lateral.transfer.move_to_neighbours
+====================================================
+
+.. py:function:: monarchs.physics.lateral.transfer.move_to_neighbours(grid, temp_grid, biggest_neighbours, col, row, split, catchment_outflow, biggest_height_difference, timestep, flow_into_land=False, flow_speed_scaling=1.0, outflow_proportion=1.0)
+
+   Moves water from the central cell (grid[row][col]) to the neighbours
+   indicated by *biggest_neighbours*.
+
+   :Parameters: * **grid** (*numpy structured array*) -- Model grid representing the ice shelf.
+                * **temp_grid** (*numpy structured array*) -- Working copy of the grid used to accumulate water movements before
+                  they are applied simultaneously at the end of ``move_water``.
+                * **biggest_neighbours** (*np.ndarray[int32]*) -- Direction indices (0=NW … 7=W; see module ``_DIR_ROW``/``_DIR_COL``)
+                  of the neighbours with the largest downhill water-level difference.
+                * **col, row** (*int*) -- Column and row indices of the source cell.
+                * **split** (*int*) -- Number of directions water is being split across (len(biggest_neighbours)).
+                * **catchment_outflow** (*bool*) -- Whether out-of-domain flow is allowed.
+                * **biggest_height_difference** (*float*) -- Largest water-level difference, used in ``water_fraction``.
+                * **timestep** (*int*) -- Lateral movement timestep in seconds.
+                * **flow_into_land** (*bool*) -- Whether water may flow into invalid (land) cells.
+                * **flow_speed_scaling** (*float*) -- Multiplicative scaling factor for flow speed.
+                * **outflow_proportion** (*float*) -- Fraction of available water allowed to leave the domain per step.
+
+   :returns: **total_water_out** -- Volume of water that left the model domain this step.
+   :rtype: float
+
+   :raises ValueError: If an inconsistent model state is encountered (e.g. negative lake
+       depth, or water present in a cell with no lake or ice lens).
+

@@ -1,0 +1,15 @@
+monarchs.physics.lake.seb.lake_formation_eqn
+============================================
+
+.. py:function:: monarchs.physics.lake.seb.lake_formation_eqn(x, args)
+
+   Residual function used to solve the surface energy balance when
+   we have a lake forming on the surface.
+
+   Solved by lake_seb_solver with formation=False.
+
+   :Parameters: * **x** (*float*) -- Current estimate of the lake surface temperature [K].
+                * **args** (*tuple*) -- ``(cell, met_data, k, T1, dz_firn)``, where k is the firn thermal
+                  conductivity, T1 the second-layer firn temperature, and dz_firn the
+                  firn layer thickness.
+

@@ -1,0 +1,4 @@
+monarchs.variables.initial_value_functions.n_firn
+=================================================
+
+.. py:function:: monarchs.variables.initial_value_functions.n_firn(ctx)

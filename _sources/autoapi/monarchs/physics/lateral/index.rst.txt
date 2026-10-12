@@ -1,0 +1,42 @@
+monarchs.physics.lateral
+========================
+
+.. py:module:: monarchs.physics.lateral
+
+.. autoapi-nested-parse::
+
+   Lateral water movement subpackage.
+
+   Public API
+   ----------
+   move_water : move water laterally across the grid for one model day.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/monarchs/physics/lateral/available_water/index
+   /autoapi/monarchs/physics/lateral/directions/index
+   /autoapi/monarchs/physics/lateral/move_water/index
+   /autoapi/monarchs/physics/lateral/neighbours/index
+   /autoapi/monarchs/physics/lateral/transfer/index
+   /autoapi/monarchs/physics/lateral/water_level/index
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lateral/move_water
+
+.. autoapisummary::
+
+   monarchs.physics.lateral.move_water
+
+

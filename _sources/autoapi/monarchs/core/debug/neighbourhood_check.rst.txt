@@ -1,0 +1,11 @@
+monarchs.core.debug.neighbourhood_check
+=======================================
+
+.. py:function:: monarchs.core.debug.neighbourhood_check(grid, target_row, target_col)
+
+   A debugging function that prints out the status of the target cell and its
+   immediate neighbors. Useful to debug e.g. lateral flow issues.
+   :Parameters: * **grid**
+                * **target_row**
+                * **target_col**
+

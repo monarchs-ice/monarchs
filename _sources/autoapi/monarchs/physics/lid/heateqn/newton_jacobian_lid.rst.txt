@@ -1,0 +1,10 @@
+monarchs.physics.lid.heateqn.newton_jacobian_lid
+================================================
+
+.. py:function:: monarchs.physics.lid.heateqn.newton_jacobian_lid(x, kappa, k0, dz, dt, dq_val)
+
+   Assemble the tridiagonal Jacobian J = dF/dT of the lid heat equation,
+   returning the sub/main/super diagonals (a, b, c). The residual F comes
+   from ``heateqn_lid``. The SW radiation term is not present here, since
+   the partial derivative w.r.t. temperature is 0.
+

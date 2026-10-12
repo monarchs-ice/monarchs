@@ -1,0 +1,42 @@
+monarchs.physics.timestep
+=========================
+
+.. py:module:: monarchs.physics.timestep
+
+.. autoapi-nested-parse::
+
+   Model timestepping module.
+   core.timestep_loop handles all the 1D calculations, by first checking the
+   current state of the column, then running firn_column and lake/lid functions
+   accordingly.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.timestep.MODULE_NAME
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/timestep/timestep_loop
+
+.. autoapisummary::
+
+   monarchs.physics.timestep.timestep_loop
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.physics.timestep'
+
+

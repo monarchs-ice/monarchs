@@ -1,0 +1,4 @@
+monarchs.config.computed_defaults.lateral_timestep
+==================================================
+
+.. py:function:: monarchs.config.computed_defaults.lateral_timestep(model_setup)

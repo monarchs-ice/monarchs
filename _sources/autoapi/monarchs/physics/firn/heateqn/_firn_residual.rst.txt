@@ -1,0 +1,10 @@
+monarchs.physics.firn.heateqn._firn_residual
+============================================
+
+.. py:function:: monarchs.physics.firn.heateqn._firn_residual(x, args)
+
+   Argument packer for the residual calculation. Packing it like this
+   lets us make the solver itself generic by just taking a tuple
+   of arguments ``args`` as input, so we can use it for both
+   firn and lid (which have different argument lengths).
+

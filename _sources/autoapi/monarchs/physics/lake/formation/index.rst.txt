@@ -1,0 +1,42 @@
+monarchs.physics.lake.formation
+===============================
+
+.. py:module:: monarchs.physics.lake.formation
+
+.. autoapi-nested-parse::
+
+   Lake formation physics.
+
+   Contains functions for the early-stage evolution of exposed meltwater at the
+   firn surface, before a full lake (depth >= 10 cm) has developed.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.lake.formation.MODULE_NAME
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/physics/lake/formation/lake_formation
+
+.. autoapisummary::
+
+   monarchs.physics.lake.formation.lake_formation
+
+
+Module Contents
+---------------
+
+.. py:data:: MODULE_NAME
+   :value: 'monarchs.physics.lake.formation'
+
+

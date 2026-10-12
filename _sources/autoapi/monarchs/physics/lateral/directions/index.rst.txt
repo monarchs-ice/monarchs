@@ -1,0 +1,32 @@
+monarchs.physics.lateral.directions
+===================================
+
+.. py:module:: monarchs.physics.lateral.directions
+
+.. autoapi-nested-parse::
+
+   Schema for mapping water direction to an index.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.physics.lateral.directions._DIR_COL
+   monarchs.physics.lateral.directions._DIR_ROW
+   monarchs.physics.lateral.directions._N_DIRS
+
+
+Module Contents
+---------------
+
+.. py:data:: _DIR_COL
+
+.. py:data:: _DIR_ROW
+
+.. py:data:: _N_DIRS
+   :value: 8
+
+

@@ -1,0 +1,44 @@
+monarchs.variables.build
+========================
+
+.. py:module:: monarchs.variables.build
+
+.. autoapi-nested-parse::
+
+   Turn the catalogue into the things the model needs - the grid dtype, the
+   initialised grid itself, and the netCDF metadata for its variables.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   monarchs.variables.build._DIM_SIZE
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/variables/build/build_dtype
+   /autoapi/monarchs/variables/build/make_grid
+   /autoapi/monarchs/variables/build/validate_catalogue
+   /autoapi/monarchs/variables/build/variable_metadata
+
+.. autoapisummary::
+
+   monarchs.variables.build.build_dtype
+   monarchs.variables.build.make_grid
+   monarchs.variables.build.validate_catalogue
+   monarchs.variables.build.variable_metadata
+
+
+Module Contents
+---------------
+
+.. py:data:: _DIM_SIZE
+

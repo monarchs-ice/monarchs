@@ -1,0 +1,18 @@
+monarchs.physics.lid.seb.lid_seb_solver
+=======================================
+
+.. py:function:: monarchs.physics.lid.seb.lid_seb_solver(cell, met_data, k_lid)
+
+   Solve the lid surface energy balance (full or virtual lid form) with the
+   scalar Newton solver.
+
+   Called in lid.initialise_lid and lid.virtual_lid.
+
+   :Parameters: * **cell** (*numpy structured array*) -- Element of the model grid we are operating on.
+                * **met_data** (*numpy structured array*) -- Meteorological data for the current timestep.
+                * **k_lid** (*float*) -- Thermal conductivity of the (virtual) lid [W m^-1 K^-1].
+
+   :returns: * **sol** (*float*) -- Calculated lid surface temperature, rounded to 8 decimal places [K].
+             * **success** (*bool*) -- True if the iteration converged.
+             * **n_iter** (*int*) -- Number of Newton iterations used.
+

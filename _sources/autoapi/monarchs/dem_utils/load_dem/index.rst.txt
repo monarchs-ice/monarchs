@@ -1,0 +1,33 @@
+monarchs.dem_utils.load_dem
+===========================
+
+.. py:module:: monarchs.dem_utils.load_dem
+
+.. autoapi-nested-parse::
+
+   Functions to load in a real DEM from a GeoTIFF file, and interpolate it into the
+   number of rows and columns the user wants to MONARCHS with.
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/dem_utils/load_dem/bounding_box_diagnostic_plots
+   /autoapi/monarchs/dem_utils/load_dem/export_DEM
+   /autoapi/monarchs/dem_utils/load_dem/generate_diagnostic_plots
+   /autoapi/monarchs/dem_utils/load_dem/get_xy_distance
+   /autoapi/monarchs/dem_utils/load_dem/interpolate_DEM
+
+.. autoapisummary::
+
+   monarchs.dem_utils.load_dem.bounding_box_diagnostic_plots
+   monarchs.dem_utils.load_dem.export_DEM
+   monarchs.dem_utils.load_dem.generate_diagnostic_plots
+   monarchs.dem_utils.load_dem.get_xy_distance
+   monarchs.dem_utils.load_dem.interpolate_DEM
+
+

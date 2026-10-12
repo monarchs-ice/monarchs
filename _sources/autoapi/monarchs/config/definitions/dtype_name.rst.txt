@@ -1,0 +1,7 @@
+monarchs.config.definitions.dtype_name
+======================================
+
+.. py:function:: monarchs.config.definitions.dtype_name(dtype)
+
+   Human-readable name for a dtype (or union tuple), for errors and docs.
+

@@ -1,0 +1,30 @@
+monarchs.io.checkpoint
+======================
+
+.. py:module:: monarchs.io.checkpoint
+
+.. autoapi-nested-parse::
+
+   Functions to handle dumping of model state, so that runs can be restarted
+   upon failure.
+   Separate from model output (``monarchs.io.output``), which just handles a
+   user-defined subset of the outputs (i.e. ones that are useful scientifically,
+   rather than everything needed to restart the model).
+
+
+
+Functions
+---------
+
+.. toctree::
+   :hidden:
+
+   /autoapi/monarchs/io/checkpoint/read_checkpoint
+   /autoapi/monarchs/io/checkpoint/write_checkpoint
+
+.. autoapisummary::
+
+   monarchs.io.checkpoint.read_checkpoint
+   monarchs.io.checkpoint.write_checkpoint
+
+
